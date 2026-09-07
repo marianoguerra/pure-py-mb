@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-09-07
 
-The first working version: PurePy's tokenizer, parser, sieve, checker,
+The first release: PurePy's tokenizer, parser, sieve, checker,
 printer and interpreter, with the conformance suite passing in full.
 
 ### What it does
@@ -139,8 +139,16 @@ once per test, which is what the conformance suite specifies.
 
 ### Packaging
 
-The published module carries its conformance suite: `test/conformance/` is
-the reference's own 392 sources, and `test/golden/` the reference's answers
-for them. `moon.mod` has no way to leave them out, and they are what makes
-the suite hermetic -- a consumer who wants to know what this port agrees with
-has it in hand. The zip is about half a megabyte.
+The published module carries its conformance suite. Of the 978 files in the
+zip, 832 are under `test/`: the reference's own 392 sources, its answers for
+them, and the corpora the token and tree oracles compare against. They are
+what makes the suite hermetic, so a consumer who wants to know exactly what
+this port agrees with has it in hand -- but a consumer who only wants a
+parser is downloading half a megabyte to get it.
+
+`moon.mod` has no way to leave them out: `exclude`, `include` and `files` are
+all rejected by `moon publish`. The way to fix it is to move the library
+under a directory with its own `moon.mod` and publish from there, as
+`error-report` does; that is a restructuring, and it is not worth doing to a
+working tree on the eve of a first release. Recorded here so the next release
+can decide differently.
