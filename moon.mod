@@ -22,7 +22,7 @@ version = "0.1.0"
 
 readme = "README.mbt.md"
 
-repository = "https://github.com/marianoguerra/pure-py-mbt"
+repository = "https://github.com/marianoguerra/pure-py-mb"
 
 license = "Apache-2.0"
 
