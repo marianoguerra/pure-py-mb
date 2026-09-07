@@ -1,12 +1,80 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/analysis"
 
+import {
+  "marianoguerra/pure-py/ast",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/sorted_set",
+}
+
 // Values
+pub fn assigns_body(Array[@ast.Stmt]) -> @sorted_set.SortedSet[String]
+
+pub fn assigns_seq(ArrayView[Statement]) -> @sorted_set.SortedSet[String]
+
+pub fn assigns_statement(Statement) -> @sorted_set.SortedSet[String]
+
+pub fn assigns_stmt(@ast.Stmt) -> @sorted_set.SortedSet[String]
+
+pub fn binds(@ast.Pattern) -> @sorted_set.SortedSet[String]
+
+pub fn binds_quals(Array[@ast.Comprehension]) -> @sorted_set.SortedSet[String]
+
+pub fn binds_seq(@ast.Pattern) -> Array[String]
+
+pub fn captures(@ast.Stmt) -> @sorted_set.SortedSet[String]
+
+pub fn captures_body(Array[@ast.Stmt]) -> @sorted_set.SortedSet[String]
+
+pub fn captures_e(@ast.Expr) -> @sorted_set.SortedSet[String]
+
+pub fn captures_e_list(Array[@ast.Expr]) -> @sorted_set.SortedSet[String]
+
+pub fn captures_region(Array[@ast.Stmt]) -> @sorted_set.SortedSet[String]
+
+pub fn captures_statement(Statement) -> @sorted_set.SortedSet[String]
+
+pub let empty : @sorted_set.SortedSet[String]
+
+pub fn find_first_reassigning(ArrayView[Statement], @sorted_set.SortedSet[String]) -> @ast.Stmt?
+
+pub fn find_import(Array[@ast.Stmt]) -> @ast.Stmt?
+
+pub fn find_nested_import(Array[@ast.Stmt], nested? : Bool) -> @ast.Stmt?
+
+pub fn fv_body(Array[@ast.Stmt]) -> @sorted_set.SortedSet[String]
+
+pub fn fv_e(@ast.Expr) -> @sorted_set.SortedSet[String]
+
+pub fn fv_e_list(Array[@ast.Expr]) -> @sorted_set.SortedSet[String]
+
+pub fn fv_stmt(@ast.Stmt) -> @sorted_set.SortedSet[String]
+
+pub fn is_import(@ast.Stmt) -> Bool
+
+pub fn is_qualified_name(@ast.Expr) -> Bool
+
+pub fn names(Array[String]) -> @sorted_set.SortedSet[String]
+
+pub fn names_in_target(@ast.Expr) -> @sorted_set.SortedSet[String]
+
+pub fn own_fields(@ast.Stmt) -> Array[String]
+
+pub fn qualified_name(@ast.Expr) -> String
+
+pub fn split_imports(Array[@ast.Stmt]) -> (Array[@ast.Stmt], Array[@ast.Stmt])
+
+pub fn statements(Array[@ast.Stmt]) -> Array[Statement]
 
 // Errors
 
 // Types and methods
+pub(all) enum Statement {
+  Single(@ast.Stmt)
+  Region(Array[@ast.Stmt])
+} derive(Eq, @debug.Debug)
 
 // Type aliases
+pub type NameSet = @sorted_set.SortedSet[String]
 
 // Traits

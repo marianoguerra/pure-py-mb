@@ -1,1 +1,10 @@
+import {
+  "marianoguerra/pure-py/ast",
+  "moonbitlang/core/immut/sorted_set",
+}
 
+import {
+  "marianoguerra/pure-py/analysis",
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/parser",
+} for "test"

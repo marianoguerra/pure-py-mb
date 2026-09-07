@@ -1,12 +1,94 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/context"
 
+import {
+  "marianoguerra/pure-py/ast",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/sorted_map",
+}
+
 // Values
+pub fn assigns_empty() -> ResultType
+
+pub fn[M] class_entry(@ast.Expr, ModuleContext[M]) -> ClassEntry?
+
+pub fn context_of(Array[(String, Entry)]) -> @sorted_map.SortedMap[String, Entry]
+
+pub fn empty_context() -> @sorted_map.SortedMap[String, Entry]
+
+pub fn empty_vars() -> @sorted_map.SortedMap[String, Status]
+
+pub fn[M] entry_of(@ast.Expr, ModuleContext[M]) -> Entry?
+
+pub fn extend_context(@sorted_map.SortedMap[String, Entry], @sorted_map.SortedMap[String, Entry]) -> @sorted_map.SortedMap[String, Entry]
+
+pub fn extend_entry(Entry, Entry) -> Entry
+
+pub fn merge_delta(@sorted_map.SortedMap[String, Status], @sorted_map.SortedMap[String, Status]) -> @sorted_map.SortedMap[String, Status]
+
+pub fn merge_results(Array[ResultType]) -> ResultType
+
+pub fn merge_status(Status, Status) -> Status
+
+pub fn override_delta(@sorted_map.SortedMap[String, Status], @sorted_map.SortedMap[String, Status]) -> @sorted_map.SortedMap[String, Status]
+
+pub fn override_results(ResultType, ResultType) -> ResultType
+
+pub fn own_fields(@ast.Stmt) -> Array[String]
+
+pub fn predefined_context(String) -> @sorted_map.SortedMap[String, Entry]
+
+pub fn predefined_members(String) -> Array[String]?
+
+pub let predefined_modules : Array[String]
+
+pub fn vars_of(Array[(String, Status)]) -> @sorted_map.SortedMap[String, Status]
 
 // Errors
 
 // Types and methods
+pub(all) struct ClassEntry {
+  context : @sorted_map.SortedMap[String, Entry]
+  name : String
+  own_fields : Array[String]
+  base : String?
+} derive(Eq, @debug.Debug)
+pub fn ClassEntry::ancestors(Self) -> Array[Self]
+pub fn[T] ClassEntry::field_map(Self, Array[T], Array[String], Array[T]) -> Array[(String, T)]?
+pub fn ClassEntry::fields(Self) -> Array[String]
+pub fn ClassEntry::short_name(Self) -> String
+
+pub(all) enum Entry {
+  Var(Status)
+  ModuleStub(String)
+  ModuleLoaded(String, @sorted_map.SortedMap[String, Entry])
+  Class(ClassEntry)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ModuleContext[M] {
+  gamma : @sorted_map.SortedMap[String, Entry]
+  program : M
+  q : String
+} derive(Eq, @debug.Debug)
+pub fn[M] ModuleContext::class_of(Self[M], String) -> ClassEntry?
+pub fn[M] ModuleContext::module_of(Self[M], String) -> Entry?
+pub fn[M] ModuleContext::override_gamma(Self[M], @sorted_map.SortedMap[String, Entry]) -> Self[M]
+pub fn[M] ModuleContext::override_var(Self[M], @sorted_map.SortedMap[String, Status]) -> Self[M]
+pub fn[M] ModuleContext::var_status(Self[M], String) -> Status?
+
+pub(all) enum ResultType {
+  Returns
+  Assigns(@sorted_map.SortedMap[String, Status])
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Status {
+  TT
+  FF
+} derive(Compare, Eq, @debug.Debug)
 
 // Type aliases
+pub type Context = @sorted_map.SortedMap[String, Entry]
+
+pub type VarContext = @sorted_map.SortedMap[String, Status]
 
 // Traits
