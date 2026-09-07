@@ -4,6 +4,7 @@ import {
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/lexer",
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/sieve",
   "marianoguerra/pure-py/write",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",

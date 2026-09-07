@@ -1,4 +1,480 @@
 ///|
-/// Placeholder: this package is filled in by a later phase of
-/// `implementation-plan.md`.
-let _placeholder : Unit = ()
+/// The sieve: everything PurePy excludes on sight.
+///
+/// A port of the reference's `syntax.py`, function for function and message
+/// for message. Two things about it are load-bearing and easy to lose:
+///
+///   * **The traversal order is the answer.** A file with two violations
+///     reports the first one the walk reaches, and the conformance suite has
+///     files that depend on which. So the order of the tests below is the
+///     order of the `isinstance` chain in `syntax.py`, not a tidier one.
+///   * **Some rejections have no position.** `check_arguments`,
+///     `check_generator` and the case-guard test are handed CPython nodes that
+///     carry no `lineno` -- `arguments`, `comprehension`, `match_case` -- and
+///     the reference prints `path: msg` with no line for them. That is
+///     reproduced by giving those diagnostics no span.
+///
+/// Everything here raises on the first violation, so `check` is `Unit` and
+/// the caller catches.
+pub fn check_module(m : @ast.Module) -> Unit raise {
+  check_top_level(m.body)
+}
+
+///|
+/// Whether a module passes the sieve, as a diagnostic rather than a raise.
+pub fn result(m : @ast.Module) -> @err.Diagnostic? {
+  try check_module(m) catch {
+    @err.PurePyError(d) => Some(d)
+    _ => None
+  } noraise {
+    _ => None
+  }
+}
+
+///|
+fn prohibited(msg : String, span : @basic.Span) -> @err.PurePyError {
+  @err.PurePyError(@err.Diagnostic::new(Prohibited(msg~), span~))
+}
+
+///|
+/// A rejection with no position, for the three node kinds CPython gives none.
+fn prohibited_nowhere(msg : String) -> @err.PurePyError {
+  @err.PurePyError(@err.Diagnostic::new(Prohibited(msg~)))
+}
+
+///|
+fn not_yet(
+  feature : String,
+  issue : Int,
+  span : @basic.Span,
+) -> @err.PurePyError {
+  @err.PurePyError(
+    @err.Diagnostic::new(NotYetSupported(feature~, issue~), span~),
+  )
+}
+
+///|
+fn not_yet_nowhere(feature : String, issue : Int) -> @err.PurePyError {
+  @err.PurePyError(@err.Diagnostic::new(NotYetSupported(feature~, issue~)))
+}
+
+// ---------------------------------------------------------------------------
+
+///|
+/// The module body: a class declaration is allowed here and nowhere else.
+fn check_top_level(stmts : Array[@ast.Stmt]) -> Unit raise {
+  for s in stmts {
+    if s is ClassDef(..) {
+      check_classdef(s)
+    } else {
+      check_stmt(s)
+    }
+  }
+}
+
+///|
+fn check_body(stmts : Array[@ast.Stmt]) -> Unit raise {
+  for s in stmts {
+    check_stmt(s)
+  }
+}
+
+///|
+fn check_stmt(node : @ast.Stmt) -> Unit raise {
+  let span = node.span()
+  match node {
+    Pass(..) => ()
+    Assign(targets~, value~, ..) => {
+      if targets.length() != 1 {
+        raise prohibited("multiple assignment targets", span)
+      }
+      match targets[0] {
+        Subscript(..) => raise prohibited("item assignment prohibited", span)
+        Attribute(..) =>
+          raise prohibited("attribute assignment prohibited", span)
+        Name(..) => ()
+        _ => raise not_yet("destructuring assignment", 54, span)
+      }
+      check_expr(value)
+    }
+    Return(value~, ..) =>
+      match value {
+        Some(v) => check_expr(v)
+        None => ()
+      }
+    If(cond~, body~, or_else~, ..) => {
+      check_expr(cond)
+      check_body(body)
+      check_body(or_else)
+    }
+    // `async def` is a different class in CPython and never reaches the
+    // `FunctionDef` arm, so its arguments, decorators and annotation are not
+    // examined: it is simply "async prohibited".
+    FunctionDef(is_async=true, ..) => raise prohibited("async prohibited", span)
+    FunctionDef(args~, body~, decorators~, returns~, ..) => {
+      check_arguments(args)
+      if decorators.length() > 0 {
+        raise not_yet("decorators", 58, span)
+      }
+      if returns is Some(_) {
+        raise prohibited("return type annotations prohibited", span)
+      }
+      check_body(body)
+    }
+    ExprStmt(value~, ..) => check_expr(value)
+    Assert(cond~, msg~, ..) => {
+      check_expr(cond)
+      match msg {
+        Some(m) => check_expr(m)
+        None => ()
+      }
+    }
+    AugAssign(..) =>
+      raise prohibited("augmented assignment (+=, etc.) prohibited", span)
+    AnnAssign(..) => raise prohibited("annotated assignment prohibited", span)
+    Delete(..) => raise prohibited("del prohibited", span)
+    For(is_async=false, ..) => raise prohibited("for loops prohibited", span)
+    While(..) => raise prohibited("while loops prohibited", span)
+    With(is_async=false, ..) =>
+      raise prohibited("with statements prohibited", span)
+    For(..) | With(..) => raise prohibited("async prohibited", span)
+    Raise(..) => raise prohibited("raise prohibited", span)
+    // `try/except*` is `TryStar` in CPython, a class of its own that the
+    // reference's chain never names, so it falls through to the last line.
+    Try(is_star=false, ..) => raise prohibited("try/except prohibited", span)
+    Import(names~, ..) => {
+      if names.length() != 1 {
+        raise not_yet("multi-target import (import a, b)", 53, span)
+      }
+      if names[0].asname is Some(_) {
+        raise not_yet("import-as", 53, span)
+      }
+    }
+    ImportFrom(module_name~, names~, level~, ..) => {
+      if level > 0 {
+        raise not_yet("relative imports", 53, span)
+      }
+      if module_name is None {
+        raise not_yet("from-import with no module", 53, span)
+      }
+      for a in names {
+        if a.name == "*" {
+          raise not_yet("from M import *", 53, span)
+        }
+        if a.asname is Some(_) {
+          raise not_yet("from-import-as", 53, span)
+        }
+      }
+    }
+    Global(..) => raise prohibited("global prohibited", span)
+    Nonlocal(..) => raise prohibited("nonlocal prohibited", span)
+    ClassDef(..) =>
+      raise prohibited("class declaration only at module top level", span)
+    Match(subject~, cases~, ..) => {
+      check_expr(subject)
+      for c in cases {
+        // A `match_case` carries no position in CPython's tree.
+        if c.guard_ is Some(_) {
+          raise not_yet_nowhere("case guards", 83)
+        }
+        check_pattern(c.pattern)
+        check_body(c.body)
+      }
+    }
+    Break(..) => raise prohibited("break prohibited", span)
+    Continue(..) => raise prohibited("continue prohibited", span)
+    _ => raise prohibited("unknown statement type: \{node.kind_name()}", span)
+  }
+}
+
+///|
+fn check_classdef(node : @ast.Stmt) -> Unit raise {
+  let span = node.span()
+  match node {
+    ClassDef(bases~, keywords~, body~, decorators~, ..) => {
+      for b in bases {
+        if b is Name(id="Enum", ..) {
+          raise not_yet("enum classes", 86, span)
+        }
+      }
+      if decorators.length() != 1 {
+        raise prohibited(
+          "class must have exactly the @dataclass decorator", span,
+        )
+      }
+      if !(decorators[0] is Name(id="dataclass", ..)) {
+        raise prohibited(
+          "only the @dataclass decorator is supported on classes", span,
+        )
+      }
+      if bases.length() > 1 {
+        raise prohibited("multiple inheritance prohibited", span)
+      }
+      if bases.length() > 0 && !(bases[0] is Name(..)) {
+        raise prohibited("base class must be a simple name", span)
+      }
+      if keywords.length() > 0 {
+        raise prohibited("class keyword arguments prohibited", span)
+      }
+      if body.length() == 1 && body[0] is Pass(..) {
+        return
+      }
+      for s in body {
+        check_field(s)
+      }
+    }
+    _ => ()
+  }
+}
+
+///|
+fn check_field(stmt : @ast.Stmt) -> Unit raise {
+  let span = stmt.span()
+  match stmt {
+    AnnAssign(target~, annotation~, value~, ..) => {
+      if !(target is Name(..)) {
+        raise prohibited("field target must be a simple name", span)
+      }
+      if value is Some(_) {
+        raise prohibited("field default values prohibited", span)
+      }
+      if !(annotation is Name(id="Any", ..)) {
+        raise prohibited("field type annotation must be Any", span)
+      }
+    }
+    _ =>
+      raise prohibited(
+        "dataclass body may contain only field declarations", span,
+      )
+  }
+}
+
+///|
+/// `a`, `a.b`, `a.b.c` -- what a class pattern's head must be.
+pub fn is_qualified_name(e : @ast.Expr) -> Bool {
+  match e {
+    Name(..) => true
+    Attribute(value~, ..) => is_qualified_name(value)
+    _ => false
+  }
+}
+
+///|
+fn check_pattern(node : @ast.Pattern) -> Unit raise {
+  let span = node.span()
+  match node {
+    MatchValue(value~, ..) => {
+      match value {
+        // A bool in a pattern is a `MatchSingleton`, so `int` here never
+        // means `bool` -- which in Python it otherwise would.
+        Constant(value=Int(_) | Float(_) | Str(_), ..) => return
+        UnaryOp(op=UAdd | USub, operand~, ..) =>
+          if operand is Constant(value=Int(_) | Float(_), ..) {
+            return
+          }
+        Attribute(..) => raise not_yet("attribute value patterns", 86, span)
+        _ => ()
+      }
+      raise not_yet("complex value patterns", 83, span)
+    }
+    MatchSingleton(..) => ()
+    MatchAs(pattern~, ..) =>
+      match pattern {
+        Some(p) => check_pattern(p)
+        None => ()
+      }
+    MatchSequence(patterns~, ..) =>
+      for p in patterns {
+        if p is MatchStar(..) {
+          raise not_yet("star patterns", 84, span)
+        }
+        check_pattern(p)
+      }
+    MatchClass(cls~, patterns~, kwd_patterns~, ..) => {
+      if !is_qualified_name(cls) {
+        raise prohibited("class pattern head must be a qualified name", span)
+      }
+      for p in patterns {
+        check_pattern(p)
+      }
+      for p in kwd_patterns {
+        check_pattern(p)
+      }
+    }
+    MatchMapping(keys~, patterns~, rest~, ..) => {
+      if rest is Some(_) {
+        raise not_yet("rest capture in dict patterns", 84, span)
+      }
+      for k in keys {
+        if !(k is Constant(value=Str(_), ..)) {
+          // The KEY's position, not the pattern's.
+          raise prohibited(
+            "dict pattern keys must be string literals",
+            k.span(),
+          )
+        }
+      }
+      for p in patterns {
+        check_pattern(p)
+      }
+    }
+    MatchOr(..) => raise not_yet("or-patterns", 85, span)
+    MatchStar(..) => raise not_yet("star patterns", 84, span)
+  }
+}
+
+///|
+fn check_expr(node : @ast.Expr) -> Unit raise {
+  let span = node.span()
+  match node {
+    Constant(value~, ..) =>
+      match value {
+        Int(_) | Float(_) | Str(_) | Bool(_) | None => ()
+        Bytes(_) | Complex(_) =>
+          raise prohibited("\{value.type_name()} literals prohibited", span)
+        _ =>
+          raise prohibited(
+            "prohibited literal type: \{value.type_name()}",
+            span,
+          )
+      }
+    Name(..) => ()
+    BinOp(left~, op~, right~, ..) => {
+      match op {
+        Add | Sub | Mult | Div | FloorDiv | Mod | Pow => ()
+        _ =>
+          raise prohibited("binary operator '\{op.symbol()}' prohibited", span)
+      }
+      check_expr(left)
+      check_expr(right)
+    }
+    UnaryOp(op~, operand~, ..) =>
+      match op {
+        Not | UAdd | USub => check_expr(operand)
+        _ =>
+          raise prohibited("unary operator '\{op.symbol()}' prohibited", span)
+      }
+    BoolOp(values~, ..) => {
+      if values.length() > 2 {
+        raise not_yet("chained boolean operator", 82, span)
+      }
+      for v in values {
+        check_expr(v)
+      }
+    }
+    Compare(left~, ops~, comparators~, ..) => {
+      if ops.length() > 1 {
+        raise not_yet("chained comparison", 82, span)
+      }
+      for op in ops {
+        if op is (Is | IsNot) {
+          raise not_yet("identity operator (is/is not)", 81, span)
+        }
+      }
+      check_expr(left)
+      for c in comparators {
+        check_expr(c)
+      }
+    }
+    Call(func~, args~, keywords~, ..) => {
+      check_expr(func)
+      for a in args {
+        check_expr(a)
+      }
+      for k in keywords {
+        check_expr(k.value)
+      }
+    }
+    IfExp(cond~, body~, or_else~, ..) => {
+      check_expr(cond)
+      check_expr(body)
+      check_expr(or_else)
+    }
+    Lambda(args~, body~, ..) => {
+      check_arguments(args)
+      check_expr(body)
+    }
+    List(elts~, ..) | Tuple(elts~, ..) =>
+      for e in elts {
+        check_expr(e)
+      }
+    Dict(keys~, values~, ..) => {
+      for k in keys {
+        match k {
+          Some(e) => check_expr(e)
+          None => ()
+        }
+      }
+      for v in values {
+        check_expr(v)
+      }
+    }
+    Set(..) => raise not_yet("set literals", 147, span)
+    Attribute(value~, ..) => check_expr(value)
+    Subscript(value~, slice~, ..) => {
+      check_expr(value)
+      check_expr(slice)
+    }
+    ListComp(elt~, generators~, ..) => {
+      check_expr(elt)
+      for g in generators {
+        check_generator(g)
+      }
+    }
+    DictComp(key~, value~, generators~, ..) => {
+      check_expr(key)
+      check_expr(value)
+      for g in generators {
+        check_generator(g)
+      }
+    }
+    SetComp(..) => raise not_yet("set comprehensions", 147, span)
+    Slice(..) => raise not_yet("slicing", 59, span)
+    GeneratorExp(..) =>
+      raise prohibited("generator expressions prohibited", span)
+    NamedExpr(..) => raise prohibited("walrus operator (:=) prohibited", span)
+    Starred(..) => raise prohibited("starred expressions prohibited", span)
+    Await(..) => raise prohibited("async prohibited", span)
+    Yield(..) | YieldFrom(..) => raise prohibited("yield prohibited", span)
+    JoinedStr(..) => raise not_yet("f-strings", 55, span)
+  }
+}
+
+///|
+/// A comprehension clause. The node carries no position in CPython's tree, so
+/// neither rejection here has one.
+fn check_generator(node : @ast.Comprehension) -> Unit raise {
+  if node.is_async {
+    raise prohibited_nowhere("async comprehensions prohibited")
+  }
+  if !(node.target is Name(..)) {
+    raise not_yet_nowhere("destructuring in comprehensions", 54)
+  }
+  check_expr(node.iter)
+  for i in node.ifs {
+    check_expr(i)
+  }
+}
+
+///|
+/// A parameter list. `arguments` carries no position either.
+fn check_arguments(node : @ast.Arguments) -> Unit raise {
+  if node.vararg is Some(_) {
+    raise not_yet_nowhere("*args", 57)
+  }
+  if node.kwarg is Some(_) {
+    raise not_yet_nowhere("**kwargs", 57)
+  }
+  if node.kwonlyargs.length() > 0 {
+    raise prohibited_nowhere("keyword-only arguments prohibited")
+  }
+  if node.defaults.length() > 0 {
+    raise not_yet_nowhere("default arguments", 56)
+  }
+  if node.kw_defaults.length() > 0 {
+    raise not_yet_nowhere("default arguments", 56)
+  }
+  if node.posonlyargs.length() > 0 {
+    raise prohibited_nowhere("positional-only arguments prohibited")
+  }
+}

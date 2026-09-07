@@ -18,6 +18,7 @@ fn main {
     ["tokens", path] => @sys.exit(cmd_tokens(path))
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
     ["unparse", path] => @sys.exit(cmd_unparse(path))
+    ["parse", .. paths] => @sys.exit(cmd_parse(paths))
     ["dump", path, "--pos"] | ["dump", "--pos", path] =>
       @sys.exit(cmd_dump(path, pos=true))
     [cmd, ..] => {
@@ -123,6 +124,34 @@ fn cmd_unparse(path : String) -> Int {
       0
     }
   }
+}
+
+///|
+/// `parse FILE...`: what the sieve says about each file.
+///
+/// The format and the exit codes are `syntax.py`'s: `FILE: ok`, or
+/// `FILE:line:col: message` with the column in UTF-8 BYTES, which is what
+/// CPython's `col_offset` counts and what the reference therefore prints.
+/// Several files in one invocation, and the LAST non-zero code wins.
+fn cmd_parse(paths : ArrayView[String]) -> Int {
+  let mut code = 0
+  for path in paths {
+    let src = read_source(path)
+    let d = try @parser.parse(src) catch {
+      @err.PurePyError(d) => Some(d.as_parse_error())
+      e => Some(@err.Diagnostic::new(PythonSyntax(msg="parse error: \{e}")))
+    } noraise {
+      m => @sieve.result(m)
+    }
+    match d {
+      None => println("\{path}: ok")
+      Some(diag) => {
+        println(diag.short(path, source=src))
+        code = diag.exit_code()
+      }
+    }
+  }
+  code
 }
 
 ///|

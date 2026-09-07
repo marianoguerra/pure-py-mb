@@ -1,1 +1,11 @@
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/error" @err,
+}
 
+import {
+  "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/sieve",
+} for "test"

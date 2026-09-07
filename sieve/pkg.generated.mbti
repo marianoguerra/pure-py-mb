@@ -1,7 +1,17 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/sieve"
 
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/error",
+}
+
 // Values
+pub fn check_module(@ast.Module) -> Unit raise
+
+pub fn is_qualified_name(@ast.Expr) -> Bool
+
+pub fn result(@ast.Module) -> @error.Diagnostic?
 
 // Errors
 

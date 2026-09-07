@@ -10,7 +10,7 @@ import {
 pub fn syntax_error(String, @basic.Span) -> PurePyError
 
 // Errors
-pub suberror PurePyError {
+pub(all) suberror PurePyError {
   PurePyError(Diagnostic)
 } derive(Eq, @debug.Debug)
 
@@ -21,9 +21,11 @@ pub(all) struct Diagnostic {
   in_module : String?
   related : Array[(@basic.Span, String)]
 } derive(Eq, @debug.Debug)
+pub fn Diagnostic::as_parse_error(Self) -> Self
 pub fn Diagnostic::exit_code(Self) -> Int
 pub fn Diagnostic::message(Self) -> String
 pub fn Diagnostic::new(Kind, span? : @basic.Span, in_module? : String, related? : Array[(@basic.Span, String)]) -> Self
+pub fn Diagnostic::raise_(Self) -> PurePyError
 pub fn Diagnostic::short(Self, String, source? : @basic.Source) -> String
 pub fn Diagnostic::stage(Self) -> Stage
 

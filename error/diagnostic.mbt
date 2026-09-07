@@ -120,9 +120,28 @@ pub fn Diagnostic::short(
 /// The one error this module raises. Everything that can reject carries a
 /// `Diagnostic`, so a caller never has to match on several error types to
 /// decide an exit code.
-pub suberror PurePyError {
+pub(all) suberror PurePyError {
   PurePyError(Diagnostic)
 } derive(Eq, Debug)
+
+///|
+/// The same rejection, worded as the reference words a Python syntax error
+/// found while LOADING a module: `parse error: <msg>`. `syntax.py` lets
+/// `ast.parse` raise and the message reaches the user through
+/// `check_program.py`'s `load`, which prefixes it.
+pub fn Diagnostic::as_parse_error(self : Diagnostic) -> Diagnostic {
+  match self.kind {
+    PythonSyntax(msg~) =>
+      { ..self, kind: PythonSyntax(msg="parse error: " + msg), }
+    _ => self
+  }
+}
+
+///|
+/// Raise this diagnostic.
+pub fn Diagnostic::raise_(self : Diagnostic) -> PurePyError {
+  PurePyError(self)
+}
 
 ///|
 /// Raise a Python syntax error at `span`.
