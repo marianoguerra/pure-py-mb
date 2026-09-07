@@ -80,7 +80,7 @@ test "constants print the way Python's repr prints them" {
   assert_eq(@ast.Constant::Int(42N).to_literal(), "42")
   assert_eq(@ast.Constant::Float(1.0).to_literal(), "1.0")
   assert_eq(@ast.Constant::Float(1.0e16).to_literal(), "1e+16")
-  assert_eq(@ast.Constant::Complex(3.0).to_literal(), "3.0j")
+  assert_eq(@ast.Constant::Complex(3.0).to_literal(), "3j")
   assert_eq(@ast.Constant::Str("it's").to_literal(), "\"it's\"")
   assert_eq(@ast.Constant::Bytes(b"a\x00").to_literal(), "b'a\\x00'")
   assert_eq(@ast.Constant::Bool(true).to_literal(), "True")

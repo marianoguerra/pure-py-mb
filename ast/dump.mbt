@@ -23,9 +23,11 @@
 /// re-parsing is the only way to compare it structurally, and it renders a
 /// constant through Python's own `repr` of an arbitrary object. Defining our
 /// own costs one Python script and buys a line-oriented diff.
-pub fn dump(m : Module, pos~ : Bool = false) -> String {
-  let d = { out: StringBuilder(), pos }
-  d.node("Module", [], 0, m.span)
+pub fn dump(m : Module, pos? : Bool = false) -> String {
+  let d = { out: StringBuilder(), pos, }
+  // `Module`, `arguments`, `comprehension`, `withitem` and `match_case` carry
+  // no position in CPython's tree, so they carry none here either.
+  d.out.write_string("Module\n")
   d.field_stmts("body", m.body, 1)
   d.out.to_string()
 }
@@ -65,7 +67,12 @@ fn Dumper::node(
 
 ///|
 /// A field's introducing line, `name:`, optionally with an inline `-`.
-fn Dumper::field(self : Dumper, name : String, depth : Int, absent~ : Bool = false) -> Unit {
+fn Dumper::field(
+  self : Dumper,
+  name : String,
+  depth : Int,
+  absent? : Bool = false,
+) -> Unit {
   self.indent(depth)
   self.out.write_string(if absent { "\{name}: -\n" } else { "\{name}:\n" })
 }
@@ -96,7 +103,7 @@ pub fn Constant::to_literal(self : Constant) -> String {
   match self {
     Int(n) => n.to_string()
     Float(d) => @basic.py_float_repr(d)
-    Complex(d) => @basic.py_float_repr(d) + "j"
+    Complex(d) => @basic.py_float_layout(d, dot_zero=false) + "j"
     Str(s) => @basic.py_repr(s)
     Bytes(b) => @basic.py_bytes_repr(b)
     Bool(b) => bool_text(b)
@@ -135,7 +142,12 @@ fn Dumper::field_exprs(
 }
 
 ///|
-fn Dumper::field_expr(self : Dumper, name : String, e : Expr, depth : Int) -> Unit {
+fn Dumper::field_expr(
+  self : Dumper,
+  name : String,
+  e : Expr,
+  depth : Int,
+) -> Unit {
   self.field(name, depth)
   self.expr(e, depth + 1)
 }
@@ -472,12 +484,8 @@ fn Dumper::comprehensions(
 ) -> Unit {
   self.field("generators", depth)
   for g in gens {
-    self.node(
-      "comprehension",
-      [("is_async", bool_text(g.is_async))],
-      depth + 1,
-      g.target.span(),
-    )
+    self.indent(depth + 1)
+    self.out.write_string("comprehension is_async=\{bool_text(g.is_async)}\n")
     self.field_expr("target", g.target, depth + 2)
     self.field_expr("iter", g.iter, depth + 2)
     self.field_exprs("ifs", g.ifs, depth + 2)
@@ -612,12 +620,7 @@ fn Dumper::pattern(self : Dumper, p : Pattern, depth : Int) -> Unit {
       self.field_patterns("patterns", patterns, d)
     }
     MatchClass(cls~, patterns~, kwd_attrs~, kwd_patterns~, span~) => {
-      self.node(
-        "MatchClass",
-        [("kwd_attrs", id_list(kwd_attrs))],
-        depth,
-        span,
-      )
+      self.node("MatchClass", [("kwd_attrs", id_list(kwd_attrs))], depth, span)
       self.field_expr("cls", cls, d)
       self.field_patterns("patterns", patterns, d)
       self.field_patterns("kwd_patterns", kwd_patterns, d)

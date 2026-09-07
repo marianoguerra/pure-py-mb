@@ -18,6 +18,14 @@
 ///
 /// The same layout is what `str()` produces: Python 3 has one float format.
 pub fn py_float_repr(d : Double) -> String {
+  py_float_layout(d, dot_zero=true)
+}
+
+///|
+/// The same layout without the forced `.0`, which is how CPython writes the
+/// imaginary part of a complex: `repr(4j)` is `4j` and not `4.0j`. The flag is
+/// CPython's own `Py_DTSF_ADD_DOT_0`, set for a float and clear for a complex.
+pub fn py_float_layout(d : Double, dot_zero~ : Bool) -> String {
   if d != d {
     return "nan"
   }
@@ -39,7 +47,7 @@ pub fn py_float_repr(d : Double) -> String {
     out.write_char('-')
   }
   if digits == "0" {
-    out.write_string("0.0")
+    out.write_string(if dot_zero { "0.0" } else { "0" })
     return out.to_string()
   }
   // `exp10` is the power of ten the first digit stands for; CPython's `decpt`
@@ -48,7 +56,7 @@ pub fn py_float_repr(d : Double) -> String {
   if decpt <= -4 || decpt > 16 {
     write_exponential(out, digits, exp10)
   } else {
-    write_positional(out, digits, exp10)
+    write_positional(out, digits, exp10, dot_zero)
   }
   out.to_string()
 }
@@ -137,7 +145,12 @@ fn parse_signed_int(s : String) -> Int {
 
 ///|
 /// `1.0`, `10.0`, `0.0001` -- always with a point and a digit after it.
-fn write_positional(out : StringBuilder, digits : String, exp10 : Int) -> Unit {
+fn write_positional(
+  out : StringBuilder,
+  digits : String,
+  exp10 : Int,
+  dot_zero : Bool,
+) -> Unit {
   if exp10 >= 0 {
     let int_len = exp10 + 1
     for i in 0..<int_len {
@@ -147,11 +160,11 @@ fn write_positional(out : StringBuilder, digits : String, exp10 : Int) -> Unit {
         out.write_char('0')
       }
     }
-    out.write_char('.')
     if digits.length() > int_len {
+      out.write_char('.')
       out.write_string(digits[int_len:].to_owned())
-    } else {
-      out.write_char('0')
+    } else if dot_zero {
+      out.write_string(".0")
     }
   } else {
     out.write_string("0.")

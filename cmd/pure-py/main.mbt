@@ -16,6 +16,10 @@ fn main {
     [] | ["-h"] | ["--help"] => println(usage)
     ["--version"] => println("pure-py 0.1.0")
     ["tokens", path] => @sys.exit(cmd_tokens(path))
+    ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
+    ["unparse", path] => @sys.exit(cmd_unparse(path))
+    ["dump", path, "--pos"] | ["dump", "--pos", path] =>
+      @sys.exit(cmd_dump(path, pos=true))
     [cmd, ..] => {
       println("pure-py: unknown command '\{cmd}'")
       println(usage)
@@ -73,6 +77,49 @@ fn cmd_tokens(path : String) -> Int {
         )
       }
       write_stdout(out.to_string())
+      0
+    }
+  }
+}
+
+///|
+/// `dump FILE [--pos]`: the tree, in the format `tools/pyast_dump.py` prints
+/// for CPython's.
+fn cmd_dump(path : String, pos~ : Bool) -> Int {
+  let src = read_source(path)
+  try @parser.parse(src) catch {
+    @err.PurePyError(d) => {
+      println("!error \{d.short(path, source=src)}")
+      1
+    }
+    e => {
+      println("!error \{e}")
+      1
+    }
+  } noraise {
+    m => {
+      write_stdout(@ast.dump(m, pos~))
+      0
+    }
+  }
+}
+
+///|
+/// `unparse FILE`: the source rebuilt from the tree.
+fn cmd_unparse(path : String) -> Int {
+  let src = read_source(path)
+  try @parser.parse(src) catch {
+    @err.PurePyError(d) => {
+      println("!error \{d.short(path, source=src)}")
+      1
+    }
+    e => {
+      println("!error \{e}")
+      1
+    }
+  } noraise {
+    m => {
+      write_stdout(@write.unparse(m))
       0
     }
   }

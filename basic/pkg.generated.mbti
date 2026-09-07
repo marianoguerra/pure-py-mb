@@ -16,6 +16,12 @@ pub let nowhere : Span
 
 pub let origin : Pos
 
+pub fn py_bytes_repr(Bytes) -> String
+
+pub fn py_float_layout(Double, dot_zero~ : Bool) -> String
+
+pub fn py_float_repr(Double) -> String
+
 pub fn py_repr(String) -> String
 
 pub fn utf8_length(Char) -> Int

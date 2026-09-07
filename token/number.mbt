@@ -89,8 +89,33 @@ fn all_zeros(s : String) -> Bool {
 fn to_double(s : String, tok : Token) -> Double raise {
   let padded = pad_point(s)
   @string.parse_double(padded) catch {
-    _ => raise @err.syntax_error("invalid numeric literal", tok.span)
+    _ =>
+      // A literal too large for a double is an infinity in Python, not an
+      // error: `1e400` is `inf`, and the suite has one. Anything else really
+      // is malformed.
+      if overflows(padded) {
+        @double.infinity
+      } else {
+        raise @err.syntax_error("invalid numeric literal", tok.span)
+      }
   }
+}
+
+///|
+/// Whether a literal `parse_double` refused is one whose magnitude is simply
+/// too large: digits and a point, with an exponent that is not negative.
+fn overflows(s : String) -> Bool {
+  let mut seen_e = false
+  for c in s {
+    if c == 'e' || c == 'E' {
+      seen_e = true
+    } else if c == '-' && seen_e {
+      return false
+    } else if !(c.is_ascii_digit() || c == '.' || c == '+') {
+      return false
+    }
+  }
+  true
 }
 
 ///|

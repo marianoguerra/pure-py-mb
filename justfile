@@ -113,6 +113,8 @@ ci:
     tools/boundary-check.sh
     moon build --target native
     tools/tokdiff.py --show 5
+    tools/astdiff.py --show 5
+    tools/unparse_check.sh
     tools/conform.py --show 5
 
 # ---------------------------------------------------------------------------
@@ -126,12 +128,34 @@ ci:
 [group('conform')]
 conform *args: build
     tools/tokdiff.py --show 5
+    tools/astdiff.py --show 5
+    tools/unparse_check.sh
     {{conform}} --show 5 {{args}}
 
 # Our token stream against CPython's `tokenize`, over the suite and the corpus.
 [group('conform')]
 tokens *args: build
     tools/tokdiff.py --show 5 {{args}}
+
+# Our parse tree against CPython's `ast`, with and without positions.
+[group('conform')]
+ast *args: build
+    tools/astdiff.py --show 5 {{args}}
+
+# Where our tree and CPython's part company, for one file.
+[group('conform')]
+ast-for file: build
+    tools/astdiff.py --python --show 1 --filter {{file}}
+
+# What the printer writes, parsed again, is the tree it was given.
+[group('conform')]
+unparse: build
+    tools/unparse_check.sh
+
+# The same claim, with CPython doing the reading.
+[group('conform')]
+unparse-python: build
+    tools/unparse_python_check.py
 
 # Where our token stream and CPython's part company, for one file.
 [group('conform')]
@@ -178,18 +202,21 @@ goldens:
 [group('regen')]
 ratchet: build
     tools/tokdiff.py --regen-policy --show 0
+    tools/astdiff.py --regen-policy --show 0
     {{conform}} --regen-policy --show 0
 
-# Rewrite the CPython token index the `tokens` oracle compares against.
+# Rewrite the CPython indexes the `tokens` and `ast` oracles compare against.
 [group('regen')]
-tokens-index:
+indexes:
     tools/tokdiff.py --regen
+    tools/astdiff.py --regen
 
-# Rewrite the generated literal tables from CPython's own answers.
+# Rewrite the generated tables from CPython's own answers.
 [group('regen')]
-literal-tables:
+tables:
     tools/gen_number_cases.py
     tools/gen_string_cases.py
+    tools/gen_float_cases.py
     moon fmt
 
 # Prove the reference implementation passes its own suite.

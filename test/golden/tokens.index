@@ -393,6 +393,18 @@ test/conformance/program-level/semantically-valid/unused_descendant_import/u/sub
 test/conformance/program-level/semantically-valid/unused_module/main.py	f14fc8e68386ad1835455fa502e18bfce4cff68d
 test/conformance/program-level/semantically-valid/unused_module/unused.py	064313475a24c628b57150b524aba1867189f9e3
 test/conformance/run-all.py	94745a472632135781adf8f6df0c69f87d323290
+test/corpus/python/class_forms.py	1f939128dcd87ab40de58abc98e24f115d2e16e9
+test/corpus/python/def_forms.py	35870dafe595cffa0e120c008bc4445e4c987344
+test/corpus/python/expr_boolop.py	82a472fa0debc2493fa7b379f9367077367032c1
+test/corpus/python/expr_calls.py	48934c5cf750c952b0eb917bf838cb07409afb48
+test/corpus/python/expr_comprehensions.py	153a1a0f51c707b10c3400369edc220c141b6141
+test/corpus/python/expr_literals.py	5d1cf19e27f7997d915265e264afa02d7e4e88d2
+test/corpus/python/expr_precedence.py	2b078ae10ce4e4aef5d6da3447efb43ddc9f3203
+test/corpus/python/expr_subscript.py	e51ff2d973950b258047be42d9dbc50ca0c4af86
+test/corpus/python/match_patterns.py	62713919acd8d7989d0deb5ae7acadd718137b0d
+test/corpus/python/stmt_compound.py	21c73de46baab357bcc9b6ee8849e8cae8c38b26
+test/corpus/python/stmt_simple.py	b67e42cb7affda1ae047914c8386f1f5a554bd15
+test/corpus/python/strings_and_fstrings.py	f747760ed1ccbf4b1f65e89a017dbdab62b07211
 test/corpus/python/tok_errors.py	851a5312f07c405e10a33c50c0c63b209d5f3067
 test/corpus/python/tok_fstrings.py	3fa390fbc3d51a5b7c988937c356e5fa927dd6e7
 test/corpus/python/tok_layout.py	56ee97429cae5dbefb0f1321ed667d52c1699037
@@ -400,3 +412,4 @@ test/corpus/python/tok_numbers.py	867a40e5e8ba8e8b5bf01f958b9cf58e479c3ca0
 test/corpus/python/tok_operators.py	24a413be5ef3ae14ed1ad4a1788e83f6f8011f6a
 test/corpus/python/tok_strings.py	c28c8fbfd401a56cd547a4e3ef23c04ca83b4cdd
 test/corpus/python/tok_unicode.py	5d4864ddaa42032a971dd5efe3d51ae10a9efed6
+test/corpus/python/walrus_and_starred.py	f46ff80c326c5bfb613e06dd41c97450a8449a5a

@@ -1,7 +1,17 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/parser"
 
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
+}
+
 // Values
+pub fn parse(@basic.Source) -> @ast.Module raise
+
+pub fn parse_string(String, name? : String) -> @ast.Module raise
+
+pub fn set_context(@ast.Expr, @ast.ExprContext) -> @ast.Expr
 
 // Errors
 

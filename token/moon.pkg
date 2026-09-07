@@ -1,6 +1,7 @@
 import {
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/error" @err,
+  "moonbitlang/core/double",
   "moonbitlang/core/string",
 }
 

@@ -10,7 +10,7 @@
 /// use alone: `tools/embed-smoke.sh` builds a program from them and checks
 /// that doing so links neither the lexer, the parser, the checker nor the
 /// evaluator.
-pub fn Expr::name(id : String, ctx~ : ExprContext = Load) -> Expr {
+pub fn Expr::name(id : String, ctx? : ExprContext = Load) -> Expr {
   Name(id~, ctx~, span=@basic.nowhere)
 }
 
@@ -48,18 +48,26 @@ pub fn Expr::none() -> Expr {
 pub fn Expr::call(
   func : Expr,
   args : Array[Expr],
-  keywords~ : Array[Keyword] = [],
+  keywords? : Array[Keyword] = [],
 ) -> Expr {
   Call(func~, args~, keywords~, span=@basic.nowhere)
 }
 
 ///|
-pub fn Expr::attribute(value : Expr, attr : String, ctx~ : ExprContext = Load) -> Expr {
+pub fn Expr::attribute(
+  value : Expr,
+  attr : String,
+  ctx? : ExprContext = Load,
+) -> Expr {
   Attribute(value~, attr~, ctx~, span=@basic.nowhere)
 }
 
 ///|
-pub fn Expr::subscript(value : Expr, slice : Expr, ctx~ : ExprContext = Load) -> Expr {
+pub fn Expr::subscript(
+  value : Expr,
+  slice : Expr,
+  ctx? : ExprContext = Load,
+) -> Expr {
   Subscript(value~, slice~, ctx~, span=@basic.nowhere)
 }
 
@@ -94,12 +102,12 @@ pub fn Expr::if_exp(cond : Expr, body : Expr, or_else : Expr) -> Expr {
 }
 
 ///|
-pub fn Expr::list(elts : Array[Expr], ctx~ : ExprContext = Load) -> Expr {
+pub fn Expr::list(elts : Array[Expr], ctx? : ExprContext = Load) -> Expr {
   List(elts~, ctx~, span=@basic.nowhere)
 }
 
 ///|
-pub fn Expr::tuple(elts : Array[Expr], ctx~ : ExprContext = Load) -> Expr {
+pub fn Expr::tuple(elts : Array[Expr], ctx? : ExprContext = Load) -> Expr {
   Tuple(elts~, ctx~, span=@basic.nowhere)
 }
 
@@ -123,7 +131,7 @@ pub fn arguments(params : Array[String]) -> Arguments {
   {
     posonlyargs: [],
     args: params.map(fn(p) {
-      { arg: p, annotation: None, span: @basic.nowhere }
+      { arg: p, annotation: None, span: @basic.nowhere, }
     }),
     vararg: None,
     kwonlyargs: [],
@@ -140,11 +148,7 @@ pub fn Stmt::expr_stmt(e : Expr) -> Stmt {
 
 ///|
 pub fn Stmt::assign(target : String, value : Expr) -> Stmt {
-  Assign(
-    targets=[Expr::name(target, ctx=Store)],
-    value~,
-    span=@basic.nowhere,
-  )
+  Assign(targets=[Expr::name(target, ctx=Store)], value~, span=@basic.nowhere)
 }
 
 ///|
@@ -158,12 +162,20 @@ pub fn Stmt::pass() -> Stmt {
 }
 
 ///|
-pub fn Stmt::if_(cond : Expr, body : Array[Stmt], or_else~ : Array[Stmt] = []) -> Stmt {
+pub fn Stmt::if_(
+  cond : Expr,
+  body : Array[Stmt],
+  or_else? : Array[Stmt] = [],
+) -> Stmt {
   If(cond~, body~, or_else~, span=@basic.nowhere)
 }
 
 ///|
-pub fn Stmt::def_(name : String, params : Array[String], body : Array[Stmt]) -> Stmt {
+pub fn Stmt::def_(
+  name : String,
+  params : Array[String],
+  body : Array[Stmt],
+) -> Stmt {
   FunctionDef(
     name~,
     args=arguments(params),
@@ -213,7 +225,7 @@ pub fn Stmt::match_(subject : Expr, cases : Array[MatchCase]) -> Stmt {
 ///|
 pub fn Stmt::import_(names : Array[String]) -> Stmt {
   Import(
-    names=names.map(fn(n) { { name: n, asname: None, span: @basic.nowhere } }),
+    names=names.map(fn(n) { { name: n, asname: None, span: @basic.nowhere, } }),
     span=@basic.nowhere,
   )
 }
@@ -222,19 +234,15 @@ pub fn Stmt::import_(names : Array[String]) -> Stmt {
 pub fn Stmt::from_import(module_name : String, names : Array[String]) -> Stmt {
   ImportFrom(
     module_name=Some(module_name),
-    names=names.map(fn(n) { { name: n, asname: None, span: @basic.nowhere } }),
+    names=names.map(fn(n) { { name: n, asname: None, span: @basic.nowhere, } }),
     level=0,
     span=@basic.nowhere,
   )
 }
 
 ///|
-pub fn case_(
-  pattern : Pattern,
-  body : Array[Stmt],
-  when? : Expr,
-) -> MatchCase {
-  { pattern, guard_: when, body }
+pub fn case_(pattern : Pattern, body : Array[Stmt], when? : Expr) -> MatchCase {
+  { pattern, guard_: when, body, }
 }
 
 ///|
@@ -256,7 +264,7 @@ pub fn Pattern::literal(c : Constant) -> Pattern {
 pub fn Pattern::constr(
   cls : String,
   patterns : Array[Pattern],
-  keywords~ : Array[(String, Pattern)] = [],
+  keywords? : Array[(String, Pattern)] = [],
 ) -> Pattern {
   MatchClass(
     cls=Expr::name(cls),
@@ -274,5 +282,5 @@ pub fn Pattern::sequence(kind : SeqKind, patterns : Array[Pattern]) -> Pattern {
 
 ///|
 pub fn module_of(body : Array[Stmt]) -> Module {
-  { body, span: @basic.nowhere }
+  { body, span: @basic.nowhere, }
 }

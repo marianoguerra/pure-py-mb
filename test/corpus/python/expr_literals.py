@@ -1,0 +1,23 @@
+# Containers, and the empty forms that are easy to confuse.
+a = []
+b = [1]
+c = [1, 2]
+d = [1, 2, ]
+e = ()
+f = (1,)
+g = (1, 2)
+h = 1, 2
+i = 1,
+j = {}
+k = {"a": 1}
+m = {"a": 1, "b": 2}
+n = {1}
+o = {1, 2}
+p = [*b, *c]
+q = {**k, "c": 3}
+r = (*b, *c)
+s = [1, [2, [3]]]
+t = None
+u = True
+v = False
+w = ...

@@ -56,5 +56,11 @@ jobs:
       - name: Tokens against CPython's tokenize
         run: tools/tokdiff.py --show 20
 
+      - name: Trees against CPython's ast
+        run: tools/astdiff.py --show 20
+
+      - name: The printer's round trip
+        run: tools/unparse_check.sh
+
       - name: Conformance
         run: tools/conform.py --show 20

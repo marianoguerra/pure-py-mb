@@ -1,7 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/write"
 
+import {
+  "marianoguerra/pure-py/ast",
+}
+
 // Values
+pub fn unparse(@ast.Module) -> String
+
+pub fn unparse_expr(@ast.Expr) -> String
 
 // Errors
 
