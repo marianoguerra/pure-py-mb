@@ -217,6 +217,8 @@ tables:
     tools/gen_number_cases.py
     tools/gen_string_cases.py
     tools/gen_float_cases.py
+    tools/gen_value_cases.py
+    tools/gen_repr_cases.py
     moon fmt
 
 # Prove the reference implementation passes its own suite.

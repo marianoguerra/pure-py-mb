@@ -1,12 +1,148 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/value"
 
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/context",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/hashmap",
+}
+
 // Values
+pub fn big_to_double(@bigint.BigInt) -> Double
+
+pub fn binop(@ast.Operator, Value, Value) -> Outcome
+
+pub fn compare(@ast.CmpOp, Value, Value) -> Outcome
+
+pub fn contains(Value, Value) -> Bool?
+
+pub fn contains_elems(Array[Value], Value) -> Bool?
+
+pub fn elems(Value) -> Array[Value]?
+
+pub fn empty_env() -> @hashmap.HashMap[String, Value]
+
+pub fn entries(Array[(String, Value)], Array[(String, Value)]) -> Array[(String, Value)]
+
+pub fn env_of(Array[(String, Value)]) -> @hashmap.HashMap[String, Value]
+
+pub fn eq(Value, Value) -> Bool?
+
+pub fn eq_elems(Array[Value], Array[Value]) -> Bool?
+
+pub fn exact_integer(Double) -> @bigint.BigInt?
+
+pub fn extend_env(@hashmap.HashMap[String, Value], @hashmap.HashMap[String, Value]) -> @hashmap.HashMap[String, Value]
+
+pub fn extend_value(Value, Value) -> Value
+
+pub fn float_mod(Double, Double) -> Double
+
+pub fn floor_div(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn floor_mod(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn getitem(Value, Value) -> Outcome
+
+pub fn iter(Value) -> Array[Value]?
+
+pub fn order(Value, Value) -> Int?
+
+pub fn override_env(@hashmap.HashMap[String, Value], @hashmap.HashMap[String, Value]) -> @hashmap.HashMap[String, Value]
+
+pub fn unop(@ast.UnaryOp, Value) -> Outcome
+
+pub fn update(Array[(String, Value)], String, Value) -> Array[(String, Value)]
 
 // Errors
 
 // Types and methods
+pub(all) struct DefClosure {
+  env : @hashmap.HashMap[String, Value]
+  region : Array[@ast.Stmt]
+  index : Int
+} derive(@debug.Debug)
+
+pub(all) struct LamClosure {
+  env : @hashmap.HashMap[String, Value]
+  params : Array[String]
+  body : @ast.Expr
+} derive(@debug.Debug)
+
+pub(all) enum MatchResult {
+  Match(@hashmap.HashMap[String, Value])
+  NoMatch
+  MatchStuck(String)
+} derive(@debug.Debug)
+pub fn MatchResult::then(Self, Self) -> Self
+
+pub(all) enum Outcome {
+  Val(Value)
+  Aborts(Termination)
+  Stuck(String)
+} derive(@debug.Debug)
+
+pub(all) enum Primitive {
+  Print
+  Len
+  Range
+  Exit
+  Sqrt
+  Exp
+  Log
+  Sin
+  Cos
+  Tan
+  MathFloor
+  MathCeil
+  Opaque(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum StmtResult {
+  Assigns(@hashmap.HashMap[String, Value])
+  Returns(Value)
+  ResultAborts(Termination)
+  ResultStuck(String)
+} derive(@debug.Debug)
+pub fn StmtResult::outcome(Self) -> Outcome
+pub fn StmtResult::then(Self, Self) -> Self
+
+pub(all) enum Termination {
+  TypeError
+  IndexError
+  KeyError
+  ZeroDivisionError
+  AttributeError
+  AssertionError(String?)
+  SystemExit(@bigint.BigInt)
+} derive(Eq, @debug.Debug)
+pub fn Termination::name(Self) -> String
+pub fn Termination::to_text(Self) -> String
+
+pub(all) enum Value {
+  None
+  Bool(Bool)
+  Int(@bigint.BigInt)
+  Float(Double)
+  Str(String)
+  List(Array[Value])
+  Tuple(Array[Value])
+  Dict(Array[(String, Value)])
+  Lam(LamClosure)
+  Def(DefClosure)
+  Obj(@context.ClassEntry, @hashmap.HashMap[String, Value])
+  ModStub(String)
+  Mod(String, @hashmap.HashMap[String, Value])
+  Class(@context.ClassEntry)
+  Prim(Primitive)
+} derive(@debug.Debug)
+pub fn Value::kind_name(Self) -> String
+pub fn Value::repr(Self) -> String?
+pub fn Value::str(Self) -> String?
 
 // Type aliases
+pub type Env = @hashmap.HashMap[String, Value]
 
 // Traits
