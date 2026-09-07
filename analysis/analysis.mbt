@@ -570,3 +570,10 @@ pub fn is_qualified_name(e : @ast.Expr) -> Bool {
     _ => false
   }
 }
+
+///|
+/// What a run of comprehension clauses captures, for a caller that has a whole
+/// array rather than a view.
+pub fn captures_quals_of(generators : Array[@ast.Comprehension]) -> NameSet {
+  captures_quals(generators[:])
+}

@@ -7,6 +7,10 @@ import {
 }
 
 // Values
+pub fn ill_formed(Reason, span? : @basic.Span) -> PurePyError
+
+pub fn ill_formed_program(String) -> PurePyError
+
 pub fn syntax_error(String, @basic.Span) -> PurePyError
 
 // Errors
@@ -22,6 +26,7 @@ pub(all) struct Diagnostic {
   related : Array[(@basic.Span, String)]
 } derive(Eq, @debug.Debug)
 pub fn Diagnostic::as_parse_error(Self) -> Self
+pub fn Diagnostic::attribute_to(Self, String) -> Self
 pub fn Diagnostic::exit_code(Self) -> Int
 pub fn Diagnostic::message(Self) -> String
 pub fn Diagnostic::new(Kind, span? : @basic.Span, in_module? : String, related? : Array[(@basic.Span, String)]) -> Self
@@ -33,8 +38,45 @@ pub(all) enum Kind {
   PythonSyntax(msg~ : String)
   Prohibited(msg~ : String)
   NotYetSupported(feature~ : String, issue~ : Int)
+  IllFormed(Reason)
   Program(msg~ : String)
 } derive(Eq, @debug.Debug)
+
+pub(all) enum Reason {
+  DuplicateFieldName(name~ : String, cls~ : String)
+  UnknownBaseClass(base~ : String)
+  InheritedFieldClash(field~ : String, base~ : String)
+  DuplicateClassName(name~ : String, in_module~ : String)
+  UnassignedVariable(name~ : String)
+  CapturedReassignment(name~ : String)
+  SelfCaptureAssignment(name~ : String)
+  CapturedGeneratorVariable(name~ : String)
+  UnreachableStatement
+  ConstructorArityMismatch(cls~ : String, expected~ : Int, got~ : Int)
+  UnknownConstructorKeyword(cls~ : String, expected_fields~ : Array[String])
+  PatternArityMismatch(cls~ : String, expected~ : Int, got~ : Int)
+  UnknownClassInPattern(cls~ : String)
+  UnknownFieldInPattern(cls~ : String, expected_fields~ : Array[String])
+  DuplicatePatternKeyword(cls~ : String)
+  DuplicateDictKey(key~ : String)
+  NonlinearPattern(index~ : Int)
+  UnreachableCase(index~ : Int, subsumed_by~ : Int)
+  DuplicateMutualName(name~ : String)
+  NonTopLevelImport
+  ImportAfterStatement
+  SubmoduleNameClash(name~ : String, submodule~ : String)
+  SubmoduleNotImported(q~ : String)
+  UnassignedMember(x~ : String, q~ : String)
+  TopLevelReturn
+  EmptyFromImport
+  UnknownModule(q~ : String)
+  UnknownMember(x~ : String, q~ : String)
+  ModuleAsValue(name~ : String)
+  OwnDescendantImport(q~ : String, q0~ : String)
+  ClassAsValue(name~ : String)
+} derive(Eq, @debug.Debug)
+pub fn Reason::code(Self) -> String
+pub fn Reason::message(Self) -> String
 
 pub(all) enum Stage {
   Syntax

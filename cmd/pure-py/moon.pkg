@@ -1,6 +1,7 @@
 import {
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/check",
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/lexer",
   "marianoguerra/pure-py/parser",

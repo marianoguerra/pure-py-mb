@@ -29,6 +29,8 @@ pub(all) enum Kind {
   Prohibited(msg~ : String)
   /// Exit 2, printed as `<feature> not yet supported (#<issue>)`.
   NotYetSupported(feature~ : String, issue~ : Int)
+  /// Exit 3. `check_module.py`'s answer.
+  IllFormed(Reason)
   /// Exit 4.
   Program(msg~ : String)
 } derive(Eq, Debug)
@@ -65,6 +67,7 @@ pub fn Diagnostic::exit_code(self : Diagnostic) -> Int {
   match self.kind {
     PythonSyntax(..) | Prohibited(..) => 1
     NotYetSupported(..) => 2
+    IllFormed(_) => 3
     Program(..) => 4
   }
 }
@@ -75,6 +78,7 @@ pub fn Diagnostic::stage(self : Diagnostic) -> Stage {
     PythonSyntax(..) => Syntax
     Prohibited(..) => Prohibited
     NotYetSupported(..) => NotYetSupported
+    IllFormed(_) => IllFormedModule
     Program(..) => IllFormedProgram
   }
 }
@@ -87,6 +91,7 @@ pub fn Diagnostic::message(self : Diagnostic) -> String {
     Prohibited(msg~) => msg
     NotYetSupported(feature~, issue~) =>
       "\{feature} not yet supported (#\{issue})"
+    IllFormed(r) => r.message()
     Program(msg~) => msg
   }
 }
@@ -123,6 +128,30 @@ pub fn Diagnostic::short(
 pub(all) suberror PurePyError {
   PurePyError(Diagnostic)
 } derive(Eq, Debug)
+
+///|
+/// Record which module a rejection came from, if it does not already say.
+///
+/// The innermost module wins: a module that fails while being imported keeps
+/// its own name, and the importer's path prefix is what `check-program` adds.
+pub fn Diagnostic::attribute_to(self : Diagnostic, q : String) -> Diagnostic {
+  match self.in_module {
+    Some(_) => self
+    None => { ..self, in_module: Some(q), }
+  }
+}
+
+///|
+/// Reject a module: exit 3, with the reference's own wording.
+pub fn ill_formed(reason : Reason, span? : @basic.Span) -> PurePyError {
+  PurePyError(Diagnostic::new(IllFormed(reason), span?))
+}
+
+///|
+/// Reject a program: exit 4.
+pub fn ill_formed_program(msg : String) -> PurePyError {
+  PurePyError(Diagnostic::new(Program(msg~)))
+}
 
 ///|
 /// The same rejection, worded as the reference words a Python syntax error

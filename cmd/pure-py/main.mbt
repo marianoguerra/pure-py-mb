@@ -19,6 +19,7 @@ fn main {
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
     ["unparse", path] => @sys.exit(cmd_unparse(path))
     ["parse", .. paths] => @sys.exit(cmd_parse(paths))
+    ["check", .. paths] => @sys.exit(cmd_check(paths))
     ["dump", path, "--pos"] | ["dump", "--pos", path] =>
       @sys.exit(cmd_dump(path, pos=true))
     [cmd, ..] => {
@@ -142,6 +143,38 @@ fn cmd_parse(paths : ArrayView[String]) -> Int {
       e => Some(@err.Diagnostic::new(PythonSyntax(msg="parse error: \{e}")))
     } noraise {
       m => @sieve.result(m)
+    }
+    match d {
+      None => println("\{path}: ok")
+      Some(diag) => {
+        println(diag.short(path, source=src))
+        code = diag.exit_code()
+      }
+    }
+  }
+  code
+}
+
+///|
+/// `check FILE...`: module well-formedness.
+///
+/// The sieve runs first, and its verdict is this command's when it rejects --
+/// `check_module.py` does not run it and walks a node it has no case for
+/// instead, so the reference's own runner never calls check on a file parse
+/// rejected. The golden records the sieve's answer for those files.
+fn cmd_check(paths : ArrayView[String]) -> Int {
+  let mut code = 0
+  for path in paths {
+    let src = read_source(path)
+    let d = try @parser.parse(src) catch {
+      @err.PurePyError(d) => Some(d.as_parse_error())
+      e => Some(@err.Diagnostic::new(PythonSyntax(msg="parse error: \{e}")))
+    } noraise {
+      m =>
+        match @sieve.result(m) {
+          Some(d) => Some(d)
+          None => @check.check_single(m)
+        }
     }
     match d {
       None => println("\{path}: ok")

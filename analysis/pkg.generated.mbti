@@ -30,6 +30,8 @@ pub fn captures_e(@ast.Expr) -> @sorted_set.SortedSet[String]
 
 pub fn captures_e_list(Array[@ast.Expr]) -> @sorted_set.SortedSet[String]
 
+pub fn captures_quals_of(Array[@ast.Comprehension]) -> @sorted_set.SortedSet[String]
+
 pub fn captures_region(Array[@ast.Stmt]) -> @sorted_set.SortedSet[String]
 
 pub fn captures_statement(Statement) -> @sorted_set.SortedSet[String]

@@ -3,5 +3,5 @@ import {
 }
 
 import {
-  "marianoguerra/pure-py/error",
+  "marianoguerra/pure-py/error" @err,
 } for "test"
