@@ -14,6 +14,13 @@
 # `moon publish --dry-run` reaches the registry, is told the version is fine,
 # and then exits non-zero anyway: "Dry run completed successfully" in its
 # output is the answer, not the exit code.
+#
+# Dependency order is not enough on its own. `moon publish` verifies what it
+# packaged by extracting the zip and running `moon check` on it against the
+# REGISTRY, and the index it checks against is the local copy -- which, a
+# second after `lib` went up, still predates it. So the index is refreshed
+# between the two, or `cli` fails on a dependency that exists and is not yet
+# visible. 0.2.0 went out in two commands because of this.
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -26,6 +33,12 @@ for arg in "$@"; do
     lib|cli) modules="$arg" ;;
     *) echo "usage: $0 [--dry-run] [lib|cli]" >&2; exit 2 ;;
   esac
+done
+
+# Which module goes last, so the ones before it can refresh the index for it.
+last=""
+for m in $modules; do
+  last="$m"
 done
 
 for m in $modules; do
@@ -47,5 +60,12 @@ for m in $modules; do
     fi
   else
     (cd "$root/$m" && moon publish)
+    # The module just published is a dependency of the ones after it, and
+    # their verification step resolves it through the local index. Refresh it
+    # here so the next `moon publish` can see what this one sent.
+    if [ "$m" != "$last" ]; then
+      echo "  refreshing the registry index, so $last can resolve $name"
+      moon update > /dev/null
+    fi
   fi
 done
