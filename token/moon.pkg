@@ -1,1 +1,9 @@
+import {
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/error" @err,
+  "moonbitlang/core/string",
+}
 
+import {
+  "marianoguerra/pure-py/token",
+} for "test"

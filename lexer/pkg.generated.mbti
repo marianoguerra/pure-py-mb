@@ -1,7 +1,19 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/lexer"
 
+import {
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/token",
+}
+
 // Values
+pub fn is_ident_continue(Char) -> Bool
+
+pub fn is_ident_start(Char) -> Bool
+
+pub fn lex(@basic.Source) -> Array[@token.Token] raise
+
+pub fn lex_string(String, name? : String) -> Array[@token.Token] raise
 
 // Errors
 

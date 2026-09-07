@@ -1,1 +1,12 @@
+import {
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/token",
+}
 
+import {
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/lexer",
+  "marianoguerra/pure-py/token",
+} for "test"

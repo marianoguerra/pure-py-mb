@@ -1,11 +1,58 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/token"
 
+import {
+  "marianoguerra/pure-py/basic",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
+}
+
 // Values
+pub fn is_keyword(String) -> Bool
+
+pub let keywords : Array[String]
+
+pub let soft_keywords : Array[String]
 
 // Errors
 
 // Types and methods
+pub(all) enum NumberValue {
+  Int(@bigint.BigInt)
+  Float(Double)
+  Imaginary(Double)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Token {
+  kind : TokenKind
+  text : String
+  span : @basic.Span
+} derive(Eq, @debug.Debug)
+pub fn Token::bytes_value(Self) -> Bytes raise
+pub fn Token::int_value(Self) -> @bigint.BigInt raise
+pub fn Token::is_name(Self, String) -> Bool
+pub fn Token::is_op(Self, String) -> Bool
+pub fn Token::is_string(Self) -> Bool
+pub fn Token::number_value(Self) -> NumberValue raise
+pub fn Token::str_value(Self) -> String raise
+
+pub(all) enum TokenKind {
+  Name
+  Number
+  Str(prefix~ : String)
+  Bytes(prefix~ : String)
+  FString(prefix~ : String)
+  Op(String)
+  Newline
+  NL
+  Indent
+  Dedent
+  Comment
+  EndMarker
+  Error(String)
+} derive(Eq, @debug.Debug)
+pub fn TokenKind::is_trivia(Self) -> Bool
+pub fn TokenKind::name(Self) -> String
 
 // Type aliases
 

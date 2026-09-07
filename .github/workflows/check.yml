@@ -53,5 +53,8 @@ jobs:
 
       # Hermetic: `test/conformance/` and `test/golden/` are committed, so this
       # needs neither the reference checkout nor `uv`.
+      - name: Tokens against CPython's tokenize
+        run: tools/tokdiff.py --show 20
+
       - name: Conformance
         run: tools/conform.py --show 20

@@ -112,6 +112,7 @@ ci:
     moon test --target all
     tools/boundary-check.sh
     moon build --target native
+    tools/tokdiff.py --show 5
     tools/conform.py --show 5
 
 # ---------------------------------------------------------------------------
@@ -124,7 +125,18 @@ ci:
 # Every oracle, held to the ratchet in test/conform-policy.json.
 [group('conform')]
 conform *args: build
+    tools/tokdiff.py --show 5
     {{conform}} --show 5 {{args}}
+
+# Our token stream against CPython's `tokenize`, over the suite and the corpus.
+[group('conform')]
+tokens *args: build
+    tools/tokdiff.py --show 5 {{args}}
+
+# Where our token stream and CPython's part company, for one file.
+[group('conform')]
+tokens-for file: build
+    tools/tokdiff.py --python --show 1 --filter {{file}}
 
 # One oracle, with the failing tests shown -- the inner loop, not a gate.
 [group('conform')]
@@ -165,7 +177,20 @@ goldens:
 # Move the ratchet's floors to what this build actually achieves.
 [group('regen')]
 ratchet: build
+    tools/tokdiff.py --regen-policy --show 0
     {{conform}} --regen-policy --show 0
+
+# Rewrite the CPython token index the `tokens` oracle compares against.
+[group('regen')]
+tokens-index:
+    tools/tokdiff.py --regen
+
+# Rewrite the generated literal tables from CPython's own answers.
+[group('regen')]
+literal-tables:
+    tools/gen_number_cases.py
+    tools/gen_string_cases.py
+    moon fmt
 
 # Prove the reference implementation passes its own suite.
 [group('regen')]
