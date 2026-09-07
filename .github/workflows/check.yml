@@ -51,6 +51,9 @@ jobs:
       - name: Build the CLI
         run: moon build --target native
 
+      - name: A code generator links neither the front end nor the back end
+        run: tools/embed-smoke.sh
+
       # Hermetic: `test/conformance/` and `test/golden/` are committed, so this
       # needs neither the reference checkout nor `uv`.
       - name: Tokens against CPython's tokenize

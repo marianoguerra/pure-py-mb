@@ -1,7 +1,29 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py"
 
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/error",
+  "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/program",
+}
+
 // Values
+pub fn check(@ast.Module) -> @error.Diagnostic?
+
+pub fn check_program(@program.SourceTree) -> @error.Diagnostic?
+
+pub fn parse(String, name? : String) -> @ast.Module raise
+
+pub fn run(@program.SourceTree, argv? : Array[String]) -> (String, @eval.RunResult)
+
+pub fn sieve(@ast.Module) -> @error.Diagnostic?
+
+pub fn source_tree(Map[String, @ast.Module]) -> @program.SourceTree
+
+pub fn source_tree_from(String, sweep? : Bool) -> @program.SourceTree raise
+
+pub fn unparse(@ast.Module) -> String
 
 // Errors
 

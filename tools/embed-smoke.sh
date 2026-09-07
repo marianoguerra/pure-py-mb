@@ -1,11 +1,15 @@
 #!/bin/sh
 # A code generator builds trees with `ast`'s builders and prints them with
-# `write`. It should pay for those two packages and nothing else -- not the
-# tokenizer, not the parser, not the checker, not the evaluator.
+# `write`. Two claims about that:
 #
-# This reads the `-i` flags off the REAL compile command for `test/embed`
-# rather than trusting its `moon.pkg`, so a package pulled in transitively is
-# caught too.
+#   1. It should pay for those two packages and nothing else -- not the
+#      tokenizer, not the parser, not the checker, not the evaluator. This
+#      reads the `-i` flags off the REAL compile command rather than trusting
+#      `moon.pkg`, so a package pulled in transitively is caught too.
+#   2. What it generates should be PurePy. The program it prints is fed back
+#      through `pure-py check` and `pure-py run`, which closes the loop: the
+#      builders produce trees the printer can print, the parser can read back
+#      and the checker accepts.
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -25,6 +29,24 @@ for forbidden in lexer parser sieve analysis context check value eval program; d
     status=1
   fi
 done
+
+embed="$root/_build/native/debug/build/test/embed/embed.exe"
+impl="$root/_build/native/debug/build/cmd/pure-py/pure-py.exe"
+if [ -x "$embed" ] && [ -x "$impl" ]; then
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' EXIT
+  "$embed" > "$tmp/main.py"
+  if ! "$impl" check "$tmp/main.py" > /dev/null; then
+    echo "embed-smoke: the generated program is not well-formed PurePy" >&2
+    "$impl" check "$tmp/main.py" >&2
+    status=1
+  fi
+  got=$("$impl" run "$tmp/main.py")
+  if [ "$got" != "3 True" ]; then
+    echo "embed-smoke: the generated program printed '$got', expected '3 True'" >&2
+    status=1
+  fi
+fi
 
 [ "$status" -eq 0 ] && echo "embed-smoke: ok"
 exit "$status"

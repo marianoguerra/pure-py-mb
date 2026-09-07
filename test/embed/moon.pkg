@@ -1,1 +1,6 @@
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/write",
+}
+
 pkgtype(kind: "executable")

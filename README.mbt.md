@@ -1,22 +1,175 @@
 # pure-py
 
 **PurePy** in MoonBit: a tokenizer and parser for Python 3.12 producing a
-CPython-shaped abstract syntax tree, a sieve that rejects the Python that
-PurePy excludes, a well-formedness checker, an interpreter, a printer that
-turns the tree back into Python source, and a command-line tool.
+CPython-shaped abstract syntax tree, a sieve that rejects the Python PurePy
+excludes, a well-formedness checker, an interpreter, a printer that turns the
+tree back into Python source, and a command-line tool.
 
 PurePy is a pure functional subset of Python with a small-step operational
 semantics and a static well-formedness judgement, specified in
 [pure-py/pure-py-spec](https://github.com/pure-py/pure-py-spec). This module is
-a port of that specification: the reference checker is the specification for
-what `check` decides, and CPython is the oracle for what `run` prints.
+a port of that specification. The reference checker is the specification for
+what `check` decides; CPython is the oracle for what `run` prints.
 
 ## Status
 
-Under construction, phase by phase. See
-[implementation-plan.md](implementation-plan.md) for the plan and
-`test/conform-policy.json` for exactly how much of the conformance suite passes
-today.
+The conformance suite passes in full: 983 assertions across four oracles,
+compared against the reference's own answers for every one of its sources.
+Two more oracles compare the token stream and the parse tree against CPython's
+directly, and a third round-trips the printer.
+
+## Installing
+
+```sh
+moon add marianoguerra/pure-py
+```
+
+A package is the unit of naming, so import the façade for the calls and the
+packages whose types you name:
+
+```
+import {
+  "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/ast",
+}
+```
+
+## Parsing
+
+The tree is CPython's, node for node.
+
+```mbt check
+///|
+test "parsing" {
+  let m = @purepy.parse("print(\"hello\")\n")
+  inspect(
+    @ast.dump(m),
+    content=(
+      #|Module
+      #|  body:
+      #|    Expr
+      #|      value:
+      #|        Call
+      #|          func:
+      #|            Name id=print ctx=Load
+      #|          args:
+      #|            Constant value='hello'
+      #|          keywords:
+      #|
+    ),
+  )
+}
+```
+
+## Deciding whether it is PurePy
+
+Two questions, in order. The sieve asks whether the syntax is within the
+subset; the checker asks whether the module is well formed.
+
+```mbt check
+///|
+test "the sieve rejects what PurePy excludes" {
+  let m = @purepy.parse("for x in [1]:\n    print(x)\n")
+  match @purepy.sieve(m) {
+    Some(d) => {
+      inspect(d.message(), content="for loops prohibited")
+      // 1 for a form PurePy excludes, 2 for one it plans to accept.
+      inspect(d.exit_code(), content="1")
+    }
+    None => fail("a for loop is not PurePy")
+  }
+}
+
+///|
+test "the checker decides definite assignment and the capture rules" {
+  let good = @purepy.parse("x = 1\nprint(x)\n")
+  inspect(@purepy.check(good) is None, content="true")
+  let bad = @purepy.parse("x = 1\nf = lambda: x\nx = 2\n")
+  match @purepy.check(bad) {
+    Some(d) =>
+      inspect(
+        d.message(),
+        content="'x' captured by previous statement, reassigned here",
+      )
+    None => fail("a captured name may not be reassigned")
+  }
+}
+```
+
+## Running
+
+A program is a map from module name to parsed module, with the entry under
+`__main__`. `run` answers with everything the program printed and how it
+ended.
+
+```mbt check
+///|
+test "running a program" {
+  let modules = Map([
+    ("__main__", @purepy.parse("from lib import double\nprint(double(21))\n")),
+    ("lib", @purepy.parse("def double(n):\n    return n * 2\n")),
+  ])
+  let (output, result) = @purepy.run(@purepy.source_tree(modules))
+  inspect(result is Finished, content="true")
+  inspect(
+    output,
+    content=(
+      #|42
+      #|
+    ),
+  )
+}
+```
+
+An operation the semantics leaves undefined is reported rather than guessed
+at. Python's truthiness is not PurePy's, so a non-boolean condition has no
+rule:
+
+```mbt check
+///|
+test "an undefined operation" {
+  let modules = Map([("__main__", @purepy.parse("if 5:\n    print(1)\n"))])
+  let (_, result) = @purepy.run(@purepy.source_tree(modules))
+  match result {
+    Undefined(op) => inspect(op, content="an if condition on int")
+    _ => fail("Python's truthiness is not PurePy's")
+  }
+}
+```
+
+## Generating Python
+
+`ast` has builders that supply positions, and `write` prints a tree back as
+source. Neither links the tokenizer, the parser, the checker or the
+evaluator, so a code generator pays for neither.
+
+```mbt check
+///|
+test "building a tree and printing it" {
+  let m = @ast.module_of([
+    @ast.Stmt::dataclass("Point", ["x", "y"]),
+    @ast.Stmt::expr_stmt(
+      @ast.Expr::call(@ast.Expr::name("print"), [
+        @ast.Expr::call(@ast.Expr::name("Point"), [
+          @ast.Expr::int(1),
+          @ast.Expr::int(2),
+        ]),
+      ]),
+    ),
+  ])
+  inspect(
+    @purepy.unparse(m),
+    content=(
+      #|@dataclass
+      #|class Point:
+      #|    x: Any
+      #|    y: Any
+      #|print(Point(1, 2))
+      #|
+    ),
+  )
+}
+```
 
 ## The command
 
@@ -30,10 +183,28 @@ pure-py check-program MAIN    decide program well-formedness
 pure-py run MAIN [ARGS...]    evaluate a program
 ```
 
-Exit codes follow the reference's: `0` accepted, `1` a prohibited form, `2` a
-form that is planned but not yet supported, `3` an ill-formed module, `4` an
-ill-formed program, and `5` -- this port's own -- an operation the semantics
-leaves undefined.
+Exit codes follow the reference's: `0` accepted, `1` a prohibited form or an
+abort, `2` a form that is planned and not yet supported, `3` an ill-formed
+module, `4` an ill-formed program, and `5` -- this port's own -- an operation
+the semantics leaves undefined.
+
+`check --error-format human` renders a rejection with the source around it:
+
+```
+error[purepy::captured-reassignment]: 'x' captured by previous statement, reassigned here
+  ╭─[ shadow_captured.py:6:5 ]
+  │
+4 │ ╭     def g():
+5 │ ├         return x
+  │ ╰─ 'x' captured here
+6 │       x = 6
+  │       ──┬──
+  │         ╰─ reassigned here
+  │
+  ├─ help: a closure captured this name, and PurePy has no cell for it to see
+  │        a later value; bind a new name instead
+  ╰─
+```
 
 ## Development
 
@@ -41,7 +212,7 @@ leaves undefined.
 
 ```
 just quick        type-check, format, unit tests, layering, conformance
-just conform      the conformance suite, held to its ratchet
+just conform      every oracle, held to its ratchet
 just one PATTERN  the tests whose name contains PATTERN, in full
 ```
 

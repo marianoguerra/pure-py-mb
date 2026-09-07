@@ -140,7 +140,7 @@ pub fn Source::byte_col(self : Source, pos : Pos) -> Int {
 
 ///|
 /// How many bytes a code point takes in UTF-8.
-pub fn utf8_length(c : Char) -> Int {
+fn utf8_length(c : Char) -> Int {
   let n = c.to_int()
   if n < 0x80 {
     1

@@ -1,1 +1,16 @@
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/check",
+  "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/program",
+  "marianoguerra/pure-py/sieve",
+  "marianoguerra/pure-py/write",
+}
 
+import {
+  "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/ast",
+} for "test"

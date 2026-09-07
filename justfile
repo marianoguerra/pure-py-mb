@@ -96,7 +96,7 @@ embed-smoke:
 
 # Check, format, unit tests, boundaries, conformance -- run before committing.
 [group('gates')]
-quick: check fmt test boundary-check conform
+quick: check fmt test boundary-check embed-smoke conform
 
 # Mirrors .github/workflows/check.yml, including the `git diff --exit-code`
 # steps -- which is how a stale `.mbti` or an unformatted file is caught.
@@ -112,6 +112,7 @@ ci:
     moon test --target all
     tools/boundary-check.sh
     moon build --target native
+    tools/embed-smoke.sh
     tools/tokdiff.py --show 5
     tools/astdiff.py --show 5
     tools/unparse_check.sh
@@ -219,6 +220,23 @@ tables:
     tools/gen_value_cases.py
     tools/gen_repr_cases.py
     moon fmt
+
+# `moon publish --dry-run` reaches the registry, is told the version is fine,
+# and then exits non-zero anyway -- "Dry run completed successfully" in the
+# output is the answer, not the exit code. The `-` keeps that from reading as
+# a failure here.
+#
+# Show what would go to mooncakes, without sending it.
+[group('publish')]
+publish-dry: ci
+    -moon publish --dry-run
+
+# A published version cannot be withdrawn, so the full gate runs first.
+[group('publish')]
+publish: ci
+    moon publish
+
+# ---------------------------------------------------------------------------
 
 # Prove the reference implementation passes its own suite.
 [group('regen')]
