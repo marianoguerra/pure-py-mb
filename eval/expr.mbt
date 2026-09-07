@@ -325,6 +325,22 @@ pub fn Interp::apply(
   callee : Value,
   actual : Array[Value],
 ) -> Outcome {
+  self.depth += 1
+  if self.depth > self.max_depth {
+    self.depth -= 1
+    return Stuck("a call stack deeper than \{self.max_depth}")
+  }
+  let result = self.apply_(callee, actual)
+  self.depth -= 1
+  result
+}
+
+///|
+fn Interp::apply_(
+  self : Interp,
+  callee : Value,
+  actual : Array[Value],
+) -> Outcome {
   match callee {
     Lam(c) => {
       if c.params.length() != actual.length() {

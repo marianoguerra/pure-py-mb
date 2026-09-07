@@ -12,9 +12,11 @@ import {
 }
 
 // Values
+pub let default_max_depth : Int
+
 pub fn region_bindings(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt]) -> @hashmap.HashMap[String, @value.Value]
 
-pub fn run_program(@program.SourceTree, argv? : Array[String]) -> (String, RunResult)
+pub fn run_program(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> (String, RunResult)
 
 // Errors
 
@@ -31,6 +33,8 @@ pub struct Interp {
   loaded : Map[String, @hashmap.HashMap[String, @value.Value]]
   loading : Array[String]
   argv : Array[String]
+  mut depth : Int
+  max_depth : Int
 }
 pub fn Interp::apply(Self, @value.Value, Array[@value.Value]) -> @value.Outcome
 pub fn Interp::dispatch(Self, @hashmap.HashMap[String, @value.Value], @value.Value, Array[@ast.MatchCase]) -> Dispatch
@@ -41,7 +45,7 @@ pub fn Interp::eval_quals(Self, ArrayView[@ast.Comprehension], @hashmap.HashMap[
 pub fn Interp::eval_seq(Self, ArrayView[@analysis.Statement], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult
 pub fn Interp::load(Self, String) -> Result[@hashmap.HashMap[String, @value.Value], @value.Outcome]
 pub fn Interp::match_pattern(Self, @hashmap.HashMap[String, @value.Value], @ast.Pattern, @value.Value) -> @value.MatchResult
-pub fn Interp::new(@program.SourceTree, argv? : Array[String]) -> Self
+pub fn Interp::new(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> Self
 pub fn Interp::output(Self) -> String
 pub fn Interp::predefined(Self, String) -> @hashmap.HashMap[String, @value.Value]?
 pub fn Interp::resolve_class(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @context.ClassEntry?

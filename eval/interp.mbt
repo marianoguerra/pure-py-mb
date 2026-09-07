@@ -32,14 +32,44 @@ pub struct Interp {
   /// asked for a program nobody checked.
   loading : Array[String]
   argv : Array[String]
+  /// How deep the call stack is, and how deep it may go.
+  ///
+  /// The semantics allows a program not to terminate, and an infinite
+  /// recursion is one that does not; but an evaluator that recurses on the
+  /// machine stack meets a stack overflow rather than running forever. The
+  /// limit turns that into an answer -- an operation the semantics does not
+  /// cover -- which a person can read.
+  mut depth : Int
+  max_depth : Int
 }
+
+///|
+/// How deep a PurePy call stack may go by default.
+///
+/// Twice Python's own limit of a thousand, and a third of where this
+/// evaluator's stack gives out on a native thread's default 8 MB. A PurePy
+/// program is pure and recursion is how it loops, so the default is generous.
+///
+/// It is a parameter and not a constant because the ceiling is the HOST's,
+/// not this evaluator's: a JavaScript engine's stack holds far fewer frames
+/// than a native thread's, and a caller running there wants a smaller number.
+pub let default_max_depth : Int = 2000
 
 ///|
 pub fn Interp::new(
   tree : @program.SourceTree,
   argv? : Array[String] = [],
+  max_depth? : Int = default_max_depth,
 ) -> Interp {
-  { tree, out: StringBuilder(), loaded: Map([]), loading: [], argv, }
+  {
+    tree,
+    out: StringBuilder(),
+    loaded: Map([]),
+    loading: [],
+    argv,
+    depth: 0,
+    max_depth,
+  }
 }
 
 ///|

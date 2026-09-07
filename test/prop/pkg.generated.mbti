@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/pure-py/test/prop"
+
+import {
+  "marianoguerra/pure-py/ast",
+  "moonbitlang/core/quickcheck/splitmix",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Gen {
+  state : @splitmix.RandomState
+  mut budget : Int
+}
+pub fn Gen::atom(Self) -> @ast.Expr
+pub fn Gen::below(Self, Int) -> Int
+pub fn Gen::expr(Self) -> @ast.Expr
+pub fn Gen::new(UInt64, budget? : Int) -> Self
+pub fn Gen::pattern(Self) -> @ast.Pattern
+pub fn Gen::pick(Self, Array[String]) -> String
+pub fn Gen::stmt(Self, top_level? : Bool) -> @ast.Stmt
+pub fn Gen::whole_module(Self) -> @ast.Module
+
+// Type aliases
+
+// Traits

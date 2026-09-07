@@ -42,6 +42,21 @@ test:
 test-all:
     moon test --target all
 
+# Seeded random trees and values: the round trip, the builders, and `repr`.
+[group('dev')]
+prop:
+    moon test -p marianoguerra/pure-py/test/prop --target native
+
+# Mutate the corpus and check nothing crashes, hangs, or loses its position.
+[group('gates')]
+fuzz count="3000" seed="1": build
+    tools/fuzz.py --count {{count}} --seed {{seed}}
+
+# How long each stage takes. A baseline, not a gate.
+[group('dev')]
+bench: build
+    tools/bench.sh
+
 # Run one package's tests, e.g. `just test-pkg lexer`.
 [group('dev')]
 test-pkg pkg:
@@ -117,6 +132,7 @@ ci:
     tools/astdiff.py --show 5
     tools/unparse_check.sh
     tools/conform.py --show 5
+    tools/fuzz.py --count 2000 --seed 1
 
 # ---------------------------------------------------------------------------
 # The conformance suite -- the project's real correctness gate

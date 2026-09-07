@@ -214,6 +214,22 @@ fn Lexer::line_start_work(self : Lexer) -> Bool raise {
     }
     if c == '#' {
       self.scan_comment()
+      // A comment can run to the end of the file with no newline after it.
+      // CPython still ends the line: an NL with no text, and then the end
+      // marker on the line after.
+      if self.at_end() {
+        let start = self.pos()
+        let end : Pos = {
+          line: start.line,
+          col: start.col + 1,
+          offset: start.offset,
+        }
+        self.emit(NL, start, end, "")
+        self.line += 1
+        self.line_start = self.i
+        self.fresh_line = false
+        return false
+      }
     }
     let start = self.pos()
     let end : Pos = {

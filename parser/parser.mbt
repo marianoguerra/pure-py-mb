@@ -26,7 +26,21 @@ priv struct Parser {
   src : Source
   tokens : Array[Token]
   mut i : Int
+  /// How deep the recursion is. A recursive-descent parser turns nesting in
+  /// the input into nesting on the machine stack, and `((((...))))` with
+  /// enough brackets is a segmentation fault rather than an answer. This
+  /// makes it a syntax error instead, as CPython's own bracket limit does.
+  mut depth : Int
 }
+
+///|
+/// How deep an expression or a statement may nest.
+///
+/// CPython's tokenizer refuses more than 200 levels of brackets and its
+/// compiler has its own recursion limit; this is one number for both, chosen
+/// an order of magnitude above anything a person writes and two below what
+/// this parser's stack can take.
+let max_depth : Int = 500
 
 ///|
 /// Parse a source into a module. Raises `PurePyError` with a
@@ -37,7 +51,7 @@ pub fn parse(src : Source) -> Module raise {
   // Comments and the newlines of non-logical lines are the tokenizer's
   // business; the grammar never mentions them.
   let tokens = all.filter(fn(t) { !t.kind.is_trivia() })
-  let p = { src, tokens, i: 0, }
+  let p = { src, tokens, i: 0, depth: 0, }
   let body = p.parse_statements_until_end()
   let span : Span = if tokens.is_empty() {
     @basic.nowhere
@@ -184,6 +198,20 @@ fn Parser::span_from(self : Parser, start : Pos) -> Span {
 }
 
 ///|
+/// Enter one level of nesting, or refuse.
+fn Parser::descend(self : Parser) -> Unit raise {
+  self.depth += 1
+  if self.depth > max_depth {
+    raise self.error("too deeply nested")
+  }
+}
+
+///|
+fn Parser::ascend(self : Parser) -> Unit {
+  self.depth -= 1
+}
+
+///|
 fn Parser::here(self : Parser) -> Pos {
   self.peek().span.start
 }
@@ -230,6 +258,14 @@ fn Parser::parse_statements_until_end(self : Parser) -> Array[Stmt] raise {
 ///|
 /// One statement, which may be several: `a = 1; b = 2` is two.
 fn Parser::parse_statement(self : Parser) -> Array[Stmt] raise {
+  self.descend()
+  let out = self.parse_statement_()
+  self.ascend()
+  out
+}
+
+///|
+fn Parser::parse_statement_(self : Parser) -> Array[Stmt] raise {
   let t = self.peek()
   if t.kind is Name {
     match t.text {

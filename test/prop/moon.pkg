@@ -1,0 +1,11 @@
+import {
+  "marianoguerra/pure-py/ast",
+  "moonbitlang/core/quickcheck/splitmix",
+}
+
+import {
+  "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/value",
+  "marianoguerra/pure-py/write",
+} for "test"

@@ -45,8 +45,9 @@ pub fn check_program(tree : @program.SourceTree) -> @err.Diagnostic? {
 pub fn run(
   tree : @program.SourceTree,
   argv? : Array[String] = [],
+  max_depth? : Int = @eval.default_max_depth,
 ) -> (String, @eval.RunResult) {
-  @eval.run_program(tree, argv~)
+  @eval.run_program(tree, argv~, max_depth~)
 }
 
 ///|

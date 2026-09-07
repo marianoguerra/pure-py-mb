@@ -261,8 +261,9 @@ pub fn Interp::run(self : Interp) -> RunResult {
 pub fn run_program(
   tree : @program.SourceTree,
   argv? : Array[String] = [],
+  max_depth? : Int = default_max_depth,
 ) -> (String, RunResult) {
-  let interp = Interp::new(tree, argv~)
+  let interp = Interp::new(tree, argv~, max_depth~)
   let result = interp.run()
   (interp.output(), result)
 }

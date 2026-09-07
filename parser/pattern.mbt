@@ -106,6 +106,14 @@ fn Parser::parse_pattern(self : Parser) -> Pattern raise {
 
 ///|
 fn Parser::parse_closed_pattern(self : Parser) -> Pattern raise {
+  self.descend()
+  let p = self.parse_closed_pattern_()
+  self.ascend()
+  p
+}
+
+///|
+fn Parser::parse_closed_pattern_(self : Parser) -> Pattern raise {
   let start = self.here()
   let t = self.peek()
   match t.kind {

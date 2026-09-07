@@ -15,7 +15,7 @@ pub fn check_program(@program.SourceTree) -> @error.Diagnostic?
 
 pub fn parse(String, name? : String) -> @ast.Module raise
 
-pub fn run(@program.SourceTree, argv? : Array[String]) -> (String, @eval.RunResult)
+pub fn run(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> (String, @eval.RunResult)
 
 pub fn sieve(@ast.Module) -> @error.Diagnostic?
 

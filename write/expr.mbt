@@ -241,6 +241,11 @@ fn Writer::raw_expr(self : Writer, e : @ast.Expr) -> Unit {
 /// A constant as SOURCE, which is not always its `repr`.
 ///
 ///   * `Ellipsis` is spelled `...`.
+///   * A NEGATIVE number prints as a negation, because Python has no negative
+///     literal. A tree built by hand can hold `Constant(-1)`, and reading back
+///     what this writes gives `UnaryOp(USub, Constant(1))` instead: the same
+///     value, a different tree. CPython's own unparser has the same asymmetry,
+///     and no tree that came from a parser can contain one.
 ///   * `inf` and `nan` are not literals at all. CPython's own unparser writes
 ///     `1e309` for an infinity, which overflows to one when read back; `nan`
 ///     it cannot express, and neither can this, so it is left as `nan` and the

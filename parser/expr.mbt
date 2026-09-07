@@ -9,6 +9,14 @@
 /// `**` is the awkward one: it binds tighter than unary on its LEFT and looser
 /// on its right, so `-2**2` is `-(2**2)` and `2**-1` parses.
 fn Parser::parse_expr(self : Parser) -> Expr raise {
+  self.descend()
+  let e = self.parse_expr_()
+  self.ascend()
+  e
+}
+
+///|
+fn Parser::parse_expr_(self : Parser) -> Expr raise {
   if self.at_name("lambda") {
     return self.parse_lambda()
   }
@@ -330,6 +338,14 @@ fn Parser::parse_binary(self : Parser, level : Int) -> Expr raise {
 
 ///|
 fn Parser::parse_unary(self : Parser) -> Expr raise {
+  self.descend()
+  let e = self.parse_unary_()
+  self.ascend()
+  e
+}
+
+///|
+fn Parser::parse_unary_(self : Parser) -> Expr raise {
   let op : @ast.UnaryOp? = match self.peek().kind {
     Op("-") => Some(USub)
     Op("+") => Some(UAdd)
@@ -513,6 +529,14 @@ fn Parser::parse_slice_item(self : Parser) -> Expr raise {
 
 ///|
 fn Parser::parse_atom(self : Parser) -> Expr raise {
+  self.descend()
+  let e = self.parse_atom_()
+  self.ascend()
+  e
+}
+
+///|
+fn Parser::parse_atom_(self : Parser) -> Expr raise {
   let t = self.peek()
   let start = self.here()
   match t.kind {

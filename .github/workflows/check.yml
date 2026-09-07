@@ -67,3 +67,7 @@ jobs:
 
       - name: Conformance
         run: tools/conform.py --show 20
+
+      # Seeded, so a failure here is reproducible from the seed it prints.
+      - name: Fuzz the front end
+        run: tools/fuzz.py --count 2000 --seed 1

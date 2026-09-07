@@ -56,6 +56,42 @@ Each is a judgement the specification leaves open, recorded where it is made:
 - **`Constant.kind` is not recorded.** CPython sets it to `'u'` for a `u"..."`
   literal; nothing in PurePy asks, and the two literals are the same string.
 
+### Hardening
+
+- **Property tests** over seeded random trees: 400 generated modules survive
+  being printed and read back, 200 more are accepted by the sieve, and a
+  value's `repr` is source that prints the value back. A failure names the
+  seed that produced it.
+- **A fuzzer**, `tools/fuzz.py`, mutates the corpus and checks that nothing
+  crashes, nothing hangs, and every rejection carries a position. It found one
+  defect: a comment that runs to the end of a file with no newline after it
+  crashed the tokenizer, and CPython emits a synthetic empty `NL` there.
+- **Nesting is bounded.** Four thousand nested brackets used to be a
+  segmentation fault and are now a syntax error; an unbounded recursion used
+  to be one and is now an undefined operation. The parser's limit is 500
+  levels and the evaluator's call stack is 2000 deep by default, twice
+  Python's own. The evaluator's is a parameter rather than a constant: the
+  ceiling belongs to the host, and a JavaScript engine's stack holds far
+  fewer frames than a native thread's.
+
+### Performance
+
+A baseline, not a target, from `tools/bench.sh` on one developer machine.
+The claim is only that nothing regresses by 2x unnoticed.
+
+| what | time |
+|---|---|
+| `tokens` over a 366-line file | 19 ms |
+| `dump` over the same | 16 ms |
+| `unparse` over the same | 14 ms |
+| the `parse` oracle over 392 sources | 0.7 s |
+| the `check` oracle over 392 sources | 0.7 s |
+| the `program` oracle over 63 directories | 0.2 s |
+| the `run` oracle over 136 tests | 0.4 s |
+
+Most of each oracle's time is process startup: the harness runs the binary
+once per test, which is what the conformance suite specifies.
+
 ### Packaging
 
 The published module carries its conformance suite: `test/conformance/` is

@@ -144,3 +144,32 @@ test "tabs and spaces that disagree about depth" {
     _ => fail("expected a TabError")
   }
 }
+
+///|
+/// A comment that runs to the end of the file with no newline after it. There
+/// is no newline token to emit and nothing left to advance over; found by
+/// `tools/fuzz.py`.
+test "a comment-only line at the end of the file" {
+  inspect(
+    dump("# just a comment"),
+    content=(
+      #|1:0-1:16 COMMENT '# just a comment'
+      #|1:16-1:17 NL ''
+      #|2:0-2:0 ENDMARKER ''
+      #|
+    ),
+  )
+  inspect(
+    dump("x = 1\n# trailing"),
+    content=(
+      #|1:0-1:1 NAME 'x'
+      #|1:2-1:3 OP '='
+      #|1:4-1:5 NUMBER '1'
+      #|1:5-1:6 NEWLINE '\n'
+      #|2:0-2:10 COMMENT '# trailing'
+      #|2:10-2:11 NL ''
+      #|3:0-3:0 ENDMARKER ''
+      #|
+    ),
+  )
+}
