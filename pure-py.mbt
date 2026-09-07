@@ -26,13 +26,36 @@ pub fn sieve(m : @ast.Module) -> @err.Diagnostic? {
 ///|
 /// Whether a single module is well formed, with only the predefined modules
 /// importable -- what `pure-py check FILE` decides.
+///
+/// The sieve runs first and its verdict is the answer when it rejects. That
+/// is not a convenience: the checker is written against the subset the sieve
+/// leaves, and handed a `for` loop it has no case to take. Calling
+/// `@check.check_single` directly skips this and is the caller's business.
 pub fn check(m : @ast.Module) -> @err.Diagnostic? {
-  @check.check_single(m)
+  match @sieve.result(m) {
+    Some(d) => Some(d)
+    None => @check.check_single(m)
+  }
 }
 
 ///|
 /// Whether a whole program is well formed.
+///
+/// Every module is sieved first, for the reason `check` is. A tree built by
+/// `source_tree_from` has been sieved already -- discovery does it, and a
+/// module the sieve rejects is a program-level error naming the file -- so
+/// this only bites on a tree assembled in memory.
 pub fn check_program(tree : @program.SourceTree) -> @err.Diagnostic? {
+  for q in tree.module_names() {
+    match tree.get(q) {
+      Some(m) =>
+        match @sieve.result(m) {
+          Some(d) => return Some(d.at_path(tree.path_of(q)))
+          None => ()
+        }
+      None => ()
+    }
+  }
   @check.check_program(tree)
 }
 
