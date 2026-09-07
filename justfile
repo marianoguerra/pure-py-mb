@@ -172,11 +172,10 @@ only phase *args: build
 one pattern: build
     {{conform}} --no-ratchet --show 20 --filter {{pattern}}
 
-# What our CLI says about one file, in full.
+# What our CLI says about one file, with the source annotated.
 [group('conform')]
 explain file: build
-    -{{impl}} parse {{file}}
-    -{{impl}} check {{file}} --error-format human
+    -{{impl}} check {{file}} --error-format human --color always
 
 # ---------------------------------------------------------------------------
 # Regenerating committed artifacts (needs reference/; never in CI)

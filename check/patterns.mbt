@@ -328,10 +328,15 @@ pub fn check_pattern_list(
     }
     for j in 0..<i {
       if subsumes(p, patterns[j], ctx) {
-        raise @err.ill_formed(
-          UnreachableCase(index=i + 1, subsumed_by=j + 1),
-          span~,
-        )
+        // Point at the case that covers it as well as the match, which is
+        // where the reference's position is.
+        let d = @err.Diagnostic::new(
+            IllFormed(UnreachableCase(index=i + 1, subsumed_by=j + 1)),
+            span~,
+          )
+          .with_related(patterns[j].span(), "this case already covers it")
+          .with_related(p.span(), "so this one can never run")
+        raise d.raise_()
       }
     }
   }

@@ -5,7 +5,9 @@
 #
 #   1. `marianoguerra/error-report` is named by `error/` and by the CLI (which
 #      renders) and nowhere else. Everything below produces a `Diagnostic` --
-#      this module's own type -- and one adapter turns it into a report.
+#      this module's own type -- and ONE function, `Diagnostic::to_report`,
+#      turns it into a report. That function being the only bridge is checked
+#      too: a second one would make swapping the renderer a hunt.
 #   2. `moonbitlang/x` (the filesystem, the process) is named by `program/` and
 #      the CLI only. A library consumer supplies its own source tree.
 #   3. `ast/` and `write/` name neither the lexer, the parser, the checker nor
@@ -43,6 +45,14 @@ for pkg in $(find . -name moon.pkg -not -path './_build/*' -not -path './referen
     report "$dir names moonbitlang/x; only program/ and cmd/pure-py may"
   fi
 done
+
+# 2b. one adapter, not several
+bridges=$(grep -c '@report\.' error/*.mbt 2>/dev/null | awk -F: '{n += $2} END {print n+0}')
+adapters=$(grep -l '@report\.' error/*.mbt 2>/dev/null | grep -v '_test' | wc -l)
+if [ "$adapters" -gt 1 ]; then
+  report "error/ names error-report in $adapters files; one adapter, one file"
+fi
+[ "$bridges" -gt 0 ] || report "error/report.mbt no longer names error-report"
 
 # 3. the tree and the printer are free of the front end and the back end
 for dir in ast write basic token; do

@@ -137,7 +137,18 @@ fn check_module_body(
   }
   let (prefix, rest) = @analysis.split_imports(m.body)
   match @analysis.find_import(rest) {
-    Some(node) => raise @err.ill_formed(ImportAfterStatement, span=node.span())
+    Some(node) => {
+      let mut d = @err.Diagnostic::new(
+        IllFormed(ImportAfterStatement),
+        span=node.span(),
+      )
+      // The first statement that is not an import is the one the import has
+      // to move above.
+      if !rest.is_empty() && !@analysis.is_import(rest[0]) {
+        d = d.with_related(rest[0].span(), "this statement comes before it")
+      }
+      raise d.raise_()
+    }
     None => ()
   }
   let empty_ctx : Ctx = { gamma: @context.empty_context(), program, q, }

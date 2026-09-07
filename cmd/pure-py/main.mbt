@@ -19,7 +19,10 @@ fn main {
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
     ["unparse", path] => @sys.exit(cmd_unparse(path))
     ["parse", .. paths] => @sys.exit(cmd_parse(paths))
-    ["check", .. paths] => @sys.exit(cmd_check(paths))
+    ["check", .. rest] => {
+      let (format, color, paths) = parse_error_options(rest)
+      @sys.exit(cmd_check(paths, format~, color~))
+    }
     ["check-program", path] => @sys.exit(cmd_check_program(path))
     ["run", path, .. rest] => @sys.exit(cmd_run(path, rest))
     ["dump", path, "--pos"] | ["dump", "--pos", path] =>
@@ -164,7 +167,11 @@ fn cmd_parse(paths : ArrayView[String]) -> Int {
 /// `check_module.py` does not run it and walks a node it has no case for
 /// instead, so the reference's own runner never calls check on a file parse
 /// rejected. The golden records the sieve's answer for those files.
-fn cmd_check(paths : ArrayView[String]) -> Int {
+fn cmd_check(
+  paths : Array[String],
+  format~ : @render.Format,
+  color~ : @style.ColorMode,
+) -> Int {
   let mut code = 0
   for path in paths {
     let src = read_source(path)
@@ -179,14 +186,71 @@ fn cmd_check(paths : ArrayView[String]) -> Int {
         }
     }
     match d {
-      None => println("\{path}: ok")
+      None => if format is Short { println("\{path}: ok") }
       Some(diag) => {
-        println(diag.short(path, source=src))
+        if format is Short {
+          println(diag.short(path, source=src))
+        } else {
+          println(render_diagnostic(diag, path, src, format~, color~))
+        }
         code = diag.exit_code()
       }
     }
   }
   code
+}
+
+///|
+/// Render a rejection with its source, through `error-report`.
+fn render_diagnostic(
+  d : @err.Diagnostic,
+  path : String,
+  src : @basic.Source,
+  format~ : @render.Format,
+  color~ : @style.ColorMode,
+) -> String {
+  let sources = @report.Sources::new()
+  let id = sources.add(path, src.text)
+  let config = { ..@render.default_config, format, color, }
+  @render.render_string(d.to_report(id), sources, config, is_tty=false)
+}
+
+///|
+/// `--error-format short|human|json` and `--color auto|always|never`.
+///
+/// `short` is the reference's own format and the default, because the
+/// conformance harness compares against the reference; the other two are for
+/// people.
+fn parse_error_options(
+  args : ArrayView[String],
+) -> (@render.Format, @style.ColorMode, Array[String]) {
+  let mut format = @render.Format::Short
+  let mut color = @style.ColorMode::Auto
+  let paths : Array[String] = []
+  let mut i = 0
+  while i < args.length() {
+    let a = args[i]
+    if a == "--error-format" && i + 1 < args.length() {
+      format = match args[i + 1] {
+        "human" | "rich" => Rich
+        "compact" => Compact
+        "json" => Json
+        _ => Short
+      }
+      i += 2
+    } else if a == "--color" && i + 1 < args.length() {
+      color = match args[i + 1] {
+        "always" => Always
+        "never" => Never
+        _ => Auto
+      }
+      i += 2
+    } else {
+      paths.push(a)
+      i += 1
+    }
+  }
+  (format, color, paths)
 }
 
 ///|
@@ -235,6 +299,16 @@ fn cmd_run(path : String, args : ArrayView[String]) -> Int {
       println("pure-py: \{e}")
       return 1
     }
+  }
+  // A program that is not well formed does not run. The conformance harness
+  // never asks for one, but a person might, and the semantics is defined for
+  // well-formed programs only.
+  match @check.check_program(tree) {
+    Some(d) => {
+      println(d.message())
+      return d.exit_code()
+    }
+    None => ()
   }
   let (output, result) = @eval.run_program(tree, argv~)
   write_stdout(output)

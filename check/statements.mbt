@@ -124,8 +124,17 @@ pub fn check_seq(
     // Python's `min`, not the set's own order: the two differ on strings.
     let name = @basic.min_name(reassigned.to_array()).unwrap()
     match @analysis.find_first_reassigning(tail, reassigned) {
-      Some(node) =>
-        raise @err.ill_formed(CapturedReassignment(name~), span=node.span())
+      Some(node) => {
+        // The reference records one position. A person reading "captured by
+        // previous statement" wants to see WHICH statement, so the capturing
+        // one is carried alongside; `short` never prints it, so the
+        // comparison with the reference is unaffected.
+        let d = @err.Diagnostic::new(
+          IllFormed(CapturedReassignment(name~)),
+          span=node.span(),
+        ).with_related(first_node(head).span(), "'\{name}' captured here")
+        raise d.raise_()
+      }
       None =>
         abort("a name in assigns_seq must have a statement that assigns it")
     }
@@ -537,13 +546,19 @@ fn check_class_decl(
       let inherited = @analysis.names(entry.fields())
       let clash = @analysis.names(names).intersection(inherited)
       if !clash.is_empty() {
-        raise @err.ill_formed(
-          InheritedFieldClash(
-            field=@basic.min_name(clash.to_array()).unwrap(),
-            base=base_name,
-          ),
+        let field = @basic.min_name(clash.to_array()).unwrap()
+        let mut d = @err.Diagnostic::new(
+          IllFormed(InheritedFieldClash(field~, base=base_name)),
           span~,
         )
+        // Point at the base class too: the clash is between two declarations
+        // and the message names only one of them.
+        match gamma.get(base_name) {
+          Some(Class(_)) =>
+            d = d.with_related(bases[0].span(), "inherits from here")
+          _ => ()
+        }
+        raise d.raise_()
       }
     }
     _ => ()

@@ -1,7 +1,11 @@
 import {
+  "marianoguerra/error-report" @report,
   "marianoguerra/pure-py/basic",
 }
 
 import {
+  "marianoguerra/error-report" @report,
+  "marianoguerra/error-report/render",
+  "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/error" @err,
 } for "test"

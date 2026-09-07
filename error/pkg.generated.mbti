@@ -2,6 +2,7 @@
 package "marianoguerra/pure-py/error"
 
 import {
+  "marianoguerra/error-report",
   "marianoguerra/pure-py/basic",
   "moonbitlang/core/debug",
 }
@@ -29,12 +30,16 @@ pub(all) struct Diagnostic {
 pub fn Diagnostic::as_parse_error(Self) -> Self
 pub fn Diagnostic::at_path(Self, String) -> Self
 pub fn Diagnostic::attribute_to(Self, String) -> Self
+pub fn Diagnostic::code(Self) -> String?
 pub fn Diagnostic::exit_code(Self) -> Int
+pub fn Diagnostic::help(Self) -> String?
 pub fn Diagnostic::message(Self) -> String
 pub fn Diagnostic::new(Kind, span? : @basic.Span, in_module? : String, related? : Array[(@basic.Span, String)]) -> Self
 pub fn Diagnostic::raise_(Self) -> PurePyError
 pub fn Diagnostic::short(Self, String, source? : @basic.Source) -> String
 pub fn Diagnostic::stage(Self) -> Stage
+pub fn Diagnostic::to_report(Self, @error-report.SourceId) -> @error-report.Report
+pub fn Diagnostic::with_related(Self, @basic.Span, String) -> Self
 
 pub(all) enum Kind {
   PythonSyntax(msg~ : String)
