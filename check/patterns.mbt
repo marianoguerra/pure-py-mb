@@ -307,7 +307,7 @@ fn sorted_unique(names : ArrayView[String]) -> Array[String] {
       out.push(n)
     }
   }
-  out.sort()
+  @basic.sort_names(out)
   out
 }
 

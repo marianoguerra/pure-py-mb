@@ -1,11 +1,39 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/program"
 
+import {
+  "marianoguerra/pure-py/ast",
+}
+
 // Values
+pub fn is_module(String, String) -> String?
+
+pub fn join(String, String) -> String
+
+pub fn name_of(String) -> String
+
+pub fn parent(String) -> String
+
+pub fn proper_prefixes(String) -> Array[String]
+
+pub fn stem(String) -> String
+
+pub fn with_proper_prefixes(Array[String]) -> Array[String]
 
 // Errors
 
 // Types and methods
+pub struct SourceTree {
+  base_dir : String
+  modules : Map[String, @ast.Module]
+  paths : Map[String, String]
+}
+pub fn SourceTree::from_entry(String, predefined~ : Array[String]) -> Self raise
+pub fn SourceTree::get(Self, String) -> @ast.Module?
+pub fn SourceTree::module_names(Self) -> Array[String]
+pub fn SourceTree::modules_map(Self) -> Map[String, @ast.Module]
+pub fn SourceTree::of(Map[String, @ast.Module], base_dir? : String) -> Self
+pub fn SourceTree::path_of(Self, String) -> String
 
 // Type aliases
 

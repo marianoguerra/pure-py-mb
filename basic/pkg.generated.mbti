@@ -12,6 +12,10 @@ pub fn hex_digits(Int, Int) -> String
 
 pub fn is_printable(Char) -> Bool
 
+pub fn lexical_compare(String, String) -> Int
+
+pub fn min_name(Array[String]) -> String?
+
 pub let nowhere : Span
 
 pub let origin : Pos
@@ -23,6 +27,8 @@ pub fn py_float_layout(Double, dot_zero~ : Bool) -> String
 pub fn py_float_repr(Double) -> String
 
 pub fn py_repr(String) -> String
+
+pub fn sort_names(Array[String]) -> Unit
 
 pub fn utf8_length(Char) -> Int
 

@@ -1,1 +1,14 @@
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/sieve",
+  "moonbitlang/x/fs",
+}
 
+import {
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/program",
+} for "test"

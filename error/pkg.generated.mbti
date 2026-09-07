@@ -24,8 +24,10 @@ pub(all) struct Diagnostic {
   span : @basic.Span?
   in_module : String?
   related : Array[(@basic.Span, String)]
+  prefix : String?
 } derive(Eq, @debug.Debug)
 pub fn Diagnostic::as_parse_error(Self) -> Self
+pub fn Diagnostic::at_path(Self, String) -> Self
 pub fn Diagnostic::attribute_to(Self, String) -> Self
 pub fn Diagnostic::exit_code(Self) -> Int
 pub fn Diagnostic::message(Self) -> String

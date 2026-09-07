@@ -4,6 +4,7 @@ import {
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/write",
   "moonbitlang/core/immut/sorted_map",
 }

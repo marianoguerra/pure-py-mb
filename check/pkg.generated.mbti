@@ -7,12 +7,15 @@ import {
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/error",
+  "marianoguerra/pure-py/program",
   "moonbitlang/core/bigint",
   "moonbitlang/core/immut/sorted_map",
 }
 
 // Values
 pub fn check_body(Array[@ast.Stmt], @context.ModuleContext[Program]) -> @context.ModuleContext[Program] raise
+
+pub fn check_entry(String) -> @error.Diagnostic?
 
 pub fn check_module(Program, String) -> @sorted_map.SortedMap[String, @context.Entry] raise
 
@@ -21,6 +24,8 @@ pub fn check_mutual_region(Array[@ast.Stmt], @context.ModuleContext[Program]) ->
 pub fn check_pattern(@ast.Pattern, @context.ModuleContext[Program]) -> Unit raise
 
 pub fn check_pattern_list(Array[@ast.Pattern], @basic.Span, @context.ModuleContext[Program]) -> Unit raise
+
+pub fn check_program(@program.SourceTree) -> @error.Diagnostic?
 
 pub fn check_seq(ArrayView[@analysis.Statement], @context.ModuleContext[Program]) -> @context.ModuleContext[Program] raise
 

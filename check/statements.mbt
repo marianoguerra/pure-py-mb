@@ -121,7 +121,8 @@ pub fn check_seq(
     @analysis.assigns_seq(tail),
   )
   if !reassigned.is_empty() {
-    let name = reassigned.to_array()[0]
+    // Python's `min`, not the set's own order: the two differ on strings.
+    let name = @basic.min_name(reassigned.to_array()).unwrap()
     match @analysis.find_first_reassigning(tail, reassigned) {
       Some(node) =>
         raise @err.ill_formed(CapturedReassignment(name~), span=node.span())
@@ -423,7 +424,9 @@ fn check_comprehension(
   let captured = @analysis.captures_e_list(elts).intersection(bound)
   if !captured.is_empty() {
     raise @err.ill_formed(
-      CapturedGeneratorVariable(name=captured.to_array()[0]),
+      CapturedGeneratorVariable(
+        name=@basic.min_name(captured.to_array()).unwrap(),
+      ),
       span=generators[0].target.span(),
     )
   }
@@ -445,7 +448,9 @@ fn check_quals(
   )
   if !captured.is_empty() {
     raise @err.ill_formed(
-      CapturedGeneratorVariable(name=captured.to_array()[0]),
+      CapturedGeneratorVariable(
+        name=@basic.min_name(captured.to_array()).unwrap(),
+      ),
       span=g.target.span(),
     )
   }
@@ -533,7 +538,10 @@ fn check_class_decl(
       let clash = @analysis.names(names).intersection(inherited)
       if !clash.is_empty() {
         raise @err.ill_formed(
-          InheritedFieldClash(field=clash.to_array()[0], base=base_name),
+          InheritedFieldClash(
+            field=@basic.min_name(clash.to_array()).unwrap(),
+            base=base_name,
+          ),
           span~,
         )
       }

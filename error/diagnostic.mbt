@@ -48,6 +48,12 @@ pub(all) struct Diagnostic {
   span : @basic.Span?
   in_module : String?
   related : Array[(@basic.Span, String)]
+  /// A file path prepended to the message, and nothing else changed.
+  ///
+  /// `check_program.py` reports a module-level rejection as
+  /// `<path>: <message>` and keeps its exit code, so the prefix cannot be a
+  /// kind of its own: exit 3 with a path in front is still exit 3.
+  prefix : String?
 } derive(Eq, Debug)
 
 ///|
@@ -57,7 +63,7 @@ pub fn Diagnostic::new(
   in_module? : String,
   related? : Array[(@basic.Span, String)] = [],
 ) -> Diagnostic {
-  { kind, span, in_module, related, }
+  { kind, span, in_module, related, prefix: None, }
 }
 
 ///|
@@ -84,8 +90,25 @@ pub fn Diagnostic::stage(self : Diagnostic) -> Stage {
 }
 
 ///|
+/// The same rejection, reported against a file: the path in front of the
+/// message, the position dropped, and the exit code unchanged. This is what
+/// `check_program.py` does to an ill-formed module.
+pub fn Diagnostic::at_path(self : Diagnostic, path : String) -> Diagnostic {
+  { ..self, prefix: Some(path), span: None, }
+}
+
+///|
 /// The message, exactly as the reference prints it.
 pub fn Diagnostic::message(self : Diagnostic) -> String {
+  let body = self.bare_message()
+  match self.prefix {
+    Some(p) => p + ": " + body
+    None => body
+  }
+}
+
+///|
+fn Diagnostic::bare_message(self : Diagnostic) -> String {
   match self.kind {
     PythonSyntax(msg~) => msg
     Prohibited(msg~) => msg

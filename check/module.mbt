@@ -322,7 +322,7 @@ fn check_submodule_clash(
   if clash.is_empty() {
     return
   }
-  clash.sort()
+  @basic.sort_names(clash)
   let x = clash[0]
   match find_binder(m.body, x) {
     Some(node) =>

@@ -20,6 +20,7 @@ fn main {
     ["unparse", path] => @sys.exit(cmd_unparse(path))
     ["parse", .. paths] => @sys.exit(cmd_parse(paths))
     ["check", .. paths] => @sys.exit(cmd_check(paths))
+    ["check-program", path] => @sys.exit(cmd_check_program(path))
     ["dump", path, "--pos"] | ["dump", "--pos", path] =>
       @sys.exit(cmd_dump(path, pos=true))
     [cmd, ..] => {
@@ -185,6 +186,26 @@ fn cmd_check(paths : ArrayView[String]) -> Int {
     }
   }
   code
+}
+
+///|
+/// `check-program MAIN`: discover the program from its entry file and decide
+/// whether the whole of it is well formed.
+///
+/// The format is `check_program.py`'s: `MAIN: ok`, or the message alone --
+/// which for a module-level rejection carries the offending file's path and
+/// no line, because that is what the reference prints.
+fn cmd_check_program(path : String) -> Int {
+  match @check.check_entry(path) {
+    None => {
+      println("\{path}: ok")
+      0
+    }
+    Some(d) => {
+      println(d.message())
+      d.exit_code()
+    }
+  }
 }
 
 ///|

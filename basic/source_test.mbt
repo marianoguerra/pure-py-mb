@@ -68,3 +68,18 @@ test "slice returns the text a span covers" {
   }
   assert_eq(src.slice(span), "'hi'")
 }
+
+///|
+/// Python orders strings by code point; MoonBit orders them by length first.
+/// Every message that names one of several candidates goes through the
+/// Python ordering, so the two are kept apart here.
+test "Python's string order is not MoonBit's" {
+  let names = ["x.z", "x.y.a", "abc", "ab", "b"]
+  @basic.sort_names(names)
+  assert_eq(names, ["ab", "abc", "b", "x.y.a", "x.z"])
+  assert_eq(@basic.min_name(["g", "c", "ab"]), Some("ab"))
+  assert_eq(@basic.min_name([]), None)
+  assert_true(@basic.lexical_compare("ab", "b") < 0)
+  // MoonBit's own comparison disagrees, which is the point.
+  assert_true("ab" > "b")
+}
