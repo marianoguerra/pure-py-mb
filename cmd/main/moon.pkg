@@ -1,0 +1,5 @@
+// import {
+//   "marianoguerra/pure-py" @lib,
+// }
+
+pkgtype(kind: "executable")
