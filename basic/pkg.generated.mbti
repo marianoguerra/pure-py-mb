@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn hex4(Int) -> String
+
 pub fn is_printable(Char) -> Bool
 
 pub fn lexical_compare(String, String) -> Int

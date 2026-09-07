@@ -133,6 +133,34 @@ ci:
     tools/unparse_check.sh
     tools/conform.py --show 5
     tools/fuzz.py --count 2000 --seed 1
+    moon build --target wasm-gc --release
+    cp _build/wasm-gc/release/build/playground/playground.wasm playground/
+    node tools/check_examples.mjs --expect
+
+# ---------------------------------------------------------------------------
+# The playground
+# ---------------------------------------------------------------------------
+#
+# The page is the library in a browser AND a real embedder: the `host` module
+# its examples import is supplied through the embedding interface, so anything
+# that breaks embedding breaks the playground.
+
+# Build the wasm-gc module and put it beside the page.
+[group('playground')]
+playground-build:
+    moon build --target wasm-gc --release
+    cp {{justfile_directory()}}/_build/wasm-gc/release/build/playground/playground.wasm {{justfile_directory()}}/playground/
+
+# Build it and serve the page on http://localhost:8000.
+[group('playground')]
+playground: playground-build
+    python3 -m http.server 8000 --directory {{justfile_directory()}}/playground
+
+# Every example, through the module the page loads. Fails if one has drifted
+# from the outcome recorded beside it.
+[group('playground')]
+examples: playground-build
+    node tools/check_examples.mjs --expect
 
 # ---------------------------------------------------------------------------
 # The conformance suite -- the project's real correctness gate

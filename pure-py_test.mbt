@@ -40,3 +40,26 @@ test "run answers on a tree the sieve would reject" {
     _ => fail("a for loop has no rule")
   }
 }
+
+///|
+/// A program assembled in memory can import the predefined modules.
+///
+/// A tree read off a disk has them because discovery put them there; one
+/// built by an embedder has never seen them, and `import math` in it used to
+/// be an unknown module.
+test "an in-memory program can import math, sys and the rest" {
+  let modules = Map([
+    (
+      "__main__",
+      @purepy.parse(
+        "import math\nimport sys\nfrom dataclasses import dataclass\n" +
+        "from typing import Any\nprint(math.floor(2.7), len(sys.argv))\n",
+      ),
+    ),
+  ])
+  let tree = @purepy.source_tree(modules)
+  assert_eq(@purepy.check_program(tree), None)
+  let (output, result) = @purepy.run(tree, argv=["main.py"])
+  assert_true(result is Finished)
+  assert_eq(output, "2 1\n")
+}

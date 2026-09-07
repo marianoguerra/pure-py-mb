@@ -10,8 +10,16 @@ pub fn check_program(
   host_members? : Map[String, Array[String]] = Map([]),
 ) -> @err.Diagnostic? {
   let modules = tree.modules_map()
-  // A host module has no source, so discovery never found one; it stands in
-  // the program with an empty body, as a predefined module does.
+  // The five predefined modules and the host's own have no source, so each
+  // stands in the program with an empty body and its members from a table.
+  // Discovery puts the predefined ones there for a tree read off a disk; a
+  // tree assembled in memory has never seen them, and `import math` in one
+  // would otherwise be an unknown module.
+  for name in @context.predefined_modules {
+    if !modules.contains(name) {
+      modules[name] = { body: [], span: @basic.nowhere, }
+    }
+  }
   for name, _ in host_members {
     if !modules.contains(name) {
       modules[name] = { body: [], span: @basic.nowhere, }

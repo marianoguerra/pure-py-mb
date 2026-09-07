@@ -1,0 +1,30 @@
+// The playground: the whole library in a browser, and a real embedder.
+//
+// It reaches the library through the facade and the packages a consumer would
+// name, so whatever it needs is by construction a name that has to stay
+// public. It is also the only consumer here that supplies a `Host`, which
+// makes it the place where the embedding surface is exercised rather than
+// only documented.
+//
+// `use-js-builtin-string` makes MoonBit's `String` the host's, so the exported
+// signatures are what JavaScript sees: a string in, a string out. No linear
+// memory, no encoding, no glue beyond `WebAssembly.instantiate`.
+import {
+  "marianoguerra/error-report" @report,
+  "marianoguerra/error-report/render",
+  "marianoguerra/error-report/style",
+  "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
+  "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/lexer",
+  "marianoguerra/pure-py/token",
+  "marianoguerra/pure-py/value",
+}
+
+options(
+  link: {
+    "wasm-gc": { "exports": [ "analyze" ], "use-js-builtin-string": true },
+  },
+)

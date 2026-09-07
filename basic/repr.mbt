@@ -129,3 +129,9 @@ pub fn py_bytes_repr(b : Bytes) -> String {
   out.write_char(quote)
   out.to_string()
 }
+
+///|
+/// Four lowercase hexadecimal digits, for a JSON escape or a code point.
+pub fn hex4(n : Int) -> String {
+  hex_digits(n, 4)
+}

@@ -1,0 +1,65 @@
+name: playground
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deployment at a time, and never cancel one that is running: a half-
+# published page is worse than a late one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Update the registry index
+        run: moon update
+
+      - name: Build the playground
+        run: moon build --target wasm-gc --release
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp playground/index.html playground/examples.js _site/
+          cp _build/wasm-gc/release/build/playground/playground.wasm _site/
+
+      # Every example, through the module the page will actually load. A note
+      # that has drifted from what the code does is worse than no note.
+      - name: The examples do what their notes say
+        run: |
+          cp _build/wasm-gc/release/build/playground/playground.wasm playground/
+          node tools/check_examples.mjs --expect
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

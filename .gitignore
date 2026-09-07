@@ -8,3 +8,6 @@ target
 # CI input: the conformance suite and the goldens under `test/` are committed.
 /reference/
 __pycache__/
+
+# Built by `just playground-build`; the deployment builds its own.
+/playground/playground.wasm

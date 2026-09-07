@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PurePy Playground</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Two colours carry the two halves of the language: slate is what
+   PurePy accepts and runs, amber is where it stops and says why.
+   Nothing else is coloured, so the stopping places stand out.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --ground:   #FBFCFD;
+  --surface:  #EFF2F5;
+  --sunken:   #FFFFFF;
+  --ink:      #17202A;
+  --muted:    #58656F;
+  --faint:    #8895A0;
+  --rule:     #D8DEE4;
+  --rule-firm:#BCC5CD;
+  --run:      #2C5D7C;
+  --run-bg:   #E4EDF3;
+  --stop:     #8A5A15;
+  --stop-bg:  #F7EEDC;
+  --bad:      #9B3226;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground:   #0E1114;
+    --surface:  #161A1E;
+    --sunken:   #111518;
+    --ink:      #E3E9EE;
+    --muted:    #94A1AC;
+    --faint:    #6F7C87;
+    --rule:     #262D33;
+    --rule-firm:#39424A;
+    --run:      #7FB6DA;
+    --run-bg:   #16232C;
+    --stop:     #D8AC5F;
+    --stop-bg:  #2A2315;
+    --bad:      #E08072;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: var(--sans); font-size: 14px;
+  display: flex; flex-direction: column;
+}
+header {
+  display: flex; align-items: baseline; gap: 1rem 1.25rem; flex-wrap: wrap;
+  padding: .7rem 1.1rem; border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+}
+h1 { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: .01em; }
+h1 span { color: var(--muted); font-weight: 400; }
+header .grow { flex: 1; }
+a { color: var(--run); }
+select, button {
+  font: inherit; color: inherit; background: var(--sunken);
+  border: 1px solid var(--rule-firm); border-radius: 6px; padding: .32rem .55rem;
+}
+select { max-width: 22rem; }
+button { cursor: pointer; }
+button:hover { border-color: var(--run); }
+button.primary { background: var(--run-bg); border-color: var(--run); color: var(--run); font-weight: 600; }
+#status { font-size: 12.5px; color: var(--muted); }
+#status .ok { color: var(--run); }
+#status .bad { color: var(--bad); }
+#build { font-size: 12px; color: var(--faint); }
+
+main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+.pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.pane + .pane { border-left: 1px solid var(--rule); }
+@media (max-width: 900px) { .pane + .pane { border-left: 0; border-top: 1px solid var(--rule); } }
+
+.bar {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  padding: .45rem .8rem; border-bottom: 1px solid var(--rule);
+  background: var(--surface); font-size: 12.5px; color: var(--muted);
+}
+.bar strong { color: var(--ink); font-weight: 600; font-size: 12.5px; }
+.tab {
+  border: 1px solid transparent; background: none; border-radius: 5px;
+  padding: .2rem .5rem; color: var(--muted); font-size: 12.5px;
+}
+.tab[aria-selected="true"] { background: var(--sunken); border-color: var(--rule-firm); color: var(--ink); font-weight: 600; }
+
+#note {
+  padding: .55rem .8rem; border-bottom: 1px solid var(--rule);
+  background: var(--sunken); color: var(--muted); font-size: 12.5px; line-height: 1.5;
+}
+textarea, pre {
+  flex: 1; margin: 0; padding: .7rem .8rem; min-height: 0;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  background: var(--sunken); color: var(--ink);
+  border: 0; resize: none; overflow: auto; white-space: pre; tab-size: 4;
+}
+textarea:focus { outline: 2px solid var(--run); outline-offset: -2px; }
+pre { white-space: pre-wrap; word-break: break-word; }
+
+.verdict { padding: .5rem .8rem; border-bottom: 1px solid var(--rule); font-size: 12.5px; }
+.verdict.run { background: var(--run-bg); color: var(--run); }
+.verdict.stop { background: var(--stop-bg); color: var(--stop); }
+.verdict b { font-weight: 650; }
+.hostlog { border-top: 1px solid var(--rule); max-height: 34%; display: flex; flex-direction: column; }
+.hostlog .bar { border-bottom: 1px solid var(--rule); border-top: 0; }
+.empty { color: var(--faint); font-style: italic; }
+footer {
+  padding: .5rem 1.1rem; border-top: 1px solid var(--rule);
+  background: var(--surface); color: var(--faint); font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PurePy <span>· a pure functional subset of Python, in MoonBit</span></h1>
+  <select id="example" aria-label="Example"></select>
+  <button id="run" class="primary">Run</button>
+  <span class="grow"></span>
+  <span id="status">Loading…</span>
+  <span id="build"></span>
+  <a href="https://github.com/marianoguerra/pure-py-mb">source</a>
+</header>
+
+<main>
+  <section class="pane">
+    <div class="bar"><strong>Program</strong>
+      <span id="modnote"></span>
+    </div>
+    <div id="note"></div>
+    <textarea id="source" spellcheck="false" autocomplete="off"></textarea>
+  </section>
+
+  <section class="pane">
+    <div class="bar">
+      <strong>Result</strong>
+      <button class="tab" data-view="run" aria-selected="true">run</button>
+      <button class="tab" data-view="check">check</button>
+      <button class="tab" data-view="ast">tree</button>
+      <button class="tab" data-view="tokens">tokens</button>
+      <button class="tab" data-view="unparse">printed back</button>
+    </div>
+    <div id="verdict" class="verdict run"></div>
+    <pre id="out"></pre>
+    <div class="hostlog" id="hostlog">
+      <div class="bar"><strong>Host</strong><span>what the page's own <code>host</code> module was asked to do</span></div>
+      <pre id="log" style="max-height:9rem"></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Everything here runs in the tab: the tokenizer, the parser, the checker and
+  the interpreter are one wasm-gc module, and the <code>host</code> module the
+  examples import is supplied by this page through the library's embedding
+  interface. Needs a browser with the JS String Builtins proposal (Chrome 130+,
+  Firefox 134+).
+</footer>
+
+<script type="module">
+import { GROUPS } from './examples.js';
+
+const $ = (id) => document.getElementById(id);
+const sourceEl = $('source'), outEl = $('out'), logEl = $('log');
+const verdictEl = $('verdict'), noteEl = $('note'), modnoteEl = $('modnote');
+const statusEl = $('status'), buildEl = $('build'), selectEl = $('example');
+const hostlogEl = $('hostlog');
+
+let wasm = null, view = 'run', last = null, timer = null;
+
+// ── the module ──────────────────────────────────────────────
+async function boot() {
+  try {
+    const bytes = await (await fetch('playground.wasm')).arrayBuffer();
+    const mod = await WebAssembly.compile(bytes, {
+      builtins: ['js-string'],
+      importedStringConstants: '_',
+    });
+    wasm = (await WebAssembly.instantiate(mod, {})).exports;
+    buildEl.textContent = (bytes.byteLength / 1024).toFixed(0) + ' KB · wasm-gc';
+    fillExamples();
+    choose(0);
+    say('Ready.', 'ok');
+  } catch (e) {
+    say(String(e), 'bad');
+    statusEl.title =
+      'This page needs the JS String Builtins proposal (Chrome 130+, Firefox 134+).';
+  }
+}
+function say(text, cls) {
+  statusEl.innerHTML = '<span class="' + (cls || '') + '">' + esc(text) + '</span>';
+}
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ── the gallery ─────────────────────────────────────────────
+const FLAT = [];
+function fillExamples() {
+  for (const group of GROUPS) {
+    const og = document.createElement('optgroup');
+    og.label = group.label;
+    for (const item of group.items) {
+      const opt = document.createElement('option');
+      opt.value = String(FLAT.length);
+      opt.textContent = item.name;
+      og.appendChild(opt);
+      FLAT.push(item);
+    }
+    selectEl.appendChild(og);
+  }
+}
+function choose(i) {
+  const item = FLAT[i];
+  selectEl.value = String(i);
+  noteEl.textContent = item.note;
+  sourceEl.value = item.src;
+  analyze();
+}
+
+// ── analysing ───────────────────────────────────────────────
+function analyze() {
+  if (!wasm) return;
+  try {
+    last = JSON.parse(wasm.analyze(sourceEl.value));
+  } catch (e) {
+    say(String(e), 'bad');
+    return;
+  }
+  const names = last.modules.map((m) => m.name);
+  modnoteEl.textContent =
+    names.length > 1 ? names.length + ' modules: ' + names.join(', ') : '';
+  render();
+  say('Ready.', 'ok');
+}
+
+function render() {
+  if (!last) return;
+  const run = last.run, check = last.check;
+
+  // The verdict line is the one thing always on screen: refused, ran, or
+  // stopped, and why.
+  if (!check.ok) {
+    verdictEl.className = 'verdict stop';
+    verdictEl.innerHTML = '<b>Refused before it ran.</b> ' + esc(check.short);
+  } else if (run.state === 'finished') {
+    verdictEl.className = 'verdict run';
+    verdictEl.innerHTML = '<b>Ran to the end.</b>';
+  } else if (run.state === 'exited') {
+    verdictEl.className = 'verdict run';
+    verdictEl.innerHTML = '<b>Exited</b> with ' + esc(run.detail) + '.';
+  } else if (run.state === 'terminated') {
+    verdictEl.className = 'verdict stop';
+    verdictEl.innerHTML = '<b>Stopped:</b> ' + esc(run.detail) +
+      ' — the same thing Python raises here.';
+  } else if (run.state === 'undefined') {
+    verdictEl.className = 'verdict stop';
+    verdictEl.innerHTML = '<b>No answer:</b> ' + esc(run.detail) +
+      ' — the semantics has no rule for it, so this implementation stops ' +
+      'rather than guessing Python’s.';
+  } else {
+    verdictEl.className = 'verdict stop';
+    verdictEl.innerHTML = '<b>Not run.</b> ' + esc(run.detail);
+  }
+
+  let text = '';
+  if (view === 'run') {
+    text = run.output || '';
+    if (!text) text = '(nothing printed)';
+  } else if (view === 'check') {
+    text = check.ok
+      ? 'Accepted: the program is PurePy and it is well formed.'
+      : check.report || check.short;
+  } else if (view === 'ast') {
+    text = last.ast || '(no tree)';
+  } else if (view === 'tokens') {
+    text = last.tokens || '';
+  } else if (view === 'unparse') {
+    text = last.unparse || '(nothing to print)';
+  }
+  outEl.textContent = text;
+  outEl.classList.toggle('empty', text.startsWith('('));
+
+  const log = run.log || [];
+  hostlogEl.style.display = view === 'run' ? 'flex' : 'none';
+  logEl.textContent = log.length
+    ? log.map((l) => '· ' + l).join('\n')
+    : '(the guest did not call the host)';
+  logEl.classList.toggle('empty', log.length === 0);
+}
+
+// ── wiring ──────────────────────────────────────────────────
+selectEl.addEventListener('change', () => choose(Number(selectEl.value)));
+$('run').addEventListener('click', analyze);
+sourceEl.addEventListener('input', () => {
+  clearTimeout(timer);
+  timer = setTimeout(analyze, 250);
+});
+sourceEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); analyze(); }
+});
+for (const tab of document.querySelectorAll('.tab')) {
+  tab.addEventListener('click', () => {
+    view = tab.dataset.view;
+    for (const t of document.querySelectorAll('.tab'))
+      t.setAttribute('aria-selected', String(t === tab));
+    render();
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -3,8 +3,8 @@
 #
 # Three claims, each of which erodes quietly if only written down:
 #
-#   1. `marianoguerra/error-report` is named by `error/` and by the CLI (which
-#      renders) and nowhere else. Everything below produces a `Diagnostic` --
+#   1. `marianoguerra/error-report` is named by `error/`, by the CLI and by the
+#      playground -- the three that RENDER -- and nowhere else. Everything below produces a `Diagnostic` --
 #      this module's own type -- and ONE function, `Diagnostic::to_report`,
 #      turns it into a report. That function being the only bridge is checked
 #      too: a second one would make swapping the renderer a hunt.
@@ -28,10 +28,10 @@ report() {
 for pkg in $(find . -name moon.pkg -not -path './_build/*' -not -path './reference/*' -not -path './.mooncakes/*'); do
   dir=$(dirname "$pkg")
   case "$dir" in
-    ./error|./cmd/pure-py) continue ;;
+    ./error|./cmd/pure-py|./playground) continue ;;
   esac
   if grep -q 'error-report' "$pkg"; then
-    report "$dir names error-report; only error/ and cmd/pure-py may"
+    report "$dir names error-report; only error/, cmd/pure-py and playground/ may"
   fi
 done
 
