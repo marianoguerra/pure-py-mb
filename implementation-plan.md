@@ -13,6 +13,68 @@ a pass/fail criterion that a person or an agent can run.
 
 ---
 
+## 0. Status: done
+
+Every phase below is implemented and committed. The plan is kept as written,
+because a plan that is edited to match what happened stops being evidence of
+what was decided in advance; what follows is what turned out differently.
+
+| oracle | result |
+|---|---|
+| `tokens` against CPython's `tokenize` | 416/416 |
+| `ast` against CPython's `ast`, without positions | 416/416 |
+| `ast` against CPython's `ast`, with positions | 416/416 |
+| the printer's round trip | 415/415 |
+| `parse` against the reference | 392/392 |
+| `check` against the reference | 392/392 |
+| `check-program` against the reference | 63/63 |
+| `run` against CPython | 136/136 |
+
+### What the plan got wrong
+
+- **The suite has 287 tests, not 288.** 224 module-level sources and 63
+  program-level directories; the 288th assertion is `run-all.py`'s own check
+  that every `# rule:` citation names a rule the spec defines, which is about
+  the suite and not about an implementation. The plan's "240 module-level, 48
+  program-level" was a miscount.
+- **§3.4's dump format did not say where a nested node goes.** An
+  S-expression of `(Kind field=value ...)` with "one node per line" is two
+  incompatible ideas. The format actually implemented is line-oriented: one
+  node per line, scalars on the node's line, child fields introduced by name.
+- **Python's float `repr` was needed in phase 2, not phase 7**, because the
+  AST dump prints float constants.
+- **`run` must not sweep the entry's directory.** The plan's phase 9.2 has
+  `run MAIN` build the same source tree `check-program` does; that tree
+  contains every `.py` beside the entry, which for a module-level conformance
+  test is dozens of unrelated files. Checking sweeps; running follows imports.
+- **Two `python-error/dynamic` tests are stuck rather than aborting** -- the
+  plan had this right, and it is worth repeating that they are `assert_falsy`
+  and `attr_non_object`.
+
+### What the phases found that the plan could not have
+
+Each of these was a failing test before it was a fix, and each is written into
+the code where it belongs:
+
+- Python orders strings by code point; MoonBit orders them by length first, so
+  `min` of a set of names can differ. Every message that names one of several
+  candidates goes through Python's ordering.
+- `String::replace` replaces one occurrence, not all, so `x.y.a` became
+  `x/y.a` and three nested packages went missing.
+- A module-level rejection reported against a file keeps exit 3: the path goes
+  in front of the message, and it is not a different kind of error.
+- A `for` target, a `with ... as` target and a comprehension's target are
+  `star_targets` and not expressions. Parsed as expressions, `for y in xs`
+  swallows the `in` as a comparison.
+- A compound statement ends where its last inner statement ends.
+- A module is loaded once per run; ancestors load before descendants;
+  `__name__` is set before the imports run; and the import prefix folds from
+  the right. All four are CPython's behaviour where the spec is silent.
+- A comment that runs to the end of a file with no newline after it crashed
+  the tokenizer, and CPython emits a synthetic empty `NL` there.
+
+---
+
 ## 1. Sources of truth
 
 | what | where | pinned at |
