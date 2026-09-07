@@ -31,6 +31,28 @@ printer and interpreter, with the conformance suite passing in full.
 | `check-program` against the reference | 63/63 |
 | `run` against CPython | 136/136 |
 
+### Embedding
+
+A host supplies everything about a run that is not pure, and there are
+exactly four things:
+
+- **output**, one call per `print` while the run is going;
+- **`sys.argv`**;
+- **importable modules** the host defines, whose members are values;
+- **calls to the functions in them**, answered by name.
+
+Everything else is already a value: a program is a `SourceTree`, so a host
+whose guest code lives in a database or a text box never touches a
+filesystem. A host function is a NAME rather than a closure, which is what
+lets a `Value` stay comparable, printable and free of the host's types.
+
+The same `Host` goes to the checker and to the evaluator: the checker needs
+the member names so `from store import get` resolves, and never sees the
+values.
+
+[docs/embedding.mbt.md](docs/embedding.mbt.md) is the whole surface, and its
+examples are compiled and run as tests.
+
 ### Decisions
 
 Each is a judgement the specification leaves open, recorded where it is made:

@@ -1,0 +1,7 @@
+// The embedding guide's examples are compiled and run as tests, so nothing in
+// it can drift from the library it documents.
+import {
+  "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/value",
+} for "test"

@@ -15,8 +15,16 @@ pub fn Interp::load(self : Interp, q : String) -> Result[Env, Outcome] {
     Some(env) => return Ok(env)
     None => ()
   }
-  // eval-predefined
+  // eval-predefined, and the host's own modules on the same footing: named,
+  // loaded once, and with no source behind them.
   match self.predefined(q) {
+    Some(env) => {
+      self.loaded[q] = env
+      return Ok(env)
+    }
+    None => ()
+  }
+  match self.host.modules.get(q) {
     Some(env) => {
       self.loaded[q] = env
       return Ok(env)
@@ -257,13 +265,31 @@ pub fn Interp::run(self : Interp) -> RunResult {
 }
 
 ///|
-/// Evaluate a program and answer with its output and how it ended.
+/// Evaluate a program and answer with its transcript and how it ended.
+///
+/// The simple path: output is collected and handed back. A caller that wants
+/// output as it happens, its own modules, or its own functions supplies a
+/// `Host` and uses `run_with`.
 pub fn run_program(
   tree : @program.SourceTree,
   argv? : Array[String] = [],
   max_depth? : Int = default_max_depth,
 ) -> (String, RunResult) {
-  let interp = Interp::new(tree, argv~, max_depth~)
-  let result = interp.run()
-  (interp.output(), result)
+  let sink = Sink::new()
+  let host = Host::new(write=fn(text) { sink.write(text) }, argv~)
+  let result = run_with(tree, host, max_depth~)
+  (sink.text(), result)
+}
+
+///|
+/// Evaluate a program against a host.
+///
+/// Output goes wherever the host sends it, so nothing is returned but how the
+/// run ended.
+pub fn run_with(
+  tree : @program.SourceTree,
+  host : Host,
+  max_depth? : Int = default_max_depth,
+) -> RunResult {
+  Interp::new(tree, host~, max_depth~).run()
 }

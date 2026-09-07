@@ -18,6 +18,8 @@ pub fn region_bindings(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt])
 
 pub fn run_program(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> (String, RunResult)
 
+pub fn run_with(@program.SourceTree, Host, max_depth? : Int) -> RunResult
+
 // Errors
 
 // Types and methods
@@ -27,12 +29,26 @@ pub(all) enum Dispatch {
   DispatchStuck(String)
 }
 
+pub struct Host {
+  write : (String) -> Unit
+  argv : Array[String]
+  modules : Map[String, @hashmap.HashMap[String, @value.Value]]
+  call : (String, Array[@value.Value]) -> @value.Outcome
+}
+pub fn Host::member_names(Self) -> Map[String, Array[String]]
+pub fn Host::module_names(Self) -> Array[String]
+pub fn Host::new(write? : (String) -> Unit, argv? : Array[String], modules? : Array[HostModule], call? : (String, Array[@value.Value]) -> @value.Outcome) -> Self
+
+pub(all) struct HostModule {
+  name : String
+  members : Array[(String, @value.Value)]
+}
+
 pub struct Interp {
   tree : @program.SourceTree
-  out : StringBuilder
+  host : Host
   loaded : Map[String, @hashmap.HashMap[String, @value.Value]]
   loading : Array[String]
-  argv : Array[String]
   mut depth : Int
   max_depth : Int
 }
@@ -45,8 +61,7 @@ pub fn Interp::eval_quals(Self, ArrayView[@ast.Comprehension], @hashmap.HashMap[
 pub fn Interp::eval_seq(Self, ArrayView[@analysis.Statement], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult
 pub fn Interp::load(Self, String) -> Result[@hashmap.HashMap[String, @value.Value], @value.Outcome]
 pub fn Interp::match_pattern(Self, @hashmap.HashMap[String, @value.Value], @ast.Pattern, @value.Value) -> @value.MatchResult
-pub fn Interp::new(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> Self
-pub fn Interp::output(Self) -> String
+pub fn Interp::new(@program.SourceTree, host? : Host, max_depth? : Int) -> Self
 pub fn Interp::predefined(Self, String) -> @hashmap.HashMap[String, @value.Value]?
 pub fn Interp::resolve_class(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @context.ClassEntry?
 pub fn Interp::run(Self) -> RunResult
@@ -56,6 +71,13 @@ pub(all) enum RunResult {
   Terminated(@value.Termination)
   Undefined(String)
 } derive(@debug.Debug)
+
+pub struct Sink {
+  buf : StringBuilder
+}
+pub fn Sink::new() -> Self
+pub fn Sink::text(Self) -> String
+pub fn Sink::write(Self, String) -> Unit
 
 // Type aliases
 

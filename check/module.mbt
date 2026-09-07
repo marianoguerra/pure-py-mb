@@ -18,26 +18,43 @@
 /// its global cache on `id(M)` for the same reason.
 pub struct Program {
   modules : Map[String, @ast.Module]
+  /// Modules an EMBEDDING host defines, and the members each exports.
+  ///
+  /// They stand exactly where the five predefined modules stand: named, with
+  /// an empty body, and with their members given by a table rather than read
+  /// off a body. The checker needs the NAMES and not the values -- what a
+  /// host function IS is the evaluator's business.
+  host_members : Map[String, Array[String]]
   signatures : Map[String, @context.Context]
   loading : Array[String]
 }
 
 ///|
 /// A program from a map of module name to parsed module.
-pub fn Program::new(modules : Map[String, @ast.Module]) -> Program {
-  { modules, signatures: Map([]), loading: [], }
+pub fn Program::new(
+  modules : Map[String, @ast.Module],
+  host_members? : Map[String, Array[String]] = Map([]),
+) -> Program {
+  { modules, host_members, signatures: Map([]), loading: [], }
 }
 
 ///|
-/// The program a single file makes: the predefined modules, empty, and the
-/// file itself as `__main__`. This is what `check_module.py` builds.
-pub fn Program::single(m : @ast.Module) -> Program {
+/// The program a single file makes: the predefined modules, empty, the host's
+/// own, and the file itself as `__main__`. This is what `check_module.py`
+/// builds, plus whatever an embedder added.
+pub fn Program::single(
+  m : @ast.Module,
+  host_members? : Map[String, Array[String]] = Map([]),
+) -> Program {
   let modules : Map[String, @ast.Module] = Map([])
   for p in @context.predefined_modules {
     modules[p] = { body: [], span: @basic.nowhere, }
   }
+  for name, _ in host_members {
+    modules[name] = { body: [], span: @basic.nowhere, }
+  }
   modules["__main__"] = m
-  Program::new(modules)
+  Program::new(modules, host_members~)
 }
 
 ///|
@@ -302,10 +319,24 @@ fn submods(program : Program, q : String) -> @context.Context {
 ///|
 /// What a module exports: its own members, and the fixed table for a
 /// predefined one.
-fn own_members(body : Array[@ast.Stmt], q : String) -> Array[String] {
-  match @context.predefined_members(q) {
+fn own_members(
+  program : Program,
+  body : Array[@ast.Stmt],
+  q : String,
+) -> Array[String] {
+  match members_without_source(program, q) {
     Some(ms) => ms
     None => @analysis.assigns_body(body).to_array()
+  }
+}
+
+///|
+/// The members of a module that has no body: one the specification predefines,
+/// or one an embedding host defines.
+fn members_without_source(program : Program, q : String) -> Array[String]? {
+  match @context.predefined_members(q) {
+    Some(ms) => Some(ms)
+    None => program.host_members.get(q)
   }
 }
 
@@ -325,7 +356,7 @@ fn check_submodule_clash(
       clash.push(name)
     }
   }
-  for name in own_members(body, q) {
+  for name in own_members(program, body, q) {
     if subs.contains(name) && !clash.contains(name) {
       clash.push(name)
     }
@@ -374,11 +405,18 @@ fn signature(
   q : String,
 ) -> @context.Context {
   let stubs = submods(program, q)
-  let own = match @context.predefined_members(q) {
-    Some(_) => @context.predefined_context(q)
+  let own = match members_without_source(program, q) {
+    Some(ms) => {
+      // Every member is definitely assigned, and so is `__name__`.
+      let entries : Array[(String, @context.Entry)] = [("__name__", Var(TT))]
+      for m in ms {
+        entries.push((m, Var(TT)))
+      }
+      @context.context_of(entries)
+    }
     None => {
       let entries : Array[(String, @context.Entry)] = []
-      for name in own_members(body, q) {
+      for name in own_members(program, body, q) {
         match final_ctx.gamma.get(name) {
           Some(e) => entries.push((name, e))
           None => ()
@@ -395,8 +433,11 @@ fn signature(
 ///|
 /// Check one module as `__main__`, with only the predefined modules
 /// importable -- what `pure-py check FILE` does.
-pub fn check_single(m : @ast.Module) -> @err.Diagnostic? {
-  let program = Program::single(m)
+pub fn check_single(
+  m : @ast.Module,
+  host_members? : Map[String, Array[String]] = Map([]),
+) -> @err.Diagnostic? {
+  let program = Program::single(m, host_members~)
   try check_module(program, "__main__") |> ignore catch {
     @err.PurePyError(d) => Some(d)
     _ => None

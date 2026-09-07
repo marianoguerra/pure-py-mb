@@ -31,10 +31,17 @@ pub fn sieve(m : @ast.Module) -> @err.Diagnostic? {
 /// is not a convenience: the checker is written against the subset the sieve
 /// leaves, and handed a `for` loop it has no case to take. Calling
 /// `@check.check_single` directly skips this and is the caller's business.
-pub fn check(m : @ast.Module) -> @err.Diagnostic? {
+pub fn check(m : @ast.Module, host? : @eval.Host) -> @err.Diagnostic? {
   match @sieve.result(m) {
     Some(d) => Some(d)
-    None => @check.check_single(m)
+    None =>
+      @check.check_single(
+        m,
+        host_members=match host {
+          Some(h) => h.member_names()
+          None => Map([])
+        },
+      )
   }
 }
 
@@ -45,7 +52,10 @@ pub fn check(m : @ast.Module) -> @err.Diagnostic? {
 /// `source_tree_from` has been sieved already -- discovery does it, and a
 /// module the sieve rejects is a program-level error naming the file -- so
 /// this only bites on a tree assembled in memory.
-pub fn check_program(tree : @program.SourceTree) -> @err.Diagnostic? {
+pub fn check_program(
+  tree : @program.SourceTree,
+  host? : @eval.Host,
+) -> @err.Diagnostic? {
   for q in tree.module_names() {
     match tree.get(q) {
       Some(m) =>
@@ -56,7 +66,13 @@ pub fn check_program(tree : @program.SourceTree) -> @err.Diagnostic? {
       None => ()
     }
   }
-  @check.check_program(tree)
+  @check.check_program(
+    tree,
+    host_members=match host {
+      Some(h) => h.member_names()
+      None => Map([])
+    },
+  )
 }
 
 ///|
@@ -71,6 +87,20 @@ pub fn run(
   max_depth? : Int = @eval.default_max_depth,
 ) -> (String, @eval.RunResult) {
   @eval.run_program(tree, argv~, max_depth~)
+}
+
+///|
+/// Evaluate a program against a host: the embedding path.
+///
+/// The host receives output as it happens, supplies `sys.argv`, defines
+/// whatever modules the guest may import, and answers calls to the functions
+/// in them. `docs/embedding.mbt.md` is the whole of it, with examples.
+pub fn run_with(
+  tree : @program.SourceTree,
+  host : @eval.Host,
+  max_depth? : Int = @eval.default_max_depth,
+) -> @eval.RunResult {
+  @eval.run_with(tree, host, max_depth~)
 }
 
 ///|

@@ -108,6 +108,10 @@ fn Interp::call_primitive(
     // `typing.Any`, `typing.Callable` and `dataclasses.dataclass` are values
     // so that importing them binds something. They are never called.
     Opaque(name) => Stuck("calling " + name)
+    // A function the host supplies. It answers by name, and what it cannot
+    // answer is an operation the semantics does not cover -- the same as any
+    // other undefined operation, and reported the same way.
+    Foreign(name) => (self.host.call)(name, args)
   }
 }
 

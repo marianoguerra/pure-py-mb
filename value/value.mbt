@@ -123,6 +123,12 @@ pub(all) enum Primitive {
   MathFloor
   MathCeil
   Opaque(String)
+  /// A function the HOST supplies, named rather than carried.
+  ///
+  /// The name is data, not a closure, so a `Value` stays comparable,
+  /// printable and free of the host's types; the host dispatches on it when
+  /// the guest calls. That is what lets a `Value` cross the boundary at all.
+  Foreign(String)
 } derive(Eq, Debug)
 
 ///|
@@ -246,4 +252,13 @@ pub fn Value::kind_name(self : Value) -> String {
     Class(_) => "class"
     Prim(_) => "builtin"
   }
+}
+
+///|
+/// A function the host supplies, as a value the guest can call.
+///
+/// The host puts one of these in a module (`@eval.HostModule`) and answers
+/// calls to it by name.
+pub fn host_fn(name : String) -> Value {
+  Prim(Foreign(name))
 }

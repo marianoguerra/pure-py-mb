@@ -31,6 +31,8 @@ packages whose types you name:
 import {
   "marianoguerra/pure-py" @purepy,
   "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/value",
 }
 ```
 
@@ -136,6 +138,55 @@ test "an undefined operation" {
   }
 }
 ```
+
+## Embedding
+
+PurePy is worth embedding because a guest cannot reach anything the host did
+not hand it: no mutation, no ambient authority, no filesystem, no clock. A
+host says where output goes, what `sys.argv` is, which modules the guest may
+import, and what the functions in them do.
+
+```mbt check
+///|
+test "a guest calling a function the host supplied" {
+  let sink = @eval.Sink::new()
+  let host = @eval.Host::new(
+    write=fn(t) { sink.write(t) },
+    modules=[
+      @eval.HostModule::{
+        name: "clock",
+        members: [("now", @value.host_fn("clock.now"))],
+      },
+    ],
+    call=fn(name, _) {
+      match name {
+        "clock.now" => Val(Int(1757260800N))
+        _ => Stuck("no such host function")
+      }
+    },
+  )
+  let modules = Map([
+    ("__main__", @purepy.parse("from clock import now\nprint(now())\n")),
+  ])
+  let tree = @purepy.source_tree(modules)
+  // The host goes to the checker too, so `from clock import now` resolves
+  // before anything runs.
+  inspect(@purepy.check_program(tree, host~) is None, content="true")
+  inspect(@purepy.run_with(tree, host) is Finished, content="true")
+  inspect(
+    sink.text(),
+    content=(
+      #|1757260800
+      #|
+    ),
+  )
+}
+```
+
+[docs/embedding.mbt.md](docs/embedding.mbt.md) is the whole surface, with
+worked examples for output, arguments, host modules, values crossing the
+boundary, refusing a guest before it runs, and bounding one that will not
+stop.
 
 ## Generating Python
 

@@ -1,6 +1,7 @@
 import {
   "marianoguerra/pure-py/analysis",
   "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/value",

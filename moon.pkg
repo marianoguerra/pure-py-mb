@@ -13,4 +13,6 @@ import {
 import {
   "marianoguerra/pure-py" @purepy,
   "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/value",
 } for "test"

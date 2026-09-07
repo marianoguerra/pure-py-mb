@@ -24,14 +24,13 @@ using @value {
 ///|
 pub struct Interp {
   tree : @program.SourceTree
-  out : StringBuilder
+  host : Host
   /// Module name to the environment it loaded to, for this run only.
   loaded : Map[String, Env]
   /// Module names being loaded, to name a cycle rather than hang. Program
   /// well-formedness rules cycles out, so this only fires when `run` is
   /// asked for a program nobody checked.
   loading : Array[String]
-  argv : Array[String]
   /// How deep the call stack is, and how deep it may go.
   ///
   /// The semantics allows a program not to terminate, and an infinite
@@ -58,29 +57,15 @@ pub let default_max_depth : Int = 2000
 ///|
 pub fn Interp::new(
   tree : @program.SourceTree,
-  argv? : Array[String] = [],
+  host? : Host = Host::new(),
   max_depth? : Int = default_max_depth,
 ) -> Interp {
-  {
-    tree,
-    out: StringBuilder(),
-    loaded: Map([]),
-    loading: [],
-    argv,
-    depth: 0,
-    max_depth,
-  }
-}
-
-///|
-/// Everything the run has printed.
-pub fn Interp::output(self : Interp) -> String {
-  self.out.to_string()
+  { tree, host, loaded: Map([]), loading: [], depth: 0, max_depth, }
 }
 
 ///|
 fn Interp::write(self : Interp, text : String) -> Unit {
-  self.out.write_string(text)
+  (self.host.write)(text)
 }
 
 // ---------------------------------------------------------------------------
@@ -113,7 +98,7 @@ pub fn Interp::predefined(self : Interp, q : String) -> Env? {
       entries.push(("ceil", Prim(MathCeil)))
     }
     "sys" => {
-      entries.push(("argv", List(self.argv.map(fn(a) { Value::Str(a) }))))
+      entries.push(("argv", List(self.host.argv.map(fn(a) { Value::Str(a) }))))
       entries.push(("exit", Prim(Exit)))
     }
     "typing" => entries.push(("Any", Prim(Opaque("Any"))))

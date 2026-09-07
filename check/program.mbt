@@ -5,8 +5,19 @@
 /// A port of the reference's `walk_program`. The whole of it is one rule that
 /// the module checker does not have: a rejection is attributed to the FILE it
 /// came from, so a program whose `helper.py` is ill formed says so.
-pub fn check_program(tree : @program.SourceTree) -> @err.Diagnostic? {
-  let program = Program::new(tree.modules_map())
+pub fn check_program(
+  tree : @program.SourceTree,
+  host_members? : Map[String, Array[String]] = Map([]),
+) -> @err.Diagnostic? {
+  let modules = tree.modules_map()
+  // A host module has no source, so discovery never found one; it stands in
+  // the program with an empty body, as a predefined module does.
+  for name, _ in host_members {
+    if !modules.contains(name) {
+      modules[name] = { body: [], span: @basic.nowhere, }
+    }
+  }
+  let program = Program::new(modules, host_members~)
   try check_module(program, "__main__") |> ignore catch {
     @err.PurePyError(d) =>
       match d.kind {
