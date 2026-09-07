@@ -85,3 +85,47 @@ pub fn hex_digits(n : Int, width : Int) -> String {
   }
   out.to_string()
 }
+
+///|
+/// Python's `repr` of a bytes object.
+///
+/// The same shape as a string's, with two differences: the `b` prefix, and
+/// "printable" meaning printable ASCII -- every byte outside `0x20..0x7E` is
+/// `\xNN`, whatever a code point of that value would be.
+pub fn py_bytes_repr(b : Bytes) -> String {
+  let mut has_single = false
+  let mut has_double = false
+  for byte in b {
+    if byte == b'\'' {
+      has_single = true
+    }
+    if byte == b'"' {
+      has_double = true
+    }
+  }
+  let quote = if has_single && !has_double { '"' } else { '\'' }
+  let out = StringBuilder()
+  out.write_string("b")
+  out.write_char(quote)
+  for byte in b {
+    let n = byte.to_int()
+    if n == 0x5C {
+      out.write_string("\\\\")
+    } else if n == 0x0A {
+      out.write_string("\\n")
+    } else if n == 0x0D {
+      out.write_string("\\r")
+    } else if n == 0x09 {
+      out.write_string("\\t")
+    } else if n == quote.to_int() {
+      out.write_char('\\')
+      out.write_char(quote)
+    } else if n >= 0x20 && n < 0x7F {
+      out.write_char(n.unsafe_to_char())
+    } else {
+      out.write_string("\\x" + hex_digits(n, 2))
+    }
+  }
+  out.write_char(quote)
+  out.to_string()
+}

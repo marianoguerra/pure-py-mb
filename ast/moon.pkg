@@ -1,1 +1,7 @@
+import {
+  "marianoguerra/pure-py/basic",
+}
 
+import {
+  "marianoguerra/pure-py/ast",
+} for "test"

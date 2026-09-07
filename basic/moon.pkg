@@ -1,3 +1,7 @@
 import {
+  "moonbitlang/core/double",
+}
+
+import {
   "marianoguerra/pure-py/basic",
 } for "test"
