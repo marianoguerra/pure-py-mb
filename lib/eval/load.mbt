@@ -10,7 +10,10 @@
 /// of what a module loads TO; it is not true of what loading PRINTS. Two
 /// imports of a module that prints would print twice, and CPython prints
 /// once. The suite has a test for it.
-pub fn Interp::load(self : Interp, q : String) -> Result[Env, Outcome] {
+pub async fn Interp::load(
+  self : Interp,
+  q : String,
+) -> Result[Env, Outcome] noraise {
   match self.loaded.get(q) {
     Some(env) => return Ok(env)
     None => ()
@@ -53,11 +56,11 @@ pub fn Interp::load(self : Interp, q : String) -> Result[Env, Outcome] {
 ///|
 /// eval-module: the import prefix, then the body under `builtins`, and the
 /// module's submodules as stubs beneath what the body assigned.
-fn Interp::load_body(
+async fn Interp::load_body(
   self : Interp,
   m : @ast.Module,
   q : String,
-) -> Result[Env, Outcome] {
+) -> Result[Env, Outcome] noraise {
   let (prefix, rest) = @analysis.split_imports(m.body)
   let imported = match self.eval_imports(prefix, q) {
     Ok(env) => env
@@ -110,11 +113,11 @@ fn Interp::submods(self : Interp, q : String) -> Env {
 
 ///|
 /// The import prefix of a module (Figure 4.12a).
-fn Interp::eval_imports(
+async fn Interp::eval_imports(
   self : Interp,
   prefix : Array[@ast.Stmt],
   q : String,
-) -> Result[Env, Outcome] {
+) -> Result[Env, Outcome] noraise {
   // Each import's bindings are collected in SOURCE order -- loading prints,
   // and the order it prints in is observable -- and folded from the RIGHT.
   // `eval-import` reads `{x: v} ⊲ ρ'` with `ρ'` the result of the imports
@@ -197,11 +200,11 @@ fn prefix_of(p : String, q : String) -> Bool {
 ///|
 /// `ρ, x imports o` (Figure 4.11): a member of a loaded module, with a
 /// submodule stub loaded on the way out.
-fn Interp::import_name(
+async fn Interp::import_name(
   self : Interp,
   members : Env,
   x : String,
-) -> Result[Value, Outcome] {
+) -> Result[Value, Outcome] noraise {
   match members.get(x) {
     None => Err(Stuck("no member '" + x + "' to import"))
     Some(ModStub(sub)) =>
@@ -216,11 +219,11 @@ fn Interp::import_name(
 ///|
 /// `q, v loads-as v'` (Figure 4.12b): the reference for the ROOT of a dotted
 /// module name, loading each ancestor on the way.
-fn Interp::loads_as(
+async fn Interp::loads_as(
   self : Interp,
   q : String,
   v : Value,
-) -> Result[Value, Outcome] {
+) -> Result[Value, Outcome] noraise {
   match q.rev_split_once(".") {
     None => Ok(v)
     Some((parent, x)) => {
@@ -243,7 +246,7 @@ fn Interp::loads_as(
 // ---------------------------------------------------------------------------
 
 ///|
-/// How a run ended.
+/// How a run ended, or that it has not ended yet.
 pub(all) enum RunResult {
   /// The main module loaded: `SystemExit(0)`.
   Finished
@@ -251,11 +254,19 @@ pub(all) enum RunResult {
   Terminated(Termination)
   /// The run reached an operation the semantics leaves undefined.
   Undefined(String)
+  /// The run is parked in a host call that has not answered yet, and the
+  /// synchronous driver had nothing to return.
+  ///
+  /// This is not an end: the run resumes when the host calls the
+  /// continuation it was handed, and `run_with`'s `done` is called with the
+  /// real answer then. A host whose `call` always answers immediately never
+  /// sees this.
+  Suspended
 } derive(Debug)
 
 ///|
 /// `⇒ κ` (Figure 4.13): evaluate a program by loading its main module.
-pub fn Interp::run(self : Interp) -> RunResult {
+pub async fn Interp::run(self : Interp) -> RunResult noraise {
   match self.load("__main__") {
     Ok(_) => Finished
     Err(Aborts(k)) => Terminated(k)
@@ -270,6 +281,9 @@ pub fn Interp::run(self : Interp) -> RunResult {
 /// The simple path: output is collected and handed back. A caller that wants
 /// output as it happens, its own modules, or its own functions supplies a
 /// `Host` and uses `run_with`.
+///
+/// The host this builds answers no foreign call, so this run cannot suspend
+/// and the result is never `Suspended`. The transcript is complete.
 pub fn run_program(
   tree : @program.SourceTree,
   argv? : Array[String] = [],
@@ -282,14 +296,50 @@ pub fn run_program(
 }
 
 ///|
-/// Evaluate a program against a host.
+/// Evaluate a program against a host, from a synchronous caller.
 ///
 /// Output goes wherever the host sends it, so nothing is returned but how the
 /// run ended.
+///
+/// A host call may suspend -- park the run and answer later -- and a
+/// synchronous caller cannot wait for it. So this returns when the run ends
+/// OR when it suspends, whichever comes first, and there are two ways to
+/// learn the answer:
+///
+///   * The return value is the answer when the run ended here, and
+///     `Suspended` when it did not.
+///   * `done` is called exactly once with the answer whenever the run really
+///     ends: before this returns when nothing suspended, and from inside the
+///     host's own continuation when something did.
+///
+/// A host that always answers immediately can ignore `done` and read the
+/// return value, which is what every caller before suspension existed did.
+/// A host that suspends should pass `done`, because the value returned here
+/// is not the answer.
+///
+/// An embedder that is itself asynchronous does not need any of this:
+/// `Interp::run` is an `async` function and can simply be awaited.
 pub fn run_with(
   tree : @program.SourceTree,
   host : Host,
   max_depth? : Int = default_max_depth,
+  done? : (RunResult) -> Unit = fn(_) {  },
 ) -> RunResult {
-  Interp::new(tree, host~, max_depth~).run()
+  let interp = Interp::new(tree, host~, max_depth~)
+  let mut answer : RunResult = Suspended
+  run_async(() => {
+    let r = interp.run()
+    answer = r
+    done(r)
+  })
+  answer
 }
+
+///|
+/// Start an asynchronous computation from a synchronous caller.
+///
+/// The compiler's own driver: it runs the work until it finishes or until it
+/// suspends, and returns either way. A suspended computation resumes when
+/// whoever took its continuation calls it, on whatever stack that happens to
+/// be -- so the work may still be running after this has returned.
+fn run_async(work : async () -> Unit noraise) -> Unit = "%async.run"

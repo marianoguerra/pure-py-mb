@@ -95,12 +95,18 @@ pub fn run(
 /// The host receives output as it happens, supplies `sys.argv`, defines
 /// whatever modules the guest may import, and answers calls to the functions
 /// in them. `docs/embedding.mbt.md` is the whole of it, with examples.
+///
+/// A host function may answer later rather than now, in which case the run
+/// parks and this returns `Suspended`; `done` is called with the real answer
+/// when the host resumes it. A host that always answers on the spot can
+/// ignore `done` and read the return value.
 pub fn run_with(
   tree : @program.SourceTree,
   host : @eval.Host,
   max_depth? : Int = @eval.default_max_depth,
+  done? : (@eval.RunResult) -> Unit = fn(_) {  },
 ) -> @eval.RunResult {
-  @eval.run_with(tree, host, max_depth~)
+  @eval.run_with(tree, host, max_depth~, done~)
 }
 
 ///|

@@ -8,12 +8,12 @@
 /// pattern against an integer is an honest no-match. A literal pattern
 /// against a list reaches `eq` between unrelated kinds and is undefined too.
 /// The conformance suite has a test for each of the three.
-pub fn Interp::match_pattern(
+pub async fn Interp::match_pattern(
   self : Interp,
   env : Env,
   p : @ast.Pattern,
   v : Value,
-) -> MatchResult {
+) -> MatchResult noraise {
   match p {
     // eval-pat-lit, eval-pat-lit-no, eval-pat-neg-lit, eval-pat-neg-lit-no
     MatchValue(value~, ..) => {
@@ -176,12 +176,12 @@ fn lookup_pattern(
 ///|
 /// `dispatch(ρ, v, p⃗, s⃗)`: the first case whose pattern matches, with its
 /// bindings; no bindings and `pass` if none does.
-pub fn Interp::dispatch(
+pub async fn Interp::dispatch(
   self : Interp,
   env : Env,
   v : Value,
   cases : Array[@ast.MatchCase],
-) -> Dispatch {
+) -> Dispatch noraise {
   for c in cases {
     match self.match_pattern(env, c.pattern, v) {
       Match(bindings) => return Taken(bindings, c.body)
@@ -202,11 +202,11 @@ pub(all) enum Dispatch {
 
 ///|
 /// `resolve-class(ρ, q)`: the class a qualified name stands for.
-pub fn Interp::resolve_class(
+pub async fn Interp::resolve_class(
   self : Interp,
   e : @ast.Expr,
   env : Env,
-) -> @context.ClassEntry? {
+) -> @context.ClassEntry? noraise {
   match e {
     Name(id~, ..) =>
       match env.get(id) {

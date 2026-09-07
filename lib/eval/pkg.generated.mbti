@@ -18,7 +18,7 @@ pub fn region_bindings(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt])
 
 pub fn run_program(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> (String, RunResult)
 
-pub fn run_with(@program.SourceTree, Host, max_depth? : Int) -> RunResult
+pub fn run_with(@program.SourceTree, Host, max_depth? : Int, done? : (RunResult) -> Unit) -> RunResult
 
 // Errors
 
@@ -33,11 +33,11 @@ pub struct Host {
   write : (String) -> Unit
   argv : Array[String]
   modules : Map[String, @hashmap.HashMap[String, @value.Value]]
-  call : (String, Array[@value.Value]) -> @value.Outcome
+  call : async (String, Array[@value.Value]) -> @value.Outcome noraise
 }
 pub fn Host::member_names(Self) -> Map[String, Array[String]]
 pub fn Host::module_names(Self) -> Array[String]
-pub fn Host::new(write? : (String) -> Unit, argv? : Array[String], modules? : Array[HostModule], call? : (String, Array[@value.Value]) -> @value.Outcome) -> Self
+pub fn Host::new(write? : (String) -> Unit, argv? : Array[String], modules? : Array[HostModule], call? : async (String, Array[@value.Value]) -> @value.Outcome noraise) -> Self
 
 pub(all) struct HostModule {
   name : String
@@ -52,24 +52,25 @@ pub struct Interp {
   mut depth : Int
   max_depth : Int
 }
-pub fn Interp::apply(Self, @value.Value, Array[@value.Value]) -> @value.Outcome
-pub fn Interp::dispatch(Self, @hashmap.HashMap[String, @value.Value], @value.Value, Array[@ast.MatchCase]) -> Dispatch
-pub fn Interp::eval_body(Self, Array[@ast.Stmt], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult
-pub fn Interp::eval_expr(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @value.Outcome
-pub fn Interp::eval_exprs(Self, Array[@ast.Expr], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@value.Value], @value.Outcome]
-pub fn Interp::eval_quals(Self, ArrayView[@ast.Comprehension], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@hashmap.HashMap[String, @value.Value]], @value.Outcome]
-pub fn Interp::eval_seq(Self, ArrayView[@analysis.Statement], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult
-pub fn Interp::load(Self, String) -> Result[@hashmap.HashMap[String, @value.Value], @value.Outcome]
-pub fn Interp::match_pattern(Self, @hashmap.HashMap[String, @value.Value], @ast.Pattern, @value.Value) -> @value.MatchResult
+pub async fn Interp::apply(Self, @value.Value, Array[@value.Value]) -> @value.Outcome noraise
+pub async fn Interp::dispatch(Self, @hashmap.HashMap[String, @value.Value], @value.Value, Array[@ast.MatchCase]) -> Dispatch noraise
+pub async fn Interp::eval_body(Self, Array[@ast.Stmt], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult noraise
+pub async fn Interp::eval_expr(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @value.Outcome noraise
+pub async fn Interp::eval_exprs(Self, Array[@ast.Expr], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@value.Value], @value.Outcome] noraise
+pub async fn Interp::eval_quals(Self, ArrayView[@ast.Comprehension], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@hashmap.HashMap[String, @value.Value]], @value.Outcome] noraise
+pub async fn Interp::eval_seq(Self, ArrayView[@analysis.Statement], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult noraise
+pub async fn Interp::load(Self, String) -> Result[@hashmap.HashMap[String, @value.Value], @value.Outcome] noraise
+pub async fn Interp::match_pattern(Self, @hashmap.HashMap[String, @value.Value], @ast.Pattern, @value.Value) -> @value.MatchResult noraise
 pub fn Interp::new(@program.SourceTree, host? : Host, max_depth? : Int) -> Self
 pub fn Interp::predefined(Self, String) -> @hashmap.HashMap[String, @value.Value]?
-pub fn Interp::resolve_class(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @context.ClassEntry?
-pub fn Interp::run(Self) -> RunResult
+pub async fn Interp::resolve_class(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @context.ClassEntry? noraise
+pub async fn Interp::run(Self) -> RunResult noraise
 
 pub(all) enum RunResult {
   Finished
   Terminated(@value.Termination)
   Undefined(String)
+  Suspended
 } derive(@debug.Debug)
 
 pub struct Sink {

@@ -105,6 +105,9 @@ pub fn analyze(source : String) -> String {
         Terminated(SystemExit(n)) => ("exited", "status " + n.to_string())
         Terminated(k) => ("terminated", k.to_text())
         Undefined(why) => ("undefined", why)
+        // The page's four host functions all answer on the spot, so this
+        // never happens; the arm is here because a host is allowed to park.
+        Suspended => ("undefined", "a host call that has not answered")
       }
       out.write_string("{\"state\":\"" + state + "\",\"detail\":")
       out.write_string(json_string(detail))

@@ -6,7 +6,11 @@
 /// truthiness is not PurePy's, so `if 5:` has no rule and the run is
 /// undefined. That is one of the conformance suite's dynamically excluded
 /// tests, and it is the reason `Stuck` is threaded everywhere.
-pub fn Interp::eval_expr(self : Interp, e : @ast.Expr, env : Env) -> Outcome {
+pub async fn Interp::eval_expr(
+  self : Interp,
+  e : @ast.Expr,
+  env : Env,
+) -> Outcome noraise {
   match e {
     // eval-var
     Name(id~, ..) =>
@@ -185,11 +189,11 @@ pub fn Interp::eval_expr(self : Interp, e : @ast.Expr, env : Env) -> Outcome {
 ///|
 /// A sequence of expressions, left to right, stopping at the first that does
 /// not yield a value (Figure 4.7).
-pub fn Interp::eval_exprs(
+pub async fn Interp::eval_exprs(
   self : Interp,
   es : Array[@ast.Expr],
   env : Env,
-) -> Result[Array[Value], Outcome] {
+) -> Result[Array[Value], Outcome] noraise {
   let out : Array[Value] = []
   for e in es {
     match self.eval_expr(e, env) {
@@ -206,11 +210,11 @@ pub fn Interp::eval_exprs(
 ///
 /// The enclosing environment is not extended by the result: a comprehension's
 /// variables are local to it.
-pub fn Interp::eval_quals(
+pub async fn Interp::eval_quals(
   self : Interp,
   generators : ArrayView[@ast.Comprehension],
   env : Env,
-) -> Result[Array[Env], Outcome] {
+) -> Result[Array[Env], Outcome] noraise {
   if generators.is_empty() {
     return Ok([env])
   }
@@ -264,13 +268,13 @@ pub fn Interp::eval_quals(
 ///|
 /// A call: a constructor, a lambda, a function from a mutual region, or a
 /// primitive. Anything else aborts with `TypeError`.
-fn Interp::eval_call(
+async fn Interp::eval_call(
   self : Interp,
   func : @ast.Expr,
   args : Array[@ast.Expr],
   keywords : Array[@ast.Keyword],
   env : Env,
-) -> Outcome {
+) -> Outcome noraise {
   // eval-constr: the arguments are evaluated first, and the class is looked
   // up rather than evaluated.
   match self.resolve_class(func, env) {
@@ -320,11 +324,11 @@ fn Interp::eval_call(
 
 ///|
 /// eval-call-lambda, eval-call-def, eval-call-prim and their arity rules.
-pub fn Interp::apply(
+pub async fn Interp::apply(
   self : Interp,
   callee : Value,
   actual : Array[Value],
-) -> Outcome {
+) -> Outcome noraise {
   self.depth += 1
   if self.depth > self.max_depth {
     self.depth -= 1
@@ -336,11 +340,11 @@ pub fn Interp::apply(
 }
 
 ///|
-fn Interp::apply_(
+async fn Interp::apply_(
   self : Interp,
   callee : Value,
   actual : Array[Value],
-) -> Outcome {
+) -> Outcome noraise {
   match callee {
     Lam(c) => {
       if c.params.length() != actual.length() {

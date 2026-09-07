@@ -10,11 +10,11 @@
 /// The figure leaves `print` and the `math` functions without a definition.
 /// They are implemented as Python implements them, since CPython is the
 /// oracle for what a run prints.
-fn Interp::call_primitive(
+async fn Interp::call_primitive(
   self : Interp,
   p : @value.Primitive,
   args : Array[Value],
-) -> Outcome {
+) -> Outcome noraise {
   match p {
     Print => {
       let parts : Array[String] = []

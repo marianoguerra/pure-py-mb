@@ -329,6 +329,13 @@ fn cmd_run(path : String, args : ArrayView[String]) -> Int {
       write_stderr("stuck: " + op)
       5
     }
+    // `run_program` builds the host itself, and that host answers no foreign
+    // call, so a run started here cannot park. The arm exists because the
+    // type allows what this caller does not.
+    Suspended => {
+      write_stderr("stuck: a host call suspended in a run that has no host")
+      5
+    }
   }
 }
 

@@ -21,6 +21,14 @@
 ///     anything it does not recognise or cannot do -- an operation the
 ///     semantics does not cover.
 ///
+///     It is `async`, so it may also answer LATER: a host that has to read a
+///     socket, await a promise or ask a person suspends, and the whole run
+///     parks where it stood -- mid-expression, inside a call, anywhere -- and
+///     resumes on the value the host eventually supplies. Nothing about the
+///     guest changes: PurePy has no `await`, and a program cannot tell a call
+///     that answered late from one that answered at once. See `run_with` for
+///     how a synchronous embedder drives a run that can park.
+///
 /// Everything else about a run is already a value: the program is a
 /// `SourceTree`, so a host that keeps its guest code in a database, a zip file
 /// or a string never touches the filesystem.
@@ -30,11 +38,16 @@
 /// invokes implicitly, because there are no hooks; and no ambient authority at
 /// all -- a guest can reach exactly the modules the host handed it. A host
 /// that gives no modules gives a program that can only compute and print.
+///
+/// Suspension adds nothing to that list. A parked run is not a concurrent
+/// one: there is one guest, it is at exactly one point, and the host holds
+/// the only continuation. Resuming it twice is the host resuming it twice,
+/// which is the host's bug and not an escape from the semantics.
 pub struct Host {
   write : (String) -> Unit
   argv : Array[String]
   modules : Map[String, @value.Env]
-  call : (String, Array[@value.Value]) -> @value.Outcome
+  call : async (String, Array[@value.Value]) -> @value.Outcome noraise
 }
 
 ///|
@@ -53,11 +66,17 @@ pub(all) struct HostModule {
 /// Every part has a default that does nothing observable: output is dropped,
 /// `sys.argv` is empty, no modules are defined, and a foreign call is an
 /// operation the semantics does not cover. A host supplies the parts it wants.
+///
+/// A `call` that answers on the spot is written exactly as it was before it
+/// could do otherwise: a plain function is a valid `async` one.
 pub fn Host::new(
   write? : (String) -> Unit = fn(_) {  },
   argv? : Array[String] = [],
   modules? : Array[HostModule] = [],
-  call? : (String, Array[@value.Value]) -> @value.Outcome = fn(name, _) {
+  call? : async (String, Array[@value.Value]) -> @value.Outcome noraise = fn(
+    name,
+    _,
+  ) {
     Stuck(
       "a call to the host function '" + name + "', which it does not answer",
     )

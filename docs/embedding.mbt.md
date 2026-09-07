@@ -248,6 +248,91 @@ A host that does not recognise a call gets the default, which is `Stuck`. That
 is the honest answer for anything the semantics does not cover, and it is
 reported the same way as PurePy's own undefined operations.
 
+## A host function that answers later
+
+`call` is `async`, so those three answers are what a host may say, and *when*
+is a separate question. A host that has to read a socket, await a promise or
+ask a person suspends: it takes the continuation it is handed, returns, and
+calls it when the answer arrives.
+
+The run parks where it stood -- mid-expression, inside a call, anywhere -- and
+resumes on the value supplied. **The guest cannot tell.** PurePy has no
+`await` and no concurrency; a call that answered a second later is a call that
+answered.
+
+What changes is the EMBEDDER's side, because a synchronous caller cannot wait
+for something that has not happened. `run_with` therefore returns when the run
+ends *or* when it parks, whichever comes first, and says which:
+
+| | return value | `done` |
+|---|---|---|
+| nothing suspended | the answer | already called, with the answer |
+| a call parked | `Suspended` | called later, from the host's continuation |
+
+```mbt check
+///|
+/// The compiler's own suspension primitive, which a host declares once: it
+/// hands `register` the continuation of the parked run and returns whatever
+/// that continuation is eventually called with.
+async fn[T] suspend(register : ((T) -> Unit) -> Unit) -> T noraise = "%async.suspend"
+```
+
+```mbt check
+///|
+test "a host function that answers later" {
+  // The host's queue of parked runs. A real one would hold these until a
+  // socket, a timer or a person produced the answer.
+  let waiting : Array[(@value.Value) -> Unit] = []
+  let sink = @eval.Sink::new()
+  let host = @eval.Host::new(
+    write=t => sink.write(t),
+    modules=[
+      @eval.HostModule::{
+        name: "slow",
+        members: [("fetch", @value.host_fn("slow.fetch"))],
+      },
+    ],
+    call=(_, _) => Val(suspend(answer => waiting.push(answer))),
+  )
+  let modules = Map([
+    (
+      "__main__",
+      @purepy.parse("from slow import fetch\nprint(fetch() + fetch())\n"),
+    ),
+  ])
+  let tree = @purepy.source_tree(modules)
+  let mut ended : @eval.RunResult? = None
+  // Both calls are operands of one addition, so the run parks twice inside a
+  // single expression.
+  let returned = @purepy.run_with(tree, host, done=r => ended = Some(r))
+  inspect(returned is Suspended, content="true")
+  inspect(ended is None, content="true")
+  // The host's work finishes and it resumes the run, which parks again in the
+  // second call and then finishes on the second answer.
+  waiting.pop().unwrap()(Int(2N))
+  waiting.pop().unwrap()(Int(40N))
+  inspect(ended is Some(Finished), content="true")
+  inspect(
+    sink.text(),
+    content=(
+      #|42
+      #|
+    ),
+  )
+}
+```
+
+An embedder that is itself asynchronous needs none of this. `Interp::run` is
+an `async` function, so a host running under `moonbitlang/async` -- or driving
+its own loop on the JavaScript or wasm side -- can simply await it, and a
+parked host call is an awaited one.
+
+Two things suspension does NOT bring. It is not concurrency: there is one
+guest, it is at exactly one point, and the host holds the only continuation.
+And it is not a scheduler: a continuation that is dropped is a run that never
+finishes, with no timeout and no cleanup -- if a host can give up on its own
+work, it answers `Stuck` instead of walking away.
+
 ## Passing values across
 
 A `Value` is data. Building one and reading one back are the same few
@@ -380,7 +465,8 @@ Everything a host can supply, in one place:
 | importable modules | `Host::new(modules=[HostModule::{...}])` | none |
 | what those functions do | `Host::new(call=...)` | `Stuck` |
 | the guest's code | `source_tree` or `source_tree_from` | — |
-| how deep it may recurse | `max_depth` | 2000 |
+| what those functions do, later | `Host::new(call=...)` and `run_with(done=...)` | answers now |
+| how deep it may recurse | `max_depth` | 500 |
 
 And everything a host does NOT have to defend against, because the language
 has no way to express it: mutation of a guest value, a guest reaching a name

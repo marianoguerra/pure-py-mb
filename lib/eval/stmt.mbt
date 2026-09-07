@@ -5,11 +5,11 @@
 /// environment: `eval-seq` composes `assigns ρ'` with what follows, and the
 /// caller overrides its own environment with the result. That is what keeps a
 /// function body's locals out of its caller.
-pub fn Interp::eval_seq(
+pub async fn Interp::eval_seq(
   self : Interp,
   items : ArrayView[@analysis.Statement],
   env : Env,
-) -> StmtResult {
+) -> StmtResult noraise {
   let mut accumulated = StmtResult::Assigns(@value.empty_env())
   let mut current = env
   for item in items {
@@ -26,20 +26,20 @@ pub fn Interp::eval_seq(
 }
 
 ///|
-pub fn Interp::eval_body(
+pub async fn Interp::eval_body(
   self : Interp,
   body : Array[@ast.Stmt],
   env : Env,
-) -> StmtResult {
+) -> StmtResult noraise {
   self.eval_seq(@analysis.statements(body)[:], env)
 }
 
 ///|
-fn Interp::eval_statement(
+async fn Interp::eval_statement(
   self : Interp,
   item : @analysis.Statement,
   env : Env,
-) -> StmtResult {
+) -> StmtResult noraise {
   match item {
     Single(s) => self.eval_stmt(s, env)
     // eval-def: a whole region at once, each definition closing over the
@@ -59,7 +59,11 @@ fn Interp::eval_statement(
 }
 
 ///|
-fn Interp::eval_stmt(self : Interp, s : @ast.Stmt, env : Env) -> StmtResult {
+async fn Interp::eval_stmt(
+  self : Interp,
+  s : @ast.Stmt,
+  env : Env,
+) -> StmtResult noraise {
   match s {
     // eval-pass
     Pass(..) => Assigns(@value.empty_env())

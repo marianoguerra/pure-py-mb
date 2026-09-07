@@ -20,6 +20,7 @@ fn program(modules : Array[(String, String)]) -> String {
     Finished => output
     Terminated(k) => output + "!" + k.to_text()
     Undefined(op) => output + "!stuck: " + op
+    Suspended => output + "!suspended"
   }
 }
 

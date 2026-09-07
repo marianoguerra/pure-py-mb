@@ -1,5 +1,86 @@
 # Changelog
 
+## 0.3.0 — 2026-09-08
+
+### A host function may answer later
+
+`Host::call` is `async`. A host that has to read a socket, await a promise or
+ask a person no longer has to answer on the spot: it takes the continuation it
+is handed, returns, and calls it when the answer arrives. The run parks
+exactly where it stood -- mid-expression, inside a call, anywhere -- and
+resumes on the value supplied.
+
+**The guest cannot tell.** PurePy has no `await` and no concurrency, and
+nothing in Chapter 4 changed: a call that answered a second later is a call
+that answered. Suspension is a fact about the embedder's clock, not about the
+semantics.
+
+It is also not an escape from the sandbox. A parked run is not a concurrent
+one -- there is one guest, it is at exactly one point, and the host holds the
+only continuation. A continuation that is dropped is a run that never
+finishes; there is no timeout and no cleanup, so a host that can give up on
+its own work answers `Stuck` rather than walking away.
+
+No JSPI, and no `moonbitlang/async`. This is MoonBit's own `async` effect,
+which the compiler transforms for every backend, so it works the same on
+`wasm`, `wasm-gc`, `js` and `native`. The test suite runs on all four.
+
+### The API this moved
+
+| | 0.2.0 | now |
+|---|---|---|
+| `Host::call` | `(String, Array[Value]) -> Outcome` | the same, `async` and `noraise` |
+| `RunResult` | `Finished`, `Terminated`, `Undefined` | and `Suspended` |
+| `run_with` | returns the answer | returns the answer *or* `Suspended`, and takes `done` |
+| `Interp::run` and the rest of the evaluator | `fn` | `async fn` |
+
+A host that answers immediately is written exactly as it was -- a plain
+function is a valid `async` one -- and reads the answer from `run_with`'s
+return value as before. A host that parks reads it from `done`, which is
+called exactly once with the real answer whenever the run really ends: before
+`run_with` returns when nothing suspended, and from inside the host's own
+continuation when something did. An embedder that is itself asynchronous needs
+neither: `Interp::run` is an `async` function and can be awaited.
+
+`run_program` did not move. It builds its own host, that host answers no
+foreign call, and so a run started through it cannot park.
+
+### What it costs
+
+Nothing is free, and two of these are worth stating before someone measures
+them and is surprised.
+
+**A guest call costs more machine stack.** The transform makes each one
+several frames where it was one. Measured on a native thread's default 8 MB,
+over a program that recurses with a small expression in each frame:
+
+| build | 0.2.0 | now |
+|---|---|---|
+| debug | over 4000 guest calls | about 1050 |
+| release | over 4000 | over 6000 |
+
+So `default_max_depth` drops from **2000 to 500**. The old number is now above
+the tightest ceiling rather than under half of it: a debug build would meet
+the stack at about 1050 and die there, rather than reach the limit and report
+`a call stack deeper than 2000`, which is the one thing the limit exists to
+do. 500 restores the margin the number always had. It costs a PurePy program
+half of Python's own recursion limit by default, and it is a parameter: a
+caller that knows it built for release should raise it.
+
+**Evaluation is slower**, by 1.8x on the worst shape of program -- one that
+does nothing but call. `fib(25)` in PurePy, native release: 0.30 s to 0.53 s.
+The conformance suite does not move, because most of its time is process
+startup:
+
+| what | 0.2.0 | now |
+|---|---|---|
+| `fib(25)`, native release | 0.30 s | 0.53 s |
+| the `run` oracle over 136 tests | 0.4 s | 0.4 s |
+| `playground.wasm` after `-Oz` | 262 KB | 279 KB |
+
+The conformance numbers are unchanged: 983/983 across the four oracles, and
+the playground's 27 examples still do what their notes say.
+
 ## 0.2.0 — 2026-09-07
 
 ### Semantics

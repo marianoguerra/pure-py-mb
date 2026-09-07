@@ -196,8 +196,8 @@ test "a guest calling a function the host supplied" {
 
 [docs/embedding.mbt.md](https://github.com/marianoguerra/pure-py-mb/blob/main/docs/embedding.mbt.md)
 is the whole surface, with worked examples for output, arguments, host modules, values crossing the
-boundary, refusing a guest before it runs, and bounding one that will not
-stop.
+boundary, a host function that answers later rather than now, refusing a guest
+before it runs, and bounding one that will not stop.
 
 ## Generating Python
 
