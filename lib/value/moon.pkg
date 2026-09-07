@@ -4,6 +4,7 @@ import {
   "marianoguerra/pure-py/context",
   "moonbitlang/core/double",
   "moonbitlang/core/immut/hashmap",
+  "moonbitlang/core/int",
   "moonbitlang/core/math",
   "moonbitlang/core/string",
 }

@@ -11,7 +11,7 @@ Regenerate with `just string-cases`; the diff is the review artifact.
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / "lexer" / "string_table_test.mbt"
+OUT = ROOT / "lib" / "lexer" / "string_table_test.mbt"
 
 CASES = [
     # plain

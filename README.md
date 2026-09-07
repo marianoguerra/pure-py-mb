@@ -66,6 +66,7 @@ MoonBit and Python 3.
 just quick        type-check, format, unit tests, layering, conformance
 just conform      every oracle, held to its ratchet
 just one PATTERN  the tests whose name contains PATTERN, in full
+just diffrun      generated programs, compared against CPython
 just playground   build the page and serve it on :8000
 just publish-dry  what would go to mooncakes, without sending it
 ```

@@ -1,6 +1,69 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-09-07
+
+### Semantics
+
+Five places where the interpreter answered something CPython does not. Every
+one of them was the same mistake, and it is worth naming once: a termination
+kind is *"named after the exception the same program raises under Python in
+the same circumstances"* (`operational-semantics.tex`), so `Aborts(TypeError)`
+is a claim about CPython. Where CPython raises nothing, the claim is false and
+the honest answer is that this subset has no rule.
+
+The arithmetic table in the specification is a `\todo` reading *"Arithmetic,
+as in Python … aborts TypeError where an operand is not a number"*. The
+sentence was written for `1 + "a"`, which the conformance suite tests and
+which **is** a TypeError. Reading it to cover everything non-numeric is what
+produced all five.
+
+| | 0.1.0 | now | CPython |
+|---|---|---|---|
+| `"a" + "b"`, `[1] + [2]`, `(1,) + (2,)` | `TypeError` | `'ab'`, `[1, 2]`, `(1, 2)` | same |
+| `"ab" * 3`, `[1] * 2` | `TypeError` | `'ababab'`, `[1, 1]` | same |
+| `"%d" % 3` | `TypeError` | undefined | `'3'` — no formatting here |
+| `True + 1`, `-False` | `TypeError` | undefined | `2`, `0` — no bool-as-int here |
+| `nan < 1.0` | undefined | `False` | same |
+| `4.0 % -2.0` | `0.0` | `-0.0` | same |
+
+Concatenation and repetition are the ones that matter in practice: a subset
+with no mutation rebuilds every sequence it touches, so `[x] + rest` is not a
+convenience there, it is the only way to write the loop.
+
+A bool now reaches no operator at all, which is what `True == 1` and
+`True < 2` already said. Whether Python has an answer is decided by
+substitution — put an integer where each bool is and ask whether the operands
+become a pair this implementation has a rule for — so `True + 1` is undefined
+while `True + None`, a TypeError in Python too, still aborts.
+
+Nothing here changes an API. `pkg.generated.mbti` is untouched.
+
+### Testing
+
+`tools/diffrun.py` generates PurePy programs, runs them under both this
+interpreter and CPython, and compares. The conformance suite's 136 `run` tests
+are programs somebody wrote; these are the ones nobody wrote. Three gates
+decide what counts: `pure-py check` discards what is not well formed, so the
+generator can chase variety rather than correctness; `stuck` is an answer and
+is skipped; everything else must match. `test/fuzzgen` builds the trees with
+`moonbitlang/core/quickcheck`, and shrinks a failure — dropping statements and
+simplifying expressions, with the oracle re-run on every candidate — before it
+is reported, so a counterexample is a line or two rather than forty.
+
+It found `%` on a string and the bool rule. The other three came from reading
+`moon coverage analyze` over the evaluator and checking each unreached branch
+against CPython.
+
+The tool's allow list of deliberate divergences is **empty**, and that is the
+result rather than the starting point: every entry it held turned out to be a
+defect. `just diffrun` runs it; `ci` runs it at 300 programs.
+
+### Fixed
+
+`tools/gen_*.py` wrote their tables to `value/`, `lexer/` and `basic/` —
+paths that stopped existing when the module split moved them under `lib/`.
+`just tables` would have created orphan directories and left the real tables
+untouched.
 
 ### Packaging
 

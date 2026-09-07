@@ -52,6 +52,13 @@ prop:
 fuzz count="3000" seed="1": build
     tools/fuzz.py --count {{count}} --seed {{seed}}
 
+# Generated programs, run against CPython. The suite's 136 `run` tests are
+# programs somebody wrote; these are the ones nobody wrote. A failure is
+# shrunk before it is printed, so the counterexample is a line or two.
+[group('gates')]
+diffrun count="300" seed="1": build
+    tools/diffrun.py --count {{count}} --seed {{seed}}
+
 # How long each stage takes. A baseline, not a gate.
 [group('dev')]
 bench: build
@@ -133,6 +140,7 @@ ci:
     tools/unparse_check.sh
     tools/conform.py --show 5
     tools/fuzz.py --count 2000 --seed 1
+    tools/diffrun.py --count 300 --seed 1
     moon build --target wasm-gc --release
     cp _build/wasm-gc/release/build/marianoguerra/pure-py-dev/playground/playground.wasm playground/
     tools/optimize-wasm.sh

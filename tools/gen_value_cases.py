@@ -17,7 +17,12 @@ Regenerate with `just tables`; the diff is the review artifact.
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / "value" / "arith_table_test.mbt"
+OUT = ROOT / "lib" / "value" / "arith_table_test.mbt"
+
+# `nan` and `inf` are not literals and PurePy has no `float()`, so a case that
+# wants one builds it the way a PurePy program has to: out of an overflow.
+NAN = "(1e308 * 10.0 - 1e308 * 10.0)"
+INF = "(1e308 * 10.0)"
 
 # Expressions over literals only: no names, no calls.
 CASES = [
@@ -31,6 +36,13 @@ CASES = [
     "1.0 + 2.0", "1.5 * 2.0", "7.0 / 2.0", "-7.5 // 2.0", "7.5 // 2.0",
     "-7.5 % 2.0", "7.5 % -2.0", "1.0 / 0.0", "1.0 // 0.0", "1.0 % 0.0",
     "2.0 ** 0.5", "0.1 + 0.2", "1e308 * 10.0", "-1e308 * 10.0",
+    # a zero remainder takes the sign of the divisor, like every other
+    "1.5 % -0.5", "4.0 % -2.0", "-1.5 % 0.5", "2.0 % -1.0", "-4.0 % 2.0",
+    # every ordering against a nan is False; `==` and `!=` have their own rule
+    f"{NAN} < 1.0", f"{NAN} <= 1.0", f"{NAN} > 1.0", f"{NAN} >= 1.0",
+    f"1.0 < {NAN}", f"{NAN} < {NAN}", f"{NAN} >= {NAN}",
+    f"{NAN} == {NAN}", f"{NAN} != {NAN}", f"{NAN} == 1.0",
+    f"{INF} > 1e308", f"-{INF} < 0.0",
     "2.5 ** 2.0", "1.0 - 1.0", "-0.0 + 0.0",
     # mixed
     "1 + 2.0", "2.0 * 3", "7 / 2.0", "1 == 1.0", "1 < 1.5", "2 > 1.5",
@@ -56,6 +68,17 @@ CASES = [
     '[1, "a", (2, 3), {"k": 1.5}, None, True]', "('x',)", "()", "[]", "{}",
     '{"k": [1, (2,)]}',
     "True == True", "True != False", "True == True",
+    # sequence concatenation and repetition: `+` and `*` are not arithmetic
+    # over a str, a list or a tuple, so the arithmetic table's TypeError
+    # sentence does not reach them
+    '"a" + "b"', '"" + "a"', '"a" * 2', '2 * "a"', '"a" * 0', '"a" * -1',
+    "[1] + [2]", "[] + [1]", "[1] * 2", "2 * [1]", "[1] * 0", "[1] * -1",
+    "(1,) + (2,)", "() + (1,)", "(1,) * 2", "2 * (1,)", "(1,) * 0",
+    '["a"] + [1]', '"" * 3', "[] * 3",
+    # the mismatches and the non-sequence operators keep Python's TypeError
+    '1 + "a"', '"a" + 1', "[1] + (2,)", "(1,) + [2]", '"a" + [1]',
+    "1.5 + 'a'", "None + None", '"a" - "b"', "[1] - [2]", "1 + [2]",
+    '{"a": 1} + {"b": 2}', '"a" * "b"', "[1] * [2]", '"a" * 1.5',
 ]
 
 # What PurePy leaves undefined, and why. Each is something CPython answers.
@@ -63,6 +86,12 @@ UNDEFINED = {
     "True == 1": "bool against int",
     "1 == True": "bool against int",
     "True < 2": "bool is not a number",
+    "True + 1": "bool is not a number",
+    "True * 2": "bool is not a number",
+    "-True": "bool is not a number",
+    "+False": "bool is not a number",
+    '"a" * True': "bool is not a count",
+    "1 % False": "bool is not a number",
     "not 1": "truthiness",
     "not None": "truthiness",
     '1 == "a"': "unrelated kinds",
@@ -73,26 +102,23 @@ UNDEFINED = {
     '{1: 2}': "a dict key that is not a string",
     "1 in 2": "membership in a number",
     '[1] < (1,)': "a list against a tuple",
+    # `%` on a string is Python's printf formatting, which PurePy does not
+    # model. Undefined, not TypeError: Python has an answer, it is just not
+    # one this subset gives.
+    '"%d" % 3': "string formatting",
+    '"a-%s" % "b"': "string formatting",
+    '"a" % []': "string formatting",
 }
 
 
-# What PurePy ABORTS with TypeError although Python has a value for it. The
-# spec's arithmetic table says "aborts TypeError where an operand is not a
-# number", so string concatenation and list concatenation are not arithmetic
-# here. Nothing in the conformance suite reaches these; the rows record the
-# decision so it cannot drift silently.
-TYPE_ERROR = {
-    '"a" + "b"': "string concatenation",
-    '"a" * 2': "string repetition",
-    "[1] + [2]": "list concatenation",
-    "[1] * 2": "list repetition",
-    '"a" - "b"': "no Python answer either",
-    # A bool is not a number, and the arithmetic table's sentence applies:
-    # TypeError. Ordering has no such sentence, so `True < 2` is undefined
-    # instead -- the two operator families follow their own spec lines.
-    "True + 1": "a bool in arithmetic",
-    "True * 2": "a bool in arithmetic",
-}
+# What PurePy ABORTS with TypeError although Python has a value for it.
+#
+# Empty, and meant to stay that way. A termination kind is named after the
+# exception the same program raises under Python, so a row here would be this
+# implementation claiming an exception Python does not raise. The rows that
+# used to live here -- string concatenation, list repetition, `%` on a string,
+# a bool in arithmetic -- are now either answered or undefined.
+TYPE_ERROR: dict[str, str] = {}
 
 
 def answer(expr: str) -> str:

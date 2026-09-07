@@ -243,6 +243,229 @@ test "the builtins" {
 }
 
 ///|
+/// `+` and `*` over sequences, through the whole interpreter.
+///
+/// The table in `value/arith_table_test.mbt` is the differential against
+/// CPython; these are the same operations reached from source, which is the
+/// path `pure-py run` takes and the one that was broken. A recursion over a
+/// list, rebuilding the spine rather than mutating it, is the shape every
+/// program in the subset has to use, so it is the case worth running whole.
+test "sequences concatenate and repeat" {
+  assert_eq(run("print(\"a\" + \"b\")\n"), "ab\n")
+  assert_eq(run("print(\"a\" + \"b\" + \"c\")\n"), "abc\n")
+  assert_eq(run("print(\"\" + \"a\")\n"), "a\n")
+  assert_eq(run("print([1] + [2])\n"), "[1, 2]\n")
+  assert_eq(run("print([] + [1])\n"), "[1]\n")
+  assert_eq(run("print((1,) + (2,))\n"), "(1, 2)\n")
+  assert_eq(run("print(\"ab\" * 3)\n"), "ababab\n")
+  assert_eq(run("print(3 * \"ab\")\n"), "ababab\n")
+  assert_eq(run("print([1, 2] * 2)\n"), "[1, 2, 1, 2]\n")
+  assert_eq(run("print((1,) * 2)\n"), "(1, 1)\n")
+  // A non-positive count is the empty sequence, not an error.
+  assert_eq(run("print(\"a\" * 0, [1] * 0, [1] * -1)\n"), " [] []\n")
+  // Concatenation does not mutate: the operands survive it.
+  assert_eq(run("xs = [1]\nys = xs + [2]\nprint(xs, ys)\n"), "[1] [1, 2]\n")
+}
+
+///|
+/// The rows the fix must NOT swallow. `1 + "a"` is the conformance suite's own
+/// `binop_non_number.py`, and it stays a TypeError; so does every pair Python
+/// refuses. `True` stays undefined, because a bool is not a number here.
+test "concatenation does not widen what TypeError covers" {
+  assert_eq(run("print(1 + \"a\")\n"), "!TypeError")
+  assert_eq(run("print(\"a\" + 1)\n"), "!TypeError")
+  assert_eq(run("print(\"a\" - \"b\")\n"), "!TypeError")
+  assert_eq(run("print([1] - [2])\n"), "!TypeError")
+  // A list and a tuple do not concatenate in Python either.
+  assert_eq(run("print([1] + (2,))\n"), "!TypeError")
+  assert_eq(run("print((1,) + [2])\n"), "!TypeError")
+  assert_eq(run("print(1 + [2])\n"), "!TypeError")
+  assert_eq(run("print({\"a\": 1} + {\"b\": 2})\n"), "!TypeError")
+  // Neither operand of `*` is a count.
+  assert_eq(run("print(\"a\" * \"b\")\n"), "!TypeError")
+  assert_eq(run("print(\"a\" * 1.5)\n"), "!TypeError")
+  // A bool is not a number, and not a count -- and that is UNDEFINED rather
+  // than an abort, because Python raises nothing there.
+  assert_eq(
+    run("print(True + 1)\n"),
+    "!stuck: '+' on a bool: PurePy does not make a bool a number",
+  )
+  assert_eq(
+    run("print(\"a\" * True)\n"),
+    "!stuck: '*' on a bool: PurePy does not make a bool a number",
+  )
+}
+
+///|
+/// A bool in an operator is undefined, not a `TypeError`.
+///
+/// A termination kind names the exception Python raises in the same
+/// circumstances, and Python raises none of these -- `True + 1` is 2 and
+/// `-False` is 0. So the answer is that this subset has no rule, which is
+/// what `True == 1` and `True < 2` already said.
+test "a bool never reaches arithmetic" {
+  let no_rule = "!stuck: '+' on a bool: PurePy does not make a bool a number"
+  assert_eq(run("print(True + 1)\n"), no_rule)
+  assert_eq(run("print(1 + True)\n"), no_rule)
+  assert_eq(run("print(+True)\n"), no_rule)
+  assert_eq(
+    run("print(-False)\n"),
+    "!stuck: '-' on a bool: PurePy does not make a bool a number",
+  )
+  // The bool can arrive from a comparison; it is the value that decides.
+  assert_eq(
+    run("print(-(1 == 1))\n"),
+    "!stuck: '-' on a bool: PurePy does not make a bool a number",
+  )
+  assert_eq(
+    run("print(63 % False)\n"),
+    "!stuck: '%' on a bool: PurePy does not make a bool a number",
+  )
+  // A bool against a non-number is a TypeError under Python too, so it keeps
+  // being one here.
+  assert_eq(run("print(True + None)\n"), "!TypeError")
+  // `not` is the one operator a bool belongs to.
+  assert_eq(run("print(not True, True and False)\n"), "False False\n")
+}
+
+///|
+/// Every ordering against a nan is False, and a zero remainder takes the sign
+/// of its divisor. Neither is reachable from a literal: PurePy has no `float`
+/// builtin, so a nan and an infinity are built out of an overflow, the way a
+/// program in the subset has to build them.
+test "nan orders as False, and a zero remainder is signed" {
+  let nan = "nan = 1e308 * 10.0 - 1e308 * 10.0\n"
+  assert_eq(run(nan + "print(nan < 1.0, nan > 1.0)\n"), "False False\n")
+  assert_eq(run(nan + "print(nan <= 1.0, nan >= 1.0)\n"), "False False\n")
+  assert_eq(run(nan + "print(1.0 < nan, nan < nan)\n"), "False False\n")
+  // `==` and `!=` had their own rule already, and it still holds.
+  assert_eq(run(nan + "print(nan == nan, nan != nan)\n"), "False True\n")
+  // An unordered pair of KINDS stays undefined, nan or not.
+  assert_eq(
+    run(nan + "print(nan < \"a\")\n"),
+    "!stuck: '<' between float and str",
+  )
+  assert_eq(run("print(1.5 % -0.5, 4.0 % -2.0)\n"), "-0.0 -0.0\n")
+  assert_eq(run("print(-1.5 % 0.5, -4.0 % 2.0)\n"), "0.0 0.0\n")
+  assert_eq(run("print(7.5 % -2.0, -7.5 % 2.0)\n"), "-0.5 0.5\n")
+}
+
+///|
+/// The recursion the subset forces on anything that builds a sequence: no
+/// mutation, so every step concatenates. This is what `pure-py run` could not
+/// evaluate at all.
+test "a spine rebuilt by concatenation, as the subset requires" {
+  let source =
+    #|def rest_from(xs, i):
+    #|    if i >= len(xs):
+    #|        return []
+    #|    return [xs[i]] + rest_from(xs, i + 1)
+    #|
+    #|
+    #|def joined(xs, sep, i):
+    #|    if i >= len(xs):
+    #|        return ""
+    #|    if i == len(xs) - 1:
+    #|        return xs[i]
+    #|    return xs[i] + sep + joined(xs, sep, i + 1)
+    #|
+    #|
+    #|print(rest_from([1, 2, 3], 1))
+    #|print(joined(["a", "b", "c"], "/", 0))
+    #|
+  assert_eq(run(source), "[2, 3]\na/b/c\n")
+}
+
+///|
+/// `%` on a string is Python's printf formatting. PurePy models none, so the
+/// answer is "no rule" rather than TypeError -- Python does not raise one.
+test "string formatting is undefined, not an error" {
+  assert_eq(
+    run("print(\"%d\" % 3)\n"),
+    "!stuck: '%' on a string: PurePy has no string formatting",
+  )
+  assert_eq(
+    run("print(\"a\" % [])\n"),
+    "!stuck: '%' on a string: PurePy has no string formatting",
+  )
+  // A string on the RIGHT is arithmetic on a non-number, and Python does
+  // raise there.
+  assert_eq(run("print(1 % \"a\")\n"), "!TypeError")
+}
+
+///|
+/// Branches the unit tests never reached, found by `moon coverage analyze`
+/// and answered against CPython. Equality between an object and a value of
+/// another kind, and equality reached through a float on the left, are the
+/// two the conformance suite happens not to contain.
+test "equality over objects, floats and mixed kinds" {
+  let p =
+    #|from dataclasses import dataclass
+    #|from typing import Any
+    #|
+    #|
+    #|@dataclass
+    #|class P:
+    #|    x: Any
+    #|    y: Any
+    #|
+    #|
+  assert_eq(
+    run(p + "print(P(1, 2) == P(1, 2), P(1, 2) == P(1, 3))\n"),
+    "True False\n",
+  )
+  // Nested, so equality recurses through the fields.
+  assert_eq(run(p + "print(P(1, [2]) == P(1, [2]))\n"), "True\n")
+  // An object against another kind has no rule, as any unrelated pair does.
+  assert_eq(run(p + "print(P(1, 2) == 1)\n"), "!stuck: == between P and int")
+  // A float on the left of `==` with an int on the right: the comparison is
+  // exact, so a large integer is not made equal to the double nearest it.
+  assert_eq(run("print(1.0 == 1, 2.0 == 3)\n"), "True False\n")
+  assert_eq(run("print(1e23 == 100000000000000000000000)\n"), "False\n")
+}
+
+///|
+/// Subscripting, and the three ways it can fail. `getitem`'s error arms were
+/// uncovered; each is a different answer and Python agrees with all three.
+test "subscripting fails three different ways" {
+  assert_eq(run("print([1, 2][1], (3, 4)[0], \"xy\"[1])\n"), "2 3 y\n")
+  assert_eq(run("print([1, 2][-1])\n"), "2\n")
+  assert_eq(run("print([1, 2][2])\n"), "!IndexError")
+  assert_eq(run("print({\"a\": 1}[\"b\"])\n"), "!KeyError")
+  // A subscript of something with no elements, and a key of the wrong kind.
+  assert_eq(run("print(1[0])\n"), "!TypeError")
+  assert_eq(run("print([1, 2][\"a\"])\n"), "!TypeError")
+  // A dict subscripted by a non-string is undefined, not a KeyError: PurePy
+  // dictionaries are keyed by strings.
+  assert_eq(
+    run("print({\"a\": 1}[1])\n"),
+    "!stuck: subscripting a dict with int",
+  )
+}
+
+///|
+/// `math`'s domain errors, and the arities the primitives reject. Python
+/// raises ValueError for a log of a non-positive, which is not a termination
+/// kind, so PurePy has no rule rather than an abort.
+test "the primitives reject what they cannot answer" {
+  assert_eq(
+    program([("__main__", "import math\nprint(math.log(1.0))\n")]),
+    "0.0\n",
+  )
+  assert_eq(
+    program([("__main__", "import math\nprint(math.exp(0.0))\n")]),
+    "1.0\n",
+  )
+  assert_eq(
+    program([("__main__", "import math\nprint(math.log(0.0))\n")]),
+    "!stuck: the logarithm of a number that is not positive",
+  )
+  assert_eq(run("print(range(1, 3))\n"), "!stuck: range with 2 arguments")
+  assert_eq(run("print(range(\"a\"))\n"), "!stuck: range of str")
+  assert_eq(run("print(len(1))\n"), "!TypeError")
+}
+
+///|
 test "sys.exit ends the run with its status and prints nothing more" {
   assert_eq(
     program([("__main__", "import sys\nprint(1)\nsys.exit(2)\nprint(3)\n")]),

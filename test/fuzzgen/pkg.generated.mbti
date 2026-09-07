@@ -1,0 +1,15 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/pure-py-dev/test/fuzzgen"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Draw
+
+type Program
+
+// Type aliases
+
+// Traits

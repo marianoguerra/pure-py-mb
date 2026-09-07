@@ -11,7 +11,7 @@ Regenerate with `just tables`; the diff is the review artifact.
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / "value" / "repr_table_test.mbt"
+OUT = ROOT / "lib" / "value" / "repr_table_test.mbt"
 
 CASES = [
     "None", "True", "False", "0", "-1", "10000000000000000000000",

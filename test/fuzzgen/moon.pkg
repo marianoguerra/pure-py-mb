@@ -1,0 +1,11 @@
+import {
+  "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/write",
+  "moonbitlang/core/env",
+  "moonbitlang/core/quickcheck",
+  "moonbitlang/core/quickcheck/splitmix",
+  "moonbitlang/core/string",
+}
+
+pkgtype(kind: "executable")

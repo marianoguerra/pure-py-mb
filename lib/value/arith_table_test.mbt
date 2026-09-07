@@ -49,6 +49,23 @@ let arith_cases : Array[(String, String)] = [
   ("0.1 + 0.2", "0.30000000000000004"),
   ("1e308 * 10.0", "inf"),
   ("-1e308 * 10.0", "-inf"),
+  ("1.5 % -0.5", "-0.0"),
+  ("4.0 % -2.0", "-0.0"),
+  ("-1.5 % 0.5", "0.0"),
+  ("2.0 % -1.0", "-0.0"),
+  ("-4.0 % 2.0", "0.0"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) < 1.0", "False"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) <= 1.0", "False"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) > 1.0", "False"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) >= 1.0", "False"),
+  ("1.0 < (1e308 * 10.0 - 1e308 * 10.0)", "False"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) < (1e308 * 10.0 - 1e308 * 10.0)", "False"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) >= (1e308 * 10.0 - 1e308 * 10.0)", "False"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) == (1e308 * 10.0 - 1e308 * 10.0)", "False"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) != (1e308 * 10.0 - 1e308 * 10.0)", "True"),
+  ("(1e308 * 10.0 - 1e308 * 10.0) == 1.0", "False"),
+  ("(1e308 * 10.0) > 1e308", "True"),
+  ("-(1e308 * 10.0) < 0.0", "True"),
   ("2.5 ** 2.0", "6.25"),
   ("1.0 - 1.0", "0.0"),
   ("-0.0 + 0.0", "0.0"),
@@ -117,12 +134,60 @@ let arith_cases : Array[(String, String)] = [
   ("True == True", "True"),
   ("True != False", "True"),
   ("True == True", "True"),
+  ("\"a\" + \"b\"", "'ab'"),
+  ("\"\" + \"a\"", "'a'"),
+  ("\"a\" * 2", "'aa'"),
+  ("2 * \"a\"", "'aa'"),
+  ("\"a\" * 0", "''"),
+  ("\"a\" * -1", "''"),
+  ("[1] + [2]", "[1, 2]"),
+  ("[] + [1]", "[1]"),
+  ("[1] * 2", "[1, 1]"),
+  ("2 * [1]", "[1, 1]"),
+  ("[1] * 0", "[]"),
+  ("[1] * -1", "[]"),
+  ("(1,) + (2,)", "(1, 2)"),
+  ("() + (1,)", "(1,)"),
+  ("(1,) * 2", "(1, 1)"),
+  ("2 * (1,)", "(1, 1)"),
+  ("(1,) * 0", "()"),
+  ("[\"a\"] + [1]", "['a', 1]"),
+  ("\"\" * 3", "''"),
+  ("[] * 3", "[]"),
+  ("1 + \"a\"", "!TypeError"),
+  ("\"a\" + 1", "!TypeError"),
+  ("[1] + (2,)", "!TypeError"),
+  ("(1,) + [2]", "!TypeError"),
+  ("\"a\" + [1]", "!TypeError"),
+  ("1.5 + 'a'", "!TypeError"),
+  ("None + None", "!TypeError"),
+  ("\"a\" - \"b\"", "!TypeError"),
+  ("[1] - [2]", "!TypeError"),
+  ("1 + [2]", "!TypeError"),
+  ("{\"a\": 1} + {\"b\": 2}", "!TypeError"),
+  ("\"a\" * \"b\"", "!TypeError"),
+  ("[1] * [2]", "!TypeError"),
+  ("\"a\" * 1.5", "!TypeError"),
 ]
 
 ///|
 let undefined_cases : Array[String] = [
+  // string formatting; CPython says '3'
+  "\"%d\" % 3",
+  // string formatting; CPython says 'a'
+   "\"a\" % []",
+  // bool is not a count; CPython says 'a'
+   "\"a\" * True",
   // unrelated kinds; CPython says False
-  "\"a\" == 1",
+   "\"a\" == 1",
+  // string formatting; CPython says 'a-b'
+   "\"a-%s\" % \"b\"",
+  // bool is not a number; CPython says 0
+   "+False",
+  // bool is not a number; CPython says -1
+   "-True",
+  // bool is not a number; CPython says !ZeroDivisionError
+   "1 % False",
   // unrelated kinds; CPython says !TypeError
    "1 < 'a'",
   // unrelated kinds; CPython says False
@@ -131,6 +196,10 @@ let undefined_cases : Array[String] = [
    "1 == True",
   // membership in a number; CPython says !TypeError
    "1 in 2",
+  // bool is not a number; CPython says 2
+   "True * 2",
+  // bool is not a number; CPython says 2
+   "True + 1",
   // bool is not a number; CPython says True
    "True < 2",
   // bool against int; CPython says True
@@ -150,22 +219,7 @@ let undefined_cases : Array[String] = [
 ]
 
 ///|
-let type_error_cases : Array[String] = [
-  // string repetition; CPython says 'aa'
-  "\"a\" * 2",
-  // string concatenation; CPython says 'ab'
-   "\"a\" + \"b\"",
-  // no Python answer either; CPython says !TypeError
-   "\"a\" - \"b\"",
-  // a bool in arithmetic; CPython says 2
-   "True * 2",
-  // a bool in arithmetic; CPython says 2
-   "True + 1",
-  // list repetition; CPython says [1, 1]
-   "[1] * 2",
-  // list concatenation; CPython says [1, 2]
-   "[1] + [2]",
-]
+let type_error_cases : Array[String] = []
 
 ///|
 test "every operator over literals answers as CPython answers" {

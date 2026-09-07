@@ -16,7 +16,7 @@ import pathlib
 import struct
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / "lexer" / "number_table_test.mbt"
+OUT = ROOT / "lib" / "lexer" / "number_table_test.mbt"
 
 CASES = [
     "0", "00", "000", "1", "7", "42", "1_000", "1_000_000",
