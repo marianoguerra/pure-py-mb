@@ -2,6 +2,8 @@
 // it can drift from the library it documents.
 import {
   "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/eval",
   "marianoguerra/pure-py/value",
 } for "test"

@@ -295,6 +295,42 @@ A site is `None` when there is no guest position to give: an abort a host
 returned before any guest expression was entered, or one from a tree built by
 a code generator, whose nodes carry no source.
 
+### A site survives a tree the host rewrote
+
+A host that assembles the program it runs -- a notebook prepending a prelude
+of imports to a cell, a template wrapping a fragment -- does not lose the
+positions of the part a person wrote. Builders make nodes with a `nowhere`
+span, `parse` gives the parsed ones their own, and a site is only ever taken
+from the node that aborted. So an abort in the written part reports the line
+number the WRITER counted, not the line it ended up on:
+
+```mbt check
+///|
+test "an injected prelude does not move the positions of what was written" {
+  // What the person wrote. Three lines, and the third one fails.
+  let written = @purepy.parse(
+    "rows = {\"a\": 1}\nn = 3\nprint(rows[\"missing\"])\n",
+  )
+  // What the host puts in front of it: built, not parsed, so `nowhere`.
+  let assembled : @ast.Module = {
+    body: [@ast.Stmt::assign("cell", @ast.Expr::int(1)), ..written.body],
+    span: @basic.nowhere,
+  }
+  let tree = @purepy.source_tree(Map([("__main__", assembled)]))
+  match @purepy.run(tree) {
+    (_, Terminated(_, Some(site))) =>
+      // Line 3 -- the writer's third line -- although it is the fourth
+      // statement of the program that actually ran.
+      inspect(site.span.start.line, content="3")
+    _ => fail("the missing key is a KeyError")
+  }
+}
+```
+
+This is a property of where sites come from rather than a feature added for
+it, but it is the property that makes a position worth having for an embedder
+that does not run the source it was handed.
+
 ## A host function that answers later
 
 `call` is `async`, so those three answers are what a host may say, and *when*
@@ -502,6 +538,21 @@ should measure its own ceiling and pass `max_depth` accordingly**, the way the
 playground does: it runs a release wasm-gc module whose ceiling is about 130,
 and sets 40. Recurse at increasing depths until the host throws, then take
 about a third.
+
+**A measured ceiling belongs to a VERSION of this library, not to PurePy.**
+How many host frames a guest call costs is an implementation detail that
+moves: the `async` transform in 0.3.0 spent about a dozen of them where there
+had been one, and the abort sites in 0.4.0 spent a little more again. Probed
+with `def down(n): return 0 if n == 0 else 1 + down(n - 1)` on `wasm-gc`
+debug, the ceiling went from about 40 guest calls to about 38.
+
+Two calls is nothing; the direction is the point. A number measured against
+one version can sit above the ceiling in the next, and that regression does
+not appear as a failing test -- it appears in production as the host's own
+stack overflow, which on a JavaScript engine is a `RangeError` no MoonBit
+code can catch and in a browser takes the tab. **Re-measure after upgrading**,
+and leave the note in the code that says why the number is what it is. The
+table above was measured at 0.3.0.
 
 ```mbt check
 ///|
