@@ -5,41 +5,57 @@
 ### The default recursion limit is per backend
 
 `default_max_depth` is 500 on `native` and **12** on `wasm`, `wasm-gc` and
-`js`. It was 500 everywhere, and on a JavaScript engine that number was two
-orders of magnitude above the ceiling.
+`js`. It was 500 everywhere, and on a JavaScript engine that number was above
+the ceiling it was meant to sit under -- so the guard never fired and the
+engine threw first.
 
-The `async` transform spends roughly a dozen host frames per guest call, and a
-JavaScript engine's stack is about a megabyte where a native thread's is
-eight. Measured by recursing at increasing depths until the host's own stack
-went, over a program with a small expression in each frame:
+That failure mode is why this is a defect and not a tuning note. On a native
+thread an overflow is a crash the developer sees. On a JavaScript engine it is
+a `RangeError` that no MoonBit code can catch, and in a browser it takes the
+tab with it -- where `a call stack deeper than 12` is an ordinary termination
+that a page can render and a program can be rewritten around. Turning the
+first into the second is the only thing the limit is for.
 
-| backend | debug | release |
-|---|---|---|
-| `native` | about 1050 guest calls | over 6000 |
-| `js` | about 40 | — |
-| `wasm-gc` | about 26 | about 130 |
-| `wasm` | about 26 | — |
+### What the ceiling actually is
 
-So a `wasm-gc` embedder running `moon test` had a limit of 500 guarding a
-stack that held about 26. The guard never fired; the engine threw first.
+Measured by recursing at increasing depths until the host's own stack went,
+over a program with a small expression in each frame:
 
-That failure mode is the reason this is a defect and not a tuning note. On a
-native thread an overflow is a crash the developer sees. On a JavaScript
-engine it is a `RangeError` that no MoonBit code can catch, and in a browser
-it takes the tab with it -- where `a call stack deeper than 12` is an ordinary
-termination that a page can render and a program can be rewritten around. The
-limit exists to turn the first into the second, and it was not doing it.
+| how the evaluator is called | debug | release | release + `-Oz` |
+|---|---|---|---|
+| `native`, as a process | about 1050 | over 6000 | — |
+| `wasm-gc` under `moon test` | about 26 | about 130 | — |
+| `wasm-gc` as a bare export | about 370 | about 600 | about 780 |
 
-Twelve is under half the tightest measured ceiling, which is the margin the
-native number already had. It is a floor and not a recommendation: an embedder
-that ships a release build should measure its own ceiling and pass
-`max_depth`. `docs/embedding.mbt.md` says how, and the playground now does it
--- 40, against the release ceiling of about 130, where it used to say 120 and
-sit at the edge of taking the tab down.
+The build matters. **The caller matters more,** which is the part worth
+carrying away: the same `wasm-gc` module holds fourteen times as many guest
+calls entered directly as it does under a test harness, because whatever is
+already on the stack is stack the guest does not get.
 
-Found by an embedder: a web agent that makes PurePy the whole language of a
-tool call, running under `moon test --target wasm-gc`, which is exactly the
-tightest configuration and not an exotic one.
+12 is the tightest row rather than a guess at anyone's embedding -- the
+configuration a consumer reaches without choosing it, `moon test --target
+wasm-gc` on a debug build -- and it is under half of it, the margin the native
+number already keeps. It is a floor. `docs/embedding.mbt.md` says how to
+measure your own: call the module the way your application calls it, at
+increasing depths, more than once per depth because the answer depends on what
+is already on the stack, and take about a third.
+
+The playground now does that and passes **250**, measured against the release
+module it actually ships. It used to pass 120 against a default of 500, and
+its note claimed the library's default was 2000, which stopped being true in
+0.3.0.
+
+`tools/depth-probe.mjs` is the measurement itself rather than a number in a
+document that rots -- `just depth-probe` over the page's own module, or point
+it at any module exporting `analyze`. It bisects, tries each depth five times
+because the answer depends on what is already on the stack, and says when it
+found the module's own `max_depth` instead of the engine's ceiling, which is
+the mistake it is easiest to publish.
+
+Found by an embedder that makes PurePy the whole language of a tool call and
+runs it under `moon test --target wasm-gc` -- the tightest configuration, and
+not an exotic one -- and then sharpened by that same embedder sweeping a real
+browser, which is what turned up the caller effect.
 
 ## 0.4.0 — 2026-09-08
 

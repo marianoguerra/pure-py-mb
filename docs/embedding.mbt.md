@@ -509,35 +509,48 @@ run ends undefined rather than overflowing the host's stack, and the limit is
 a parameter because the ceiling belongs to the host: a JavaScript engine holds
 far fewer frames than a native thread.
 
-**How much fewer is not a detail.** Evaluation is `async`, so that a host
-function may suspend, and the transform spends roughly a dozen host frames per
-guest call. Measured by recursing at increasing depths until the host's own
-stack went, over a program with a small expression in each frame:
+**How much fewer is not a detail, and the backend is not the whole of it.**
+Evaluation is `async`, so that a host function may suspend, and the transform
+spends roughly a dozen host frames per guest call. Measured by recursing at
+increasing depths until the host's own stack went, over a program with a small
+expression in each frame:
 
-| backend | debug | release |
-|---|---|---|
-| `native` | about 1050 guest calls | over 6000 |
-| `js` | about 40 | — |
-| `wasm-gc` | about 26 | about 130 |
-| `wasm` | about 26 | — |
+| how the evaluator is called | debug | release | release + `-Oz` |
+|---|---|---|---|
+| `native`, as a process | about 1050 | over 6000 | — |
+| `wasm-gc` under `moon test` | about 26 | about 130 | — |
+| `wasm-gc` as a bare export | about 370 | about 600 | about 780 |
+
+The build matters, as you would expect. **The caller matters more.** The same
+`wasm-gc` module holds fourteen times as many guest calls entered directly as
+it does under a test harness, because whatever is already on the stack is
+stack the guest does not get. An embedder who measures under `moon test` and
+ships a page is measuring the wrong number, and so is one who does the
+reverse.
 
 So the default is per backend -- 500 on `native`, **12** on the three that run
-on a JavaScript engine -- and both are under half the tightest ceiling
-measured for them.
+on a JavaScript engine -- and 12 is the tightest of the rows above rather than
+a guess at yours. It is the configuration a consumer reaches without choosing
+it: `moon test --target wasm-gc` on a debug build, where the ceiling really is
+about 26.
 
 Twelve is small, and it is deliberate. On a native thread an overflow is a
 crash the developer sees; on a JavaScript engine it is a `RangeError` that no
 MoonBit code can catch, and in a browser it takes the tab. `a call stack
 deeper than 12` is an ordinary termination that a page can render, a model can
-read and a program can be rewritten around. The default is the number that is
-safe in the tightest build anyone might run -- which includes
-`moon test --target wasm-gc`, where the ceiling really is about 26.
+read and a program can be rewritten around.
 
-It is a floor, not a recommendation. **An embedder that ships a release build
-should measure its own ceiling and pass `max_depth` accordingly**, the way the
-playground does: it runs a release wasm-gc module whose ceiling is about 130,
-and sets 40. Recurse at increasing depths until the host throws, then take
-about a third.
+**It is a floor, not a recommendation. Measure your own and pass
+`max_depth`.** Call your module the way your application calls it -- same
+build, same optimizer, same depth of caller beneath it -- at increasing depths
+until the engine throws, and take about a third. Do it more than once at each
+depth: the answer depends on what is already on the stack, so a single try can
+disagree with itself. The playground does this and passes 250, against a
+measured ceiling of about 780 for the release module it actually ships.
+
+`tools/depth-probe.mjs` in this repository is that measurement, and it will
+sweep any wasm module exporting `analyze` -- point it at yours. `just
+depth-probe` runs it over the page's own.
 
 **A measured ceiling belongs to a VERSION of this library, not to PurePy.**
 How many host frames a guest call costs is an implementation detail that
@@ -551,8 +564,7 @@ one version can sit above the ceiling in the next, and that regression does
 not appear as a failing test -- it appears in production as the host's own
 stack overflow, which on a JavaScript engine is a `RangeError` no MoonBit
 code can catch and in a browser takes the tab. **Re-measure after upgrading**,
-and leave the note in the code that says why the number is what it is. The
-table above was measured at 0.3.0.
+and leave the note in the code that says why the number is what it is.
 
 ```mbt check
 ///|

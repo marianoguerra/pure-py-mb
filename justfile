@@ -64,6 +64,15 @@ diffrun count="300" seed="1": build
 bench: build
     tools/bench.sh
 
+# The number `playground.mbt` passes as `max_depth` should be about a third of
+# what this reports, and `docs/embedding.mbt.md` says why it is measured
+# rather than assumed.
+#
+# How deep the guest can recurse before the host's stack gives out.
+[group('dev')]
+depth-probe:
+    node tools/depth-probe.mjs
+
 # Run one package's tests, e.g. `just test-pkg lexer`.
 [group('dev')]
 test-pkg pkg:
