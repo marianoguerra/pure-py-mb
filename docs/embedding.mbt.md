@@ -473,6 +473,36 @@ run ends undefined rather than overflowing the host's stack, and the limit is
 a parameter because the ceiling belongs to the host: a JavaScript engine holds
 far fewer frames than a native thread.
 
+**How much fewer is not a detail.** Evaluation is `async`, so that a host
+function may suspend, and the transform spends roughly a dozen host frames per
+guest call. Measured by recursing at increasing depths until the host's own
+stack went, over a program with a small expression in each frame:
+
+| backend | debug | release |
+|---|---|---|
+| `native` | about 1050 guest calls | over 6000 |
+| `js` | about 40 | — |
+| `wasm-gc` | about 26 | about 130 |
+| `wasm` | about 26 | — |
+
+So the default is per backend -- 500 on `native`, **12** on the three that run
+on a JavaScript engine -- and both are under half the tightest ceiling
+measured for them.
+
+Twelve is small, and it is deliberate. On a native thread an overflow is a
+crash the developer sees; on a JavaScript engine it is a `RangeError` that no
+MoonBit code can catch, and in a browser it takes the tab. `a call stack
+deeper than 12` is an ordinary termination that a page can render, a model can
+read and a program can be rewritten around. The default is the number that is
+safe in the tightest build anyone might run -- which includes
+`moon test --target wasm-gc`, where the ceiling really is about 26.
+
+It is a floor, not a recommendation. **An embedder that ships a release build
+should measure its own ceiling and pass `max_depth` accordingly**, the way the
+playground does: it runs a release wasm-gc module whose ceiling is about 130,
+and sets 40. Recurse at increasing depths until the host throws, then take
+about a third.
+
 ```mbt check
 ///|
 test "an unbounded recursion is reported, not crashed into" {
@@ -513,7 +543,7 @@ Everything a host can supply, in one place:
 | what those functions do | `Host::new(call=...)` | `Stuck` |
 | the guest's code | `source_tree` or `source_tree_from` | — |
 | what those functions do, later | `Host::new(call=...)` and `run_with(done=...)` | answers now |
-| how deep it may recurse | `max_depth` | 500 |
+| how deep it may recurse | `max_depth` | 500 native, 12 on a JavaScript engine |
 
 And everything a host does NOT have to defend against, because the language
 has no way to express it: mutation of a guest value, a guest reaching a name

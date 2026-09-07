@@ -106,33 +106,6 @@ fn Interp::sited(self : Interp, e : @ast.Expr, o : Outcome) -> Outcome {
 }
 
 ///|
-/// How deep a PurePy call stack may go by default.
-///
-/// Half Python's own limit of a thousand, which is less generous than it was
-/// and for a reason worth recording. Evaluation is `async`, so that a host
-/// function may suspend, and the compiler's transform makes each guest call
-/// cost several times the machine stack a direct call cost. Measured on a
-/// native thread's default 8 MB, over a program that recurses with a small
-/// expression in each frame:
-///
-/// | build | before | now |
-/// |---|---|---|
-/// | debug | over 4000 frames | about 1050 |
-/// | release | far more | over 6000 |
-///
-/// The old default of 2000 was under half the tightest ceiling. It is now
-/// over it: a debug build would meet the stack at about 1050 and die there,
-/// rather than reach the limit and report. 500 restores the margin the
-/// number always had.
-///
-/// A release build holds ten times this, so a caller who knows what it built
-/// should raise it. That is why it is a parameter and not a constant -- as
-/// is the fact that the ceiling is the HOST's: a JavaScript engine's stack
-/// holds far fewer frames than a native thread's, and a caller running there
-/// wants a smaller number still.
-pub let default_max_depth : Int = 500
-
-///|
 pub fn Interp::new(
   tree : @program.SourceTree,
   host? : Host = Host::new(),

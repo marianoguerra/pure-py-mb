@@ -436,7 +436,7 @@ print(first((1, 2)))
           "No check can rule out a program that runs forever. Recursion is " +
           "bounded instead, and the bound belongs to the host: a browser tab " +
           "holds far fewer frames than a native thread, so this page sets it " +
-          "to 120 where the library's own default is 2000.",
+          "to 40, measured against the stack its own release build has.",
         expect: 'undefined',
         src: `def forever(n):
     return forever(n + 1)

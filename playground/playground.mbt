@@ -99,7 +99,14 @@ pub fn analyze(source : String) -> String {
     None => {
       // A modest limit: a browser tab's stack is not a native thread's, and a
       // playground should report rather than take the page down with it.
-      let result = @purepy.run_with(tree, host, max_depth=120)
+      //
+      // 40, not the 12 the library defaults to on this backend. This page
+      // ships a release build, whose measured ceiling is about 130 guest
+      // calls where a debug build's is about 26; 40 keeps the same third of
+      // the ceiling that the library's own defaults keep. Raising it to the
+      // ceiling itself is what would take the tab down: a `RangeError` is
+      // not catchable, and `max_depth` firing is.
+      let result = @purepy.run_with(tree, host, max_depth=40)
       let (state, detail) = match result {
         Finished => ("finished", "")
         Terminated(SystemExit(n), _) => ("exited", "status " + n.to_string())
