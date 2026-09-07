@@ -28,7 +28,7 @@ pub struct SourceTree {
   modules : Map[String, @ast.Module]
   paths : Map[String, String]
 }
-pub fn SourceTree::from_entry(String, predefined~ : Array[String]) -> Self raise
+pub fn SourceTree::from_entry(String, predefined~ : Array[String], sweep? : Bool) -> Self raise
 pub fn SourceTree::get(Self, String) -> @ast.Module?
 pub fn SourceTree::module_names(Self) -> Array[String]
 pub fn SourceTree::modules_map(Self) -> Map[String, @ast.Module]

@@ -5,7 +5,7 @@
     "check": 392,
     "parse": 392,
     "program": 63,
-    "run": 0,
+    "run": 136,
     "tokens": 413
   },
   "note": "A ratchet, not a target. `tools/conform.py` fails when an oracle drops below its floor (a regression) and equally when it rises above one (an improvement nobody recorded): rerun with --regen-policy and commit the moved floor in the change that earned it.",

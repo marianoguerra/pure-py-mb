@@ -21,6 +21,7 @@ fn main {
     ["parse", .. paths] => @sys.exit(cmd_parse(paths))
     ["check", .. paths] => @sys.exit(cmd_check(paths))
     ["check-program", path] => @sys.exit(cmd_check_program(path))
+    ["run", path, .. rest] => @sys.exit(cmd_run(path, rest))
     ["dump", path, "--pos"] | ["dump", "--pos", path] =>
       @sys.exit(cmd_dump(path, pos=true))
     [cmd, ..] => {
@@ -205,6 +206,70 @@ fn cmd_check_program(path : String) -> Int {
       println(d.message())
       d.exit_code()
     }
+  }
+}
+
+///|
+/// `run MAIN [ARGS...]`: evaluate a program.
+///
+/// `sys.argv` is `[MAIN, ARGS...]`, so `argv[0]` is the path as it was
+/// given, exactly as Python has it.
+///
+/// Output is buffered and flushed before an abort message, so a program that
+/// prints and then fails shows both in the order Python shows them.
+fn cmd_run(path : String, args : ArrayView[String]) -> Int {
+  let argv = [path]
+  for a in args {
+    argv.push(a)
+  }
+  let tree = @program.SourceTree::from_entry(
+    path,
+    predefined=@check.predefined_module_names(),
+    sweep=false,
+  ) catch {
+    @err.PurePyError(d) => {
+      println(d.message())
+      return d.exit_code()
+    }
+    e => {
+      println("pure-py: \{e}")
+      return 1
+    }
+  }
+  let (output, result) = @eval.run_program(tree, argv~)
+  write_stdout(output)
+  match result {
+    Finished => 0
+    // `sys.exit(n)` leaves with status n and prints nothing.
+    Terminated(SystemExit(n)) => n.to_int()
+    Terminated(k) => {
+      // Python's traceback ends with the exception's name and message, and
+      // that last line is what the suite's `.exception.expected` holds.
+      write_stderr("Traceback (most recent call last):\n" + k.to_text())
+      1
+    }
+    // An operation the semantics leaves undefined. Chapter 1 allows an
+    // implementation to abort or to produce Python's answer; this one aborts,
+    // so that the suite's dynamically excluded tests are checked.
+    Undefined(op) => {
+      write_stderr("stuck: " + op)
+      5
+    }
+  }
+}
+
+///|
+/// Write a line to standard error.
+///
+/// MoonBit's core offers no standard error, so this writes to `/dev/stderr`,
+/// which every POSIX system provides. A system that does not have it falls
+/// back to standard output: the message is then in the wrong stream, but it
+/// is not lost, and the conformance harness compares the two together.
+fn write_stderr(text : String) -> Unit {
+  // One call per run: `write_string_to_file` opens for TRUNCATION, so two
+  // calls would leave only the second when standard error is a file.
+  @fs.write_string_to_file("/dev/stderr", text + "\n") catch {
+    _ => println(text)
   }
 }
 

@@ -486,7 +486,9 @@ def main() -> None:
     print(f"\n{passed}/{total} across {len(reports)} oracle(s)")
 
     if args.regen_policy:
-        policy["totals"] = {r.name: r.total for r in reports}
+        # Merge, not replace: the token and tree oracles live in their own
+        # scripts and record their totals in the same file.
+        policy.setdefault("totals", {}).update({r.name: r.total for r in reports})
         save_policy(policy)
         print(f"wrote {POLICY.relative_to(ROOT)}")
         return

@@ -1,11 +1,57 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "marianoguerra/pure-py/eval"
 
+import {
+  "marianoguerra/pure-py/analysis",
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/context",
+  "marianoguerra/pure-py/program",
+  "marianoguerra/pure-py/value",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/hashmap",
+}
+
 // Values
+pub fn region_bindings(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt]) -> @hashmap.HashMap[String, @value.Value]
+
+pub fn run_program(@program.SourceTree, argv? : Array[String]) -> (String, RunResult)
 
 // Errors
 
 // Types and methods
+pub(all) enum Dispatch {
+  Taken(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt])
+  FellThrough
+  DispatchStuck(String)
+}
+
+pub struct Interp {
+  tree : @program.SourceTree
+  out : StringBuilder
+  loaded : Map[String, @hashmap.HashMap[String, @value.Value]]
+  loading : Array[String]
+  argv : Array[String]
+}
+pub fn Interp::apply(Self, @value.Value, Array[@value.Value]) -> @value.Outcome
+pub fn Interp::dispatch(Self, @hashmap.HashMap[String, @value.Value], @value.Value, Array[@ast.MatchCase]) -> Dispatch
+pub fn Interp::eval_body(Self, Array[@ast.Stmt], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult
+pub fn Interp::eval_expr(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @value.Outcome
+pub fn Interp::eval_exprs(Self, Array[@ast.Expr], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@value.Value], @value.Outcome]
+pub fn Interp::eval_quals(Self, ArrayView[@ast.Comprehension], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@hashmap.HashMap[String, @value.Value]], @value.Outcome]
+pub fn Interp::eval_seq(Self, ArrayView[@analysis.Statement], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult
+pub fn Interp::load(Self, String) -> Result[@hashmap.HashMap[String, @value.Value], @value.Outcome]
+pub fn Interp::match_pattern(Self, @hashmap.HashMap[String, @value.Value], @ast.Pattern, @value.Value) -> @value.MatchResult
+pub fn Interp::new(@program.SourceTree, argv? : Array[String]) -> Self
+pub fn Interp::output(Self) -> String
+pub fn Interp::predefined(Self, String) -> @hashmap.HashMap[String, @value.Value]?
+pub fn Interp::resolve_class(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @context.ClassEntry?
+pub fn Interp::run(Self) -> RunResult
+
+pub(all) enum RunResult {
+  Finished
+  Terminated(@value.Termination)
+  Undefined(String)
+} derive(@debug.Debug)
 
 // Type aliases
 

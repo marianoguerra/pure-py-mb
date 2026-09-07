@@ -255,9 +255,17 @@ fn walk_py_files(dir : String) -> Array[String] {
 
 ///|
 /// Discover a whole program from its entry file.
+///
+/// `sweep` decides whether every `.py` under the entry's directory is part of
+/// the program, or only what the entry imports, transitively. Checking sweeps:
+/// the reference discovers an unused module and reports it if it will not
+/// parse. Running does not: the semantics only ever loads a module something
+/// imports, and a directory full of unrelated files -- which is exactly what
+/// the conformance suite's module-level tests are -- must not be dragged in.
 pub fn SourceTree::from_entry(
   entry_path : String,
   predefined~ : Array[String],
+  sweep? : Bool = true,
 ) -> SourceTree raise {
   let base_dir = parent(entry_path)
   let entry_tree = load(stem(entry_path), base_dir)
@@ -270,8 +278,10 @@ pub fn SourceTree::from_entry(
     queue.push(p)
   }
   @basic.sort_names(queue)
-  for n in source_tree_names(base_dir, entry_path) {
-    queue.push(n)
+  if sweep {
+    for n in source_tree_names(base_dir, entry_path) {
+      queue.push(n)
+    }
   }
   for n in with_proper_prefixes(import_targets(entry_tree, base_dir)) {
     queue.push(n)

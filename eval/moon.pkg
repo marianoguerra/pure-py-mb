@@ -1,1 +1,15 @@
+import {
+  "marianoguerra/pure-py/analysis",
+  "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/context",
+  "marianoguerra/pure-py/program",
+  "marianoguerra/pure-py/value",
+  "moonbitlang/core/math",
+}
 
+import {
+  "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/program",
+  "marianoguerra/pure-py/value",
+} for "test"
