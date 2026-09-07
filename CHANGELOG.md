@@ -59,8 +59,22 @@ examples are compiled and run as tests.
 wasm-gc module and deployed by GitHub Actions. It is a real embedder: the
 `host` module its examples import is supplied by the page.
 `tools/check_examples.mjs --expect` runs every example through the very module
-the page loads and fails if one has drifted from the outcome recorded beside
-it.
+the page loads -- after it has been shrunk, because that is the one that ships
+-- and fails if one has drifted from the outcome recorded beside it.
+
+`moon build --release` strips symbols and eliminates what the single export
+cannot reach, but does not optimise for size. `tools/optimize-wasm.sh` runs
+`wasm-opt -Oz` over the result, which takes about a quarter off:
+
+| | raw | over the wire |
+|---|---|---|
+| as built | 340 KB | 138 KB |
+| after `-Oz` | 262 KB | 110 KB |
+
+The feature list it passes is explicit and that is the whole trick:
+`--all-features` lets binaryen emit post-MVP shapes no browser accepts, and
+the module then fails to compile rather than failing a test. The pass is
+optional -- without binaryen the page still builds, one quarter larger.
 
 ### Decisions
 

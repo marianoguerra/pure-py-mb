@@ -135,6 +135,7 @@ ci:
     tools/fuzz.py --count 2000 --seed 1
     moon build --target wasm-gc --release
     cp _build/wasm-gc/release/build/playground/playground.wasm playground/
+    tools/optimize-wasm.sh
     node tools/check_examples.mjs --expect
 
 # ---------------------------------------------------------------------------
@@ -145,11 +146,13 @@ ci:
 # its examples import is supplied through the embedding interface, so anything
 # that breaks embedding breaks the playground.
 
-# Build the wasm-gc module and put it beside the page.
+# Build the wasm-gc module, shrink it if binaryen is here, and put it beside
+# the page.
 [group('playground')]
 playground-build:
     moon build --target wasm-gc --release
     cp {{justfile_directory()}}/_build/wasm-gc/release/build/playground/playground.wasm {{justfile_directory()}}/playground/
+    tools/optimize-wasm.sh
 
 # Build it and serve the page on http://localhost:8000.
 [group('playground')]

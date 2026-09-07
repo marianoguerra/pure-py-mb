@@ -37,18 +37,24 @@ jobs:
       - name: Build the playground
         run: moon build --target wasm-gc --release
 
+      # `--release` strips and eliminates; it does not optimise for size.
+      # `-Oz` takes about a quarter off, and the page is what people download.
+      - name: Shrink it
+        run: |
+          npm install --no-save binaryen
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
       - name: Assemble the site
         run: |
-          mkdir -p _site
-          cp playground/index.html playground/examples.js _site/
-          cp _build/wasm-gc/release/build/playground/playground.wasm _site/
-
-      # Every example, through the module the page will actually load. A note
-      # that has drifted from what the code does is worse than no note.
-      - name: The examples do what their notes say
-        run: |
           cp _build/wasm-gc/release/build/playground/playground.wasm playground/
-          node tools/check_examples.mjs --expect
+          tools/optimize-wasm.sh
+          mkdir -p _site
+          cp playground/index.html playground/examples.js playground/playground.wasm _site/
+
+      # Every example, through the very module the page will load -- after it
+      # has been optimised, because that is the one that ships.
+      - name: The examples do what their notes say
+        run: node tools/check_examples.mjs --expect
 
       - uses: actions/upload-pages-artifact@v3
         with:
