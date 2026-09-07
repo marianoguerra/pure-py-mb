@@ -212,7 +212,7 @@ host function is is none of its business.
 | answer | what it means | what the guest sees |
 |---|---|---|
 | `Val(v)` | it worked | the value |
-| `Aborts(k)` | it failed the way Python fails | the run ends with that termination |
+| `Aborts(k)` | it failed the way Python fails | the run ends with that termination, sited at the call |
 | `Stuck(why)` | the host cannot answer | the run ends undefined, with `why` |
 
 The terminations are the semantics' own: `TypeError`, `IndexError`,
@@ -238,7 +238,12 @@ test "a host function that fails" {
   let tree = @purepy.source_tree(modules)
   assert_true(@purepy.check_program(tree, host~) is None)
   match @purepy.run_with(tree, host) {
-    Terminated(k) => inspect(k.to_text(), content="KeyError")
+    Terminated(k, site) => {
+      inspect(k.to_text(), content="KeyError")
+      // The host had no position to give -- it is not running guest source --
+      // so the site is the CALL, in the guest, that asked for the missing row.
+      inspect(site.unwrap().to_display(), content="__main__:2:6")
+    }
     _ => fail("a missing row is a KeyError")
   }
 }
@@ -247,6 +252,48 @@ test "a host function that fails" {
 A host that does not recognise a call gets the default, which is `Stuck`. That
 is the honest answer for anything the semantics does not cover, and it is
 reported the same way as PurePy's own undefined operations.
+
+## Where a run aborted
+
+`Terminated` carries a `Site` beside the termination kind: the module the
+guest was running in, and the span within it. It is the INNERMOST expression
+that aborted -- in `a + f(b)`, the call and not the sum -- and the module is
+the one the failing code was WRITTEN in, not the one that imported it.
+
+The kind and the site are separate on purpose. The specification fixes which
+kind a run yields and leaves reporting open: *"An implementation must agree on
+which kind a run yields, though how it reports one is not prescribed"*
+(`operational-semantics.tex`). So a `Site` never changes a `Termination`, two
+runs that abort in different places still agree on the kind, and a host that
+matches on `Terminated(KeyError, _)` keeps working.
+
+```mbt check
+///|
+test "where a run aborted, across two modules" {
+  let modules = Map([
+    ("helper", @purepy.parse("def pick(d):\n    return d[\"missing\"]\n")),
+    (
+      "__main__",
+      @purepy.parse("from helper import pick\nprint(pick({\"k\": 1}))\n"),
+    ),
+  ])
+  let tree = @purepy.source_tree(modules)
+  assert_true(@purepy.check_program(tree) is None)
+  match @purepy.run(tree) {
+    (_, Terminated(k, Some(site))) => {
+      inspect(k.to_text(), content="KeyError")
+      // Line 2 of `helper`, not of `__main__`: the subscript that failed is
+      // written in the module that defines `pick`.
+      inspect(site.to_display(), content="helper:2:11")
+    }
+    _ => fail("the missing key is a KeyError")
+  }
+}
+```
+
+A site is `None` when there is no guest position to give: an abort a host
+returned before any guest expression was entered, or one from a tree built by
+a code generator, whose nodes carry no source.
 
 ## A host function that answers later
 

@@ -157,6 +157,7 @@ test "a closure has no printable form, so printing one is undefined" {
     env: env([]),
     params: ["x"],
     body: @ast.Expr::name("x"),
+    in_module: "__main__",
   })
   assert_true(f.repr() is None)
   assert_true(f.str() is None)

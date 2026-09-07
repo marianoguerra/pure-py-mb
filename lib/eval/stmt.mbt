@@ -49,7 +49,17 @@ async fn Interp::eval_statement(
       for i, d in defs {
         match d {
           FunctionDef(name~, ..) =>
-            entries.push((name, Value::Def({ env, region: defs, index: i, })))
+            entries.push(
+              (
+                name,
+                Value::Def({
+                  env,
+                  region: defs,
+                  index: i,
+                  in_module: self.in_module,
+                }),
+              ),
+            )
           _ => ()
         }
       }
@@ -103,10 +113,16 @@ async fn Interp::eval_stmt(
         Val(Bool(true)) => Assigns(@value.empty_env())
         Val(Bool(false)) =>
           match msg {
-            None => ResultAborts(AssertionError(None))
+            None => {
+              self.record(s.span())
+              ResultAborts(AssertionError(None))
+            }
             Some(m) =>
               match self.eval_expr(m, env) {
-                Val(Str(w)) => ResultAborts(AssertionError(Some(w)))
+                Val(Str(w)) => {
+                  self.record(s.span())
+                  ResultAborts(AssertionError(Some(w)))
+                }
                 Val(v) =>
                   ResultStuck("an assertion message of type " + v.kind_name())
                 Aborts(k) => ResultAborts(k)

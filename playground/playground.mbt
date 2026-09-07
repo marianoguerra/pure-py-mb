@@ -102,8 +102,14 @@ pub fn analyze(source : String) -> String {
       let result = @purepy.run_with(tree, host, max_depth=120)
       let (state, detail) = match result {
         Finished => ("finished", "")
-        Terminated(SystemExit(n)) => ("exited", "status " + n.to_string())
-        Terminated(k) => ("terminated", k.to_text())
+        Terminated(SystemExit(n), _) => ("exited", "status " + n.to_string())
+        // `line:col: message`, which is how this page already shows a static
+        // rejection -- one module, so the name is left off. The column counts
+        // CODE POINTS: the reference checker's format prints bytes and this
+        // is not that format, it is the page's own.
+        Terminated(k, Some(site)) =>
+          ("terminated", site.span.start.to_display() + ": " + k.to_text())
+        Terminated(k, None) => ("terminated", k.to_text())
         Undefined(why) => ("undefined", why)
         // The page's four host functions all answer on the spot, so this
         // never happens; the arm is here because a host is allowed to park.

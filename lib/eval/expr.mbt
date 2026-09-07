@@ -6,6 +6,12 @@
 /// truthiness is not PurePy's, so `if 5:` has no rule and the run is
 /// undefined. That is one of the conformance suite's dynamically excluded
 /// tests, and it is the reason `Stuck` is threaded everywhere.
+///
+/// Where an abort happened is recorded by `sited`, at each of the six places
+/// an expression can produce one. Not by wrapping this function: it recurses
+/// and it is `async`, so a step after the recursive call is a continuation
+/// allocated per expression rather than a tail call, and that measured 21%
+/// on a program that does nothing but call.
 pub async fn Interp::eval_expr(
   self : Interp,
   e : @ast.Expr,
@@ -30,11 +36,18 @@ pub async fn Interp::eval_expr(
       }
     // eval-lambda
     Lambda(args~, body~, ..) =>
-      Val(Lam({ env, params: args.args.map(fn(p) { p.arg }), body, }))
+      Val(
+        Lam({
+          env,
+          params: args.args.map(fn(p) { p.arg }),
+          body,
+          in_module: self.in_module,
+        }),
+      )
     // eval-unop
     UnaryOp(op~, operand~, ..) =>
       match self.eval_expr(operand, env) {
-        Val(v) => @value.unop(op, v)
+        Val(v) => self.sited(e, @value.unop(op, v))
         other => other
       }
     // eval-binop
@@ -42,7 +55,7 @@ pub async fn Interp::eval_expr(
       match self.eval_expr(left, env) {
         Val(a) =>
           match self.eval_expr(right, env) {
-            Val(b) => @value.binop(op, a, b)
+            Val(b) => self.sited(e, @value.binop(op, a, b))
             other => other
           }
         other => other
@@ -73,7 +86,7 @@ pub async fn Interp::eval_expr(
       match self.eval_expr(left, env) {
         Val(a) =>
           match self.eval_expr(comparators[0], env) {
-            Val(b) => @value.compare(ops[0], a, b)
+            Val(b) => self.sited(e, @value.compare(ops[0], a, b))
             other => other
           }
         other => other
@@ -163,7 +176,7 @@ pub async fn Interp::eval_expr(
         Val(Obj(_, fields_env)) =>
           match fields_env.get(attr) {
             Some(v) => Val(v)
-            None => Aborts(AttributeError)
+            None => self.sited(e, Aborts(AttributeError))
           }
         // The attributes of a built-in value are undefined: `xs.append` has
         // no rule, which is what makes list mutation unreachable.
@@ -175,13 +188,13 @@ pub async fn Interp::eval_expr(
       match self.eval_expr(value, env) {
         Val(v) =>
           match self.eval_expr(slice, env) {
-            Val(k) => @value.getitem(v, k)
+            Val(k) => self.sited(e, @value.getitem(v, k))
             other => other
           }
         other => other
       }
     Call(func~, args~, keywords~, ..) =>
-      self.eval_call(func, args, keywords, env)
+      self.eval_call(func, args, keywords, env, e)
     _ => Stuck("expression " + e.kind_name())
   }
 }
@@ -230,7 +243,10 @@ pub async fn Interp::eval_quals(
   let items = match @value.iter(source) {
     Some(xs) => xs
     // eval-qual-generator-nonseq
-    None => return Err(Aborts(TypeError))
+    None => {
+      self.record(g.iter.span())
+      return Err(Aborts(TypeError))
+    }
   }
   let out : Array[Env] = []
   for u in items {
@@ -274,6 +290,11 @@ async fn Interp::eval_call(
   args : Array[@ast.Expr],
   keywords : Array[@ast.Keyword],
   env : Env,
+  /// The call expression itself, for the aborts with no nearer span: a
+  /// constructor of the wrong shape, an arity mismatch, a callee that is not
+  /// a function, and whatever a host answers. Passed as the node rather than
+  /// its span so that a call which succeeds pays for no span at all.
+  call : @ast.Expr,
 ) -> Outcome noraise {
   // eval-constr: the arguments are evaluated first, and the class is looked
   // up rather than evaluated.
@@ -300,7 +321,10 @@ async fn Interp::eval_call(
       }
       match entry.field_map(positional, kwd_names, kwd_values) {
         Some(fields) => Val(Obj(entry, @value.env_of(fields)))
-        None => Aborts(TypeError)
+        None => {
+          self.record(call.span())
+          Aborts(TypeError)
+        }
       }
     }
     None => {
@@ -317,7 +341,11 @@ async fn Interp::eval_call(
         Ok(vs) => vs
         Err(o) => return o
       }
-      self.apply(callee, actual)
+      let o = self.apply(callee, actual)
+      if o is Aborts(_) {
+        self.record(call.span())
+      }
+      o
     }
   }
 }
@@ -350,7 +378,13 @@ async fn Interp::apply_(
       if c.params.length() != actual.length() {
         return Aborts(TypeError)
       }
-      self.eval_expr(c.body, bind(c.env, c.params, actual))
+      // The body runs in the module it was WRITTEN in, not the one calling
+      // it, so that an abort inside it is reported against the right file.
+      let caller = self.in_module
+      self.in_module = c.in_module
+      let result = self.eval_expr(c.body, bind(c.env, c.params, actual))
+      self.in_module = caller
+      result
     }
     // Calling one function of a mutual region rebinds the WHOLE region in the
     // callee's environment, which is what lets its siblings name each other.
@@ -363,9 +397,13 @@ async fn Interp::apply_(
       if params.length() != actual.length() {
         return Aborts(TypeError)
       }
-      let region_env = region_bindings(c.env, c.region)
+      let region_env = region_bindings(c.env, c.region, c.in_module)
       let inner = bind(region_env, params, actual)
-      self.eval_seq(@analysis.statements(body)[:], inner).outcome()
+      let caller = self.in_module
+      self.in_module = c.in_module
+      let result = self.eval_seq(@analysis.statements(body)[:], inner).outcome()
+      self.in_module = caller
+      result
     }
     Prim(p) => self.call_primitive(p, actual)
     // eval-call-nonfun
@@ -385,12 +423,19 @@ fn bind(env : Env, params : Array[String], actual : Array[Value]) -> Env {
 ///|
 /// `{f⃗: v⃗}`: every definition of a region, as closures over the same
 /// environment.
-pub fn region_bindings(env : Env, region : Array[@ast.Stmt]) -> Env {
+///
+/// `in_module` is the module the region was written in, which the closures
+/// carry so that an abort inside one is reported against the right file.
+pub fn region_bindings(
+  env : Env,
+  region : Array[@ast.Stmt],
+  in_module : String,
+) -> Env {
   let entries : Array[(String, Value)] = []
   for i, d in region {
     match d {
       FunctionDef(name~, ..) =>
-        entries.push((name, Value::Def({ env, region, index: i, })))
+        entries.push((name, Value::Def({ env, region, index: i, in_module, })))
       _ => ()
     }
   }

@@ -77,7 +77,13 @@ async fn Interp::load_body(
   // tell the difference because it tracks statuses and not values.
   let named = @value.env_of([("__name__", Value::Str(q))])
   let base = @value.override_env(@value.override_env(builtins, named), imported)
-  match self.eval_body(rest, base) {
+  // A body runs in its own module, and an import that ran inside it -- which
+  // is a whole other module's body -- has already put this back.
+  let importer = self.in_module
+  self.in_module = q
+  let body = self.eval_body(rest, base)
+  self.in_module = importer
+  match body {
     Assigns(delta) =>
       // What the module exports: its submodules as stubs, then its own name,
       // then what the body assigned. Imported names are NOT exported.
@@ -250,8 +256,13 @@ async fn Interp::loads_as(
 pub(all) enum RunResult {
   /// The main module loaded: `SystemExit(0)`.
   Finished
-  /// The run aborted with a termination kind.
-  Terminated(Termination)
+  /// The run aborted with a termination kind, and -- when the abort came
+  /// from a guest expression this evaluator was running -- where.
+  ///
+  /// The site is `None` for an abort that has no guest position: one a host
+  /// function returned before any guest expression was entered, or one from
+  /// a tree a code generator built, whose nodes have no source behind them.
+  Terminated(Termination, Site?)
   /// The run reached an operation the semantics leaves undefined.
   Undefined(String)
   /// The run is parked in a host call that has not answered yet, and the
@@ -269,7 +280,7 @@ pub(all) enum RunResult {
 pub async fn Interp::run(self : Interp) -> RunResult noraise {
   match self.load("__main__") {
     Ok(_) => Finished
-    Err(Aborts(k)) => Terminated(k)
+    Err(Aborts(k)) => Terminated(k, self.abort_at)
     Err(Stuck(op)) => Undefined(op)
     Err(Val(_)) => Finished
   }

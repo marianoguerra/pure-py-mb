@@ -40,6 +40,69 @@ pub struct Interp {
   /// cover -- which a person can read.
   mut depth : Int
   max_depth : Int
+  /// The module whose source is running right now.
+  ///
+  /// Not the top of `loading`: that is the IMPORT stack, and during a call
+  /// into an imported function it still names the importer. This is set from
+  /// the module body being loaded and from the callee's closure, and restored
+  /// after, so it always names the module the current expression was written
+  /// in.
+  mut in_module : String
+  /// Where the run's first abort happened, once one has.
+  ///
+  /// First write wins, and nothing ever clears it. That is sound because
+  /// `try`/`except` is not PurePy: an abort is never caught, so the first one
+  /// constructed is the one the run ends with. It is read only when the run
+  /// ends `Terminated`, which is why a pattern that swallows an abort into
+  /// `MatchStuck` can leave a value here that nobody looks at.
+  mut abort_at : Site?
+}
+
+///|
+/// Where an abort happened: the module, and the span within it.
+///
+/// The specification says an implementation "must agree on which kind a run
+/// yields, though how it reports one is not prescribed"
+/// (`operational-semantics.tex`). This is reporting, then, and not semantics:
+/// a `Site` never changes which `Termination` a run yields, and two runs that
+/// abort at different places with the same kind still agree.
+pub(all) struct Site {
+  in_module : String
+  span : @basic.Span
+} derive(Eq, Debug)
+
+///|
+/// `module:line:col`, the site as a person reads it.
+pub fn Site::to_display(self : Site) -> String {
+  "\{self.in_module}:\{self.span.start.to_display()}"
+}
+
+///|
+/// Record where an abort happened, if nothing earlier has.
+///
+/// First write wins, so the INNERMOST construct to abort claims the site and
+/// nothing enclosing it can take the site away: in `a + f(b)`, the call and
+/// not the sum. That is the expression a person would point at.
+///
+/// Callers test for an abort before they compute a span, so a construct that
+/// yields a value costs one tag test and nothing else. That matters:
+/// `eval_expr` is the hottest path there is.
+fn Interp::record(self : Interp, span : @basic.Span) -> Unit {
+  if self.abort_at is None && span != @basic.nowhere {
+    self.abort_at = Some({ in_module: self.in_module, span, })
+  }
+}
+
+///|
+/// `record`, for an outcome that may or may not have aborted.
+///
+/// A span is computed only when there is an abort, so an expression that
+/// yields a value costs one tag test.
+fn Interp::sited(self : Interp, e : @ast.Expr, o : Outcome) -> Outcome {
+  if o is Aborts(_) {
+    self.record(e.span())
+  }
+  o
 }
 
 ///|
@@ -75,7 +138,16 @@ pub fn Interp::new(
   host? : Host = Host::new(),
   max_depth? : Int = default_max_depth,
 ) -> Interp {
-  { tree, host, loaded: Map([]), loading: [], depth: 0, max_depth, }
+  {
+    tree,
+    host,
+    loaded: Map([]),
+    loading: [],
+    depth: 0,
+    max_depth,
+    in_module: "__main__",
+    abort_at: None,
+  }
 }
 
 ///|

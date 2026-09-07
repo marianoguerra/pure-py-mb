@@ -41,10 +41,19 @@ pub(all) enum Value {
 } derive(Debug)
 
 ///|
+/// `in_module` is not part of `LamΓ`: the spec's closures carry an
+/// environment and a body, and nothing about where they were written. It is
+/// here because a position without a file is a lie the moment a program has
+/// two modules -- a `helper.py` function that aborts on its line 4 would be
+/// read as line 4 of `__main__`. The evaluator's import stack cannot supply
+/// it, because during a call it names the module that IMPORTED the callee,
+/// not the one that defined it. Only the closure knows.
 pub(all) struct LamClosure {
   env : Env
   params : Array[String]
   body : @ast.Expr
+  /// The module whose source `body` was read from.
+  in_module : String
 } derive(Debug)
 
 ///|
@@ -52,6 +61,8 @@ pub(all) struct DefClosure {
   env : Env
   region : Array[@ast.Stmt]
   index : Int
+  /// The module whose source `region` was read from.
+  in_module : String
 } derive(Debug)
 
 ///|

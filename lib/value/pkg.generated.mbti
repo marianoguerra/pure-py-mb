@@ -65,12 +65,14 @@ pub(all) struct DefClosure {
   env : @hashmap.HashMap[String, Value]
   region : Array[@ast.Stmt]
   index : Int
+  in_module : String
 } derive(@debug.Debug)
 
 pub(all) struct LamClosure {
   env : @hashmap.HashMap[String, Value]
   params : Array[String]
   body : @ast.Expr
+  in_module : String
 } derive(@debug.Debug)
 
 pub(all) enum MatchResult {

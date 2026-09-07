@@ -4,6 +4,7 @@ package "marianoguerra/pure-py/eval"
 import {
   "marianoguerra/pure-py/analysis",
   "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/value",
@@ -14,7 +15,7 @@ import {
 // Values
 pub let default_max_depth : Int
 
-pub fn region_bindings(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt]) -> @hashmap.HashMap[String, @value.Value]
+pub fn region_bindings(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt], String) -> @hashmap.HashMap[String, @value.Value]
 
 pub fn run_program(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> (String, RunResult)
 
@@ -51,6 +52,8 @@ pub struct Interp {
   loading : Array[String]
   mut depth : Int
   max_depth : Int
+  mut in_module : String
+  mut abort_at : Site?
 }
 pub async fn Interp::apply(Self, @value.Value, Array[@value.Value]) -> @value.Outcome noraise
 pub async fn Interp::dispatch(Self, @hashmap.HashMap[String, @value.Value], @value.Value, Array[@ast.MatchCase]) -> Dispatch noraise
@@ -68,7 +71,7 @@ pub async fn Interp::run(Self) -> RunResult noraise
 
 pub(all) enum RunResult {
   Finished
-  Terminated(@value.Termination)
+  Terminated(@value.Termination, Site?)
   Undefined(String)
   Suspended
 } derive(@debug.Debug)
@@ -79,6 +82,12 @@ pub struct Sink {
 pub fn Sink::new() -> Self
 pub fn Sink::text(Self) -> String
 pub fn Sink::write(Self, String) -> Unit
+
+pub(all) struct Site {
+  in_module : String
+  span : @basic.Span
+} derive(Eq, @debug.Debug)
+pub fn Site::to_display(Self) -> String
 
 // Type aliases
 

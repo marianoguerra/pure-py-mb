@@ -76,10 +76,81 @@ startup:
 |---|---|---|
 | `fib(25)`, native release | 0.30 s | 0.53 s |
 | the `run` oracle over 136 tests | 0.4 s | 0.4 s |
-| `playground.wasm` after `-Oz` | 262 KB | 279 KB |
+| `playground.wasm` after `-Oz` | 262 KB | 280 KB |
 
 The conformance numbers are unchanged: 983/983 across the four oracles, and
 the playground's 27 examples still do what their notes say.
+
+### Where a run aborted
+
+`Terminated` carries a `Site` beside the termination kind: the module the
+guest was running in, and the span within it. `KeyError` was all a run could
+say about a failure; now it can say `helper:2:11`.
+
+**This is reporting, not semantics.** The specification is explicit that it
+leaves the question open -- *"An implementation must agree on which kind a run
+yields, though how it reports one is not prescribed"*
+(`operational-semantics.tex`) -- and the termination kinds themselves are a
+closed grammar with no position in them. So a `Site` never changes which
+`Termination` a run yields, two runs that abort in different places still
+agree on the kind, and `Termination` is byte-for-byte the type it was. That is
+also why the position is beside the kind and not inside it: a `Termination`
+that compared by position would no longer compare by kind, which is the one
+thing the specification asks of it.
+
+Two things it gets right that are easy to get wrong:
+
+**The site is the innermost expression that aborted**, not the statement it
+sits in. In `print(len(xs) + 1 // n)` it is the `1 // n`. Each of the six
+places an expression can abort records its own span, and the first write wins
+-- which is sound because `try`/`except` is not PurePy: an abort is never
+caught, so the first one built is the one the run ends with.
+
+**The module is where the code was WRITTEN, not what imported it.** A function
+defined in `helper` and called from `__main__` reports `helper`. The import
+stack cannot answer this -- during the call it still names the importer -- so
+`LamClosure` and `DefClosure` now carry the module they were written in, and
+that is what a call restores while it runs. A line number attributed to the
+wrong file is worse than no line number.
+
+A `Site` is `None` when there is no guest position to give: an abort a host
+function returned before any guest expression was entered, or one from a tree
+a code generator built, whose nodes have no source behind them.
+
+The CLI prints a frame between the traceback header and the exception, which
+is the file and line CPython names in its own innermost frame:
+
+```
+Traceback (most recent call last):
+  File "helper.py", line 2
+KeyError
+```
+
+The playground shows `line:col`, in the same shape it already shows a static
+rejection. That column counts CODE POINTS: the byte columns are the reference
+checker's message format, and this is not that format.
+
+### The API this moved, again
+
+| | 0.2.0 | now |
+|---|---|---|
+| `RunResult::Terminated` | `Terminated(Termination)` | `Terminated(Termination, Site?)` |
+| `LamClosure`, `DefClosure` | `env`, and the body | and `in_module` |
+| `region_bindings` | `(env, region)` | `(env, region, in_module)` |
+
+It costs about 6% on `fib(25)`, the same call-heavy shape the async transform
+was measured against, and nothing measurable on the conformance suite. That
+6% is one tag test after each guest call and one more word in each closure.
+An earlier cut recorded the span around `eval_expr` as a whole rather than at
+the six places that abort; it reads better and cost 21%, because a step after
+a recursive call in an `async` function is a continuation allocated per
+expression instead of a tail call.
+
+`Termination`, `Outcome` and `StmtResult` are untouched, so a host function
+that answers `Aborts(KeyError)` is written exactly as it was. A caller that
+matched `Terminated(k)` matches `Terminated(k, _)`, and one that never
+constructed a closure by hand -- which is every caller that runs source --
+sees nothing else.
 
 ## 0.2.0 — 2026-09-07
 

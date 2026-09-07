@@ -18,10 +18,35 @@ fn program(modules : Array[(String, String)]) -> String {
   let (output, result) = @eval.run_program(tree, argv=["main.py"])
   match result {
     Finished => output
-    Terminated(k) => output + "!" + k.to_text()
+    Terminated(k, _) => output + "!" + k.to_text()
     Undefined(op) => output + "!stuck: " + op
     Suspended => output + "!suspended"
   }
+}
+
+///|
+/// Where a program aborted, as `module:line:col`, or why it did not abort.
+fn site(modules : Array[(String, String)]) -> String {
+  let parsed : Map[String, @ast.Module] = Map([])
+  for m in modules {
+    parsed[m.0] = @parser.parse_string(m.1, name=m.0) catch {
+      e => return "syntax in \{m.0}: \{e}"
+    }
+  }
+  let tree = @program.SourceTree::of(parsed)
+  match @eval.run_program(tree).1 {
+    Terminated(_, Some(s)) => s.to_display()
+    Terminated(_, None) => "terminated nowhere"
+    Finished => "did not terminate: finished"
+    Undefined(op) => "did not terminate: stuck: " + op
+    Suspended => "did not terminate: suspended"
+  }
+}
+
+///|
+/// The same, for a single-module program.
+fn site1(source : String) -> String {
+  site([("__main__", source)])
 }
 
 // ---------------------------------------------------------------------------
@@ -579,4 +604,106 @@ test "sys.argv is the entry path and the arguments after it" {
     program([("__main__", "import sys\nprint(sys.argv)\n")]),
     "['main.py']\n",
   )
+}
+
+// ---------------------------------------------------------------------------
+// Where a run aborted
+//
+// The specification fixes which kind a run yields and leaves reporting open,
+// so none of this changes a `Termination` -- but a position that points at
+// the wrong expression, or at the right line of the wrong file, is worse than
+// no position, and that is what these pin down.
+
+///|
+test "the site is the innermost expression that aborted" {
+  // The subscript, not the sum that contains it.
+  assert_eq(site1("d = {}\nprint(1 + d[\"k\"])\n"), "__main__:2:10")
+  // The division, not the call that wraps it.
+  assert_eq(site1("n = 0\nprint(len([1]) + 1 // n)\n"), "__main__:2:17")
+  // A binary operator on operands the semantics has no rule for.
+  assert_eq(site1("print(1 + None)\n"), "__main__:1:6")
+}
+
+///|
+test "the site is a column, and it counts code points" {
+  // The identifier before the subscript is three characters and five bytes.
+  // A column that counted bytes would say 11.
+  assert_eq(site1("héé = {}\nprint(héé[\"k\"])\n"), "__main__:2:6")
+}
+
+///|
+test "a statement's own abort is sited at the statement" {
+  assert_eq(site1("assert False\n"), "__main__:1:0")
+  assert_eq(site1("x = 1\nassert x == 2, \"nope\"\n"), "__main__:2:0")
+}
+
+///|
+test "the site names the module the code was WRITTEN in" {
+  // `pick` is called from `__main__` and fails in `helper`. The import stack
+  // says `__main__` at that moment; the closure says `helper`, and the
+  // closure is right.
+  assert_eq(
+    site([
+      ("helper", "def pick(d):\n    return d[\"missing\"]\n"),
+      ("__main__", "from helper import pick\nprint(pick({}))\n"),
+    ]),
+    "helper:2:11",
+  )
+  // A lambda carries its module too, and calling it from another one does
+  // not move the blame.
+  assert_eq(
+    site([
+      ("helper", "def make():\n    return lambda d: d[\"missing\"]\n"),
+      ("__main__", "from helper import make\nf = make()\nprint(f({}))\n"),
+    ]),
+    "helper:2:21",
+  )
+  // And control comes back: after the call returns, an abort in `__main__`
+  // is `__main__`'s again.
+  assert_eq(
+    site([
+      ("helper", "def ok(d):\n    return 1\n"),
+      ("__main__", "from helper import ok\nx = ok({})\nprint({}[\"k\"])\n"),
+    ]),
+    "__main__:3:6",
+  )
+}
+
+///|
+test "a module that aborts while loading is sited in itself" {
+  assert_eq(
+    site([
+      ("helper", "boom = {}[\"k\"]\n"),
+      ("__main__", "import helper\nprint(1)\n"),
+    ]),
+    "helper:1:7",
+  )
+}
+
+///|
+test "an exit is a termination like any other, and it has a position" {
+  assert_eq(site1("import sys\nsys.exit(2)\n"), "__main__:2:0")
+}
+
+///|
+test "a tree nobody read has nowhere to point at" {
+  // What a code generator builds: real statements, `nowhere` spans. A site
+  // made of those would be `1:0` for everything, which reads like a position
+  // and is not one, so there is none.
+  let built : @ast.Module = {
+    body: [
+      @ast.Stmt::expr_stmt(
+        @ast.Expr::subscript(@ast.Expr::dict([]), @ast.Expr::str("k")),
+      ),
+    ],
+    span: @basic.nowhere,
+  }
+  let tree = @program.SourceTree::of(Map([("__main__", built)]))
+  match @eval.run_program(tree).1 {
+    Terminated(k, site) => {
+      assert_eq(k.to_text(), "KeyError")
+      assert_true(site is None)
+    }
+    _ => fail("the missing key is a KeyError wherever the tree came from")
+  }
 }

@@ -315,11 +315,19 @@ fn cmd_run(path : String, args : ArrayView[String]) -> Int {
   match result {
     Finished => 0
     // `sys.exit(n)` leaves with status n and prints nothing.
-    Terminated(SystemExit(n)) => n.to_int()
-    Terminated(k) => {
+    Terminated(SystemExit(n), _) => n.to_int()
+    Terminated(k, site) => {
       // Python's traceback ends with the exception's name and message, and
-      // that last line is what the suite's `.exception.expected` holds.
-      write_stderr("Traceback (most recent call last):\n" + k.to_text())
+      // that last line is what the suite's `.exception.expected` holds. The
+      // frame line between them is Python's shape too, and it is a line and
+      // not a column because that is what CPython prints; the column is in
+      // the `Site` for a caller that wants it.
+      let frame = match site {
+        Some(s) =>
+          "  File \"\{tree.path_of(s.in_module)}\", line \{s.span.start.line}\n"
+        None => ""
+      }
+      write_stderr("Traceback (most recent call last):\n" + frame + k.to_text())
       1
     }
     // An operation the semantics leaves undefined. Chapter 1 allows an
