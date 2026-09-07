@@ -11,6 +11,17 @@ semantics and a static well-formedness judgement, specified in
 a port of that specification. The reference checker is the specification for
 what `check` decides; CPython is the oracle for what `run` prints.
 
+## Playground
+
+<https://marianoguerra.github.io/pure-py-mb/> — the whole library in a browser
+tab, with twenty-seven examples covering what PurePy runs, what a host can
+hand it, what is refused before it runs, and what ends without an answer.
+
+The page is a real embedder rather than a demonstration of one: the `host`
+module its examples import does not exist in PurePy, and the page supplies it
+through the interface [docs/embedding.mbt.md](docs/embedding.mbt.md)
+describes.
+
 ## Status
 
 The conformance suite passes in full: 983 assertions across four oracles,

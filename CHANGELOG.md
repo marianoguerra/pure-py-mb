@@ -53,6 +53,15 @@ values.
 [docs/embedding.mbt.md](docs/embedding.mbt.md) is the whole surface, and its
 examples are compiled and run as tests.
 
+### Playground
+
+<https://marianoguerra.github.io/pure-py-mb/>, built from `playground/` as one
+wasm-gc module and deployed by GitHub Actions. It is a real embedder: the
+`host` module its examples import is supplied by the page.
+`tools/check_examples.mjs --expect` runs every example through the very module
+the page loads and fails if one has drifted from the outcome recorded beside
+it.
+
 ### Decisions
 
 Each is a judgement the specification leaves open, recorded where it is made:
