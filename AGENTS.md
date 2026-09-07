@@ -51,3 +51,40 @@ You can browse and install extra skills here:
   scientific computations), prefer assertion tests. You can use
   `moon coverage analyze > uncovered.log` to see which parts of your code are
   not covered by tests.
+
+## This project
+
+A port of **PurePy** (a pure functional subset of Python 3.12) to MoonBit.
+[implementation-plan.md](implementation-plan.md) is the plan; work it phase by
+phase and read §7 before touching the tokenizer, the numbers, the strings, the
+checker or the evaluator.
+
+### Two oracles, and which one decides
+
+- **The reference checker is the specification for what `parse` and `check`
+  decide.** `reference/src/*.py` (pinned in `tools/reference.json`) is what
+  `test/golden/{parse,check,program}.txt` was generated from, message for
+  message. A disagreement is our bug until upstream is shown to be wrong.
+- **CPython is the oracle for what `run` prints.** The suite's `.expected`,
+  `.exception.expected` and `.output.expected` files are Python's own output.
+
+### Rules
+
+- **Goldens are regenerated, never edited.** `just goldens` rewrites them from
+  the reference; the diff is the review artifact. Editing one by hand turns a
+  disagreement into a silence.
+- **`test/conform-policy.json` is a ratchet that fails from both sides.** A run
+  below a floor is a regression; a run above one is an improvement nobody
+  recorded. `just ratchet` moves the floors, in the commit that earned them.
+- **Layering is a gate,** not a note: `tools/boundary-check.sh`. `error-report`
+  is named by `error/` and the CLI only; `moonbitlang/x` by `program/` and the
+  CLI only; `ast/` and `write/` link neither the front end nor the back end.
+- **`test/conformance/` is vendored verbatim** from the reference and is never
+  edited. `just suite-sync` re-copies it.
+- **Positions are code points, not bytes.** CPython's `col_offset` counts UTF-8
+  bytes and the `tokenize` module counts code points; we store code points and
+  convert only when printing a message in the reference's format.
+- **Ints are `BigInt` and floor-based.** MoonBit's `/` and `%` truncate;
+  Python's `//` and `%` floor. `value/arith.mbt` has the one implementation.
+- **Floats print through our own `repr`,** not `Double::to_string`, which
+  differs from Python's layout in six ways (see the plan, §7.3).

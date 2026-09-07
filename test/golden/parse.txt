@@ -1,0 +1,393 @@
+# parse: exit code and message from the reference, one line per test; regenerate with tools/conform.py --reference --regen
+module-level/excluded/dynamic-semantic/eq_bool_int.py	0	: ok
+module-level/excluded/dynamic/attr_builtin_method.py	0	: ok
+module-level/excluded/dynamic/eq_function.py	0	: ok
+module-level/excluded/dynamic/eq_nan_container.py	0	: ok
+module-level/excluded/dynamic/eq_short_circuit_undefined.py	0	: ok
+module-level/excluded/dynamic/eq_unrelated_types.py	0	: ok
+module-level/excluded/dynamic/if_nonbool.py	0	: ok
+module-level/excluded/static/class_as_value.py	0	: ok
+module-level/excluded/static/class_shadow_captured.py	0	: ok
+module-level/excluded/static/class_shadows_captured_var.py	0	: ok
+module-level/excluded/static/comprehension_capture.py	0	: ok
+module-level/excluded/static/comprehension_capture_qualifier.py	0	: ok
+module-level/excluded/static/cond_partial_def.py	0	: ok
+module-level/excluded/static/dataclass_dup_class.py	0	: ok
+module-level/excluded/static/dataclass_dup_field.py	0	: ok
+module-level/excluded/static/dataclass_inherited_field_clash.py	0	: ok
+module-level/excluded/static/duplicate_def_in_region.py	0	: ok
+module-level/excluded/static/elif_no_else.py	0	: ok
+module-level/excluded/static/forward_class_in_def.py	0	: ok
+module-level/excluded/static/import_in_def.py	0	: ok
+module-level/excluded/static/import_in_if.py	0	: ok
+module-level/excluded/static/import_in_match_case.py	0	: ok
+module-level/excluded/static/match_as_subsumed.py	0	: ok
+module-level/excluded/static/match_dup_list.py	0	: ok
+module-level/excluded/static/match_dup_literal.py	0	: ok
+module-level/excluded/static/match_dup_neg_literal.py	0	: ok
+module-level/excluded/static/match_partial_def.py	0	: ok
+module-level/excluded/static/match_shadowed_class.py	0	: ok
+module-level/excluded/static/match_unreachable.py	0	: ok
+module-level/excluded/static/match_var_leak.py	0	: ok
+module-level/excluded/static/module_as_value.py	0	: ok
+module-level/excluded/static/mutual_def_block_local.py	0	: ok
+module-level/excluded/static/mutual_lambdas.py	0	: ok
+module-level/excluded/static/mutual_split_by_assign.py	0	: ok
+module-level/excluded/static/no_else.py	0	: ok
+module-level/excluded/static/pat_class_arity.py	0	: ok
+module-level/excluded/static/pat_class_bad_keyword.py	0	: ok
+module-level/excluded/static/pat_constr_split_subsumed.py	0	: ok
+module-level/excluded/static/pat_constr_subsumed.py	0	: ok
+module-level/excluded/static/pat_dict_unreachable.py	0	: ok
+module-level/excluded/static/pending/dict_comp_int_keys.py	0	: ok
+module-level/excluded/static/pending/dict_int_keys.py	0	: ok
+module-level/excluded/static/pending/match_int_pat_on_list.py	0	: ok
+module-level/excluded/static/pending/match_list_pat_on_tuple.py	0	: ok
+module-level/excluded/static/pending/match_str_pat_on_int.py	0	: ok
+module-level/excluded/static/pending/match_tuple_pat_on_list.py	0	: ok
+module-level/excluded/static/predefined_member_unknown.py	0	: ok
+module-level/excluded/static/self_capture.py	0	: ok
+module-level/excluded/static/self_capture_lambda.py	0	: ok
+module-level/excluded/static/shadow_captured.py	0	: ok
+module-level/excluded/static/shadow_captured_mutual.py	0	: ok
+module-level/excluded/static/stmt_before_import.py	0	: ok
+module-level/excluded/static/unreachable.py	0	: ok
+module-level/excluded/static/unsupported_builtin.py	0	: ok
+module-level/excluded/syntactic/annotated_assign.py	1	:1:0: annotated assignment prohibited
+module-level/excluded/syntactic/async_def.py	1	:1:0: async prohibited
+module-level/excluded/syntactic/attribute_assign.py	1	:7:0: attribute assignment prohibited
+module-level/excluded/syntactic/augmented_assign.py	1	:2:0: augmented assignment (+=, etc.) prohibited
+module-level/excluded/syntactic/bitwise_or.py	1	:1:4: binary operator '|' prohibited
+module-level/excluded/syntactic/bytes_literal.py	1	:1:4: bytes literals prohibited
+module-level/excluded/syntactic/class_bad_decorator.py	1	:5:0: only the @dataclass decorator is supported on classes
+module-level/excluded/syntactic/class_base_not_name.py	1	:5:0: base class must be a simple name
+module-level/excluded/syntactic/class_def.py	1	:1:0: class must have exactly the @dataclass decorator
+module-level/excluded/syntactic/class_keyword_args.py	1	:4:0: class keyword arguments prohibited
+module-level/excluded/syntactic/complex_literal.py	1	:1:8: complex literals prohibited
+module-level/excluded/syntactic/dataclass_field_default.py	1	:6:4: field default values prohibited
+module-level/excluded/syntactic/dataclass_int_field.py	1	:5:4: field type annotation must be Any
+module-level/excluded/syntactic/dataclass_method.py	1	:4:4: dataclass body may contain only field declarations
+module-level/excluded/syntactic/dataclass_two_bases.py	1	:12:0: multiple inheritance prohibited
+module-level/excluded/syntactic/delete.py	1	:2:0: del prohibited
+module-level/excluded/syntactic/ellipsis_literal.py	1	:1:4: prohibited literal type: ellipsis
+module-level/excluded/syntactic/field_target_not_name.py	1	:7:4: field target must be a simple name
+module-level/excluded/syntactic/for_loop.py	1	:2:0: for loops prohibited
+module-level/excluded/syntactic/generator_expr.py	1	:1:7: generator expressions prohibited
+module-level/excluded/syntactic/global_stmt.py	1	:4:4: global prohibited
+module-level/excluded/syntactic/item_assign.py	1	:2:0: item assignment prohibited
+module-level/excluded/syntactic/keyword_only_args.py	1	: keyword-only arguments prohibited
+module-level/excluded/syntactic/multiple_assign.py	1	:1:0: multiple assignment targets
+module-level/excluded/syntactic/nested_class.py	1	:6:4: class declaration only at module top level
+module-level/excluded/syntactic/nonlocal_stmt.py	1	:4:8: nonlocal prohibited
+module-level/excluded/syntactic/pat_dict_int_key.py	1	:3:10: dict pattern keys must be string literals
+module-level/excluded/syntactic/positional_only_args.py	1	: positional-only arguments prohibited
+module-level/excluded/syntactic/raise_stmt.py	1	:2:4: raise prohibited
+module-level/excluded/syntactic/return_annotation.py	1	:1:0: return type annotations prohibited
+module-level/excluded/syntactic/starred_list.py	1	:1:6: starred expressions prohibited
+module-level/excluded/syntactic/try_except.py	1	:1:0: try/except prohibited
+module-level/excluded/syntactic/walrus.py	1	:3:11: walrus operator (:=) prohibited
+module-level/excluded/syntactic/while_loop.py	1	:2:0: while loops prohibited
+module-level/excluded/syntactic/with_stmt.py	1	:1:0: with statements prohibited
+module-level/excluded/syntactic/yield_expr.py	1	:2:4: yield prohibited
+module-level/python-error/dynamic/assert_false.py	0	: ok
+module-level/python-error/dynamic/assert_falsy.py	0	: ok
+module-level/python-error/dynamic/attr_missing.py	0	: ok
+module-level/python-error/dynamic/attr_non_object.py	0	: ok
+module-level/python-error/dynamic/binop_non_number.py	0	: ok
+module-level/python-error/dynamic/call_non_callable.py	0	: ok
+module-level/python-error/dynamic/divide_by_zero.py	0	: ok
+module-level/python-error/dynamic/iterate_non_sequence.py	0	: ok
+module-level/python-error/dynamic/subscript_non_list.py	0	: ok
+module-level/python-error/dynamic/subscript_out_of_range.py	0	: ok
+module-level/python-error/dynamic/unary_non_number.py	0	: ok
+module-level/python-error/static/assert_msg_undefined.py	0	: ok
+module-level/python-error/static/constructor_arity.py	0	: ok
+module-level/python-error/static/constructor_bad_keyword.py	0	: ok
+module-level/python-error/static/constructor_oversaturated.py	0	: ok
+module-level/python-error/static/dataclass_unknown_base.py	0	: ok
+module-level/python-error/static/forward_class_top.py	0	: ok
+module-level/python-error/static/match_catchall_unreachable.py	0	: ok
+module-level/python-error/static/match_wildcard_unreachable.py	0	: ok
+module-level/python-error/static/mutual_split_by_call.py	0	: ok
+module-level/python-error/static/nonlinear_pattern.py	0	: ok
+module-level/python-error/static/pat_class_dup_keyword.py	0	: ok
+module-level/python-error/static/pat_class_unknown.py	0	: ok
+module-level/python-error/static/pat_dict_dup_key.py	0	: ok
+module-level/python-error/static/pat_dict_nonlinear.py	0	: ok
+module-level/python-error/static/pending/currying.py	0	: ok
+module-level/python-error/static/subclass_arity.py	0	: ok
+module-level/python-error/static/top_level_return.py	0	: ok
+module-level/python-error/static/top_level_return_midway.py	0	: ok
+module-level/python-error/static/unbound_local.py	0	: ok
+module-level/python-error/static/unknown_module.py	0	: ok
+module-level/python-error/syntactic-only/empty_from_import.py	0	: ok
+module-level/python-error/syntactic-only/helpers/__init__.py	0	: ok
+module-level/python-error/syntactic-only/helpers/harness.py	2	: default arguments not yet supported (#56)
+module-level/semantically-valid/bool_op.py	0	: ok
+module-level/semantically-valid/builtin_shadow.py	0	: ok
+module-level/semantically-valid/class_shadows_variable.py	0	: ok
+module-level/semantically-valid/comprehension_capture_outer.py	0	: ok
+module-level/semantically-valid/comprehension_capture_parameter.py	0	: ok
+module-level/semantically-valid/conditionals/both_branches.py	0	: ok
+module-level/semantically-valid/conditionals/branch_local.py	0	: ok
+module-level/semantically-valid/conditionals/early_return.py	0	: ok
+module-level/semantically-valid/conditionals/elif_chain.py	0	: ok
+module-level/semantically-valid/constr_keyword_split.py	0	: ok
+module-level/semantically-valid/constructor_keywords.py	0	: ok
+module-level/semantically-valid/dataclass_construct.py	0	: ok
+module-level/semantically-valid/dataclass_construct_base.py	0	: ok
+module-level/semantically-valid/dataclass_construct_inherit.py	0	: ok
+module-level/semantically-valid/dict_comp.py	0	: ok
+module-level/semantically-valid/dict_comp_dup_key.py	0	: ok
+module-level/semantically-valid/dict_comp_guard.py	0	: ok
+module-level/semantically-valid/dict_duplicate_key.py	0	: ok
+module-level/semantically-valid/dict_insertion_order.py	0	: ok
+module-level/semantically-valid/dict_literal.py	0	: ok
+module-level/semantically-valid/empty_module.py	0	: ok
+module-level/semantically-valid/eq_short_circuit.py	0	: ok
+module-level/semantically-valid/from_import.py	0	: ok
+module-level/semantically-valid/functions/assert_msg_stmt.py	0	: ok
+module-level/semantically-valid/functions/assert_stmt.py	0	: ok
+module-level/semantically-valid/functions/expr_stmt.py	0	: ok
+module-level/semantically-valid/functions/implicit_none.py	0	: ok
+module-level/semantically-valid/functions/implicit_return.py	0	: ok
+module-level/semantically-valid/functions/lambda.py	0	: ok
+module-level/semantically-valid/functions/mutual.py	0	: ok
+module-level/semantically-valid/functions/mutual_after_rebind.py	0	: ok
+module-level/semantically-valid/functions/mutual_def_in_branch.py	0	: ok
+module-level/semantically-valid/functions/mutual_def_in_branch_shadows.py	0	: ok
+module-level/semantically-valid/functions/self.py	0	: ok
+module-level/semantically-valid/if_exp.py	0	: ok
+module-level/semantically-valid/import_predefined.py	0	: ok
+module-level/semantically-valid/list_comp.py	0	: ok
+module-level/semantically-valid/list_comp_generators.py	0	: ok
+module-level/semantically-valid/list_comp_guard.py	0	: ok
+module-level/semantically-valid/match_as_simple.py	0	: ok
+module-level/semantically-valid/match_base_class.py	0	: ok
+module-level/semantically-valid/match_base_subclass.py	0	: ok
+module-level/semantically-valid/match_base_transitive.py	0	: ok
+module-level/semantically-valid/match_basic.py	0	: ok
+module-level/semantically-valid/match_class.py	0	: ok
+module-level/semantically-valid/match_dict.py	0	: ok
+module-level/semantically-valid/match_dict_missing.py	0	: ok
+module-level/semantically-valid/match_dict_partial.py	0	: ok
+module-level/semantically-valid/match_empty_seq.py	0	: ok
+module-level/semantically-valid/match_list.py	0	: ok
+module-level/semantically-valid/match_neg_lit.py	0	: ok
+module-level/semantically-valid/match_nested.py	0	: ok
+module-level/semantically-valid/match_partial.py	0	: ok
+module-level/semantically-valid/match_returning_branch.py	0	: ok
+module-level/semantically-valid/match_seq_kinds.py	0	: ok
+module-level/semantically-valid/match_singleton.py	0	: ok
+module-level/semantically-valid/match_subclass_fallthrough.py	0	: ok
+module-level/semantically-valid/match_tuple_pat_on_int.py	0	: ok
+module-level/semantically-valid/match_zero_field_constr.py	0	: ok
+module-level/semantically-valid/membership.py	0	: ok
+module-level/semantically-valid/membership_dict.py	0	: ok
+module-level/semantically-valid/membership_string.py	0	: ok
+module-level/semantically-valid/membership_tuple.py	0	: ok
+module-level/semantically-valid/pat_class_mixed.py	0	: ok
+module-level/semantically-valid/pat_class_nested.py	0	: ok
+module-level/semantically-valid/pat_constr_subclass_first.py	0	: ok
+module-level/semantically-valid/pat_constr_unrelated.py	0	: ok
+module-level/semantically-valid/pending/case_guard.py	2	: case guards not yet supported (#83)
+module-level/semantically-valid/pending/chained_bool.py	2	:4:6: chained boolean operator not yet supported (#82)
+module-level/semantically-valid/pending/chained_compare.py	2	:2:6: chained comparison not yet supported (#82)
+module-level/semantically-valid/pending/decorator.py	2	:2:0: decorators not yet supported (#58)
+module-level/semantically-valid/pending/default_args.py	2	: default arguments not yet supported (#56)
+module-level/semantically-valid/pending/destructuring_assign.py	2	:1:0: destructuring assignment not yet supported (#54)
+module-level/semantically-valid/pending/destructuring_comp.py	2	: destructuring in comprehensions not yet supported (#54)
+module-level/semantically-valid/pending/from_import_as.py	2	:1:0: from-import-as not yet supported (#53)
+module-level/semantically-valid/pending/fstring.py	2	:2:6: f-strings not yet supported (#55)
+module-level/semantically-valid/pending/identity.py	2	:2:6: identity operator (is/is not) not yet supported (#81)
+module-level/semantically-valid/pending/import_as.py	2	:1:0: import-as not yet supported (#53)
+module-level/semantically-valid/pending/import_multi.py	2	:1:0: multi-target import (import a, b) not yet supported (#53)
+module-level/semantically-valid/pending/import_relative.py	2	:1:0: relative imports not yet supported (#53)
+module-level/semantically-valid/pending/import_star.py	2	:1:0: from M import * not yet supported (#53)
+module-level/semantically-valid/pending/match_attr_value.py	2	:2:9: attribute value patterns not yet supported (#86)
+module-level/semantically-valid/pending/match_complex_value.py	2	:2:9: complex value patterns not yet supported (#83)
+module-level/semantically-valid/pending/match_enum.py	2	:3:0: enum classes not yet supported (#86)
+module-level/semantically-valid/pending/match_or.py	2	:3:9: or-patterns not yet supported (#85)
+module-level/semantically-valid/pending/match_star.py	2	:3:9: star patterns not yet supported (#84)
+module-level/semantically-valid/pending/pat_dict_rest.py	2	:3:9: rest capture in dict patterns not yet supported (#84)
+module-level/semantically-valid/pending/set_comp.py	2	:2:4: set comprehensions not yet supported (#147)
+module-level/semantically-valid/pending/set_literal.py	2	:1:4: set literals not yet supported (#147)
+module-level/semantically-valid/pending/slicing.py	2	:2:9: slicing not yet supported (#59)
+module-level/semantically-valid/pending/star_kwargs.py	2	: **kwargs not yet supported (#57)
+module-level/semantically-valid/pending/starred_expr.py	2	: *args not yet supported (#57)
+module-level/semantically-valid/range_builtin.py	0	: ok
+module-level/semantically-valid/scopes/closure_capture.py	0	: ok
+module-level/semantically-valid/scopes/lambda_capture.py	0	: ok
+module-level/semantically-valid/scopes/param_reassign.py	0	: ok
+module-level/semantically-valid/scopes/self_capture_def.py	0	: ok
+module-level/semantically-valid/simple.py	0	: ok
+module-level/semantically-valid/string_literal.py	0	: ok
+module-level/semantically-valid/subscript.py	0	: ok
+module-level/semantically-valid/subscript_negative.py	0	: ok
+module-level/semantically-valid/subscript_tuple_ok.py	0	: ok
+program-level/excluded/extend_imported_class/base.py	0	: ok
+program-level/excluded/extend_imported_class/main.py	0	: ok
+program-level/excluded/import_after_statement/helper.py	0	: ok
+program-level/excluded/import_after_statement/main.py	0	: ok
+program-level/excluded/import_unassigned/m.py	0	: ok
+program-level/excluded/import_unassigned/main.py	0	: ok
+program-level/excluded/imported_module_rejected/helper.py	0	: ok
+program-level/excluded/imported_module_rejected/main.py	0	: ok
+program-level/excluded/own_descendant_import/main.py	0	: ok
+program-level/excluded/own_descendant_import/pkg/__init__.py	0	: ok
+program-level/excluded/own_descendant_import/pkg/sub.py	0	: ok
+program-level/excluded/parents_cycle/main.py	0	: ok
+program-level/excluded/parents_cycle/x/__init__.py	0	: ok
+program-level/excluded/parents_cycle/x/a.py	0	: ok
+program-level/excluded/parents_cycle/y/__init__.py	0	: ok
+program-level/excluded/parents_cycle/y/a.py	0	: ok
+program-level/excluded/qualified_class_as_value/main.py	0	: ok
+program-level/excluded/qualified_class_as_value/mod.py	0	: ok
+program-level/excluded/reexport_from_import/defs.py	0	: ok
+program-level/excluded/reexport_from_import/main.py	0	: ok
+program-level/excluded/reexport_from_import/mid.py	0	: ok
+program-level/excluded/reexport_import_alias/helper.py	0	: ok
+program-level/excluded/reexport_import_alias/main.py	0	: ok
+program-level/excluded/submodule_as_value/main.py	0	: ok
+program-level/excluded/submodule_as_value/pkg/__init__.py	0	: ok
+program-level/excluded/submodule_as_value/pkg/sub.py	0	: ok
+program-level/excluded/submodule_import_clash/helper.py	0	: ok
+program-level/excluded/submodule_import_clash/main.py	0	: ok
+program-level/excluded/submodule_import_clash/pkg/__init__.py	0	: ok
+program-level/excluded/submodule_import_clash/pkg/sub.py	0	: ok
+program-level/excluded/submodule_name_clash/main.py	0	: ok
+program-level/excluded/submodule_name_clash/pkg/__init__.py	0	: ok
+program-level/excluded/submodule_name_clash/pkg/sub.py	0	: ok
+program-level/excluded/submodule_self_import/a/__init__.py	0	: ok
+program-level/excluded/submodule_self_import/a/b.py	0	: ok
+program-level/excluded/submodule_self_import/main.py	0	: ok
+program-level/excluded/submodule_transitive_import/a.py	0	: ok
+program-level/excluded/submodule_transitive_import/main.py	0	: ok
+program-level/excluded/submodule_transitive_import/pkg/__init__.py	0	: ok
+program-level/excluded/submodule_transitive_import/pkg/sub.py	0	: ok
+program-level/excluded/transitive_ancestor_cycle/main.py	0	: ok
+program-level/excluded/transitive_ancestor_cycle/x/__init__.py	0	: ok
+program-level/excluded/transitive_ancestor_cycle/x/z.py	0	: ok
+program-level/excluded/transitive_ancestor_cycle/y.py	0	: ok
+program-level/python-error/attr_unknown_member/main.py	0	: ok
+program-level/python-error/attr_unknown_member/mod.py	0	: ok
+program-level/python-error/cycle/helper.py	0	: ok
+program-level/python-error/cycle/main.py	0	: ok
+program-level/python-error/dynamic/from_import_failing_ancestor/main.py	0	: ok
+program-level/python-error/dynamic/from_import_failing_ancestor/pkg/__init__.py	0	: ok
+program-level/python-error/dynamic/from_import_failing_ancestor/pkg/sub.py	0	: ok
+program-level/python-error/dynamic/import_failing_ancestor/main.py	0	: ok
+program-level/python-error/dynamic/import_failing_ancestor/pkg/__init__.py	0	: ok
+program-level/python-error/dynamic/import_failing_ancestor/pkg/sub.py	0	: ok
+program-level/python-error/from_import_arity/main.py	0	: ok
+program-level/python-error/from_import_arity/mod.py	0	: ok
+program-level/python-error/from_import_bad_ancestor/main.py	0	: ok
+program-level/python-error/from_import_bad_ancestor/pkg/__init__.py	0	: ok
+program-level/python-error/from_import_bad_ancestor/pkg/sub.py	0	: ok
+program-level/python-error/from_import_unassigned/lib.py	0	: ok
+program-level/python-error/from_import_unassigned/main.py	0	: ok
+program-level/python-error/from_import_unknown_member/main.py	0	: ok
+program-level/python-error/from_import_unknown_member/mod.py	0	: ok
+program-level/python-error/import_bad_ancestor/main.py	0	: ok
+program-level/python-error/import_bad_ancestor/pkg/__init__.py	0	: ok
+program-level/python-error/import_bad_ancestor/pkg/sub.py	0	: ok
+program-level/python-error/member_builtin/lib.py	0	: ok
+program-level/python-error/member_builtin/main.py	0	: ok
+program-level/python-error/missing_module/main.py	0	: ok
+program-level/python-error/qualified_class_unknown/main.py	0	: ok
+program-level/python-error/qualified_class_unknown/mod.py	0	: ok
+program-level/python-error/self_import/main.py	0	: ok
+program-level/python-error/submodule_not_imported/a.py	0	: ok
+program-level/python-error/submodule_not_imported/b.py	0	: ok
+program-level/python-error/submodule_not_imported/main.py	0	: ok
+program-level/python-error/submodule_not_imported/pkg/__init__.py	0	: ok
+program-level/python-error/submodule_not_imported/pkg/sub.py	0	: ok
+program-level/python-error/unassigned_member/lib.py	0	: ok
+program-level/python-error/unassigned_member/main.py	0	: ok
+program-level/semantically-valid/attr_access/helper.py	0	: ok
+program-level/semantically-valid/attr_access/main.py	0	: ok
+program-level/semantically-valid/child_after_parent/main.py	0	: ok
+program-level/semantically-valid/child_after_parent/pkg/__init__.py	0	: ok
+program-level/semantically-valid/child_after_parent/pkg/sub.py	0	: ok
+program-level/semantically-valid/deep_sibling_submodules/main.py	0	: ok
+program-level/semantically-valid/deep_sibling_submodules/pkg/__init__.py	0	: ok
+program-level/semantically-valid/deep_sibling_submodules/pkg/sub/__init__.py	0	: ok
+program-level/semantically-valid/deep_sibling_submodules/pkg/sub/x.py	0	: ok
+program-level/semantically-valid/deep_sibling_submodules/pkg/sub/y.py	0	: ok
+program-level/semantically-valid/diamond/b.py	0	: ok
+program-level/semantically-valid/diamond/c.py	0	: ok
+program-level/semantically-valid/diamond/d.py	0	: ok
+program-level/semantically-valid/diamond/main.py	0	: ok
+program-level/semantically-valid/dotted_attr_access/main.py	0	: ok
+program-level/semantically-valid/dotted_attr_access/x/__init__.py	0	: ok
+program-level/semantically-valid/dotted_attr_access/x/a.py	0	: ok
+program-level/semantically-valid/dotted_import/main.py	0	: ok
+program-level/semantically-valid/dotted_import/x/__init__.py	0	: ok
+program-level/semantically-valid/dotted_import/x/a.py	0	: ok
+program-level/semantically-valid/empty/main.py	0	: ok
+program-level/semantically-valid/from_import_class/main.py	0	: ok
+program-level/semantically-valid/from_import_class/shapes.py	0	: ok
+program-level/semantically-valid/from_import_multi/helper.py	0	: ok
+program-level/semantically-valid/from_import_multi/main.py	0	: ok
+program-level/semantically-valid/from_import_repeated/m.py	0	: ok
+program-level/semantically-valid/from_import_repeated/main.py	0	: ok
+program-level/semantically-valid/from_import_subclass/main.py	0	: ok
+program-level/semantically-valid/from_import_subclass/shapes.py	0	: ok
+program-level/semantically-valid/from_import_submodule/main.py	0	: ok
+program-level/semantically-valid/from_import_submodule/x/__init__.py	0	: ok
+program-level/semantically-valid/from_import_submodule/x/a.py	0	: ok
+program-level/semantically-valid/import_absolute_shadow/main.py	0	: ok
+program-level/semantically-valid/import_absolute_shadow/x/__init__.py	0	: ok
+program-level/semantically-valid/import_absolute_shadow/x/y.py	0	: ok
+program-level/semantically-valid/import_absolute_shadow/y/__init__.py	0	: ok
+program-level/semantically-valid/import_absolute_shadow/y/z.py	0	: ok
+program-level/semantically-valid/import_only/helper.py	0	: ok
+program-level/semantically-valid/import_only/main.py	0	: ok
+program-level/semantically-valid/import_submodule_attr/main.py	0	: ok
+program-level/semantically-valid/import_submodule_attr/pkg/__init__.py	0	: ok
+program-level/semantically-valid/import_submodule_attr/pkg/sub.py	0	: ok
+program-level/semantically-valid/import_twice/main.py	0	: ok
+program-level/semantically-valid/import_twice/pkg/__init__.py	0	: ok
+program-level/semantically-valid/import_twice/pkg/sub.py	0	: ok
+program-level/semantically-valid/name_import/lib.py	0	: ok
+program-level/semantically-valid/name_import/main.py	0	: ok
+program-level/semantically-valid/name_member/lib.py	0	: ok
+program-level/semantically-valid/name_member/main.py	0	: ok
+program-level/semantically-valid/name_var/helper.py	0	: ok
+program-level/semantically-valid/name_var/main.py	0	: ok
+program-level/semantically-valid/namespace_deep/main.py	0	: ok
+program-level/semantically-valid/namespace_deep/x/y/a.py	0	: ok
+program-level/semantically-valid/namespace_from_import/main.py	0	: ok
+program-level/semantically-valid/namespace_from_import/x/a.py	0	: ok
+program-level/semantically-valid/namespace_import/main.py	0	: ok
+program-level/semantically-valid/namespace_import/x/a.py	0	: ok
+program-level/semantically-valid/parent_after_child/main.py	0	: ok
+program-level/semantically-valid/parent_after_child/pkg/__init__.py	0	: ok
+program-level/semantically-valid/parent_after_child/pkg/sub.py	0	: ok
+program-level/semantically-valid/predefined_imports/main.py	0	: ok
+program-level/semantically-valid/qualified_class_construct/main.py	0	: ok
+program-level/semantically-valid/qualified_class_construct/shapes.py	0	: ok
+program-level/semantically-valid/qualified_class_pattern/main.py	0	: ok
+program-level/semantically-valid/qualified_class_pattern/shapes.py	0	: ok
+program-level/semantically-valid/self_from_import/main.py	0	: ok
+program-level/semantically-valid/self_from_import/pkg/__init__.py	0	: ok
+program-level/semantically-valid/self_from_import/pkg/sub.py	0	: ok
+program-level/semantically-valid/self_from_import_deep/main.py	0	: ok
+program-level/semantically-valid/self_from_import_deep/pkg/__init__.py	0	: ok
+program-level/semantically-valid/self_from_import_deep/pkg/a/__init__.py	0	: ok
+program-level/semantically-valid/self_from_import_deep/pkg/a/b.py	0	: ok
+program-level/semantically-valid/sibling_submodules/main.py	0	: ok
+program-level/semantically-valid/sibling_submodules/pkg/__init__.py	0	: ok
+program-level/semantically-valid/sibling_submodules/pkg/a.py	0	: ok
+program-level/semantically-valid/sibling_submodules/pkg/b.py	0	: ok
+program-level/semantically-valid/sibling_submodules_swapped/main.py	0	: ok
+program-level/semantically-valid/sibling_submodules_swapped/pkg/__init__.py	0	: ok
+program-level/semantically-valid/sibling_submodules_swapped/pkg/a.py	0	: ok
+program-level/semantically-valid/sibling_submodules_swapped/pkg/b.py	0	: ok
+program-level/semantically-valid/two_modules/helper.py	0	: ok
+program-level/semantically-valid/two_modules/main.py	0	: ok
+program-level/semantically-valid/unused_descendant_import/main.py	0	: ok
+program-level/semantically-valid/unused_descendant_import/u/__init__.py	0	: ok
+program-level/semantically-valid/unused_descendant_import/u/sub.py	0	: ok
+program-level/semantically-valid/unused_module/main.py	0	: ok
+program-level/semantically-valid/unused_module/unused.py	0	: ok

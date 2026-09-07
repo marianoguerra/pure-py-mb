@@ -4,3 +4,7 @@ target/
 target
 .mooncakes/
 .moonagent/
+# The read-only reference checkout (`just reference-fetch`). Never a build or
+# CI input: the conformance suite and the goldens under `test/` are committed.
+/reference/
+__pycache__/

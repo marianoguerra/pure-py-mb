@@ -1,0 +1,64 @@
+# program: exit code and message from the reference, one line per test; regenerate with tools/conform.py --reference --regen
+program-level/excluded/extend_imported_class	3	main.py: base class 'Base' is not declared in this module
+program-level/excluded/import_after_statement	3	main.py: imports must precede all other statements
+program-level/excluded/import_unassigned	3	main.py: member 'x' of module 'm' is not definitely assigned
+program-level/excluded/imported_module_rejected	3	helper.py: duplicate name 'f' in mutual region
+program-level/excluded/own_descendant_import	3	pkg/__init__.py: 'pkg.sub' is a descendant of the importing module 'pkg'; import it with a from-import
+program-level/excluded/parents_cycle	4	import cycle: x -> y -> x
+program-level/excluded/qualified_class_as_value	3	main.py: 'mod.C' refers to a class; classes are not first-class values
+program-level/excluded/reexport_from_import	3	main.py: module 'mid' has no member 'y'
+program-level/excluded/reexport_import_alias	3	main.py: module 'helper' has no member 'sys'
+program-level/excluded/submodule_as_value	3	main.py: 'pkg.sub' refers to a module; modules are not first-class values
+program-level/excluded/submodule_import_clash	3	pkg/__init__.py: binding 'sub' clashes with submodule 'pkg.sub'
+program-level/excluded/submodule_name_clash	3	pkg/__init__.py: binding 'sub' clashes with submodule 'pkg.sub'
+program-level/excluded/submodule_self_import	4	import cycle: a.b -> a.b
+program-level/excluded/submodule_transitive_import	3	main.py: submodule 'pkg.sub' is not imported
+program-level/excluded/transitive_ancestor_cycle	4	import cycle: x -> y -> x
+program-level/python-error/attr_unknown_member	3	main.py: module 'mod' has no member 'missing'
+program-level/python-error/cycle	4	import cycle: helper -> main -> helper
+program-level/python-error/dynamic/from_import_failing_ancestor	0	main.py: ok
+program-level/python-error/dynamic/import_failing_ancestor	0	main.py: ok
+program-level/python-error/from_import_arity	3	main.py: constructor for 'C' expects 1 arguments, got 2
+program-level/python-error/from_import_bad_ancestor	3	pkg/__init__.py: 'z' is not definitely assigned
+program-level/python-error/from_import_unassigned	3	main.py: member 'x' of module 'lib' is not definitely assigned
+program-level/python-error/from_import_unknown_member	3	main.py: module 'mod' has no member 'Missing'
+program-level/python-error/import_bad_ancestor	3	pkg/__init__.py: 'z' is not definitely assigned
+program-level/python-error/member_builtin	3	main.py: module 'lib' has no member 'print'
+program-level/python-error/missing_module	4	module 'helper' not found under .
+program-level/python-error/qualified_class_unknown	3	main.py: 'mod.NotAClass' is not a declared class
+program-level/python-error/self_import	4	import cycle: main -> main
+program-level/python-error/submodule_not_imported	3	b.py: submodule 'pkg.sub' is not imported
+program-level/python-error/unassigned_member	3	main.py: member 'x' of module 'lib' is not definitely assigned
+program-level/semantically-valid/attr_access	0	main.py: ok
+program-level/semantically-valid/child_after_parent	0	main.py: ok
+program-level/semantically-valid/deep_sibling_submodules	0	main.py: ok
+program-level/semantically-valid/diamond	0	main.py: ok
+program-level/semantically-valid/dotted_attr_access	0	main.py: ok
+program-level/semantically-valid/dotted_import	0	main.py: ok
+program-level/semantically-valid/empty	0	main.py: ok
+program-level/semantically-valid/from_import_class	0	main.py: ok
+program-level/semantically-valid/from_import_multi	0	main.py: ok
+program-level/semantically-valid/from_import_repeated	0	main.py: ok
+program-level/semantically-valid/from_import_subclass	0	main.py: ok
+program-level/semantically-valid/from_import_submodule	0	main.py: ok
+program-level/semantically-valid/import_absolute_shadow	0	main.py: ok
+program-level/semantically-valid/import_only	0	main.py: ok
+program-level/semantically-valid/import_submodule_attr	0	main.py: ok
+program-level/semantically-valid/import_twice	0	main.py: ok
+program-level/semantically-valid/name_import	0	main.py: ok
+program-level/semantically-valid/name_member	0	main.py: ok
+program-level/semantically-valid/name_var	0	main.py: ok
+program-level/semantically-valid/namespace_deep	0	main.py: ok
+program-level/semantically-valid/namespace_from_import	0	main.py: ok
+program-level/semantically-valid/namespace_import	0	main.py: ok
+program-level/semantically-valid/parent_after_child	0	main.py: ok
+program-level/semantically-valid/predefined_imports	0	main.py: ok
+program-level/semantically-valid/qualified_class_construct	0	main.py: ok
+program-level/semantically-valid/qualified_class_pattern	0	main.py: ok
+program-level/semantically-valid/self_from_import	0	main.py: ok
+program-level/semantically-valid/self_from_import_deep	0	main.py: ok
+program-level/semantically-valid/sibling_submodules	0	main.py: ok
+program-level/semantically-valid/sibling_submodules_swapped	0	main.py: ok
+program-level/semantically-valid/two_modules	0	main.py: ok
+program-level/semantically-valid/unused_descendant_import	0	main.py: ok
+program-level/semantically-valid/unused_module	0	main.py: ok

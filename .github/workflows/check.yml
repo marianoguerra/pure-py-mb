@@ -1,0 +1,57 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Versions
+        run: moon version --all
+
+      - name: Update the registry index
+        run: moon update
+
+      # The order below is `just ci`. It is spelled out rather than delegated
+      # so that a failing step names itself in the run's summary.
+      - name: Type-check, warnings fatal
+        run: moon check --deny-warn
+
+      - name: Interfaces are up to date
+        run: |
+          moon info
+          git diff --exit-code
+
+      - name: Sources are formatted
+        run: |
+          moon fmt
+          git diff --exit-code
+
+      - name: Unit tests on every backend
+        run: moon test --target all
+
+      - name: Layering
+        run: tools/boundary-check.sh
+
+      - name: Build the CLI
+        run: moon build --target native
+
+      # Hermetic: `test/conformance/` and `test/golden/` are committed, so this
+      # needs neither the reference checkout nor `uv`.
+      - name: Conformance
+        run: tools/conform.py --show 20
