@@ -287,14 +287,18 @@ publish: ci
 publish-one module: ci
     tools/publish.sh {{module}}
 
-# What each module would actually ship: the file count is the point.
+# What each module would actually ship: the file count is the point, because
+# 0.1.0 shipped 978 files and 832 of them were conformance fixtures.
 [group('publish')]
 package-size:
     #!/bin/sh
+    set -eu
     for m in lib cli; do
-      (cd $m && moon publish --dry-run > /dev/null 2>&1 || true)
-      zip=$(ls -t $m/_build/publish/*.zip 2>/dev/null | head -1)
-      [ -n "$zip" ] && printf "  %-4s %6s  %s files\n" "$m" \
+      (cd "{{justfile_directory()}}/$m" && moon publish --dry-run) > /dev/null 2>&1 || true
+    done
+    for zip in {{justfile_directory()}}/_build/publish/*.zip; do
+      [ -e "$zip" ] || continue
+      printf "  %-38s %6s  %4s files\n" "$(basename "$zip")" \
         "$(du -h "$zip" | cut -f1)" "$(unzip -l "$zip" | tail -1 | awk '{print $2}')"
     done
 

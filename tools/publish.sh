@@ -33,11 +33,18 @@ for m in $modules; do
   version=$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/$m/moon.mod")
   echo
   echo "── $name $version ($m/)"
-  # A module reports "pending" until its dependencies exist in the registry:
-  # `moon publish` verifies the packaged zip against the registry, and on a
-  # first release the dependency is not there yet.
   if [ -n "$dry" ]; then
-    (cd "$root/$m" && moon publish --dry-run) || true
+    out=$( (cd "$root/$m" && moon publish --dry-run) 2>&1 ) || true
+    # `moon publish` verifies the packaged zip against the REGISTRY, so a
+    # module whose dependency is not published yet cannot be dry-run at all.
+    # On a first release that is every module but the first, and it is not a
+    # failure -- it is the order the two have to go out in.
+    if printf '%s' "$out" | grep -q 'no version satisfies requirement'; then
+      dep=$(printf '%s' "$out" | sed -n 's/.*resolve registry dependency `\([^`]*\)`.*/\1/p' | head -1)
+      echo "  pending: needs $dep in the registry first, which is why lib goes before cli"
+    else
+      printf '%s\n' "$out" | grep -E 'Dry run|Server status|error|Error' | head -3
+    fi
   else
     (cd "$root/$m" && moon publish)
   fi
