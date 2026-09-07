@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "marianoguerra/pure-py/cmd/pure-py"
+package "marianoguerra/pure-py-cli/pure-py"
 
 // Values
 

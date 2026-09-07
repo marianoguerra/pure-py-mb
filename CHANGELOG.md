@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased
+
+### Packaging
+
+The library no longer ships the conformance suite. `lib/` is its own module
+and is what gets published; `cli/` is a second module holding the command;
+and the repository root is a development module that is never published,
+holding the suite, the goldens, the corpora, the tools, the documentation and
+the playground.
+
+| | files | size |
+|---|---|---|
+| `marianoguerra/pure-py` 0.1.0 | 978 | 540 KB |
+| `marianoguerra/pure-py` 0.2.0 | 96 | 164 KB |
+| `marianoguerra/pure-py-cli` 0.2.0 | 5 | 8 KB |
+
+This is what 0.1.0's packaging note said the fix would have to be:
+`moon publish` packages a module's whole directory tree and `moon.mod` has no
+way to leave part of it out, so the only way to ship a library without its
+fixtures is for the library to be the module. `moon.work` makes the local
+directories win over the registry, so the split costs nothing during
+development.
+
+Import paths are unchanged: `lib/`'s module is still `marianoguerra/pure-py`
+and its packages are still `marianoguerra/pure-py/ast` and the rest. A
+consumer of 0.1.0 upgrades by changing a version number.
+
+The command moved out of the library and into `marianoguerra/pure-py-cli`, so
+a consumer of the library no longer downloads it.
+
 ## 0.1.0 — 2026-09-07
 
 The first release: PurePy's tokenizer, parser, sieve, checker,
@@ -139,16 +169,9 @@ once per test, which is what the conformance suite specifies.
 
 ### Packaging
 
-The published module carries its conformance suite. Of the 978 files in the
-zip, 832 are under `test/`: the reference's own 392 sources, its answers for
-them, and the corpora the token and tree oracles compare against. They are
-what makes the suite hermetic, so a consumer who wants to know exactly what
-this port agrees with has it in hand -- but a consumer who only wants a
-parser is downloading half a megabyte to get it.
-
-`moon.mod` has no way to leave them out: `exclude`, `include` and `files` are
-all rejected by `moon publish`. The way to fix it is to move the library
-under a directory with its own `moon.mod` and publish from there, as
-`error-report` does; that is a restructuring, and it is not worth doing to a
-working tree on the eve of a first release. Recorded here so the next release
-can decide differently.
+The published module carries its conformance suite: 832 of its 978 files are
+test fixtures, about half a megabyte. `moon.mod` has no way to leave them out
+-- `exclude`, `include` and `files` are all rejected by `moon publish` -- so
+the fix is to move the library under a directory with its own `moon.mod`.
+That is a restructuring, and not one to do to a working tree on the eve of a
+first release. **Done in the next release.**

@@ -11,7 +11,7 @@
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-impl="$root/_build/native/debug/build/cmd/pure-py/pure-py.exe"
+impl="$root/_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

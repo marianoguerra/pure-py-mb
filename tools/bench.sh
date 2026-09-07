@@ -8,7 +8,7 @@
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-impl="$root/_build/native/debug/build/cmd/pure-py/pure-py.exe"
+impl="$root/_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 [ -x "$impl" ] || { echo "$impl: not built" >&2; exit 1; }
 
 # The largest file in the tree, which is the reference's own test runner.

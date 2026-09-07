@@ -46,7 +46,7 @@ jobs:
 
       - name: Assemble the site
         run: |
-          cp _build/wasm-gc/release/build/playground/playground.wasm playground/
+          cp _build/wasm-gc/release/build/marianoguerra/pure-py-dev/playground/playground.wasm playground/
           tools/optimize-wasm.sh
           mkdir -p _site
           cp playground/index.html playground/examples.js playground/playground.wasm _site/

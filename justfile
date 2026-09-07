@@ -14,7 +14,7 @@
 #     vendored suite -- is a deliberate act whose diff is the review. Those are
 #     in `regen`, and none of them runs in CI.
 
-impl := justfile_directory() / "_build/native/debug/build/cmd/pure-py/pure-py.exe"
+impl := justfile_directory() / "_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 conform := justfile_directory() / "tools/conform.py"
 
 # List every task, grouped.
@@ -134,7 +134,7 @@ ci:
     tools/conform.py --show 5
     tools/fuzz.py --count 2000 --seed 1
     moon build --target wasm-gc --release
-    cp _build/wasm-gc/release/build/playground/playground.wasm playground/
+    cp _build/wasm-gc/release/build/marianoguerra/pure-py-dev/playground/playground.wasm playground/
     tools/optimize-wasm.sh
     node tools/check_examples.mjs --expect
 
@@ -151,7 +151,7 @@ ci:
 [group('playground')]
 playground-build:
     moon build --target wasm-gc --release
-    cp {{justfile_directory()}}/_build/wasm-gc/release/build/playground/playground.wasm {{justfile_directory()}}/playground/
+    cp {{justfile_directory()}}/_build/wasm-gc/release/build/marianoguerra/pure-py-dev/playground/playground.wasm {{justfile_directory()}}/playground/
     tools/optimize-wasm.sh
 
 # Build it and serve the page on http://localhost:8000.
@@ -268,20 +268,35 @@ tables:
     tools/gen_repr_cases.py
     moon fmt
 
-# `moon publish --dry-run` reaches the registry, is told the version is fine,
-# and then exits non-zero anyway -- "Dry run completed successfully" in the
-# output is the answer, not the exit code. The `-` keeps that from reading as
-# a failure here.
+# Two modules go out; the root one never does. `tools/publish.sh` is what makes
+# that structural rather than a habit -- it can only address `lib` and `cli`,
+# and it walks them in dependency order.
 #
 # Show what would go to mooncakes, without sending it.
 [group('publish')]
 publish-dry: ci
-    -moon publish --dry-run
+    tools/publish.sh --dry-run
 
 # A published version cannot be withdrawn, so the full gate runs first.
 [group('publish')]
 publish: ci
-    moon publish
+    tools/publish.sh
+
+# For a follow-up release of one module, e.g. `just publish-one cli`.
+[group('publish')]
+publish-one module: ci
+    tools/publish.sh {{module}}
+
+# What each module would actually ship: the file count is the point.
+[group('publish')]
+package-size:
+    #!/bin/sh
+    for m in lib cli; do
+      (cd $m && moon publish --dry-run > /dev/null 2>&1 || true)
+      zip=$(ls -t $m/_build/publish/*.zip 2>/dev/null | head -1)
+      [ -n "$zip" ] && printf "  %-4s %6s  %s files\n" "$m" \
+        "$(du -h "$zip" | cut -f1)" "$(unzip -l "$zip" | tail -1 | awk '{print $2}')"
+    done
 
 # ---------------------------------------------------------------------------
 

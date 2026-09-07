@@ -27,7 +27,7 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-IMPL = ROOT / "_build/native/debug/build/cmd/pure-py/pure-py.exe"
+IMPL = ROOT / "_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 GREEN, RED, RESET = "\033[32m", "\033[31m", "\033[0m"
 
 # What the command line promises. Anything else is a defect.

@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "marianoguerra/pure-py/playground"
+package "marianoguerra/pure-py-dev/playground"
 
 // Values
 pub fn analyze(String) -> String

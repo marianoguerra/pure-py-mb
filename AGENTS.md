@@ -76,9 +76,17 @@ checker or the evaluator.
 - **`test/conform-policy.json` is a ratchet that fails from both sides.** A run
   below a floor is a regression; a run above one is an improvement nobody
   recorded. `just ratchet` moves the floors, in the commit that earned them.
+- **Three modules, one workspace.** `lib/` is `marianoguerra/pure-py`, `cli/`
+  is `marianoguerra/pure-py-cli`, and the root is a development module that is
+  never published: it holds the conformance suite, the goldens, the corpora,
+  the tools, the docs and the playground, and reaches the other two through
+  their public API only. `moon.work` makes the local directories win over the
+  registry, so working on the library does not mean publishing it to test it.
+  Publish with `just publish`, never `moon publish` at the root.
 - **Layering is a gate,** not a note: `tools/boundary-check.sh`. `error-report`
-  is named by `error/` and the CLI only; `moonbitlang/x` by `program/` and the
-  CLI only; `ast/` and `write/` link neither the front end nor the back end.
+  is named by `lib/error`, the CLI and the playground -- the three that render
+  -- and nowhere else; `moonbitlang/x` by `lib/program` and the CLI only;
+  `lib/ast` and `lib/write` link neither the front end nor the back end.
 - **`test/conformance/` is vendored verbatim** from the reference and is never
   edited. `just suite-sync` re-copies it.
 - **Positions are code points, not bytes.** CPython's `col_offset` counts UTF-8

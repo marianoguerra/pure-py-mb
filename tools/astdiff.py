@@ -27,7 +27,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SUITE = ROOT / "test" / "conformance"
 CORPUS = ROOT / "test" / "corpus" / "python"
-DEFAULT_IMPL = ROOT / "_build/native/debug/build/cmd/pure-py/pure-py.exe"
+DEFAULT_IMPL = ROOT / "_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 PYAST = ROOT / "tools" / "pyast_dump.py"
 POLICY = ROOT / "test" / "conform-policy.json"
 

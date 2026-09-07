@@ -30,7 +30,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SUITE = ROOT / "test" / "conformance"
 CORPUS = ROOT / "test" / "corpus" / "python"
 INDEX = ROOT / "test" / "golden" / "tokens.index"
-DEFAULT_IMPL = ROOT / "_build/native/debug/build/cmd/pure-py/pure-py.exe"
+DEFAULT_IMPL = ROOT / "_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 PYTOKENS = ROOT / "tools" / "pytokens.py"
 
 GREEN, RED, DIM, RESET = "\033[32m", "\033[31m", "\033[2m", "\033[0m"

@@ -40,7 +40,9 @@ SUITE = ROOT / "test" / "conformance"
 GOLDEN = ROOT / "test" / "golden"
 POLICY = ROOT / "test" / "conform-policy.json"
 REFERENCE = ROOT / "reference"
-DEFAULT_IMPL = ROOT / "_build" / "native" / "debug" / "build" / "cmd" / "pure-py" / "pure-py.exe"
+DEFAULT_IMPL = (
+    ROOT / "_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
+)
 
 GREEN, RED, YELLOW, DIM, RESET = (
     "\033[32m", "\033[31m", "\033[33m", "\033[2m", "\033[0m",

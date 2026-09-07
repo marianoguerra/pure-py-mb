@@ -30,8 +30,8 @@ for forbidden in lexer parser sieve analysis context check value eval program; d
   fi
 done
 
-embed="$root/_build/native/debug/build/test/embed/embed.exe"
-impl="$root/_build/native/debug/build/cmd/pure-py/pure-py.exe"
+embed="$root/_build/native/debug/build/marianoguerra/pure-py-dev/test/embed/embed.exe"
+impl="$root/_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 if [ -x "$embed" ] && [ -x "$impl" ]; then
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
