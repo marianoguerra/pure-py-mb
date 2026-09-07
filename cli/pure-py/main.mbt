@@ -14,7 +14,7 @@ fn main {
   let args = @env.args()[1:].to_owned()
   match args {
     [] | ["-h"] | ["--help"] => println(usage)
-    ["--version"] => println("pure-py 0.1.0")
+    ["--version"] => println("pure-py 0.2.0")
     ["tokens", path] => @sys.exit(cmd_tokens(path))
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
     ["unparse", path] => @sys.exit(cmd_unparse(path))
