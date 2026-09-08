@@ -596,6 +596,13 @@ point: measure from the position your application actually calls from, and
 report more than one so that an engine's behaviour can be told apart from the
 harness's own mistake.
 
+The columns are three positions and not a spectrum. Module top level in
+particular is not reliably the shallow one: here it is within a call of the
+timer, and the embedder above measures it a third TIGHTER than the timer on
+the same shape. A probe that runs at module top level and reports one number
+is not measuring the roomiest stack a caller can arrange, it is measuring one
+arbitrary position that happens to be neutral here and pessimistic there.
+
 `just depth-probe-browser firefox` is that measurement, and `chromium` the
 other; with no argument it serves the page for an engine neither of us
 automated. It also asks the question that actually decides whether a page
