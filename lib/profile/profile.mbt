@@ -1,0 +1,175 @@
+///|
+/// What a caller may opt in to on top of PurePy.
+///
+/// PurePy is a subset of Python and a specification, and this module ships it
+/// exactly. But an embedder is not always writing to the specification: one
+/// wants `a and b and c`, another wants a `str` with methods, and forking the
+/// library to get either is a bad trade. A `Profile` is how they ask.
+///
+/// Three things about it are load-bearing.
+///
+///   * **`core` is the default everywhere.** Every function that takes a
+///     profile takes it as an optional argument defaulting to `core`, so a
+///     caller who never heard of profiles gets PurePy, message for message and
+///     verdict for verdict. That is not a courtesy: `test/golden/` and
+///     `test/conform-policy.json` are the reference checker's answers, and a
+///     profile that moved one of them would have broken the thing being ported.
+///
+///   * **A profile only ever ADDS.** It is built from `core` by adding
+///     features, so there is no way to spell a SUBSET of PurePy with one, and a
+///     program accepted under a poorer profile is accepted under a richer one.
+///
+///   * **A profile may open a `not_yet` gate and may not lift a
+///     `prohibited` one.** The sieve says "not yet" to a form the specification
+///     intends to have and says "prohibited" to one it excludes on purpose --
+///     `for`, `while`, `try`, `raise`, `del`, `+=`, item and attribute
+///     assignment. The second list is what makes PurePy pure, and no profile
+///     touches it. See `lib/sieve/sieve.mbt`, where the two have separate
+///     helpers for exactly this reason.
+///
+/// This package is a LEAF: it imports nothing from the library, not even
+/// `value` or `ast`. It has to be, because the checker's `context` and the
+/// evaluator's `value` both consult a profile and `value` imports `context`.
+/// `tools/boundary-check.sh` asserts it.
+
+///|
+/// A feature PurePy does not have and a profile may add.
+///
+/// The doc comment on each arm cites the upstream issue the sieve cites, so
+/// the two can be read together.
+///
+/// Arms are APPENDED, never inserted: the derived `Compare` is tag order, and
+/// tag order is the order `Profile::features` answers in. Adding one is
+/// additive for a caller who builds a profile and breaking for one who matches
+/// a `Feature` exhaustively, which is the usual trade for an open enum.
+pub(all) enum Feature {
+  /// `a and b and c`: three or more operands in one boolean expression (#82).
+  ChainedBoolean
+} derive(Eq, Compare, Hash, Debug)
+
+///|
+/// The name a `--profile` flag prints and a person reads.
+pub fn Feature::name(self : Feature) -> String {
+  match self {
+    ChainedBoolean => "chained-boolean"
+  }
+}
+
+// ---------------------------------------------------------------------------
+
+///|
+/// Which superset of PurePy a caller opted in to.
+///
+/// A sorted set, because that is how the rest of this codebase gets a
+/// deterministic order out of a set: `features` iterates it, and what
+/// `pure-py profiles` prints has to be the same twice.
+///
+/// The field is readable, as every `pub struct` in this library is, but there
+/// is no way to CONSTRUCT one except from `core` by `adding`. That is the
+/// property worth having: a `Profile` is always a superset of PurePy, never a
+/// subset, and no caller can spell one that takes something away.
+///
+/// `Eq` is derived because "did the caller ask for the same language I did?"
+/// is a fair question; `Debug` because a failing test should be able to say
+/// which profile it had. `adding` rather than `with` only because `with` is a
+/// keyword.
+pub struct Profile {
+  features : @sorted_set.SortedSet[Feature]
+} derive(Eq, Debug)
+
+///|
+/// PurePy exactly as specified: no feature at all, and the default of every
+/// function in this library that takes a profile.
+///
+/// A `let` rather than a `fn`, as `@analysis.empty` is, so that the default
+/// argument on a dozen public functions allocates nothing.
+pub let core : Profile = { features: @sorted_set.SortedSet::new(), }
+
+///|
+/// Whether this profile has a feature. The one question the sieve, the checker
+/// and the evaluator ask.
+pub fn Profile::has(self : Profile, f : Feature) -> Bool {
+  self.features.contains(f)
+}
+
+///|
+/// This profile with more features. Stacking is this and nothing else.
+pub fn Profile::adding(self : Profile, fs : Array[Feature]) -> Profile {
+  let mut s = self.features
+  for f in fs {
+    s = s.add(f)
+  }
+  { features: s, }
+}
+
+///|
+/// Every feature this profile has, in tag order.
+pub fn Profile::features(self : Profile) -> Array[Feature] {
+  self.features.iter().collect()
+}
+
+///|
+/// Whether every feature of `other` is a feature of this one.
+///
+/// What "builds on top of" means, as a question that can be asked rather than a
+/// claim in a comment.
+pub fn Profile::contains(self : Profile, other : Profile) -> Bool {
+  for f in other.features {
+    if !self.features.contains(f) {
+      return false
+    }
+  }
+  true
+}
+
+// ---------------------------------------------------------------------------
+// The named profiles, each built from the one below it.
+
+///|
+/// The features upstream has already committed to, as far as they are
+/// implemented here.
+///
+/// Everything in it is a form the sieve refuses today with an issue number --
+/// `not yet supported (#82)` and its neighbours -- which makes it the profile
+/// with the least to lose: upstream intends to make these core, so this SHRINKS
+/// as each one lands rather than drifting away from the specification.
+///
+/// It grows one feature per commit until it covers the whole table in
+/// `implementation-plan.md` § "After the plan: the pending features". Ask it
+/// what it holds -- `Profile::features`, or `pure-py profiles` -- rather than
+/// assuming a feature from that table is in it yet.
+pub fn pending() -> Profile {
+  core.adding([ChainedBoolean])
+}
+
+///|
+/// A profile by the name a `--profile` flag or a playground selector uses.
+pub fn by_name(name : String) -> Profile? {
+  match name {
+    "core" | "purepy" => Some(core)
+    "pending" => Some(pending())
+    _ => None
+  }
+}
+
+///|
+/// Every name `by_name` answers to, in the order they stack.
+pub let names : Array[String] = ["core", "pending"]
+
+///|
+/// Which named profile accepts a form the sieve refused, if any does.
+///
+/// Keyed on the feature STRING the sieve passes to `not_yet`, because
+/// `@error.Kind::NotYetSupported` already carries it and nothing else names the
+/// rule. That is also why this lives here and not in `lib/error`: a hint about
+/// profiles is a rendering concern, and `Diagnostic::message` is compared
+/// against the reference checker's output word for word.
+///
+/// The caller decides whether to show it. A run that asked for no profile
+/// should print what it printed before profiles existed.
+pub fn accepted_by(feature : String) -> String? {
+  match feature {
+    "chained boolean operator" => Some("pending")
+    _ => None
+  }
+}

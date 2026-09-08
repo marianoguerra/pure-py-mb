@@ -9,6 +9,7 @@ import {
   "marianoguerra/pure-py/eval",
   "marianoguerra/pure-py/lexer",
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/sieve",
   "marianoguerra/pure-py/write",

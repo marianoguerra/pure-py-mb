@@ -11,11 +11,16 @@
 // Layering is strict and gated by `tools/boundary-check.sh` (see
 // `implementation-plan.md` §2):
 //
-//   basic < token < lexer          error   ast < write
-//                                    \      |
-//                     parser ---------+-----+
-//                     sieve, analysis, context, check, value, eval, program
-//                     `.` (facade)
+//   basic, profile < token < lexer          error   ast < write
+//                                             \      |
+//                              parser ---------+-----+
+//                              sieve, analysis, context, check, value, eval,
+//                              program
+//                              `.` (facade)
+//
+// `profile/` is a leaf beside `basic`: the sieve, the checker and the
+// evaluator all ask a profile what a caller opted in to, and `value` imports
+// `context`, so a profile that named any of them would close a cycle.
 //
 // `marianoguerra/error-report` is named by `error/` and nowhere else: a
 // diagnostic is a value of this module's own type, and ONE function turns it

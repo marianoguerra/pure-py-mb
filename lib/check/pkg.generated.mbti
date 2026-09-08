@@ -7,6 +7,7 @@ import {
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/error",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
   "moonbitlang/core/bigint",
   "moonbitlang/core/immut/sorted_map",
@@ -15,7 +16,7 @@ import {
 // Values
 pub fn check_body(Array[@ast.Stmt], @context.ModuleContext[Program]) -> @context.ModuleContext[Program] raise
 
-pub fn check_entry(String) -> @error.Diagnostic?
+pub fn check_entry(String, profile? : @profile.Profile) -> @error.Diagnostic?
 
 pub fn check_module(Program, String) -> @sorted_map.SortedMap[String, @context.Entry] raise
 

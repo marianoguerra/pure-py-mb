@@ -14,6 +14,7 @@ import {
   "marianoguerra/error-report/render",
   "marianoguerra/error-report/style",
   "marianoguerra/pure-py" @purepy,
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/error" @err,
@@ -25,6 +26,9 @@ import {
 
 options(
   link: {
-    "wasm-gc": { "exports": [ "analyze" ], "use-js-builtin-string": true },
+    "wasm-gc": {
+      "exports": [ "analyze", "analyze_with" ],
+      "use-js-builtin-string": true,
+    },
   },
 )

@@ -3,7 +3,8 @@
 **PurePy** in MoonBit: a tokenizer and parser for Python 3.12 producing a
 CPython-shaped abstract syntax tree, a sieve that rejects the Python PurePy
 excludes, a well-formedness checker, an interpreter, a printer that turns the
-tree back into Python source, and a command-line tool.
+tree back into Python source, and a command-line tool. A library user who wants
+a slightly larger language than the specification's opts in to a **profile**.
 
 PurePy is a pure functional subset of Python with a small-step operational
 semantics and a static well-formedness judgement, specified in
@@ -43,6 +44,7 @@ import {
   "marianoguerra/pure-py" @purepy,
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/value",
 }
 ```
@@ -106,6 +108,32 @@ test "the checker decides definite assignment and the capture rules" {
       )
     None => fail("a captured name may not be reassigned")
   }
+}
+```
+
+## Asking for a larger language
+
+Everything above is PurePy exactly as specified, which is what you get for not
+asking. A **profile** is how a caller opts in to a superset: `@profile.core`
+is PurePy, and each named profile is the one below it plus features.
+
+```mbt check
+///|
+test "a profile widens what the sieve accepts" {
+  let m = @purepy.parse("print(True and True and True)\n")
+  // PurePy has no chained boolean operator yet, and says which issue it is.
+  inspect(
+    @purepy.check(m).unwrap().message(),
+    content="chained boolean operator not yet supported (#82)",
+  )
+  // A caller who asked for the profile that has it gets it.
+  inspect(@purepy.check(m, profile=@profile.pending()) is None, content="true")
+  // No profile lifts a prohibition: exit 1 is what PurePy excludes on purpose.
+  let looping = @purepy.parse("for x in [1]:\n    print(x)\n")
+  inspect(
+    @purepy.sieve(looping, profile=@profile.pending()).unwrap().message(),
+    content="for loops prohibited",
+  )
 }
 ```
 

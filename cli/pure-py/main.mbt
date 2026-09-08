@@ -11,20 +11,22 @@
 ///   4  an ill-formed program
 ///   5  an operation the semantics leaves undefined
 fn main {
-  let args = @env.args()[1:].to_owned()
+  let (profile, asked, args) = take_profile(@env.args()[1:])
   match args {
     [] | ["-h"] | ["--help"] => println(usage)
     ["--version"] => println("pure-py 0.4.0")
+    ["profiles"] => println(profiles_listing())
     ["tokens", path] => @sys.exit(cmd_tokens(path))
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
     ["unparse", path] => @sys.exit(cmd_unparse(path))
-    ["parse", .. paths] => @sys.exit(cmd_parse(paths))
+    ["parse", .. paths] => @sys.exit(cmd_parse(paths, profile~, asked~))
     ["check", .. rest] => {
       let (format, color, paths) = parse_error_options(rest)
-      @sys.exit(cmd_check(paths, format~, color~))
+      @sys.exit(cmd_check(paths, format~, color~, profile~, asked~))
     }
-    ["check-program", path] => @sys.exit(cmd_check_program(path))
-    ["run", path, .. rest] => @sys.exit(cmd_run(path, rest))
+    ["check-program", path] =>
+      @sys.exit(cmd_check_program(path, profile~, asked~))
+    ["run", path, .. rest] => @sys.exit(cmd_run(path, rest, profile~, asked~))
     ["dump", path, "--pos"] | ["dump", "--pos", path] =>
       @sys.exit(cmd_dump(path, pos=true))
     [cmd, ..] => {
@@ -36,9 +38,112 @@ fn main {
 }
 
 ///|
+/// `--profile NAME`, which must come BEFORE the command.
+///
+/// Before, and not after, because of `run`: `cmd_run` forwards everything past
+/// the entry file to the guest's `sys.argv`, so `run main.py --profile pending`
+/// would hand the GUEST the flag and run under `core` -- the wrong language,
+/// silently, which is the worst way to be wrong. Rather than guess which
+/// occurrence was meant, one position is legal and a stray one is refused
+/// below.
+///
+/// Answers the profile, whether one was asked for at all, and what is left.
+/// A run that asked for nothing must print exactly what it printed before
+/// profiles existed, which is what `asked` is for.
+fn take_profile(
+  argv : ArrayView[String],
+) -> (@profile.Profile, Bool, Array[String]) {
+  let mut profile = @profile.core
+  let mut asked = false
+  let mut i = 0
+  while i + 1 < argv.length() && argv[i] == "--profile" {
+    match @profile.by_name(argv[i + 1]) {
+      Some(p) => {
+        profile = p
+        asked = true
+      }
+      None => {
+        println("pure-py: unknown profile '\{argv[i + 1]}'")
+        println(profiles_listing())
+        @sys.exit(2)
+      }
+    }
+    i += 2
+  }
+  let rest = argv[i:].to_owned()
+  // A `--profile` anywhere else is a mistake worth naming. Nothing legitimate
+  // passes the literal string to a guest, and running under the wrong profile
+  // because the flag landed in `sys.argv` is not a failure anyone would spot.
+  if rest.contains("--profile") {
+    println("pure-py: --profile must come before the command")
+    println("  pure-py --profile \{@profile.names[1]} run FILE")
+    @sys.exit(2)
+  }
+  (profile, asked, rest)
+}
+
+///|
+/// `profiles`: what each name means, since a profile is a set and the set
+/// grows.
+fn profiles_listing() -> String {
+  let mut width = 0
+  for name in @profile.names {
+    if name.length() > width {
+      width = name.length()
+    }
+  }
+  let lines = ["profiles, each a superset of the one before it:"]
+  for name in @profile.names {
+    let p = match @profile.by_name(name) {
+      Some(p) => p
+      None => continue
+    }
+    let features = p.features().map(@profile.Feature::name)
+    let pad = " ".repeat(width - name.length())
+    lines.push(
+      "  " +
+      name +
+      pad +
+      "  " +
+      (if features.is_empty() {
+        "PurePy as specified"
+      } else {
+        features.join(", ")
+      }),
+    )
+  }
+  lines.join("\n")
+}
+
+///|
+/// A line naming the profile that would have accepted this, or nothing.
+///
+/// Printed only when the caller asked about profiles at all. A rejection under
+/// the default is a rejection PurePy makes, and it says what it always said --
+/// `test/golden/` compares those messages against the reference's, and this is
+/// how that stays true by construction rather than by a comparison that
+/// happens not to look here.
+fn profile_note(d : @err.Diagnostic, asked : Bool) -> String? {
+  guard asked else { return None }
+  match d.kind {
+    NotYetSupported(feature~, ..) =>
+      match @profile.accepted_by(feature) {
+        Some(p) => Some("  accepted under --profile \{p}")
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
 let usage : String =
-  #|usage: pure-py <command> [options] FILE...
+  #|usage: pure-py [--profile NAME] <command> [options] FILE...
   #|
+  #|  --profile NAME        opt in to a superset of PurePy; `profiles` lists
+  #|                        them. It must come BEFORE the command, because
+  #|                        `run` gives everything after the file to the guest.
+  #|
+  #|  profiles              the profiles and what each adds
   #|  tokens FILE           one token per line
   #|  dump FILE [--pos]     the abstract syntax tree
   #|  unparse FILE          Python source regenerated from the tree
@@ -139,7 +244,11 @@ fn cmd_unparse(path : String) -> Int {
 /// `FILE:line:col: message` with the column in UTF-8 BYTES, which is what
 /// CPython's `col_offset` counts and what the reference therefore prints.
 /// Several files in one invocation, and the LAST non-zero code wins.
-fn cmd_parse(paths : ArrayView[String]) -> Int {
+fn cmd_parse(
+  paths : ArrayView[String],
+  profile? : @profile.Profile = @profile.core,
+  asked? : Bool = false,
+) -> Int {
   let mut code = 0
   for path in paths {
     let src = read_source(path)
@@ -147,12 +256,16 @@ fn cmd_parse(paths : ArrayView[String]) -> Int {
       @err.PurePyError(d) => Some(d.as_parse_error())
       e => Some(@err.Diagnostic::new(PythonSyntax(msg="parse error: \{e}")))
     } noraise {
-      m => @sieve.result(m)
+      m => @sieve.result(m, profile~)
     }
     match d {
       None => println("\{path}: ok")
       Some(diag) => {
         println(diag.short(path, source=src))
+        match profile_note(diag, asked) {
+          Some(note) => println(note)
+          None => ()
+        }
         code = diag.exit_code()
       }
     }
@@ -171,6 +284,8 @@ fn cmd_check(
   paths : Array[String],
   format~ : @render.Format,
   color~ : @style.ColorMode,
+  profile? : @profile.Profile = @profile.core,
+  asked? : Bool = false,
 ) -> Int {
   let mut code = 0
   for path in paths {
@@ -180,7 +295,7 @@ fn cmd_check(
       e => Some(@err.Diagnostic::new(PythonSyntax(msg="parse error: \{e}")))
     } noraise {
       m =>
-        match @sieve.result(m) {
+        match @sieve.result(m, profile~) {
           Some(d) => Some(d)
           None => @check.check_single(m)
         }
@@ -192,6 +307,10 @@ fn cmd_check(
           println(diag.short(path, source=src))
         } else {
           println(render_diagnostic(diag, path, src, format~, color~))
+        }
+        match profile_note(diag, asked) {
+          Some(note) => println(note)
+          None => ()
         }
         code = diag.exit_code()
       }
@@ -260,14 +379,22 @@ fn parse_error_options(
 /// The format is `check_program.py`'s: `MAIN: ok`, or the message alone --
 /// which for a module-level rejection carries the offending file's path and
 /// no line, because that is what the reference prints.
-fn cmd_check_program(path : String) -> Int {
-  match @check.check_entry(path) {
+fn cmd_check_program(
+  path : String,
+  profile? : @profile.Profile = @profile.core,
+  asked? : Bool = false,
+) -> Int {
+  match @check.check_entry(path, profile~) {
     None => {
       println("\{path}: ok")
       0
     }
     Some(d) => {
       println(d.message())
+      match profile_note(d, asked) {
+        Some(note) => println(note)
+        None => ()
+      }
       d.exit_code()
     }
   }
@@ -281,7 +408,12 @@ fn cmd_check_program(path : String) -> Int {
 ///
 /// Output is buffered and flushed before an abort message, so a program that
 /// prints and then fails shows both in the order Python shows them.
-fn cmd_run(path : String, args : ArrayView[String]) -> Int {
+fn cmd_run(
+  path : String,
+  args : ArrayView[String],
+  profile? : @profile.Profile = @profile.core,
+  asked? : Bool = false,
+) -> Int {
   let argv = [path]
   for a in args {
     argv.push(a)
@@ -290,9 +422,14 @@ fn cmd_run(path : String, args : ArrayView[String]) -> Int {
     path,
     predefined=@check.predefined_module_names(),
     sweep=false,
+    profile~,
   ) catch {
     @err.PurePyError(d) => {
       println(d.message())
+      match profile_note(d, asked) {
+        Some(note) => println(note)
+        None => ()
+      }
       return d.exit_code()
     }
     e => {

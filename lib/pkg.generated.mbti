@@ -5,13 +5,14 @@ import {
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/error",
   "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
 }
 
 // Values
-pub fn check(@ast.Module, host? : @eval.Host) -> @error.Diagnostic?
+pub fn check(@ast.Module, host? : @eval.Host, profile? : @profile.Profile) -> @error.Diagnostic?
 
-pub fn check_program(@program.SourceTree, host? : @eval.Host) -> @error.Diagnostic?
+pub fn check_program(@program.SourceTree, host? : @eval.Host, profile? : @profile.Profile) -> @error.Diagnostic?
 
 pub fn parse(String, name? : String) -> @ast.Module raise
 
@@ -19,11 +20,11 @@ pub fn run(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> (Str
 
 pub fn run_with(@program.SourceTree, @eval.Host, max_depth? : Int, done? : (@eval.RunResult) -> Unit) -> @eval.RunResult
 
-pub fn sieve(@ast.Module) -> @error.Diagnostic?
+pub fn sieve(@ast.Module, profile? : @profile.Profile) -> @error.Diagnostic?
 
 pub fn source_tree(Map[String, @ast.Module]) -> @program.SourceTree
 
-pub fn source_tree_from(String, sweep? : Bool) -> @program.SourceTree raise
+pub fn source_tree_from(String, sweep? : Bool, profile? : @profile.Profile) -> @program.SourceTree raise
 
 pub fn unparse(@ast.Module) -> String
 

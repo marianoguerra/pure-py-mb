@@ -89,7 +89,11 @@ pub fn is_module(name : String, base_dir : String) -> String? {
 ///|
 /// Read, parse and sieve one module. A failure at any of the three is a
 /// program-level error naming the file.
-fn load(name : String, base_dir : String) -> @ast.Module raise {
+fn load(
+  name : String,
+  base_dir : String,
+  profile : @profile.Profile,
+) -> @ast.Module raise {
   let path = match is_module(name, base_dir) {
     Some(p) => p
     None =>
@@ -111,7 +115,7 @@ fn load(name : String, base_dir : String) -> @ast.Module raise {
       raise @err.ill_formed_program("\{path}: parse error: " + d.message())
     e => raise @err.ill_formed_program("\{path}: parse error: \{e}")
   }
-  match @sieve.result(tree) {
+  match @sieve.result(tree, profile~) {
     Some(d) => raise @err.ill_formed_program("\{path}: " + d.message())
     None => ()
   }
@@ -262,13 +266,18 @@ fn walk_py_files(dir : String) -> Array[String] {
 /// parse. Running does not: the semantics only ever loads a module something
 /// imports, and a directory full of unrelated files -- which is exactly what
 /// the conformance suite's module-level tests are -- must not be dragged in.
+///
+/// `profile` reaches here because discovery SIEVES each file it loads. A tree
+/// found under `core` and checked under a richer profile would have been
+/// rejected before the checker ever saw it.
 pub fn SourceTree::from_entry(
   entry_path : String,
   predefined~ : Array[String],
   sweep? : Bool = true,
+  profile? : @profile.Profile = @profile.core,
 ) -> SourceTree raise {
   let base_dir = parent(entry_path)
-  let entry_tree = load(stem(entry_path), base_dir)
+  let entry_tree = load(stem(entry_path), base_dir, profile)
   let modules : Map[String, @ast.Module] = Map([])
   let paths : Map[String, String] = Map([])
   modules["__main__"] = entry_tree
@@ -299,7 +308,7 @@ pub fn SourceTree::from_entry(
       paths[name] = "<\{name}>"
       continue
     }
-    let tree = load(name, base_dir)
+    let tree = load(name, base_dir, profile)
     modules[name] = tree
     paths[name] = match path {
       Some(p) => p

@@ -3,6 +3,7 @@ package "marianoguerra/pure-py/program"
 
 import {
   "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/profile",
 }
 
 // Values
@@ -28,7 +29,7 @@ pub struct SourceTree {
   modules : Map[String, @ast.Module]
   paths : Map[String, String]
 }
-pub fn SourceTree::from_entry(String, predefined~ : Array[String], sweep? : Bool) -> Self raise
+pub fn SourceTree::from_entry(String, predefined~ : Array[String], sweep? : Bool, profile? : @profile.Profile) -> Self raise
 pub fn SourceTree::get(Self, String) -> @ast.Module?
 pub fn SourceTree::module_names(Self) -> Array[String]
 pub fn SourceTree::modules_map(Self) -> Map[String, @ast.Module]

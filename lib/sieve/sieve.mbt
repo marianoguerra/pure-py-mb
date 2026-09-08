@@ -16,14 +16,20 @@
 ///
 /// Everything here raises on the first violation, so `check` is `Unit` and
 /// the caller catches.
-pub fn check_module(m : @ast.Module) -> Unit raise {
-  check_top_level(m.body)
+pub fn check_module(
+  m : @ast.Module,
+  profile? : @profile.Profile = @profile.core,
+) -> Unit raise {
+  Sieve::{ profile, }.check_top_level(m.body)
 }
 
 ///|
 /// Whether a module passes the sieve, as a diagnostic rather than a raise.
-pub fn result(m : @ast.Module) -> @err.Diagnostic? {
-  try check_module(m) catch {
+pub fn result(
+  m : @ast.Module,
+  profile? : @profile.Profile = @profile.core,
+) -> @err.Diagnostic? {
+  try check_module(m, profile~) catch {
     @err.PurePyError(d) => Some(d)
     _ => None
   } noraise {
@@ -31,7 +37,57 @@ pub fn result(m : @ast.Module) -> @err.Diagnostic? {
   }
 }
 
+// ---------------------------------------------------------------------------
+
 ///|
+/// The sieve's one piece of state: which superset of PurePy it is sieving FOR.
+///
+/// A struct threaded as a receiver rather than a parameter passed by hand,
+/// because the profile is consulted at leaves twenty levels down and the
+/// traversal is nine mutually recursive functions. Under `@profile.core` --
+/// the default of every entry point above -- it changes nothing: `gate` raises
+/// exactly where the `raise not_yet(...)` it replaced raised.
+///
+/// Three of the nine traversal functions -- `check_classdef`, `check_field`
+/// and `check_arguments` -- are still free functions rather than methods,
+/// because none of their gates is open yet. Each becomes a method in the
+/// commit that opens its first one (`check_field` never will: its rejections
+/// are all prohibitions). Which of them takes a `Sieve` is therefore a reading
+/// of how far a profile can reach today.
+priv struct Sieve {
+  profile : @profile.Profile
+}
+
+///|
+/// A `not_yet` that a profile can open.
+///
+/// The rejection is byte-identical to the one it replaces and happens at the
+/// same point in the same traversal, which is what keeps `core` honest: the
+/// order of these tests is `syntax.py`'s and a file with two violations
+/// reports the first one the walk reaches. Under a profile that has the
+/// feature this returns, and the arm goes on to walk the node the way the
+/// sieve walks everything it accepts.
+fn Sieve::gate(
+  self : Sieve,
+  f : @profile.Feature,
+  feature : String,
+  issue : Int,
+  span : @basic.Span,
+) -> Unit raise {
+  if !self.profile.has(f) {
+    raise not_yet(feature, issue, span)
+  }
+}
+
+///|
+/// A form PurePy excludes on purpose, and the one thing no profile can open.
+///
+/// There is deliberately no `Sieve::gate` for this the way there is for
+/// `not_yet`. `for`, `while`, `try`, `raise`, `del`, `+=`, item and attribute
+/// assignment are what make the language pure: a value has no cell to write to
+/// because nothing can spell a write. A profile may say "not yet, but yes"; it
+/// may not say "yes" to these. Two helpers rather than one parameterised one
+/// is what makes that readable here rather than a claim someone has to find.
 fn prohibited(msg : String, span : @basic.Span) -> @err.PurePyError {
   @err.PurePyError(@err.Diagnostic::new(Prohibited(msg~), span~))
 }
@@ -62,25 +118,25 @@ fn not_yet_nowhere(feature : String, issue : Int) -> @err.PurePyError {
 
 ///|
 /// The module body: a class declaration is allowed here and nowhere else.
-fn check_top_level(stmts : Array[@ast.Stmt]) -> Unit raise {
+fn Sieve::check_top_level(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise {
   for s in stmts {
     if s is ClassDef(..) {
       check_classdef(s)
     } else {
-      check_stmt(s)
+      self.check_stmt(s)
     }
   }
 }
 
 ///|
-fn check_body(stmts : Array[@ast.Stmt]) -> Unit raise {
+fn Sieve::check_body(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise {
   for s in stmts {
-    check_stmt(s)
+    self.check_stmt(s)
   }
 }
 
 ///|
-fn check_stmt(node : @ast.Stmt) -> Unit raise {
+fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
   let span = node.span()
   match node {
     Pass(..) => ()
@@ -95,17 +151,17 @@ fn check_stmt(node : @ast.Stmt) -> Unit raise {
         Name(..) => ()
         _ => raise not_yet("destructuring assignment", 54, span)
       }
-      check_expr(value)
+      self.check_expr(value)
     }
     Return(value~, ..) =>
       match value {
-        Some(v) => check_expr(v)
+        Some(v) => self.check_expr(v)
         None => ()
       }
     If(cond~, body~, or_else~, ..) => {
-      check_expr(cond)
-      check_body(body)
-      check_body(or_else)
+      self.check_expr(cond)
+      self.check_body(body)
+      self.check_body(or_else)
     }
     // `async def` is a different class in CPython and never reaches the
     // `FunctionDef` arm, so its arguments, decorators and annotation are not
@@ -119,13 +175,13 @@ fn check_stmt(node : @ast.Stmt) -> Unit raise {
       if returns is Some(_) {
         raise prohibited("return type annotations prohibited", span)
       }
-      check_body(body)
+      self.check_body(body)
     }
-    ExprStmt(value~, ..) => check_expr(value)
+    ExprStmt(value~, ..) => self.check_expr(value)
     Assert(cond~, msg~, ..) => {
-      check_expr(cond)
+      self.check_expr(cond)
       match msg {
-        Some(m) => check_expr(m)
+        Some(m) => self.check_expr(m)
         None => ()
       }
     }
@@ -171,14 +227,14 @@ fn check_stmt(node : @ast.Stmt) -> Unit raise {
     ClassDef(..) =>
       raise prohibited("class declaration only at module top level", span)
     Match(subject~, cases~, ..) => {
-      check_expr(subject)
+      self.check_expr(subject)
       for c in cases {
         // A `match_case` carries no position in CPython's tree.
         if c.guard_ is Some(_) {
           raise not_yet_nowhere("case guards", 83)
         }
-        check_pattern(c.pattern)
-        check_body(c.body)
+        self.check_pattern(c.pattern)
+        self.check_body(c.body)
       }
     }
     Break(..) => raise prohibited("break prohibited", span)
@@ -260,7 +316,7 @@ pub fn is_qualified_name(e : @ast.Expr) -> Bool {
 }
 
 ///|
-fn check_pattern(node : @ast.Pattern) -> Unit raise {
+fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
   let span = node.span()
   match node {
     MatchValue(value~, ..) => {
@@ -280,7 +336,7 @@ fn check_pattern(node : @ast.Pattern) -> Unit raise {
     MatchSingleton(..) => ()
     MatchAs(pattern~, ..) =>
       match pattern {
-        Some(p) => check_pattern(p)
+        Some(p) => self.check_pattern(p)
         None => ()
       }
     MatchSequence(patterns~, ..) =>
@@ -288,17 +344,17 @@ fn check_pattern(node : @ast.Pattern) -> Unit raise {
         if p is MatchStar(..) {
           raise not_yet("star patterns", 84, span)
         }
-        check_pattern(p)
+        self.check_pattern(p)
       }
     MatchClass(cls~, patterns~, kwd_patterns~, ..) => {
       if !is_qualified_name(cls) {
         raise prohibited("class pattern head must be a qualified name", span)
       }
       for p in patterns {
-        check_pattern(p)
+        self.check_pattern(p)
       }
       for p in kwd_patterns {
-        check_pattern(p)
+        self.check_pattern(p)
       }
     }
     MatchMapping(keys~, patterns~, rest~, ..) => {
@@ -315,7 +371,7 @@ fn check_pattern(node : @ast.Pattern) -> Unit raise {
         }
       }
       for p in patterns {
-        check_pattern(p)
+        self.check_pattern(p)
       }
     }
     MatchOr(..) => raise not_yet("or-patterns", 85, span)
@@ -324,7 +380,7 @@ fn check_pattern(node : @ast.Pattern) -> Unit raise {
 }
 
 ///|
-fn check_expr(node : @ast.Expr) -> Unit raise {
+fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
   let span = node.span()
   match node {
     Constant(value~, ..) =>
@@ -345,21 +401,21 @@ fn check_expr(node : @ast.Expr) -> Unit raise {
         _ =>
           raise prohibited("binary operator '\{op.symbol()}' prohibited", span)
       }
-      check_expr(left)
-      check_expr(right)
+      self.check_expr(left)
+      self.check_expr(right)
     }
     UnaryOp(op~, operand~, ..) =>
       match op {
-        Not | UAdd | USub => check_expr(operand)
+        Not | UAdd | USub => self.check_expr(operand)
         _ =>
           raise prohibited("unary operator '\{op.symbol()}' prohibited", span)
       }
     BoolOp(values~, ..) => {
       if values.length() > 2 {
-        raise not_yet("chained boolean operator", 82, span)
+        self.gate(ChainedBoolean, "chained boolean operator", 82, span)
       }
       for v in values {
-        check_expr(v)
+        self.check_expr(v)
       }
     }
     Compare(left~, ops~, comparators~, ..) => {
@@ -371,61 +427,61 @@ fn check_expr(node : @ast.Expr) -> Unit raise {
           raise not_yet("identity operator (is/is not)", 81, span)
         }
       }
-      check_expr(left)
+      self.check_expr(left)
       for c in comparators {
-        check_expr(c)
+        self.check_expr(c)
       }
     }
     Call(func~, args~, keywords~, ..) => {
-      check_expr(func)
+      self.check_expr(func)
       for a in args {
-        check_expr(a)
+        self.check_expr(a)
       }
       for k in keywords {
-        check_expr(k.value)
+        self.check_expr(k.value)
       }
     }
     IfExp(cond~, body~, or_else~, ..) => {
-      check_expr(cond)
-      check_expr(body)
-      check_expr(or_else)
+      self.check_expr(cond)
+      self.check_expr(body)
+      self.check_expr(or_else)
     }
     Lambda(args~, body~, ..) => {
       check_arguments(args)
-      check_expr(body)
+      self.check_expr(body)
     }
     List(elts~, ..) | Tuple(elts~, ..) =>
       for e in elts {
-        check_expr(e)
+        self.check_expr(e)
       }
     Dict(keys~, values~, ..) => {
       for k in keys {
         match k {
-          Some(e) => check_expr(e)
+          Some(e) => self.check_expr(e)
           None => ()
         }
       }
       for v in values {
-        check_expr(v)
+        self.check_expr(v)
       }
     }
     Set(..) => raise not_yet("set literals", 147, span)
-    Attribute(value~, ..) => check_expr(value)
+    Attribute(value~, ..) => self.check_expr(value)
     Subscript(value~, slice~, ..) => {
-      check_expr(value)
-      check_expr(slice)
+      self.check_expr(value)
+      self.check_expr(slice)
     }
     ListComp(elt~, generators~, ..) => {
-      check_expr(elt)
+      self.check_expr(elt)
       for g in generators {
-        check_generator(g)
+        self.check_generator(g)
       }
     }
     DictComp(key~, value~, generators~, ..) => {
-      check_expr(key)
-      check_expr(value)
+      self.check_expr(key)
+      self.check_expr(value)
       for g in generators {
-        check_generator(g)
+        self.check_generator(g)
       }
     }
     SetComp(..) => raise not_yet("set comprehensions", 147, span)
@@ -443,16 +499,19 @@ fn check_expr(node : @ast.Expr) -> Unit raise {
 ///|
 /// A comprehension clause. The node carries no position in CPython's tree, so
 /// neither rejection here has one.
-fn check_generator(node : @ast.Comprehension) -> Unit raise {
+fn Sieve::check_generator(
+  self : Sieve,
+  node : @ast.Comprehension,
+) -> Unit raise {
   if node.is_async {
     raise prohibited_nowhere("async comprehensions prohibited")
   }
   if !(node.target is Name(..)) {
     raise not_yet_nowhere("destructuring in comprehensions", 54)
   }
-  check_expr(node.iter)
+  self.check_expr(node.iter)
   for i in node.ifs {
-    check_expr(i)
+    self.check_expr(i)
   }
 }
 

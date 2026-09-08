@@ -2,10 +2,12 @@ import {
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/error" @err,
+  "marianoguerra/pure-py/profile",
 }
 
 import {
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/sieve",
 } for "test"

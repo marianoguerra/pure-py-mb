@@ -5,6 +5,7 @@ import {
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/eval",
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/sieve",
   "marianoguerra/pure-py/write",
@@ -14,5 +15,6 @@ import {
   "marianoguerra/pure-py" @purepy,
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/eval",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/value",
 } for "test"

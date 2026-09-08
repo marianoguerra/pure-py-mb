@@ -2,10 +2,57 @@
 
 ## Unreleased
 
+### Profiles: a superset a library user can opt in to
+
+`sieve`, `check`, `check_program` and `source_tree_from` take a `profile`,
+which is how a caller asks for a language slightly larger than PurePy. The new
+`marianoguerra/pure-py/profile` package holds it. `@profile.core` is the
+default of all four -- PurePy exactly as specified -- so a caller who never
+heard of profiles gets the answer they got before, and the conformance suite
+still reports 983/983 with no floor moved.
+
+`@profile.pending()` is the first named one. It holds the forms the sieve
+refuses today with an upstream issue number, and it starts with one:
+
+```
+$ pure-py check chained.py
+chained.py:1:6: chained boolean operator not yet supported (#82)
+$ pure-py --profile pending run chained.py
+True
+```
+
+It is a set, and it grows one feature per commit until it covers the table in
+`implementation-plan.md` § "After the plan: the pending features". `pure-py
+profiles` prints what it actually holds. `--profile` must come before the
+command, because `run` gives everything after the entry file to the guest's
+`sys.argv`, and running under the wrong language silently is worse than being
+told where the flag goes.
+
+Two limits are worth stating, because they are the point rather than an
+omission.
+
+**A profile never lifts a prohibition.** The sieve refuses two kinds of form:
+one PurePy plans to have (`not yet supported (#82)`, exit 2) and one it
+excludes on purpose (`for loops prohibited`, exit 1). The second list -- `for`,
+`while`, `try`, `raise`, `del`, `+=`, item and attribute assignment -- is what
+makes the language pure, and it is what every guarantee in
+`docs/embedding.mbt.md` rests on. `Sieve::gate` exists for the first list and
+there is deliberately no counterpart for the second.
+
+**A profile is not a mode the runtime is in.** `run` takes no profile and the
+evaluator reads none. It always evaluated an n-ary `and` correctly; the sieve
+simply never let one through. A profile widens what a host will accept from its
+guest, and changes nothing about what the semantics does with what it accepted
+-- `1 and 2 and 3` is accepted under `pending` and still undefined when it
+runs.
+
+The playground has a selector beside the example list, and `analyze` keeps its
+one-argument shape: `analyze_with(source, profile)` is the new export.
+
 ### The stack position a probe measures from
 
-Documentation and tools only; `lib/` is untouched, so 0.5.0 is still the
-published library.
+Documentation and tools only: this particular change touches no `lib/` source.
+(Profiles, above, do.)
 
 The depth probes named their columns after a syntax -- `await` against
 `setTimeout` -- and that is the wrong axis. What varies is who RESUMED you: a

@@ -183,3 +183,83 @@ test "what PurePy accepts" {
     assert_eq(verdict(c), "ok", msg=c)
   }
 }
+
+// ---------------------------------------------------------------------------
+// Profiles
+
+///|
+/// `verdict`, under a profile the caller opted in to.
+fn verdict_under(source : String, profile : @profile.Profile) -> String {
+  let m = try @parser.parse_string(source) catch {
+    @err.PurePyError(d) => return "syntax: " + d.message()
+    e => return "syntax: \{e}"
+  } noraise {
+    m => m
+  }
+  match @sieve.result(m, profile~) {
+    None => "ok"
+    Some(d) => "\{d.exit_code()}: \{d.message()}"
+  }
+}
+
+///|
+/// The pair that is the whole claim: refused under `core` with the message the
+/// reference prints, accepted under the profile that opens the gate.
+///
+/// The `core` half is the one that matters. `test/golden/` and the conformance
+/// ratchet say the same thing over 392 files, but they say it about the
+/// default argument; this says it about `@profile.core` written out, which is
+/// what the default is.
+test "chained boolean operators are gated, not removed" {
+  let cases = [
+    "a = b and c and d\n", "a = b or c or d\n", "a = b and c and d and e\n",
+  ]
+  for source in cases {
+    assert_eq(
+      verdict(source),
+      "2: chained boolean operator not yet supported (#82)",
+    )
+    assert_eq(verdict_under(source, @profile.core), verdict(source))
+    assert_eq(verdict_under(source, @profile.pending()), "ok")
+  }
+}
+
+///|
+/// Two operands is PurePy, under every profile.
+test "an unchained boolean operator is untouched" {
+  assert_eq(verdict("a = b and c\n"), "ok")
+  assert_eq(verdict_under("a = b and c\n", @profile.pending()), "ok")
+}
+
+///|
+/// Opening a gate must not make the walk skip what is past it.
+///
+/// The sieve raises on the FIRST violation it reaches and the conformance
+/// suite has files that depend on which -- so a profile that forgives the
+/// first must go on to find the second, and must not have been implemented by
+/// forgiving the raise after the fact.
+test "a profile keeps walking past the gate it opened" {
+  let source = "a = b and c and d\ne = f is g\n"
+  assert_eq(
+    verdict(source),
+    "2: chained boolean operator not yet supported (#82)",
+  )
+  assert_eq(
+    verdict_under(source, @profile.pending()),
+    "2: identity operator (is/is not) not yet supported (#81)",
+  )
+}
+
+///|
+/// A gate is not a licence: `for` is prohibited under every profile there is.
+test "no profile lifts a prohibition" {
+  for name in @profile.names {
+    let p = @profile.by_name(name).unwrap()
+    assert_eq(
+      verdict_under("for x in y:\n    pass\n", p),
+      "1: for loops prohibited",
+    )
+    assert_eq(verdict_under("xs[0] = 1\n", p), "1: item assignment prohibited")
+    assert_eq(verdict_under("del x\n", p), "1: del prohibited")
+  }
+}

@@ -49,10 +49,18 @@ pub fn check_program(
 
 ///|
 /// Discover a program from its entry file and check it.
-pub fn check_entry(entry_path : String) -> @err.Diagnostic? {
+///
+/// `profile` reaches discovery, which sieves every file it loads. It does not
+/// reach `check_program`: nothing the checker decides depends on a profile
+/// yet, and an argument that does nothing is a promise to keep.
+pub fn check_entry(
+  entry_path : String,
+  profile? : @profile.Profile = @profile.core,
+) -> @err.Diagnostic? {
   let tree = @program.SourceTree::from_entry(
     entry_path,
     predefined=@context.predefined_modules,
+    profile~,
   ) catch {
     @err.PurePyError(d) => return Some(d)
     e => return Some(@err.Diagnostic::new(Program(msg="\{e}")))

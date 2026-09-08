@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/pure-py/profile"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/sorted_set",
+}
+
+// Values
+pub fn accepted_by(String) -> String?
+
+pub fn by_name(String) -> Profile?
+
+pub let core : Profile
+
+pub let names : Array[String]
+
+pub fn pending() -> Profile
+
+// Errors
+
+// Types and methods
+pub(all) enum Feature {
+  ChainedBoolean
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn Feature::name(Self) -> String
+
+pub struct Profile {
+  features : @sorted_set.SortedSet[Feature]
+} derive(Eq, @debug.Debug)
+pub fn Profile::adding(Self, Array[Feature]) -> Self
+pub fn Profile::contains(Self, Self) -> Bool
+pub fn Profile::features(Self) -> Array[Feature]
+pub fn Profile::has(Self, Feature) -> Bool
+
+// Type aliases
+
+// Traits

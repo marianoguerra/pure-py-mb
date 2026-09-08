@@ -10,6 +10,13 @@
 /// Every call here answers with a `Diagnostic` rather than raising, except
 /// `parse`, where a syntax error is the only thing that can go wrong and a
 /// caller almost always wants to stop.
+///
+/// The calls that decide what a program MAY SAY -- `sieve`, `check`,
+/// `check_program` and the discovery that sieves on the way in -- take a
+/// `profile`, which is how a caller opts in to a superset of PurePy. It
+/// defaults to `@profile.core` everywhere, so PurePy is what you get for not
+/// asking. `run` does not take one yet: nothing the evaluator does depends on
+/// a profile so far, and an argument that does nothing is a promise to keep.
 pub fn parse(source : String, name? : String = "<string>") -> @ast.Module raise {
   @parser.parse(@basic.Source::new(source, name~))
 }
@@ -19,8 +26,17 @@ pub fn parse(source : String, name? : String = "<string>") -> @ast.Module raise 
 ///
 /// `None` means yes. A rejection carries exit code 1 for a form PurePy
 /// excludes and 2 for one it plans to accept and does not yet.
-pub fn sieve(m : @ast.Module) -> @err.Diagnostic? {
-  @sieve.result(m)
+///
+/// `profile` is what a caller opted in to on top of PurePy. It defaults to
+/// `@profile.core`, which is PurePy and nothing else, so a caller who has
+/// never heard of profiles gets the specification's own answer. A richer
+/// profile turns some of the exit-2 rejections into acceptances -- and none of
+/// the exit-1 ones, which are what PurePy excludes on purpose.
+pub fn sieve(
+  m : @ast.Module,
+  profile? : @profile.Profile = @profile.core,
+) -> @err.Diagnostic? {
+  @sieve.result(m, profile~)
 }
 
 ///|
@@ -31,8 +47,12 @@ pub fn sieve(m : @ast.Module) -> @err.Diagnostic? {
 /// is not a convenience: the checker is written against the subset the sieve
 /// leaves, and handed a `for` loop it has no case to take. Calling
 /// `@check.check_single` directly skips this and is the caller's business.
-pub fn check(m : @ast.Module, host? : @eval.Host) -> @err.Diagnostic? {
-  match @sieve.result(m) {
+pub fn check(
+  m : @ast.Module,
+  host? : @eval.Host,
+  profile? : @profile.Profile = @profile.core,
+) -> @err.Diagnostic? {
+  match @sieve.result(m, profile~) {
     Some(d) => Some(d)
     None =>
       @check.check_single(
@@ -55,11 +75,12 @@ pub fn check(m : @ast.Module, host? : @eval.Host) -> @err.Diagnostic? {
 pub fn check_program(
   tree : @program.SourceTree,
   host? : @eval.Host,
+  profile? : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   for q in tree.module_names() {
     match tree.get(q) {
       Some(m) =>
-        match @sieve.result(m) {
+        match @sieve.result(m, profile~) {
           Some(d) => return Some(d.at_path(tree.path_of(q)))
           None => ()
         }
@@ -131,10 +152,12 @@ pub fn source_tree(modules : Map[String, @ast.Module]) -> @program.SourceTree {
 pub fn source_tree_from(
   entry_path : String,
   sweep? : Bool = true,
+  profile? : @profile.Profile = @profile.core,
 ) -> @program.SourceTree raise {
   @program.SourceTree::from_entry(
     entry_path,
     predefined=@check.predefined_module_names(),
     sweep~,
+    profile~,
   )
 }

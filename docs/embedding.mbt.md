@@ -498,6 +498,66 @@ test "a guest that is refused" {
 }
 ```
 
+## Asking for a larger language
+
+Everything above is PurePy exactly as specified, which is what a host gets for
+not asking. A host that wants a slightly larger language asks for a **profile**.
+
+A profile is opt-in, and it stacks: `@profile.core` is PurePy, and each named
+profile is the one below it plus features. `@profile.pending()` holds the forms
+the specification intends to have and has not settled -- the ones the sieve
+refuses today with an issue number.
+
+```mbt check
+///|
+test "a guest written in a superset" {
+  let source = "print(True and True and True)\n"
+  let m = @purepy.parse(source)
+
+  // PurePy refuses a chained boolean operator, and says which issue it is.
+  match @purepy.check(m) {
+    Some(d) =>
+      inspect(
+        d.message(),
+        content="chained boolean operator not yet supported (#82)",
+      )
+    None => fail("PurePy does not have chained boolean operators")
+  }
+
+  // A host that opted in gets it.
+  let profile = @profile.pending()
+  if @purepy.check(m, profile~) is Some(d) {
+    fail("refused under a profile that has it: " + d.message())
+  }
+  let tree = @purepy.source_tree(Map([("__main__", m)]))
+  let printed = StringBuilder()
+  let host = @eval.Host::new(write=text => printed.write_string(text))
+  @purepy.run_with(tree, host) |> ignore
+  inspect(printed.to_string(), content="True\n")
+}
+```
+
+The profile belongs to the calls that decide **what a program may say** --
+`sieve`, `check`, `check_program`, and `source_tree_from`, which sieves each
+file as it discovers it. It is not part of `Host` and is not an argument to
+`run`, for a reason worth saying plainly: a profile is not a mode the runtime
+is in. The evaluator already evaluated an n-ary `and` correctly; the sieve
+simply never let one through. A profile widens what a host will accept from its
+guest, and changes nothing about what the semantics does with what it accepted.
+
+Two things a profile will never do.
+
+It will not lift a **prohibition**. The sieve rejects two kinds of form: one it
+plans to have (`not yet supported (#82)`, exit 2) and one it excludes on purpose
+(`for loops prohibited`, exit 1). The second list -- `for`, `while`, `try`,
+`raise`, `del`, `+=`, item and attribute assignment -- is what makes the
+language pure, and it is the list this whole document's guarantees rest on. No
+profile reaches it.
+
+And it will not make an undefined operation defined. `1 and 2 and 3` is
+accepted under `pending` and is still `Undefined` when it runs, because
+PurePy's `and` wants a `bool` and always did.
+
 ## Bounding a run
 
 A guest can still loop forever -- PurePy is Turing-complete, and no check can
@@ -672,6 +732,7 @@ Everything a host can supply, in one place:
 | the guest's code | `source_tree` or `source_tree_from` | — |
 | what those functions do, later | `Host::new(call=...)` and `run_with(done=...)` | answers now |
 | how deep it may recurse | `max_depth` | 500 native, 12 on a JavaScript engine |
+| how large a language the guest may use | `profile` on `check`, `sieve`, `check_program`, `source_tree_from` | `@profile.core`: PurePy |
 
 And everything a host does NOT have to defend against, because the language
 has no way to express it: mutation of a guest value, a guest reaching a name

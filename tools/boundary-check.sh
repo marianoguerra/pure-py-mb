@@ -54,8 +54,9 @@ if [ "$adapters" -gt 1 ]; then
 fi
 [ "$bridges" -gt 0 ] || report "lib/error/report.mbt no longer names error-report"
 
-# 3. the tree and the printer are free of the front end and the back end
-for dir in lib/ast lib/write lib/basic lib/token; do
+# 3. the tree, the printer and the profile are free of the front end and the
+#    back end
+for dir in lib/ast lib/write lib/basic lib/token lib/profile; do
   [ -f "$dir/moon.pkg" ] || continue
   for forbidden in lexer parser sieve check eval program; do
     if grep -q "pure-py/$forbidden\"" "$dir/moon.pkg"; then
@@ -63,6 +64,17 @@ for dir in lib/ast lib/write lib/basic lib/token; do
     fi
   done
 done
+
+# 4. the profile is a leaf, and value is the edge it would fall off
+#
+# `lib/value` imports `lib/context`, and `lib/context` asks a profile what the
+# predefined modules export. A profile that named `value` would close the loop
+# context -> profile -> value -> context, and the failure is a cycle at build
+# time with no hint of which import caused it. Rule 3 does not cover this one:
+# `value` is neither a front end nor a back end.
+if [ -f lib/profile/moon.pkg ] && grep -q 'pure-py/value"' lib/profile/moon.pkg; then
+  report "lib/profile names value; the profile is a leaf (context -> profile -> value -> context)"
+fi
 
 [ "$status" -eq 0 ] && echo "boundaries: ok"
 exit "$status"

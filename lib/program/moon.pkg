@@ -3,6 +3,7 @@ import {
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/sieve",
   "moonbitlang/x/fs",
 }

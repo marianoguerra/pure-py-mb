@@ -122,6 +122,10 @@ footer {
 <header>
   <h1>PurePy <span>· a pure functional subset of Python, in MoonBit</span></h1>
   <select id="example" aria-label="Example"></select>
+  <select id="profile" aria-label="Profile" title="A superset of PurePy to opt in to">
+    <option value="core">core</option>
+    <option value="pending">pending</option>
+  </select>
   <button id="run" class="primary">Run</button>
   <span class="grow"></span>
   <span id="status">Loading…</span>
@@ -171,6 +175,7 @@ const $ = (id) => document.getElementById(id);
 const sourceEl = $('source'), outEl = $('out'), logEl = $('log');
 const verdictEl = $('verdict'), noteEl = $('note'), modnoteEl = $('modnote');
 const statusEl = $('status'), buildEl = $('build'), selectEl = $('example');
+const profileEl = $('profile');
 const hostlogEl = $('hostlog');
 
 let wasm = null, view = 'run', last = null, timer = null;
@@ -227,7 +232,7 @@ function choose(i) {
 function analyze() {
   if (!wasm) return;
   try {
-    last = JSON.parse(wasm.analyze(sourceEl.value));
+    last = JSON.parse(wasm.analyze_with(sourceEl.value, profileEl.value));
   } catch (e) {
     say(String(e), 'bad');
     return;
@@ -297,6 +302,7 @@ function render() {
 // ── wiring ──────────────────────────────────────────────────
 selectEl.addEventListener('change', () => choose(Number(selectEl.value)));
 $('run').addEventListener('click', analyze);
+profileEl.addEventListener('change', analyze);
 sourceEl.addEventListener('input', () => {
   clearTimeout(timer);
   timer = setTimeout(analyze, 250);

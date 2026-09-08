@@ -17,6 +17,25 @@
 /// `# module: NAME`. The first chunk is `__main__` unless it says otherwise,
 /// which is what lets the page show imports at all.
 pub fn analyze(source : String) -> String {
+  analyze_with(source, "core")
+}
+
+///|
+/// The same, under a named profile.
+///
+/// `analyze` keeps its one-argument shape because the page and
+/// `tools/check_examples.mjs` call it that way and a wasm export's signature
+/// is an interface. It delegates here with `"core"`, so an examples run and a
+/// page that never touches the selector see PurePy and nothing else.
+///
+/// An unknown name falls back to `core` rather than failing: the selector can
+/// only offer names the library published, so a bad one means the page is out
+/// of date with the wasm, and showing PurePy is the honest answer to that.
+pub fn analyze_with(source : String, profile_name : String) -> String {
+  let profile = match @profile.by_name(profile_name) {
+    Some(p) => p
+    None => @profile.core
+  }
   let pieces = split_modules(source)
   let out = StringBuilder()
   out.write_string("{")
@@ -86,7 +105,7 @@ pub fn analyze(source : String) -> String {
   let tree = @purepy.source_tree(modules)
   let verdict_ = match broken {
     Some(d) => Some(d)
-    None => @purepy.check_program(tree, host~)
+    None => @purepy.check_program(tree, host~, profile~)
   }
   out.write_string(",\"check\":")
   out.write_string(verdict(verdict_, entry))

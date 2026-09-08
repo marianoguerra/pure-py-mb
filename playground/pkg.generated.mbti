@@ -4,6 +4,8 @@ package "marianoguerra/pure-py-dev/playground"
 // Values
 pub fn analyze(String) -> String
 
+pub fn analyze_with(String, String) -> String
+
 // Errors
 
 // Types and methods
