@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 — 2026-09-08
+
+One addition, and nothing else: `@value.Primitive::name`. Additive, so an
+0.7.0 consumer upgrades by changing the version.
 
 ### `Primitive::name`, so an embedder stops keeping a fourth table
 

@@ -14,7 +14,7 @@ fn main {
   let (profile, asked, args) = take_profile(@env.args()[1:])
   match args {
     [] | ["-h"] | ["--help"] => println(usage)
-    ["--version"] => println("pure-py 0.7.0")
+    ["--version"] => println("pure-py 0.8.0")
     ["profiles"] => println(profiles_listing())
     ["tokens", path] => @sys.exit(cmd_tokens(path))
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
