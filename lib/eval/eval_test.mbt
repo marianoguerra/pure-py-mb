@@ -722,6 +722,22 @@ test "a tree nobody read has nowhere to point at" {
 /// left to do at every level, so every one of those levels is a live frame --
 /// and it runs on wasm, wasm-gc, js and native alike. Twelve was the old
 /// ceiling on three of those four.
+///
+/// **This test is the whole guard, and it is slow on purpose.** There used to
+/// be a second one: `tools/depth-probe.mjs` measured how many guest calls a
+/// host could hold before its stack gave out, and it is deleted, because the
+/// answer is now "as many as memory allows" on every backend. Deleting it was
+/// right only BECAUSE this exists. If a later change trims the depth, drops a
+/// backend from `--target all`, or moves this out of the default run because
+/// it is slow, the guard goes with it and nothing else is watching that axis
+/// -- the harness that would have caught the regression is the one that was
+/// removed on the strength of this.
+///
+/// Twenty thousand and four backends are the load-bearing numbers. `moon test`
+/// on `wasm-gc` is the tightest caller this package has, whatever is already
+/// on the stack being stack the guest does not get, and it is the
+/// configuration whose ceiling was measured at 20 before the machine. Keep
+/// them, or replace this with something that measures the same thing.
 test "a guest may recurse as deep as it is allowed to" {
   let source =
     #|def count(n):
