@@ -138,6 +138,41 @@ fn seq_binop(op : @ast.Operator, a : Value, b : Value) -> Outcome? {
 }
 
 ///|
+/// How many elements `binop` would BUILD for these operands, as a `BigInt` so
+/// that a count too large for an index is still a number a caller can refuse.
+///
+/// Zero for every operation that builds nothing. A caller that meters a run
+/// asks this before calling `binop`, because `[0] * 10 ** 9` is a single
+/// operation and metering it afterwards is metering it too late.
+pub fn build_size(op : @ast.Operator, a : Value, b : Value) -> BigInt {
+  match op {
+    Add =>
+      match (a, b) {
+        (List(x), List(y)) | (Tuple(x), Tuple(y)) =>
+          BigInt::from_int(x.length() + y.length())
+        (Str(x), Str(y)) => BigInt::from_int(x.length() + y.length())
+        _ => 0N
+      }
+    Mult => {
+      let (seq, count) = match (a, b) {
+        (List(x), Int(n)) | (Tuple(x), Int(n)) =>
+          (BigInt::from_int(x.length()), n)
+        (Int(n), List(x)) | (Int(n), Tuple(x)) =>
+          (BigInt::from_int(x.length()), n)
+        (Str(x), Int(n)) | (Int(n), Str(x)) => (BigInt::from_int(x.length()), n)
+        _ => (0N, 0N)
+      }
+      if count <= 0N {
+        0N
+      } else {
+        seq * count
+      }
+    }
+    _ => 0N
+  }
+}
+
+///|
 /// Python raises `OverflowError` where a repetition count does not fit an
 /// index, and that is not a termination kind, so it has no rule here.
 let too_long : Outcome = Stuck("a repetition count too large to build")

@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased
+
+### `max_steps`: the runaway that does not recurse
+
+PurePy has no loops, so for a long time recursion looked like the only way to
+run forever and `max_depth` was enough. It is not, and three shapes get past
+it, none of which calls anything:
+
+  * a comprehension loops without recursing -- `[y for y in xs for z in xs]`;
+  * `range(10 ** 9)` builds a whole sequence from a NUMBER, in one move;
+  * `[0] * 10 ** 9` builds one by repetition, also in one move.
+
+On a browser tab each is a page that stops answering, with nothing to read and
+nothing to interrupt. It was the last way a guest could take the tab: with the
+machine, recursion is not one any more.
+
+`max_steps` bounds all three. A step is one move of the machine, charged in the
+driver loop -- the one place every move passes through, which is a thing the
+recursive walk did not have. The two that build in a single move are charged
+for what they build BEFORE they build it, so the answer is a limit that was
+reached rather than a host that ran out of memory.
+
+The default is 100000000: far more than any program a person waits on, few
+enough that a runaway ends in an answer. The playground passes 2000000 and
+hmtp's notebook will want less again.
+
+**It is deterministic, and a wall-clock timeout would not be.** Two runs of the
+same program over the same host answers stop in the same place, so a guest that
+hits the limit hits it reproducibly and a test can pin it -- there is one that
+does. Stopping a run because a person pressed Cancel is a different feature and
+this is not it.
+
+Asked for by an embedder, as the last one standing.
+
 ## 0.8.0 — 2026-09-08
 
 One addition, and nothing else: `@value.Primitive::name`. Additive, so an

@@ -40,6 +40,13 @@ pub struct Interp {
   /// cover -- which a person can read.
   mut depth : Int
   max_depth : Int
+  /// How many machine steps are left, and how many there were.
+  ///
+  /// `max_depth` bounds a runaway that recurses; this bounds one that does
+  /// not. A comprehension over a long sequence is the shape that needs it:
+  /// it loops without recursing, so nothing else stops it.
+  mut fuel : Int
+  max_steps : Int
   /// The superset of PurePy this run's program was accepted under.
   ///
   /// The evaluator reads it in one place: which values `builtins` loads to. A
@@ -119,6 +126,7 @@ pub fn Interp::new(
   host? : Host = Host::new(),
   max_depth? : Int = default_max_depth,
   profile? : @profile.Profile = @profile.core,
+  max_steps? : Int = default_max_steps,
 ) -> Interp {
   {
     tree,
@@ -127,10 +135,35 @@ pub fn Interp::new(
     loading: [],
     depth: 0,
     max_depth,
+    fuel: max_steps,
+    max_steps,
     profile,
     in_module: "__main__",
     abort_at: None,
   }
+}
+
+///|
+/// Charge `n` steps for something a single move is about to build.
+///
+/// The driver charges one step per move, which bounds a guest that loops. It
+/// does not bound one that asks a single move to build a very large value --
+/// `range(10 ** 9)`, `[0] * 10 ** 9` -- because those are one move each.
+/// Cost is the size of what they build, and it is charged BEFORE they build
+/// it, so the answer is a limit that was reached rather than a host that ran
+/// out of memory.
+///
+/// Answers whether there was enough.
+fn Interp::spend(self : Interp, n : BigInt) -> Bool {
+  if n <= 0N {
+    return true
+  }
+  if n > BigInt::from_int(self.fuel) {
+    self.fuel = 0
+    return false
+  }
+  self.fuel -= n.to_int()
+  true
 }
 
 ///|

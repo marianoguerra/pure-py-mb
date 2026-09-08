@@ -705,10 +705,40 @@ one number, and it is a policy rather than a measurement: deep enough that no
 reasonable program meets it, shallow enough that a runaway stops in an array of
 ten thousand frames rather than in an out-of-memory.
 
-There is no instruction budget: a guest that loops without recursing -- a
-comprehension over a long range, say -- runs until it is done. A host that
-needs a wall-clock bound runs the guest on a thread it can abandon, or on a
-backend where it can.
+`max_depth` bounds a runaway that RECURSES, and until 0.9.0 that was the only
+runaway anyone had bounded, because PurePy has no loops and recursion looked
+like the only way to run forever. It is not. A comprehension loops without
+recursing, and `range(10 ** 9)` and `[0] * 10 ** 9` each build a whole sequence
+in a single move. On a browser tab any of the three is a page that stops
+answering, with nothing to read and nothing to interrupt.
+
+`max_steps` bounds those. A step is one move of the machine -- evaluate a
+sub-expression, hand a value to a frame, enter a call -- and something that
+builds a sequence in one move is charged for what it builds, before it builds
+it, so the answer is a limit rather than a host that ran out of memory.
+
+```mbt check
+///|
+test "a guest that loops without recursing is bounded too" {
+  let modules = Map([("__main__", @purepy.parse("xs = [0] * 1000000000\n"))])
+  match @purepy.run(@purepy.source_tree(modules), max_steps=1000) {
+    (_, Undefined(why)) => inspect(why, content="a run longer than 1000 steps")
+    _ => fail("a billion elements is not a thousand steps")
+  }
+}
+```
+
+The default is 100000000, which no program a person is waiting on comes near; a
+notebook cell wants a much smaller one and a batch job on a native thread may
+want a much larger one.
+
+**It is deterministic, and a wall-clock timeout would not be.** Two runs of the
+same program over the same host answers take the same number of steps and stop
+in the same place, so a guest that hits the limit hits it reproducibly and a
+test can pin it. If you need to stop a run because a person pressed Cancel
+rather than because it went on too long, that is a different thing and this is
+not it: run the guest on a thread you can abandon, or give it a host function
+whose answer you control.
 
 ## Where the guest's code comes from
 
@@ -733,6 +763,7 @@ Everything a host can supply, in one place:
 | the guest's code | `source_tree` or `source_tree_from` | — |
 | what those functions do, later | `Host::new(call=...)` and `run_with(done=...)` | answers now |
 | how deep it may recurse | `max_depth` | 10000, on every backend |
+| how long it may run | `max_steps` | 100000000 machine steps |
 | how large a language the guest may use | `profile`, on every call that decides what a program may say AND on `run` | `@profile.core`: PurePy |
 
 And everything a host does NOT have to defend against, because the language

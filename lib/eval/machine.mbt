@@ -263,6 +263,18 @@ async fn Interp::drive(
   let mut ctl = start
   let base_module = self.in_module
   for ;; {
+    // One step, charged here because here is the one place every move passes
+    // through. `max_depth` bounds a runaway that recurses; this bounds one
+    // that does not, which is the shape a comprehension over a long sequence
+    // has -- it loops without recursing, so nothing else would stop it.
+    //
+    // Charged before the move rather than after, so that the step which meets
+    // the limit is not the one that allocates.
+    if self.fuel <= 0 {
+      ctl = Halt(Stuck("a run longer than \{self.max_steps} steps"))
+    } else {
+      self.fuel -= 1
+    }
     match ctl {
       Ev(e, env) => ctl = self.step_expr(e, env, stack)
       Halt(o) => {
@@ -941,7 +953,14 @@ async fn Interp::resume_value(
       Ev(right, env)
     }
     BinApply(op~, left~, at~) =>
-      outcome_ctl(self.sited(at, @value.binop(op, left, v)))
+      // Concatenation and repetition are the two operators that build, and
+      // `[0] * 10 ** 9` is one move, so the size is charged before the move
+      // rather than metered after it.
+      if !self.spend(@value.build_size(op, left, v)) {
+        Halt(Stuck("a run longer than \{self.max_steps} steps"))
+      } else {
+        outcome_ctl(self.sited(at, @value.binop(op, left, v)))
+      }
     Bool(op~, values~, next~, env~) =>
       match v {
         Bool(b) => {

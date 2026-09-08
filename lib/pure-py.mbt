@@ -115,8 +115,9 @@ pub fn run(
   argv? : Array[String] = [],
   max_depth? : Int = @eval.default_max_depth,
   profile? : @profile.Profile = @profile.core,
+  max_steps? : Int = @eval.default_max_steps,
 ) -> (String, @eval.RunResult) {
-  @eval.run_program(tree, argv~, max_depth~, profile~)
+  @eval.run_program(tree, argv~, max_depth~, profile~, max_steps~)
 }
 
 ///|
@@ -136,8 +137,9 @@ pub fn run_with(
   max_depth? : Int = @eval.default_max_depth,
   done? : (@eval.RunResult) -> Unit = fn(_) {  },
   profile? : @profile.Profile = @profile.core,
+  max_steps? : Int = @eval.default_max_steps,
 ) -> @eval.RunResult {
-  @eval.run_with(tree, host, max_depth~, done~, profile~)
+  @eval.run_with(tree, host, max_depth~, done~, profile~, max_steps~)
 }
 
 ///|

@@ -22,3 +22,30 @@
 /// stops in an array of ten thousand frames rather than in an out-of-memory.
 /// A caller who wants a different one passes `max_depth`.
 pub let default_max_depth : Int = 10000
+
+///|
+/// How many steps a run may take by default.
+///
+/// A step is one move of the machine in `machine.mbt`: evaluate a
+/// sub-expression, hand a value to a frame, enter a call, bind a statement.
+/// `max_depth` bounds how DEEP a guest may go and this bounds how LONG it may
+/// take, which are different runaways and only one of them used to have an
+/// answer.
+///
+/// PurePy has no loops, so for a long time the only way to run forever was to
+/// recurse, and `max_depth` caught that. It is not the only way: a
+/// comprehension over a long sequence loops without recursing, and used to run
+/// to completion however long that took -- which on a browser tab is a page
+/// that stops answering, with no message and nothing to interrupt it.
+///
+/// A hundred million is a policy, like `max_depth`'s ten thousand: far more
+/// than any program a person is waiting on, few enough that a runaway ends in
+/// an answer rather than in a hang. A host that knows better passes
+/// `max_steps` -- a notebook cell wants a much smaller one, and a batch job on
+/// a native thread may want none of it.
+///
+/// It is DETERMINISTIC, which a wall-clock timeout would not be. Two runs of
+/// the same program over the same host answers take the same number of steps
+/// and stop in the same place, so a guest that hits the limit hits it
+/// reproducibly and a test can pin it.
+pub let default_max_steps : Int = 100_000_000

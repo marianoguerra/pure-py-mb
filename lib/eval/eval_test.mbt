@@ -777,3 +777,78 @@ test "an abort twenty thousand calls down is reported, not crashed into" {
   let (_, result) = @eval.run_program(tree, max_depth=100000)
   assert_true(result is Terminated(ZeroDivisionError, _))
 }
+
+///|
+/// The three shapes of runaway that do not recurse.
+///
+/// `max_depth` never saw any of these: none of them calls anything. PurePy has
+/// no loops, so for a long time recursion was the only way to run forever and
+/// bounding it was enough -- but a comprehension loops without recursing, and
+/// `range` and `*` build a whole sequence in a single move. On a browser tab
+/// each of the three is a page that stops answering with nothing to interrupt
+/// and nothing to read.
+test "a run that does not recurse is bounded too" {
+  let cases = [
+    // Loops without recursing: one step per element, caught by the driver.
+    "xs = [x for x in range(200)]\nys = [y for y in xs for z in xs]\n",
+    // Builds from a NUMBER in one move: caught before it builds.
+     "xs = range(1000000000)\n",
+    // Builds by repetition in one move: same.
+     "xs = [0] * 1000000000\n",
+  ]
+  for source in cases {
+    let tree = @program.SourceTree::of(
+      Map([("__main__", @parser.parse_string(source))]),
+    )
+    let (_, result) = @eval.run_program(tree, max_steps=1000)
+    match result {
+      Undefined(why) =>
+        assert_eq(why, "a run longer than 1000 steps", msg=source)
+      _ => fail("a runaway that does not recurse: " + source)
+    }
+  }
+}
+
+///|
+/// The bound is deterministic, which a wall-clock one would not be: the same
+/// program over the same host answers stops in the same place every time.
+///
+/// That is worth a test rather than a claim. A limit a test cannot pin is a
+/// limit an embedder cannot reason about, and the whole language is built on
+/// two runs agreeing.
+test "the step bound stops in the same place every time" {
+  let source = "xs = [x for x in range(5000)]\nprint(len(xs))\n"
+  let tree = @program.SourceTree::of(
+    Map([("__main__", @parser.parse_string(source))]),
+  )
+  let first = @eval.run_program(tree, max_steps=900)
+  let second = @eval.run_program(tree, max_steps=900)
+  assert_eq(first.0, second.0)
+  assert_true(first.1 is Undefined(_))
+  assert_true(second.1 is Undefined(_))
+  // And one step more of budget is one step more of program: the same run
+  // with room finishes.
+  let (out, result) = @eval.run_program(tree, max_steps=1000000)
+  assert_true(result is Finished)
+  assert_eq(out, "5000\n")
+}
+
+///|
+/// The budget is generous by default: nothing an ordinary program does comes
+/// near it, which is what makes it a backstop rather than a quota.
+test "an ordinary program is nowhere near the default budget" {
+  let source =
+    #|def fib(n):
+    #|    if n < 2:
+    #|        return n
+    #|    return fib(n - 1) + fib(n - 2)
+    #|
+    #|print(fib(18))
+    #|
+  let tree = @program.SourceTree::of(
+    Map([("__main__", @parser.parse_string(source))]),
+  )
+  let (out, result) = @eval.run_program(tree)
+  assert_true(result is Finished)
+  assert_eq(out, "2584\n")
+}

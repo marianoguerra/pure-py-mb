@@ -16,11 +16,13 @@ import {
 // Values
 pub let default_max_depth : Int
 
+pub let default_max_steps : Int
+
 pub fn region_bindings(@hashmap.HashMap[String, @value.Value], Array[@ast.Stmt], String) -> @hashmap.HashMap[String, @value.Value]
 
-pub fn run_program(@program.SourceTree, argv? : Array[String], max_depth? : Int, profile? : @profile.Profile) -> (String, RunResult)
+pub fn run_program(@program.SourceTree, argv? : Array[String], max_depth? : Int, profile? : @profile.Profile, max_steps? : Int) -> (String, RunResult)
 
-pub fn run_with(@program.SourceTree, Host, max_depth? : Int, done? : (RunResult) -> Unit, profile? : @profile.Profile) -> RunResult
+pub fn run_with(@program.SourceTree, Host, max_depth? : Int, done? : (RunResult) -> Unit, profile? : @profile.Profile, max_steps? : Int) -> RunResult
 
 // Errors
 
@@ -53,6 +55,8 @@ pub struct Interp {
   loading : Array[String]
   mut depth : Int
   max_depth : Int
+  mut fuel : Int
+  max_steps : Int
   profile : @profile.Profile
   mut in_module : String
   mut abort_at : Site?
@@ -64,7 +68,7 @@ pub async fn Interp::eval_expr(Self, @ast.Expr, @hashmap.HashMap[String, @value.
 pub async fn Interp::eval_seq(Self, ArrayView[@analysis.Statement], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult noraise
 pub async fn Interp::load(Self, String) -> Result[@hashmap.HashMap[String, @value.Value], @value.Outcome] noraise
 pub async fn Interp::match_pattern(Self, @hashmap.HashMap[String, @value.Value], @ast.Pattern, @value.Value) -> @value.MatchResult noraise
-pub fn Interp::new(@program.SourceTree, host? : Host, max_depth? : Int, profile? : @profile.Profile) -> Self
+pub fn Interp::new(@program.SourceTree, host? : Host, max_depth? : Int, profile? : @profile.Profile, max_steps? : Int) -> Self
 pub fn Interp::predefined(Self, String) -> @hashmap.HashMap[String, @value.Value]?
 pub async fn Interp::resolve_class(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @context.ClassEntry? noraise
 pub async fn Interp::run(Self) -> RunResult noraise

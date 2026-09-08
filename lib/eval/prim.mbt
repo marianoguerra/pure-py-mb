@@ -44,6 +44,14 @@ async fn Interp::call_primitive(
       } else {
         match args[0] {
           Int(n) => {
+            // `range` is the one predefined function that builds a sequence
+            // from a NUMBER, so it is the one place a three-character program
+            // can ask for more memory than the machine has. Charged before it
+            // builds, not after: `range(10 ** 9)` has to be refused rather
+            // than survived.
+            if !self.spend(n) {
+              return Stuck("a run longer than \{self.max_steps} steps")
+            }
             let out : Array[Value] = []
             let mut i = 0N
             while i < n {

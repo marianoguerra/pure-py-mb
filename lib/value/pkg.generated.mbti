@@ -14,6 +14,8 @@ pub fn big_to_double(@bigint.BigInt) -> Double
 
 pub fn binop(@ast.Operator, Value, Value) -> Outcome
 
+pub fn build_size(@ast.Operator, Value, Value) -> @bigint.BigInt
+
 pub fn compare(@ast.CmpOp, Value, Value) -> Outcome
 
 pub fn contains(Value, Value) -> Bool?

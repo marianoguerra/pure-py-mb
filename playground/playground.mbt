@@ -122,7 +122,17 @@ pub fn analyze_with(source : String, profile_name : String) -> String {
       // not the tab. This is a demonstration's number, not a safety one --
       // 250 is a wait a visitor will sit through and 10000, the library's
       // default, is not.
-      let result = @purepy.run_with(tree, host, max_depth=250, profile~)
+      // `max_steps` is the one that matters on a page. `max_depth` bounds a
+      // runaway that recurses; a comprehension loops without recursing, and
+      // `range(10 ** 9)` builds in a single move. Either is a tab that stops
+      // answering, and a playground should report instead.
+      let result = @purepy.run_with(
+        tree,
+        host,
+        max_depth=250,
+        max_steps=2000000,
+        profile~,
+      )
       let (state, detail) = match result {
         Finished => ("finished", "")
         Terminated(SystemExit(n), _) => ("exited", "status " + n.to_string())
