@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — 2026-09-08
+
+The evaluator no longer spends host stack on a guest's recursion, so the
+recursion limit is a policy instead of a measurement: **10000 on every
+backend**, where it was 500 on a native thread and 12 on the three that run on
+a JavaScript engine.
+
+**Three functions left the API**, all helpers of the recursive walk that is
+gone: `@eval.Interp::eval_exprs`, `eval_bound` and `eval_quals`. `eval_expr`,
+`eval_body`, `eval_seq` and `apply` keep their signatures and are entry points
+into the machine, so an embedder that uses the facade -- `run`, `run_with`,
+`check` -- has nothing to change.
 
 ### The evaluator is a machine with an explicit stack
 

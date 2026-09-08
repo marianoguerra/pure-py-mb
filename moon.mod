@@ -18,8 +18,8 @@ version = "0.0.0"
 
 import {
   "marianoguerra/error-report@0.1.0",
-  "marianoguerra/pure-py@0.6.0",
-  "marianoguerra/pure-py-cli@0.6.0",
+  "marianoguerra/pure-py@0.7.0",
+  "marianoguerra/pure-py-cli@0.7.0",
   "moonbitlang/x@0.5.1",
 }
 
