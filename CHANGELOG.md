@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 — 2026-09-08
+
+One addition: `max_steps`, on `run` and `run_with`. Additive, so an 0.8.0
+consumer upgrades by changing the version.
 
 ### `max_steps`: the runaway that does not recurse
 

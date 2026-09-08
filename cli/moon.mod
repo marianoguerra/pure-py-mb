@@ -9,7 +9,7 @@
 // Built with `--target native`, because the harness runs it once per test.
 name = "marianoguerra/pure-py-cli"
 
-version = "0.8.0"
+version = "0.9.0"
 
 readme = "README.md"
 
@@ -21,7 +21,7 @@ keywords = [ "python", "parser", "interpreter", "purepy", "cli" ]
 
 import {
   "marianoguerra/error-report@0.1.0",
-  "marianoguerra/pure-py@0.8.0",
+  "marianoguerra/pure-py@0.9.0",
   "moonbitlang/x@0.5.1",
 }
 
