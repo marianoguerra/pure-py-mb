@@ -133,6 +133,30 @@ pub(all) enum Primitive {
   Tan
   MathFloor
   MathCeil
+  /// The builtins a profile adds (`Feature::ExtraBuiltins`), which the
+  /// specification does not have.
+  ///
+  /// Arms are appended, never inserted. They are in the enum unconditionally
+  /// because a `Primitive` is data: what makes one reachable is being bound in
+  /// an environment, and only a profile that asked puts these there.
+  Abs
+  All
+  Any
+  DivMod
+  Enumerate
+  ToFloat
+  ToInt
+  ToList
+  Max
+  Min
+  Repr
+  Reversed
+  Round
+  Sorted
+  ToStr
+  Sum
+  ToTuple
+  Zip
   Opaque(String)
   /// A function the HOST supplies, named rather than carried.
   ///

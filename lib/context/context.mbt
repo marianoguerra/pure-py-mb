@@ -367,7 +367,21 @@ pub fn extend_context(g1 : Context, g2 : Context) -> Context {
 /// `Callable`; the reference does not, and the reference is the oracle. The
 /// divergence is recorded rather than reconciled, to be revisited when
 /// upstream settles it.
-pub fn predefined_members(q : String) -> Array[String]? {
+pub fn predefined_members(
+  q : String,
+  profile? : @profile.Profile = @profile.core,
+) -> Array[String]? {
+  // The core names come first and in this order under every profile. Not for
+  // tidiness: `check_submodule_clash` walks a module's own members and reports
+  // the first clash it finds, so reordering them would reorder a diagnostic
+  // the reference decides.
+  if q == "builtins" && profile.has(ExtraBuiltins) {
+    let out = ["print", "len", "range"]
+    for n in extra_builtin_names {
+      out.push(n)
+    }
+    return Some(out)
+  }
   match q {
     "builtins" => Some(["print", "len", "range"])
     "math" =>
@@ -387,11 +401,32 @@ pub let predefined_modules : Array[String] = [
 ]
 
 ///|
+/// The names `Feature::ExtraBuiltins` adds to `builtins`, in a fixed order.
+///
+/// The evaluator has a value for every one of them, and
+/// `lib/eval/predefined_wbtest.mbt` insists on it -- the two tables cannot BE
+/// one, because `lib/check` does not import `lib/value` and a bridge between
+/// them would put a runtime type on the checker's side of the layering.
+///
+/// Everything here is pure, and everything here is TOTAL or cleanly partial:
+/// where Python would answer by coercing -- `sum([True])`, `any([1])`,
+/// `int(True)` -- PurePy has no rule and the call is undefined rather than
+/// guessing. `bool` is absent for that reason and not by oversight: it is
+/// Python's truthiness in a function, and PurePy has no truthiness at all.
+pub let extra_builtin_names : Array[String] = [
+  "abs", "all", "any", "divmod", "enumerate", "float", "int", "list", "max", "min",
+  "repr", "reversed", "round", "sorted", "str", "sum", "tuple", "zip",
+]
+
+///|
 /// Every predefined module's members are definitely assigned, and so is
 /// `__name__`, which every module has.
-pub fn predefined_context(q : String) -> Context {
+pub fn predefined_context(
+  q : String,
+  profile? : @profile.Profile = @profile.core,
+) -> Context {
   let entries : Array[(String, Entry)] = [("__name__", Var(TT))]
-  match predefined_members(q) {
+  match predefined_members(q, profile~) {
     Some(ms) =>
       for m in ms {
         entries.push((m, Var(TT)))

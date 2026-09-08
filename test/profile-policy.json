@@ -1,5 +1,8 @@
 {
   "floors": {
+    "builtins: accepted": 3,
+    "builtins: agrees with CPython": 3,
+    "builtins: still opt-in": 3,
     "pending: accepted": 5,
     "pending: agrees with CPython": 5,
     "pending: still opt-in": 5,
@@ -7,6 +10,9 @@
   },
   "note": "A ratchet, not a target, and separate from test/conform-policy.json on purpose: a profile must never be able to move a PurePy floor. Rerun with --regen-policy and commit the moved floor in the change that earned it.",
   "totals": {
+    "builtins: accepted": 3,
+    "builtins: agrees with CPython": 3,
+    "builtins: still opt-in": 3,
     "pending: accepted": 5,
     "pending: agrees with CPython": 5,
     "pending: still opt-in": 5,

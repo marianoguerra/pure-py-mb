@@ -1,0 +1,10 @@
+xs = [3, 1, 2]
+print(sorted(xs))
+print(sorted(["b", "a"]))
+print(list("abc"), list((1, 2)))
+print(tuple([1, 2]), tuple("ab"))
+print(list(reversed([1, 2, 3])))
+print(list(enumerate(["a", "b"])))
+print(list(zip([1, 2], ["a", "b"])))
+print(list(zip([1, 2, 3], ["a"])))
+print(len(sorted(xs)), sorted(xs)[0])

@@ -3,6 +3,7 @@ package "marianoguerra/pure-py/context"
 
 import {
   "marianoguerra/pure-py/ast",
+  "marianoguerra/pure-py/profile",
   "moonbitlang/core/debug",
   "moonbitlang/core/immut/sorted_map",
 }
@@ -24,6 +25,8 @@ pub fn extend_context(@sorted_map.SortedMap[String, Entry], @sorted_map.SortedMa
 
 pub fn extend_entry(Entry, Entry) -> Entry
 
+pub let extra_builtin_names : Array[String]
+
 pub fn merge_delta(@sorted_map.SortedMap[String, Status], @sorted_map.SortedMap[String, Status]) -> @sorted_map.SortedMap[String, Status]
 
 pub fn merge_results(Array[ResultType]) -> ResultType
@@ -36,9 +39,9 @@ pub fn override_results(ResultType, ResultType) -> ResultType
 
 pub fn own_fields(@ast.Stmt) -> Array[String]
 
-pub fn predefined_context(String) -> @sorted_map.SortedMap[String, Entry]
+pub fn predefined_context(String, profile? : @profile.Profile) -> @sorted_map.SortedMap[String, Entry]
 
-pub fn predefined_members(String) -> Array[String]?
+pub fn predefined_members(String, profile? : @profile.Profile) -> Array[String]?
 
 pub let predefined_modules : Array[String]
 

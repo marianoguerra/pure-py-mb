@@ -297,7 +297,7 @@ fn cmd_check(
       m =>
         match @sieve.result(m, profile~) {
           Some(d) => Some(d)
-          None => @check.check_single(m)
+          None => @check.check_single(m, profile~)
         }
     }
     match d {
@@ -440,14 +440,14 @@ fn cmd_run(
   // A program that is not well formed does not run. The conformance harness
   // never asks for one, but a person might, and the semantics is defined for
   // well-formed programs only.
-  match @check.check_program(tree) {
+  match @check.check_program(tree, profile~) {
     Some(d) => {
       println(d.message())
       return d.exit_code()
     }
     None => ()
   }
-  let (output, result) = @eval.run_program(tree, argv~)
+  let (output, result) = @eval.run_program(tree, argv~, profile~)
   write_stdout(output)
   match result {
     Finished => 0

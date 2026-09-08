@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+### `builtins`: a profile that adds names and no syntax
+
+`@profile.builtins()` is `pending` plus eighteen builtin functions -- `abs`,
+`all`, `any`, `divmod`, `enumerate`, `float`, `int`, `list`, `max`, `min`,
+`repr`, `reversed`, `round`, `sorted`, `str`, `sum`, `tuple`, `zip`. Nothing
+about the syntax changes: a program written against it parses as PurePy and
+would be refused only for the names it uses. Three builtins is a small language
+to write in, and this is the cheapest superset to reason about.
+
+**None of them coerces.** `sum([True])` is 1 in Python only because a bool is
+an int there, and `any([1])` is True only because 1 is truthy. PurePy says
+neither, so both are undefined here. That is the whole difference between
+adding a library to PurePy and adding Python to it. `bool` is absent for the
+same reason and not by oversight: it is Python's truthiness in a function, and
+there is no truthiness to put in it. `sorted` and `min` refuse a list their
+order does not cover rather than falling back on position, which is the
+discipline `@value.eq` already follows.
+
+`enumerate`, `zip`, `reversed`, `sorted`, `list` and `tuple` answer with a list
+rather than a lazy object. That follows `range`, which Figure 2.7 already
+defines as a list, and it is observable in the same way: `print(zip(a, b))`
+prints the pairs here and `<zip object at 0x...>` in Python. Everything that
+consumes one agrees.
+
+A profile now decides what `builtins` exports, so `run` and `run_with` take one
+too, and **the checker and the run must be handed the same profile** -- they
+are two calls, and a run given the poorer one finds a name that type-checked
+and is not there.
+
+Three tables had to agree for this and nothing made them:
+`@context.predefined_members` names the builtins for the checker,
+`Interp::predefined` binds their values, and `call_primitive` implements them.
+They cannot become one -- `lib/check` does not import `lib/value`, deliberately
+-- so `lib/eval/predefined_wbtest.mbt` is what keeps them from drifting, per
+profile. Forgetting either half makes a name that type-checks and is not there,
+or is there and cannot be named, and neither half looks wrong on its own.
+
 ### `pending` holds five features, and CPython is its oracle
 
 The profile grew from one feature to five: chained boolean operators and

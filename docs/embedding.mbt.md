@@ -512,6 +512,23 @@ refuses today with an issue number: chained `and`/`or` and chained comparisons,
 It is a set, and it grows. Ask it what it holds -- `Profile::features`, or
 `pure-py profiles` -- rather than assuming a form from that table is in it.
 
+`@profile.builtins()` is `pending` and a larger set of builtin functions:
+`abs`, `min`, `max`, `sum`, `sorted`, `str`, `int`, `list`, `zip` and the rest.
+No syntax changes at all, which makes it the cheapest superset to reason about
+and the one an embedder most often wants -- three builtins is a small language
+to write in.
+
+None of them coerces. `sum([True])` is 1 in Python only because a bool is an
+int there, and `any([1])` is True only because 1 is truthy; PurePy says
+neither, so both are undefined here rather than smuggling in a rule the
+language refused. `bool` is absent for the same reason: it is Python's
+truthiness in a function, and there is no truthiness to put in it.
+
+A profile decides what `builtins` exports, so **the checker and the run must be
+handed the same one**. They are two calls and nothing can make that automatic;
+give `run` a poorer profile than `check` and a name type-checks and is then not
+there.
+
 ```mbt check
 ///|
 test "a guest written in a superset" {
@@ -736,7 +753,7 @@ Everything a host can supply, in one place:
 | the guest's code | `source_tree` or `source_tree_from` | — |
 | what those functions do, later | `Host::new(call=...)` and `run_with(done=...)` | answers now |
 | how deep it may recurse | `max_depth` | 500 native, 12 on a JavaScript engine |
-| how large a language the guest may use | `profile` on `check`, `sieve`, `check_program`, `source_tree_from` | `@profile.core`: PurePy |
+| how large a language the guest may use | `profile`, on every call that decides what a program may say AND on `run` | `@profile.core`: PurePy |
 
 And everything a host does NOT have to defend against, because the language
 has no way to express it: mutation of a guest value, a guest reaching a name

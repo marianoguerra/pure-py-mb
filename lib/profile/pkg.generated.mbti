@@ -9,6 +9,8 @@ import {
 // Values
 pub fn accepted_by(String) -> String?
 
+pub fn builtins() -> Profile
+
 pub fn by_name(String) -> Profile?
 
 pub let core : Profile
@@ -26,6 +28,7 @@ pub(all) enum Feature {
   Identity
   Slicing
   DestructuringAssignment
+  ExtraBuiltins
 } derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Feature::name(Self) -> String
 

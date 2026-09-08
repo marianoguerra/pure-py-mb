@@ -26,11 +26,11 @@ pub fn check_pattern(@ast.Pattern, @context.ModuleContext[Program]) -> Unit rais
 
 pub fn check_pattern_list(Array[@ast.Pattern], @basic.Span, @context.ModuleContext[Program]) -> Unit raise
 
-pub fn check_program(@program.SourceTree, host_members? : Map[String, Array[String]]) -> @error.Diagnostic?
+pub fn check_program(@program.SourceTree, host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> @error.Diagnostic?
 
 pub fn check_seq(ArrayView[@analysis.Statement], @context.ModuleContext[Program]) -> @context.ModuleContext[Program] raise
 
-pub fn check_single(@ast.Module, host_members? : Map[String, Array[String]]) -> @error.Diagnostic?
+pub fn check_single(@ast.Module, host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> @error.Diagnostic?
 
 pub fn check_statement(@analysis.Statement, @context.ModuleContext[Program]) -> Unit raise
 
@@ -58,11 +58,12 @@ pub fn subsumes(@ast.Pattern, @ast.Pattern, @context.ModuleContext[Program]) -> 
 pub struct Program {
   modules : Map[String, @ast.Module]
   host_members : Map[String, Array[String]]
+  profile : @profile.Profile
   signatures : Map[String, @sorted_map.SortedMap[String, @context.Entry]]
   loading : Array[String]
 }
-pub fn Program::new(Map[String, @ast.Module], host_members? : Map[String, Array[String]]) -> Self
-pub fn Program::single(@ast.Module, host_members? : Map[String, Array[String]]) -> Self
+pub fn Program::new(Map[String, @ast.Module], host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> Self
+pub fn Program::single(@ast.Module, host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> Self
 
 // Type aliases
 

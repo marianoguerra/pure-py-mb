@@ -3,9 +3,11 @@ import {
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/context",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/value",
   "moonbitlang/core/math",
+  "moonbitlang/core/string",
 }
 
 import {

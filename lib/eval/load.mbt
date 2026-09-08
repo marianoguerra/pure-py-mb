@@ -299,10 +299,11 @@ pub fn run_program(
   tree : @program.SourceTree,
   argv? : Array[String] = [],
   max_depth? : Int = default_max_depth,
+  profile? : @profile.Profile = @profile.core,
 ) -> (String, RunResult) {
   let sink = Sink::new()
   let host = Host::new(write=fn(text) { sink.write(text) }, argv~)
-  let result = run_with(tree, host, max_depth~)
+  let result = run_with(tree, host, max_depth~, profile~)
   (sink.text(), result)
 }
 
@@ -335,8 +336,9 @@ pub fn run_with(
   host : Host,
   max_depth? : Int = default_max_depth,
   done? : (RunResult) -> Unit = fn(_) {  },
+  profile? : @profile.Profile = @profile.core,
 ) -> RunResult {
-  let interp = Interp::new(tree, host~, max_depth~)
+  let interp = Interp::new(tree, host~, max_depth~, profile~)
   let mut answer : RunResult = Suspended
   run_async(() => {
     let r = interp.run()

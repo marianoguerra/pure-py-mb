@@ -17,6 +17,12 @@
 /// defaults to `@profile.core` everywhere, so PurePy is what you get for not
 /// asking. `run` does not take one yet: nothing the evaluator does depends on
 /// a profile so far, and an argument that does nothing is a promise to keep.
+///
+/// `run` and `run_with` take one too, now that a profile decides what
+/// `builtins` exports. It still is not a mode the semantics is in: every rule
+/// applies to every run, and the profile only decides what was in scope to be
+/// written. The checker and the evaluator must be handed the SAME one, or a
+/// name type-checks and is then not there.
 pub fn parse(source : String, name? : String = "<string>") -> @ast.Module raise {
   @parser.parse(@basic.Source::new(source, name~))
 }
@@ -61,6 +67,7 @@ pub fn check(
           Some(h) => h.member_names()
           None => Map([])
         },
+        profile~,
       )
   }
 }
@@ -93,6 +100,7 @@ pub fn check_program(
       Some(h) => h.member_names()
       None => Map([])
     },
+    profile~,
   )
 }
 
@@ -106,8 +114,9 @@ pub fn run(
   tree : @program.SourceTree,
   argv? : Array[String] = [],
   max_depth? : Int = @eval.default_max_depth,
+  profile? : @profile.Profile = @profile.core,
 ) -> (String, @eval.RunResult) {
-  @eval.run_program(tree, argv~, max_depth~)
+  @eval.run_program(tree, argv~, max_depth~, profile~)
 }
 
 ///|
@@ -126,8 +135,9 @@ pub fn run_with(
   host : @eval.Host,
   max_depth? : Int = @eval.default_max_depth,
   done? : (@eval.RunResult) -> Unit = fn(_) {  },
+  profile? : @profile.Profile = @profile.core,
 ) -> @eval.RunResult {
-  @eval.run_with(tree, host, max_depth~, done~)
+  @eval.run_with(tree, host, max_depth~, done~, profile~)
 }
 
 ///|

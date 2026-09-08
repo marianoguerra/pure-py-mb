@@ -16,9 +16,9 @@ pub fn check_program(@program.SourceTree, host? : @eval.Host, profile? : @profil
 
 pub fn parse(String, name? : String) -> @ast.Module raise
 
-pub fn run(@program.SourceTree, argv? : Array[String], max_depth? : Int) -> (String, @eval.RunResult)
+pub fn run(@program.SourceTree, argv? : Array[String], max_depth? : Int, profile? : @profile.Profile) -> (String, @eval.RunResult)
 
-pub fn run_with(@program.SourceTree, @eval.Host, max_depth? : Int, done? : (@eval.RunResult) -> Unit) -> @eval.RunResult
+pub fn run_with(@program.SourceTree, @eval.Host, max_depth? : Int, done? : (@eval.RunResult) -> Unit, profile? : @profile.Profile) -> @eval.RunResult
 
 pub fn sieve(@ast.Module, profile? : @profile.Profile) -> @error.Diagnostic?
 

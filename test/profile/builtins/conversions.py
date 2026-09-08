@@ -1,0 +1,6 @@
+print(str(1), str(2.5), str("a"), str([1, 2]), str(None))
+print(repr(1), repr("a"), repr([1, "b"]), repr(None))
+print(int(2.9), int(-2.9), int("42"), int("-7"), int(3))
+print(float(1), float("2.5"), float(2.5))
+print(all([True, True]), all([True, False]), all([]))
+print(any([False, True]), any([False, False]), any([]))

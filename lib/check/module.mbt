@@ -25,6 +25,12 @@ pub struct Program {
   /// off a body. The checker needs the NAMES and not the values -- what a
   /// host function IS is the evaluator's business.
   host_members : Map[String, Array[String]]
+  /// The superset of PurePy the caller opted in to.
+  ///
+  /// The checker reads it for one thing: which names `builtins` exports. A
+  /// profile that adds `sorted` has to put it in the initial context or a
+  /// program using it is ill formed before it can be run.
+  profile : @profile.Profile
   signatures : Map[String, @context.Context]
   loading : Array[String]
 }
@@ -34,8 +40,9 @@ pub struct Program {
 pub fn Program::new(
   modules : Map[String, @ast.Module],
   host_members? : Map[String, Array[String]] = Map([]),
+  profile? : @profile.Profile = @profile.core,
 ) -> Program {
-  { modules, host_members, signatures: Map([]), loading: [], }
+  { modules, host_members, profile, signatures: Map([]), loading: [], }
 }
 
 ///|
@@ -45,6 +52,7 @@ pub fn Program::new(
 pub fn Program::single(
   m : @ast.Module,
   host_members? : Map[String, Array[String]] = Map([]),
+  profile? : @profile.Profile = @profile.core,
 ) -> Program {
   let modules : Map[String, @ast.Module] = Map([])
   for p in @context.predefined_modules {
@@ -54,7 +62,7 @@ pub fn Program::single(
     modules[name] = { body: [], span: @basic.nowhere, }
   }
   modules["__main__"] = m
-  Program::new(modules, host_members~)
+  Program::new(modules, host_members~, profile~)
 }
 
 ///|
@@ -175,7 +183,7 @@ fn check_module_body(
     body.push(s)
   }
   let gamma1 = @context.extend_context(
-    @context.predefined_context("builtins"),
+    @context.predefined_context("builtins", profile=program.profile),
     gamma0,
   )
   let items = @analysis.statements(body)
@@ -334,7 +342,7 @@ fn own_members(
 /// The members of a module that has no body: one the specification predefines,
 /// or one an embedding host defines.
 fn members_without_source(program : Program, q : String) -> Array[String]? {
-  match @context.predefined_members(q) {
+  match @context.predefined_members(q, profile=program.profile) {
     Some(ms) => Some(ms)
     None => program.host_members.get(q)
   }
@@ -436,8 +444,9 @@ fn signature(
 pub fn check_single(
   m : @ast.Module,
   host_members? : Map[String, Array[String]] = Map([]),
+  profile? : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
-  let program = Program::single(m, host_members~)
+  let program = Program::single(m, host_members~, profile~)
   try check_module(program, "__main__") |> ignore catch {
     @err.PurePyError(d) => Some(d)
     _ => None

@@ -103,6 +103,24 @@ pub(all) enum Primitive {
   Tan
   MathFloor
   MathCeil
+  Abs
+  All
+  Any
+  DivMod
+  Enumerate
+  ToFloat
+  ToInt
+  ToList
+  Max
+  Min
+  Repr
+  Reversed
+  Round
+  Sorted
+  ToStr
+  Sum
+  ToTuple
+  Zip
   Opaque(String)
   Foreign(String)
 } derive(Eq, @debug.Debug)

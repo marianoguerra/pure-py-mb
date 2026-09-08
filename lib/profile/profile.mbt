@@ -62,6 +62,14 @@ pub(all) enum Feature {
   /// the same issue and is a separate gate, still closed: it binds through
   /// `eval_quals` rather than through an assignment, so it is its own rule.
   DestructuringAssignment
+  /// Builtins beyond `print`, `len` and `range`: `abs`, `min`, `max`, `sum`,
+  /// `sorted`, `str`, `int`, `list` and the rest of
+  /// `@context.extra_builtin_names`.
+  ///
+  /// No syntax changes. Every one of them is pure, and none of them coerces:
+  /// where Python would answer by truthiness or by treating a `bool` as a
+  /// number, this is undefined, because PurePy is.
+  ExtraBuiltins
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
@@ -73,6 +81,7 @@ pub fn Feature::name(self : Feature) -> String {
     Identity => "identity"
     Slicing => "slicing"
     DestructuringAssignment => "destructuring-assignment"
+    ExtraBuiltins => "extra-builtins"
   }
 }
 
@@ -171,17 +180,29 @@ pub fn pending() -> Profile {
 
 ///|
 /// A profile by the name a `--profile` flag or a playground selector uses.
+/// `pending`, and a larger set of builtin functions.
+///
+/// Nothing here is syntax: a program written against this profile parses as
+/// PurePy and would be refused only for the NAMES it uses. That makes it the
+/// cheapest superset to reason about, and the one an embedder most often
+/// wants -- three builtins is a small language to write in.
+pub fn builtins() -> Profile {
+  pending().adding([ExtraBuiltins])
+}
+
+///|
 pub fn by_name(name : String) -> Profile? {
   match name {
     "core" | "purepy" => Some(core)
     "pending" => Some(pending())
+    "builtins" => Some(builtins())
     _ => None
   }
 }
 
 ///|
 /// Every name `by_name` answers to, in the order they stack.
-pub let names : Array[String] = ["core", "pending"]
+pub let names : Array[String] = ["core", "pending", "builtins"]
 
 ///|
 /// Which named profile accepts a form the sieve refused, if any does.

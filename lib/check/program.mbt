@@ -8,6 +8,7 @@
 pub fn check_program(
   tree : @program.SourceTree,
   host_members? : Map[String, Array[String]] = Map([]),
+  profile? : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   let modules = tree.modules_map()
   // The five predefined modules and the host's own have no source, so each
@@ -25,7 +26,7 @@ pub fn check_program(
       modules[name] = { body: [], span: @basic.nowhere, }
     }
   }
-  let program = Program::new(modules, host_members~)
+  let program = Program::new(modules, host_members~, profile~)
   try check_module(program, "__main__") |> ignore catch {
     @err.PurePyError(d) =>
       match d.kind {
@@ -50,9 +51,8 @@ pub fn check_program(
 ///|
 /// Discover a program from its entry file and check it.
 ///
-/// `profile` reaches discovery, which sieves every file it loads. It does not
-/// reach `check_program`: nothing the checker decides depends on a profile
-/// yet, and an argument that does nothing is a promise to keep.
+/// `profile` reaches discovery, which sieves every file it loads, and the
+/// checker, which reads it for the names `builtins` exports.
 pub fn check_entry(
   entry_path : String,
   profile? : @profile.Profile = @profile.core,
@@ -65,5 +65,5 @@ pub fn check_entry(
     @err.PurePyError(d) => return Some(d)
     e => return Some(@err.Diagnostic::new(Program(msg="\{e}")))
   }
-  check_program(tree)
+  check_program(tree, profile~)
 }

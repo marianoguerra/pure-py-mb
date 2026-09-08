@@ -40,6 +40,14 @@ pub struct Interp {
   /// cover -- which a person can read.
   mut depth : Int
   max_depth : Int
+  /// The superset of PurePy this run's program was accepted under.
+  ///
+  /// The evaluator reads it in one place: which values `builtins` loads to. A
+  /// profile is not a mode the semantics is in -- every rule below applies to
+  /// every run -- it decides what was in scope to be written in the first
+  /// place, and the checker has to have agreed about the same set or a name
+  /// would type-check and then not be there.
+  profile : @profile.Profile
   /// The module whose source is running right now.
   ///
   /// Not the top of `loading`: that is the IMPORT stack, and during a call
@@ -110,6 +118,7 @@ pub fn Interp::new(
   tree : @program.SourceTree,
   host? : Host = Host::new(),
   max_depth? : Int = default_max_depth,
+  profile? : @profile.Profile = @profile.core,
 ) -> Interp {
   {
     tree,
@@ -118,6 +127,7 @@ pub fn Interp::new(
     loading: [],
     depth: 0,
     max_depth,
+    profile,
     in_module: "__main__",
     abort_at: None,
   }
@@ -144,6 +154,13 @@ pub fn Interp::predefined(self : Interp, q : String) -> Env? {
       entries.push(("print", Prim(Print)))
       entries.push(("len", Prim(Len)))
       entries.push(("range", Prim(Range)))
+      // In the order of `@context.extra_builtin_names`, which the checker
+      // reads. `predefined_wbtest.mbt` is what keeps the two from drifting.
+      if self.profile.has(ExtraBuiltins) {
+        for e in extra_builtins() {
+          entries.push(e)
+        }
+      }
     }
     "math" => {
       entries.push(("pi", Float(3.141592653589793)))
@@ -166,4 +183,34 @@ pub fn Interp::predefined(self : Interp, q : String) -> Env? {
     _ => return None
   }
   Some(@value.env_of(entries))
+}
+
+///|
+/// The values of `@context.extra_builtin_names`, in that order.
+///
+/// A free function and not a method: it depends on nothing about a run, and
+/// keeping it beside `Interp::predefined` is what makes the two lists easy to
+/// read against each other. `lib/eval/predefined_wbtest.mbt` is what makes
+/// them stay that way.
+fn extra_builtins() -> Array[(String, Value)] {
+  [
+    ("abs", Prim(Abs)),
+    ("all", Prim(All)),
+    ("any", Prim(Any)),
+    ("divmod", Prim(DivMod)),
+    ("enumerate", Prim(Enumerate)),
+    ("float", Prim(ToFloat)),
+    ("int", Prim(ToInt)),
+    ("list", Prim(ToList)),
+    ("max", Prim(Max)),
+    ("min", Prim(Min)),
+    ("repr", Prim(Repr)),
+    ("reversed", Prim(Reversed)),
+    ("round", Prim(Round)),
+    ("sorted", Prim(Sorted)),
+    ("str", Prim(ToStr)),
+    ("sum", Prim(Sum)),
+    ("tuple", Prim(ToTuple)),
+    ("zip", Prim(Zip)),
+  ]
 }

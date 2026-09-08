@@ -132,7 +132,10 @@ fn outcome_under(source : String, profile : @profile.Profile) -> String raise {
     None => ()
   }
   let tree = @purepy.source_tree(Map([("__main__", m)]))
-  match @purepy.run(tree) {
+  // The SAME profile the check used. Handing the run a poorer one is the
+  // mismatch "the checker and the run want the same profile" is about, and a
+  // helper that made it would report every added builtin as an unbound name.
+  match @purepy.run(tree, profile~) {
     (out, Finished) => "ok: " + out
     (_, Terminated(k, _)) => "aborts: " + k.to_text().to_string()
     (_, Undefined(op)) => "undefined: " + op
@@ -183,4 +186,74 @@ test "a pending feature aborts where Python raises" {
   // A chain short-circuits: the third comparison is never made, so its
   // undefined operand never matters.
   assert_eq(outcome_under("print(2 < 1 < \"a\")\n", p), "ok: False\n")
+}
+
+///|
+/// The added builtins do not coerce, because PurePy does not.
+///
+/// Every line here is something Python answers and this declines to. That is
+/// the whole difference between adding a LIBRARY to PurePy and adding Python
+/// to it: `sum([True])` is 1 in Python only because a bool is an int there,
+/// and `any([1])` is True only because 1 is truthy. PurePy says neither, so a
+/// builtin that said them would be smuggling in a rule the language refused.
+test "an added builtin declines where Python coerces" {
+  let p = @profile.builtins()
+  let undefined = [
+    // No truthiness: `any` and `all` want the real bools `if` wants.
+    "print(any([1, 2]))\n", "print(all([1]))\n", "print(any(['']))\n",
+    // A bool is not a number, so `+` over one has no rule.
+     "print(sum([True, False]))\n",
+    // A partial order stays partial: no total order over these, so no sort.
+     "print(sorted([1, 'a']))\n", "print(min(1, 'a'))\n",
+    // Python raises ValueError, which PurePy does not model.
+     "print(int('twelve'))\n", "print(min([]))\n",
+  ]
+  for source in undefined {
+    let got = outcome_under(source, p)
+    assert_true(got.has_prefix("undefined: "), msg=source + " -> " + got)
+    // Not undefined because the NAME was missing -- that would make this test
+    // pass under any profile at all, including one with no builtins in it.
+    assert_false(got.has_prefix("undefined: the unbound name"), msg=source)
+  }
+  // A bool handed to a builtin that says what it takes is a TypeError and not
+  // undefined, which is the better answer of the two: `TypeError` is a
+  // termination the semantics HAS, and Python raises one here too. Undefined
+  // is for where PurePy has no rule at all, not for where it has one and the
+  // argument fails it.
+  for source in ["print(abs(True))\n", "print(int(True))\n"] {
+    assert_eq(outcome_under(source, p), "aborts: TypeError", msg=source)
+  }
+}
+
+///|
+/// An added builtin is a NAME, and a profile that does not have it does not
+/// have the name -- so the failure is the checker's, before anything runs.
+test "an added builtin is not in scope without the profile" {
+  let m = @purepy.parse("print(sorted([2, 1]))\n")
+  assert_eq(@purepy.sieve(m), None)
+  assert_eq(
+    @purepy.check(m).unwrap().message(),
+    "'sorted' is not definitely assigned",
+  )
+  assert_eq(
+    @purepy.check(m, profile=@profile.pending()).unwrap().message(),
+    "'sorted' is not definitely assigned",
+  )
+  assert_eq(@purepy.check(m, profile=@profile.builtins()), None)
+}
+
+///|
+/// A profile handed to the checker and not to the run is a name that
+/// type-checks and is then not there. The facade cannot prevent it -- they are
+/// two calls -- so this is what says out loud that it is the caller's job.
+test "the checker and the run want the same profile" {
+  let m = @purepy.parse("print(sorted([2, 1]))\n")
+  let tree = @purepy.source_tree(Map([("__main__", m)]))
+  assert_eq(@purepy.check_program(tree, profile=@profile.builtins()), None)
+  // Checked under `builtins`, run under `core`: the name is gone.
+  let (_, mismatched) = @purepy.run(tree)
+  assert_true(mismatched is Undefined(_))
+  let (out, agreed) = @purepy.run(tree, profile=@profile.builtins())
+  assert_true(agreed is Finished)
+  assert_eq(out, "[1, 2]\n")
 }

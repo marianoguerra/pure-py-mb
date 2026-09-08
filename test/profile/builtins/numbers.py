@@ -1,0 +1,7 @@
+print(abs(-3), abs(3), abs(-2.5))
+print(min(3, 1, 2), max(3, 1, 2))
+print(min([4, 2, 9]), max([4, 2, 9]))
+print(min("banana"), max("banana"))
+print(sum([1, 2, 3]), sum([]), sum([1.5, 2.5]))
+print(divmod(7, 2), divmod(-7, 2), divmod(7.0, 2))
+print(round(2.5), round(3.5), round(-2.5), round(2.4), round(7))
