@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### `Primitive::name`, so an embedder stops keeping a fourth table
+
+A `Prim` has no printable form -- `str` and `repr` answer `None`, because
+Python prints an address no implementation can reproduce -- so a host that
+wants to show something in its place has to name it, and until now that meant
+spelling out all thirty. That was a fourth table agreeing with the three
+`predefined_wbtest.mbt` already keeps in line, and the only one of the four
+this library could not test: a consumer with a list of thirty names has no way
+to learn that a thirty-first arrived.
+
+`pub fn Primitive::name(Self) -> String` answers the name a member is bound
+under -- `floor` for `math.floor`, and for a host function whatever the host
+registered it as. There is no fourth table now: `Interp::predefined` is the one
+that decides, and a test reads it back, asserting under every profile that
+whatever is bound answers with the name it is bound under. Breaking one name
+fails it by member.
+
+Asked for by an embedder; thank you.
+
 ## 0.7.0 — 2026-09-08
 
 The evaluator no longer spends host stack on a guest's recursion, so the

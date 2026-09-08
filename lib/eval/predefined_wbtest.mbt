@@ -61,3 +61,66 @@ test "a profile leaves the core names where they were" {
     @context.extra_builtin_names,
   )
 }
+
+///|
+/// A primitive's name is the name it is bound under.
+///
+/// `Primitive::name` exists so that an embedder can render a value that has no
+/// printable form -- `<builtin sum>` where Python prints an address. Without
+/// the test below it would be a FOURTH table agreeing with the three this file
+/// already keeps in line, and the only one of the four nothing could check:
+/// a consumer spelling out thirty names has no way to know when a
+/// thirty-first arrives.
+///
+/// With it, there is no fourth table. `Interp::predefined` is the one that
+/// decides, and this reads it back: whatever a profile binds, under whatever
+/// name, `Primitive::name` answers with that name or this fails.
+test "a primitive answers with the name it is bound under" {
+  let tree = @program.SourceTree::of(Map([]))
+  let mut checked = 0
+  for
+    profile in [
+      @profile.core,
+      @profile.pending(),
+      @profile.builtins(),
+      @profile.methods(),
+    ] {
+    let interp = Interp::new(tree, profile~)
+    for q in @context.predefined_modules {
+      let env = match interp.predefined(q) {
+        Some(env) => env
+        None => continue
+      }
+      let members : Array[(String, @value.Value)] = []
+      env.each(fn(k, v) { members.push((k, v)) })
+      for m in members {
+        match m.1 {
+          Prim(p) => {
+            assert_eq(p.name(), m.0, msg=q + "." + m.0)
+            checked += 1
+          }
+          // `math.pi` and `sys.argv` are members that are not functions.
+          _ => ()
+        }
+      }
+    }
+  }
+  // A count, so that a profile which stopped binding anything cannot make this
+  // pass by having nothing to check.
+  assert_true(checked >= 60)
+}
+
+///|
+/// A host function answers with the name the host registered it under, which
+/// is the case an embedder actually hits: its own functions are the ones it
+/// has to render.
+test "a host function is named by its host" {
+  match @value.host_fn("search") {
+    Prim(p) => assert_eq(p.name(), "search")
+    _ => fail("host_fn makes a primitive")
+  }
+  match @value.host_fn("") {
+    Prim(p) => assert_eq(p.name(), "")
+    _ => fail("host_fn makes a primitive")
+  }
+}

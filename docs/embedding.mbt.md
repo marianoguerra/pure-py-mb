@@ -471,6 +471,37 @@ test "values in and out" {
 }
 ```
 
+A value with no printable form -- a closure, a module, a class, a builtin --
+answers `None` to both, because Python prints an address no implementation can
+reproduce. `kind_name` names the kind, and for a builtin `Primitive::name`
+names the one it is:
+
+```mbt check
+///|
+test "naming a value that cannot be printed" {
+  let host = @eval.Host::new(modules=[
+    { name: "host", members: [("search", @value.host_fn("search"))], },
+  ])
+  // Whatever the host put in its own module, read back by name.
+  let members = host.modules.get("host").unwrap()
+  match members.get("search").unwrap() {
+    Prim(p) => {
+      inspect(p.name(), content="search")
+      inspect(@value.Value::Prim(p).repr() is None, content="true")
+      inspect(@value.Value::Prim(p).kind_name(), content="builtin")
+    }
+    _ => fail("host_fn makes a primitive")
+  }
+}
+```
+
+`Primitive::name` answers the name a member is bound under -- `floor` for
+`math.floor`, and for a host function whatever the host registered it as --
+which is enough to render `<builtin search>` where Python would print an
+address. It is the same table `Interp::predefined` binds from, read back, and
+a test in the library says so, so a builtin added by a later profile does not
+leave an embedder spelling out a list that has quietly grown.
+
 ## Refusing a guest before it runs
 
 A guest that is not PurePy, or not well formed, is refused with a message and

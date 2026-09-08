@@ -295,6 +295,61 @@ pub fn Value::kind_name(self : Value) -> String {
 }
 
 ///|
+/// The name a primitive is bound under, which is the name a person knows it by.
+///
+/// A `Prim` has no printable form -- `Value::str` and `Value::repr` answer
+/// `None` for one, because Python prints an address no implementation can
+/// reproduce -- so an embedder that wants to show something in its place has to
+/// name it. Without this it spells all thirty out, which is a fourth table
+/// agreeing with the three this library already keeps in line, and the only one
+/// of the four that upstream cannot test.
+///
+/// It is tested, in `lib/eval/predefined_wbtest.mbt`: every primitive bound in
+/// a predefined module answers with the name it is bound under, under every
+/// profile. So this is not a fourth table. It is the same table, read back.
+///
+/// `MathFloor` answers `floor` rather than `math.floor`: the name is the
+/// member's, and which module it came from is the environment's business.
+/// `Opaque` and `Foreign` carry theirs, so a host function answers with the
+/// name the host registered it under.
+pub fn Primitive::name(self : Primitive) -> String {
+  match self {
+    Print => "print"
+    Len => "len"
+    Range => "range"
+    Exit => "exit"
+    Sqrt => "sqrt"
+    Exp => "exp"
+    Log => "log"
+    Sin => "sin"
+    Cos => "cos"
+    Tan => "tan"
+    MathFloor => "floor"
+    MathCeil => "ceil"
+    Abs => "abs"
+    All => "all"
+    Any => "any"
+    DivMod => "divmod"
+    Enumerate => "enumerate"
+    ToFloat => "float"
+    ToInt => "int"
+    ToList => "list"
+    Max => "max"
+    Min => "min"
+    Repr => "repr"
+    Reversed => "reversed"
+    Round => "round"
+    Sorted => "sorted"
+    ToStr => "str"
+    Sum => "sum"
+    ToTuple => "tuple"
+    Zip => "zip"
+    Opaque(name) => name
+    Foreign(name) => name
+  }
+}
+
+///|
 /// A function the host supplies, as a value the guest can call.
 ///
 /// The host puts one of these in a module (`@eval.HostModule`) and answers

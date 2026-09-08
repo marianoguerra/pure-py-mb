@@ -131,6 +131,7 @@ pub(all) enum Primitive {
   Opaque(String)
   Foreign(String)
 } derive(Eq, @debug.Debug)
+pub fn Primitive::name(Self) -> String
 
 pub(all) struct SliceBounds {
   lower : Value?
