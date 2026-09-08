@@ -20,7 +20,7 @@ hand it, what is refused before it runs, and what ends without an answer.
 
 The page is a real embedder rather than a demonstration of one: the `host`
 module its examples import does not exist in PurePy, and the page supplies it
-through the interface [docs/embedding.mbt.md](docs/embedding.mbt.md)
+through the interface [docs/embedding.mbt.md](https://github.com/marianoguerra/pure-py-mb/blob/main/docs/embedding.mbt.md)
 describes.
 
 ## Status
@@ -222,10 +222,38 @@ test "a guest calling a function the host supplied" {
 }
 ```
 
+### Bounding a run
+
+A guest cannot reach anything it was not handed, but it can decline to finish,
+and two different runaways need two different bounds. Both are optional
+arguments on `run` and `run_with`, and both are policies rather than
+measurements: nothing about them depends on the backend.
+
+| what runs away | bound | default |
+|---|---|---|
+| recursion -- `def f(n): return f(n)` | `max_depth` | 10000 |
+| everything else -- a comprehension over a long sequence, `range(10 ** 9)`, `[0] * 10 ** 9` | `max_steps` | 100000000 |
+
+```mbt check
+///|
+test "a runaway ends in an answer rather than a hang" {
+  let looping = Map([("__main__", @purepy.parse("xs = [0] * 1000000000\n"))])
+  match @purepy.run(@purepy.source_tree(looping), max_steps=1000) {
+    (_, Undefined(why)) => inspect(why, content="a run longer than 1000 steps")
+    _ => fail("a billion elements is not a thousand steps")
+  }
+}
+```
+
+The defaults are backstops -- numbers a program that was never going to finish
+will reach, and nothing else will. **Anything with a person waiting on it wants
+smaller ones, chosen by measuring its own heaviest real workload rather than by
+copying a figure from here.** The guide below has the method.
+
 [docs/embedding.mbt.md](https://github.com/marianoguerra/pure-py-mb/blob/main/docs/embedding.mbt.md)
 is the whole surface, with worked examples for output, arguments, host modules, values crossing the
 boundary, a host function that answers later rather than now, refusing a guest
-before it runs, and bounding one that will not stop.
+before it runs, and choosing the two bounds above.
 
 ## Generating Python
 

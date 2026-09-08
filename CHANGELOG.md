@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### The two bounds reach a consumer who never opens the repository
+
+`docs/` is in the root module, which is never published, so everything written
+about bounding a run lived somewhere a registry consumer does not go.
+`lib/README.mbt.md` -- the one document that ships -- mentioned neither
+`max_depth` nor `max_steps`, and one of its two links to the guide was
+relative, which resolves for a reader of the repository and is dead for
+everyone else.
+
+It now carries both bounds, what runs away past each, that the defaults are
+backstops rather than settings, and that a host with a person waiting should
+measure its own workload rather than copy a figure. Both links are absolute.
+
 ### How to choose `max_steps`
 
 0.9.0 shipped the bound with a default and no advice, so the first embedder to
