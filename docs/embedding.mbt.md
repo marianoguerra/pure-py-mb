@@ -552,6 +552,30 @@ measured ceiling of about 780 for the release module it actually ships.
 sweep any wasm module exporting `analyze` -- point it at yours. `just
 depth-probe` runs it over the page's own.
 
+**And the engine is an axis of its own.** Node is V8, so a Node figure is not
+a browser figure -- it is a Chromium figure. The playground's release module,
+same probe, same five tries per depth:
+
+| engine | ceiling |
+|---|---|
+| V8 (Node 24) | 781 |
+| V8 (Chromium 152, headless) | 783 |
+| SpiderMonkey (Firefox 154, headless) | 1966 |
+
+`just depth-probe-browser firefox` is that measurement, and `chromium` the
+other; with no argument it serves the page for an engine neither of us
+automated. It also asks the question that actually decides whether a page
+survives -- does the module we serve hold at its own limit, and report rather
+than throw past it -- and for the playground's 250 the answer in both engines
+is yes.
+
+What is NOT safe to carry away is the ratio. An embedder measuring a different
+module got SpiderMonkey at a third of V8 where this one gets it at two and a
+half times, on the same worst shape and the same method. Which engine binds is
+a property of the module, so **measure your own module in the engines you ship
+to** -- and if you ship to WebKit or to a phone, measure there, because neither
+of us could.
+
 **A measured ceiling belongs to a VERSION of this library, not to PurePy.**
 How many host frames a guest call costs is an implementation detail that
 moves: the `async` transform in 0.3.0 spent about a dozen of them where there

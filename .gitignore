@@ -12,6 +12,11 @@ __pycache__/
 # Built by `just playground-build`; the deployment builds its own.
 /playground/playground.wasm
 
+# A module built with a large `max_depth` so the engine's ceiling is reached
+# before the guest's guard. Made by hand for `just depth-probe-browser`, and a
+# quarter-megabyte binary that would go stale the moment the evaluator moves.
+/tools/depth-probe-page/unguarded.wasm
+
 # `npm install --no-save binaryen` puts wasm-opt here; the deployment
 # installs its own.
 /node_modules/

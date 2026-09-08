@@ -68,10 +68,20 @@ bench: build
 # what this reports, and `docs/embedding.mbt.md` says why it is measured
 # rather than assumed.
 #
-# How deep the guest can recurse before the host's stack gives out.
+# How deep the guest can recurse before the host's stack gives out, on V8.
 [group('dev')]
 depth-probe:
     node tools/depth-probe.mjs
+
+# The same question in a real browser, because the engine is an axis of its
+# own: `just depth-probe-browser firefox`, or `chromium`, or no argument to
+# serve the page and open it yourself. Needs
+# `tools/depth-probe-page/unguarded.wasm`; the script says how to make one.
+#
+# How deep the guest can recurse before a browser engine's stack gives out.
+[group('dev')]
+depth-probe-browser engine="":
+    node tools/depth-probe-page/serve.mjs {{engine}}
 
 # Run one package's tests, e.g. `just test-pkg lexer`.
 [group('dev')]

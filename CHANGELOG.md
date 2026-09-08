@@ -52,6 +52,31 @@ because the answer depends on what is already on the stack, and says when it
 found the module's own `max_depth` instead of the engine's ceiling, which is
 the mistake it is easiest to publish.
 
+### And the engine is an axis of its own
+
+Node is V8, so a Node figure is a Chromium figure and not a browser figure.
+Over the playground's release module:
+
+| engine | ceiling |
+|---|---|
+| V8 (Node 24) | 781 |
+| V8 (Chromium 152, headless) | 783 |
+| SpiderMonkey (Firefox 154, headless) | 1966 |
+
+`just depth-probe-browser firefox` is that measurement and `chromium` the
+other, from `tools/depth-probe-page/`: a page that bisects and a server that
+collects what it found, because a headless browser has nowhere to print. It
+also asks the question that decides whether a page survives -- does the module
+we serve hold at its own limit and report rather than throw past it -- and for
+the playground's 250 both engines say yes.
+
+The ratio is the thing not to carry away. An embedder measuring a different
+module got SpiderMonkey at a third of V8 where this one gets it at two and a
+half times, same shape and same method. Which engine binds is a property of
+the module, so the guide asks for a measurement rather than offering a rule.
+Neither of us could reach WebKit or a phone, and the guide says so rather than
+guessing.
+
 Found by an embedder that makes PurePy the whole language of a tool call and
 runs it under `moon test --target wasm-gc` -- the tightest configuration, and
 not an exotic one -- and then sharpened by that same embedder sweeping a real

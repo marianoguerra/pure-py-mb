@@ -1,0 +1,83 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>pure-py depth probe</title>
+<!--
+  How deep the guest can recurse before THIS ENGINE's stack gives out.
+
+  The Node probe next door answers the same question for V8 alone, and the
+  answer is not portable: the engine is an axis of its own, and which engine
+  is the tight one is a property of the module and not of the engine family.
+  So a page that ships to browsers measures in browsers.
+
+  Served by `tools/depth-probe-page/serve.mjs`, which also collects the
+  result, because a headless browser has nowhere to print.
+-->
+<body>
+<pre id="out">measuring…</pre>
+<script type="module">
+const out = document.getElementById('out');
+
+// A program that recurses with a small expression in each frame. A frame's
+// cost is its pending expressions and not only its call, so this is the shape
+// that binds; `tools/depth-probe.mjs` sweeps three and they do not order
+// consistently across builds.
+const program = (n) =>
+  `def down(n):\n    if n == 0:\n        return 0\n` +
+  `    return ((down(n - 1) + 1) * 2 - 2) // 2\n\nprint(down(${n}))\n`;
+
+async function load(name) {
+  const mod = await WebAssembly.compile(await (await fetch(name)).arrayBuffer(), {
+    builtins: ['js-string'],
+    importedStringConstants: '_',
+  });
+  return (await WebAssembly.instantiate(mod, {})).exports.analyze;
+}
+
+// Three outcomes that mean different things: the stack held, the engine threw
+// (the ceiling), or the module's own `max_depth` answered first (not the
+// ceiling at all, and the easiest wrong number to publish).
+function attempt(analyze, depth) {
+  try {
+    const r = JSON.parse(analyze(program(depth))).run;
+    if (r.state === 'finished') return 'held';
+    return /call stack deeper than/.test(r.detail || '') ? 'guarded' : 'other';
+  } catch {
+    return 'overflowed';
+  }
+}
+
+// Five tries per depth: the stack available to a call depends on what is
+// already on it, so one try is not a measurement.
+const holds = (analyze, depth) => {
+  for (let i = 0; i < 5; i++) if (attempt(analyze, depth) !== 'held') return false;
+  return true;
+};
+
+const result = { ua: navigator.userAgent };
+try {
+  // `unguarded.wasm` must carry a `max_depth` far above anything probed, or
+  // the guest answers before the engine does.
+  const analyze = await load('unguarded.wasm');
+  let lo = 0, hi = 1 << 16;
+  if (holds(analyze, hi)) {
+    result.ceiling = `>${hi}`;
+  } else {
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (holds(analyze, mid)) lo = mid; else hi = mid;
+    }
+    result.ceiling = lo;
+    result.wall = attempt(analyze, hi);
+  }
+  // And the question that actually decides whether a page survives: does the
+  // module we ship hold at its own limit, and report rather than throw past it?
+  const shipped = await load('shipped.wasm');
+  result.atOwnLimit = attempt(shipped, 249);
+  result.pastOwnLimit = attempt(shipped, 300);
+} catch (e) {
+  result.error = String(e);
+}
+
+out.textContent = JSON.stringify(result, null, 2);
+await fetch('/result', { method: 'POST', body: JSON.stringify(result) }).catch(() => {});
+</script>
