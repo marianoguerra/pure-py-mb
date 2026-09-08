@@ -567,7 +567,33 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
     Starred(..) => raise prohibited("starred expressions prohibited", span)
     Await(..) => raise prohibited("async prohibited", span)
     Yield(..) | YieldFrom(..) => raise prohibited("yield prohibited", span)
-    JoinedStr(..) => raise not_yet("f-strings", 55, span)
+    JoinedStr(parts~, ..) => {
+      self.gate(FStrings, "f-strings", 55, span)
+      for part in parts {
+        match part {
+          Text(_) => ()
+          Hole(value~, conversion~, spec~) => {
+            // A format spec is a language of its own -- alignment, width,
+            // precision, type codes, and a nested `{}` inside it. Refusing it
+            // by name beats implementing a piece of it.
+            if spec is Some(_) {
+              raise not_yet("an f-string format spec", 55, span)
+            }
+            match conversion {
+              None => ()
+              Some('r') | Some('s') => ()
+              // `=` is the `f"{x=}"` debug form: it prints the SOURCE of the
+              // expression, which means keeping the source, which is a
+              // different feature wearing a conversion's clothes.
+              Some('=') =>
+                raise not_yet("the f-string debug form (f\"{x=}\")", 55, span)
+              Some(_) => raise not_yet("an f-string conversion", 55, span)
+            }
+            self.check_expr(value)
+          }
+        }
+      }
+    }
   }
 }
 

@@ -185,6 +185,14 @@ pub async fn Interp::eval_expr(
         }
         Err(o) => o
       }
+    // An f-string (#55), under a profile that opens it: the pieces in source
+    // order, each turned into text and joined.
+    //
+    // A hole uses `str`, as Python does -- `f"{x}"` and `str(x)` agree -- and
+    // `!r` asks for `repr` instead. Neither is the `str` BUILTIN, which is a
+    // different profile away; both are the same `Value::str` and `Value::repr`
+    // that `print` has always used.
+    JoinedStr(parts~, ..) => self.eval_fstring(parts, env)
     // eval-attr-module, eval-attr-object, eval-attr-missing
     Attribute(value~, attr~, ..) =>
       match self.eval_expr(value, env) {
@@ -287,6 +295,46 @@ fn fill_defaults(
     out.push(defaults[i])
   }
   Some(out)
+}
+
+///|
+/// An f-string: the pieces in source order, each turned into text and joined.
+///
+/// A hole uses `str`, as Python does -- `f"{x}"` and `str(x)` agree -- and
+/// `!r` asks for `repr` instead. Neither is the `str` BUILTIN, which is a
+/// different profile away; both are the same `Value::str` and `Value::repr`
+/// that `print` has always used.
+///
+/// A function of its own rather than an arm of `eval_expr`, and that is not
+/// tidiness. A frame is sized by the whole function, so a big arm makes every
+/// call of `eval_expr` cost more stack whether or not it takes that arm --
+/// and `max_depth` on a JavaScript engine is calibrated against exactly that.
+/// Written inline, this arm cost the guest four frames of recursion depth.
+async fn Interp::eval_fstring(
+  self : Interp,
+  parts : Array[@ast.FStringPart],
+  env : Env,
+) -> Outcome noraise {
+  let out = StringBuilder()
+  for part in parts {
+    match part {
+      Text(t) => out.write_string(t)
+      Hole(value~, conversion~, ..) => {
+        let v = match self.eval_expr(value, env) {
+          Val(w) => w
+          other => return other
+        }
+        let rendered = if conversion is Some('r') { v.repr() } else { v.str() }
+        match rendered {
+          Some(t) => out.write_string(t)
+          // A closure, a module or a class has no printable form, and an
+          // f-string is a print by another name.
+          None => return Stuck("formatting " + v.kind_name())
+        }
+      }
+    }
+  }
+  Val(Str(out.to_string()))
 }
 
 ///|
@@ -597,9 +645,22 @@ async fn Interp::apply_(
 ) -> Outcome noraise {
   match callee {
     Lam(c) => {
-      let actual = match fill_defaults(c.params.length(), c.defaults, actual) {
-        Some(vs) => vs
-        None => return Aborts(TypeError)
+      // The no-defaults path is the one every PurePy program takes, and it
+      // takes exactly the code it took before defaults existed: no call, no
+      // allocation. That is not a micro-optimisation. A guest call costs about
+      // a dozen host frames under the async transform, `max_depth` is
+      // calibrated against a JavaScript engine's stack, and one more frame per
+      // guest call is enough to move where the limit has to sit.
+      let actual = if c.defaults.is_empty() {
+        if c.params.length() != actual.length() {
+          return Aborts(TypeError)
+        }
+        actual
+      } else {
+        match fill_defaults(c.params.length(), c.defaults, actual) {
+          Some(vs) => vs
+          None => return Aborts(TypeError)
+        }
       }
       // The body runs in the module it was WRITTEN in, not the one calling
       // it, so that an abort inside it is reported against the right file.
@@ -613,14 +674,24 @@ async fn Interp::apply_(
     // callee's environment, which is what lets its siblings name each other.
     Def(c) => {
       let d = c.region[c.index]
-      let (params, defaults, body) = match d {
+      let (params, args_node, body) = match d {
         FunctionDef(args~, body~, ..) =>
-          (args.args.map(fn(p) { p.arg }), literal_defaults(args), body)
+          (args.args.map(fn(p) { p.arg }), args, body)
         _ => return Stuck("a definition closure over something else")
       }
-      let actual = match fill_defaults(params.length(), defaults, actual) {
-        Some(vs) => vs
-        None => return Aborts(TypeError)
+      // As above: a function with no defaults pays nothing for the feature,
+      // not even the walk that would find it has none.
+      let actual = if args_node.defaults.is_empty() {
+        if params.length() != actual.length() {
+          return Aborts(TypeError)
+        }
+        actual
+      } else {
+        match
+          fill_defaults(params.length(), literal_defaults(args_node), actual) {
+          Some(vs) => vs
+          None => return Aborts(TypeError)
+        }
       }
       let region_env = region_bindings(c.env, c.region, c.in_module)
       let inner = bind(region_env, params, actual)

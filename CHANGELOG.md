@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+### f-strings
+
+`f"the answer is {x}"` joins `pending`, with `!r` and `!s`. A format spec --
+the `>10` of `f"{x:>10}"` -- is a language of its own and is refused by name,
+as is the `f"{x=}"` debug form, which would mean keeping the source of the
+expression.
+
+The AST node kept only `raw`, the source text of the whole adjacent-string
+group, because `tools/pyast_dump.py` renders CPython's `JoinedStr` the same way
+-- the AST oracle agreed to disagree about f-string internals. So `raw` stays
+and is still all that `dump` prints and `unparse` writes; a `parts` field
+beside it carries the pieces, and everything that looks INSIDE an f-string uses
+that. The AST oracle is untouched at 416/416.
+
+A hole's expression is parsed over a source that is the FILE up to the hole,
+blanked, wrapped in brackets, then the hole. The blanking makes line, column
+and offset land exactly where they land in the file, so `f"{nope}"` reports the
+`nope` rather than a character in a fragment nobody wrote. The brackets are
+what make it parse at all: blank space at the start of a line is indentation,
+and inside brackets the tokenizer joins lines implicitly and indentation means
+nothing.
+
+A hole is `str` and `!r` is `repr` -- the same two `print` has always used, and
+not the `str` builtin, which is a different profile away.
+
+### A big match arm costs stack even when it is not taken
+
+Writing the f-string evaluation inline as an arm of `eval_expr` cost the guest
+four frames of recursion depth on wasm-gc, and two tests that pin `max_depth`
+against a real stack caught it. A frame is sized by the whole function, so a
+big arm makes every call of `eval_expr` cost more whether or not it takes that
+arm -- and `max_depth` on a JavaScript engine is calibrated against exactly
+that. Moved to a function of its own, with a note saying why it is one.
+
+Default arguments got the same treatment for the same reason: a function with
+no defaults now takes the code it took before the feature existed, with no call
+and no allocation on the way.
+
 ### Default arguments, where the default is a literal
 
 `def f(x=1)` and `lambda x=1: x` join `pending`, provided the default is a

@@ -401,3 +401,52 @@ test "a default argument cannot be evaluated at an observable time" {
   // each re-reading the same two defaults. Nothing observes the difference.
   assert_eq(outcome_under(source, p), "ok: True False False\n")
 }
+
+///|
+/// An f-string reads names the way the rest of the language reads them.
+///
+/// The holes are real expressions at their real positions in the file, not a
+/// fragment parsed somewhere else, so the checker's rules reach into them:
+/// definite assignment, the capture rules, everything.
+test "an f-string is checked like the expressions it holds" {
+  let p = @profile.pending()
+  assert_eq(outcome_under("x = 1\nprint(f\"{x} {x + 1}\")\n", p), "ok: 1 2\n")
+  // Not definitely assigned, reported at the name inside the hole.
+  let m = @purepy.parse("a = 1\nprint(f\"x is {nope} here\")\n")
+  let d = @purepy.check(m, profile=p).unwrap()
+  assert_eq(d.message(), "'nope' is not definitely assigned")
+  assert_eq(d.span.unwrap().start.line, 2)
+  assert_eq(d.span.unwrap().start.col, 14)
+  // The capture rule reaches inside one too.
+  assert_eq(
+    @purepy.check(
+      @purepy.parse("x = 1\nf = lambda: f\"{x}\"\nx = 2\n"),
+      profile=p,
+    )
+    .unwrap()
+    .message(),
+    "'x' captured by previous statement, reassigned here",
+  )
+}
+
+///|
+/// A hole is `str`, and `!r` is `repr` -- the same two `print` has always had,
+/// and not the `str` BUILTIN, which is a different profile away.
+test "an f-string formats with the printing rules PurePy already had" {
+  let p = @profile.pending()
+  assert_eq(
+    outcome_under("print(f\"{1} {2.5} {None} {True}\")\n", p),
+    "ok: 1 2.5 None True\n",
+  )
+  assert_eq(
+    outcome_under("print(f\"{[1, 2]} {(1,)}\")\n", p),
+    "ok: [1, 2] (1,)\n",
+  )
+  assert_eq(outcome_under("print(f\"{'a'} {'a'!r}\")\n", p), "ok: a 'a'\n")
+  // A closure has no printable form, and an f-string is a print by another
+  // name -- the same undefined operation `print` gives.
+  assert_eq(
+    outcome_under("f = lambda: 1\nprint(f\"{f}\")\n", p),
+    "undefined: formatting function",
+  )
+}

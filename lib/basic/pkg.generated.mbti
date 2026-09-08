@@ -46,6 +46,7 @@ pub(all) struct Source {
   line_starts : Array[Int]
 }
 pub fn Source::byte_col(Self, Pos) -> Int
+pub fn Source::index_of_offset(Self, Int) -> Int
 pub fn Source::length(Self) -> Int
 pub fn Source::line_count(Self) -> Int
 pub fn Source::line_text(Self, Int) -> String

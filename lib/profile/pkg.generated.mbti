@@ -33,6 +33,7 @@ pub(all) enum Feature {
   ExtraBuiltins
   BuiltinMethods
   DefaultArguments
+  FStrings
 } derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Feature::name(Self) -> String
 

@@ -205,6 +205,9 @@ pub fn fv_e(e : @ast.Expr) -> NameSet {
     // names nothing. Reached only under a profile that opens slicing (#59);
     // under `core` the sieve takes this node before anyone asks.
     Slice(lower~, upper~, step~, ..) => fv_e_list(present([lower, upper, step]))
+    // An f-string's holes are expressions, and they name what they name:
+    // `f"{x}"` reads `x` exactly as `x` does (#55).
+    JoinedStr(parts~, ..) => fv_e_list(hole_values(parts))
     _ => abort("unreachable after the sieve: " + e.kind_name())
   }
 }
@@ -386,6 +389,7 @@ pub fn captures_e(e : @ast.Expr) -> NameSet {
       )
     Slice(lower~, upper~, step~, ..) =>
       captures_e_list(present([lower, upper, step]))
+    JoinedStr(parts~, ..) => captures_e_list(hole_values(parts))
     _ => abort("unreachable after the sieve: " + e.kind_name())
   }
 }
@@ -610,5 +614,18 @@ pub fn target_names(e : @ast.Expr) -> Array[String] {
   }
 
   walk(e)
+  out
+}
+
+///|
+/// The expressions inside an f-string's holes, in source order.
+pub fn hole_values(parts : Array[@ast.FStringPart]) -> Array[@ast.Expr] {
+  let out : Array[@ast.Expr] = []
+  for part in parts {
+    match part {
+      Hole(value~, ..) => out.push(value)
+      Text(_) => ()
+    }
+  }
   out
 }

@@ -206,3 +206,187 @@ pub fn Token::bytes_value(self : Token) -> Bytes raise {
   }
   Bytes::from_array(out)
 }
+
+// ---------------------------------------------------------------------------
+// f-strings (#55)
+
+///|
+/// One piece of an f-string literal.
+///
+/// `Text` is literal characters, with `{{` and `}}` already reduced and, for a
+/// non-raw literal, the escapes decoded. `Hole` is what was between a matched
+/// pair of braces, kept as SOURCE rather than parsed: this package sits below
+/// the parser and has no business building an expression.
+///
+/// `at` is the code-point index of the hole's source within the token's own
+/// text. The parser needs it to give the sub-parsed expression the position it
+/// really has in the file, so that a diagnostic inside an f-string points into
+/// the f-string and not at character zero of a fragment.
+pub(all) enum FStringPiece {
+  Text(String)
+  Hole(source~ : String, at~ : Int, conversion~ : Char?, spec~ : String?)
+} derive(Eq, Debug)
+
+///|
+/// Split an f-string literal into its literal text and its holes.
+///
+/// A scanner and not a regular expression, because a hole is not a balanced
+/// run of braces: `f"{d['}']}"` has a brace inside a string inside a hole, and
+/// `f"{ {1: 2}[1] }"` has one inside a dict. So this tracks bracket depth and
+/// string state the way the tokenizer would, and stops the hole at the first
+/// `}` that is at neither.
+///
+/// `!r` and the rest are recorded rather than judged, and so is the `f"{x=}"`
+/// debug form -- as a conversion of `=`, since it is the same shape and the
+/// same decision for whoever reads it. Deciding which of them are supported is
+/// the sieve's job, not the tokenizer's.
+pub fn Token::fstring_pieces(self : Token) -> Array[FStringPiece] raise {
+  let prefix = match self.kind {
+    FString(prefix~) => prefix
+    _ => raise @err.syntax_error("not an f-string literal", self.span)
+  }
+  let raw = prefix.contains("r") || prefix.contains("R")
+  let cs = self.text.to_array()
+  let quotes = quote_run(cs, prefix.length())
+  let body_at = prefix.length() + quotes
+  let end = cs.length() - quotes
+  let out : Array[FStringPiece] = []
+  let text = StringBuilder()
+  let flush = fn() -> Unit raise {
+    let t = text.to_string()
+    if !t.is_empty() {
+      out.push(Text(if raw { t } else { decode_escapes(t, self) }))
+    }
+    text.reset()
+  }
+  let mut i = body_at
+  while i < end {
+    let c = cs[i]
+    if c == '{' && i + 1 < end && cs[i + 1] == '{' {
+      text.write_char('{')
+      i += 2
+    } else if c == '}' && i + 1 < end && cs[i + 1] == '}' {
+      text.write_char('}')
+      i += 2
+    } else if c == '}' {
+      raise @err.syntax_error("f-string: single '}' is not allowed", self.span)
+    } else if c == '{' {
+      flush()
+      let (piece, next) = self.scan_hole(cs, i + 1, end)
+      out.push(piece)
+      i = next
+    } else {
+      text.write_char(c)
+      i += 1
+    }
+  }
+  flush()
+  out
+}
+
+///|
+/// How many quote characters open this literal: three or one.
+fn quote_run(cs : Array[Char], prefix_len : Int) -> Int {
+  if cs.length() >= prefix_len + 6 &&
+    cs[prefix_len + 1] == cs[prefix_len] &&
+    cs[prefix_len + 2] == cs[prefix_len] {
+    3
+  } else {
+    1
+  }
+}
+
+///|
+/// One hole, from just after its `{` to just after its `}`.
+fn Token::scan_hole(
+  self : Token,
+  cs : Array[Char],
+  from : Int,
+  end : Int,
+) -> (FStringPiece, Int) raise {
+  let mut depth = 0
+  let mut quote : Char? = None
+  let mut i = from
+  let mut expr_end = -1
+  let mut conversion : Char? = None
+  let mut spec : String? = None
+  while i < end {
+    let c = cs[i]
+    match quote {
+      // Inside a string, only its own closing quote means anything -- which
+      // is what lets a brace live in one.
+      Some(q) => {
+        if c == '\\' {
+          i += 1
+        } else if c == q {
+          quote = None
+        }
+        i += 1
+        continue
+      }
+      None => ()
+    }
+    if c == '\'' || c == '"' {
+      quote = Some(c)
+      i += 1
+    } else if c == '(' || c == '[' || c == '{' {
+      depth += 1
+      i += 1
+    } else if c == ')' || c == ']' {
+      depth -= 1
+      i += 1
+    } else if c == '}' && depth > 0 {
+      depth -= 1
+      i += 1
+    } else if depth > 0 {
+      i += 1
+    } else if c == '}' {
+      if expr_end < 0 {
+        expr_end = i
+      }
+      return (
+        Hole(
+          source=String::from_array(cs[from:expr_end]),
+          at=from,
+          conversion~,
+          spec~,
+        ),
+        i + 1,
+      )
+    } else if c == '=' &&
+      i + 1 < end &&
+      (cs[i + 1] == '}' || cs[i + 1] == '!' || cs[i + 1] == ':') {
+      // `f"{x=}"`: the same shape as a conversion and the same decision, so
+      // it is recorded as one rather than as a third kind of thing.
+      expr_end = i
+      conversion = Some('=')
+      i += 1
+    } else if c == '!' && i + 1 < end && cs[i + 1] != '=' {
+      expr_end = i
+      if conversion is None {
+        conversion = Some(cs[i + 1])
+      }
+      i += 2
+    } else if c == ':' {
+      if expr_end < 0 {
+        expr_end = i
+      }
+      let spec_from = i + 1
+      let mut j = spec_from
+      let mut nested = 0
+      while j < end && !(cs[j] == '}' && nested == 0) {
+        if cs[j] == '{' {
+          nested += 1
+        } else if cs[j] == '}' {
+          nested -= 1
+        }
+        j += 1
+      }
+      spec = Some(String::from_array(cs[spec_from:j]))
+      i = j
+    } else {
+      i += 1
+    }
+  }
+  raise @err.syntax_error("f-string: expecting '}'", self.span)
+}

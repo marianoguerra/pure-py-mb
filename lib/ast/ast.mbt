@@ -158,7 +158,20 @@ pub(all) enum Expr {
     span~ : @basic.Span
   )
   /// An f-string, its parts unparsed (#55). `raw` is the whole literal.
-  JoinedStr(raw~ : String, span~ : @basic.Span)
+  /// An f-string.
+  ///
+  /// `raw` is the whole adjacent-string group as it was written, which is what
+  /// `dump` prints and what `unparse` writes back: CPython's own dump of a
+  /// `JoinedStr` is a tree of `Constant` and `FormattedValue`, and this port's
+  /// AST oracle compares the source segment instead (see `tools/pyast_dump.py`).
+  /// Keeping `raw` is what keeps that comparison meaningful.
+  ///
+  /// `parts` is the same literal taken apart, and is what everything that
+  /// LOOKS INSIDE an f-string uses -- free variables, the checker, the
+  /// evaluator. It is empty for a group that has no f-string in it, which
+  /// cannot happen, and it carries the holes as real expressions with real
+  /// positions in the file.
+  JoinedStr(raw~ : String, parts~ : Array[FStringPart], span~ : @basic.Span)
   Constant(value~ : Constant, span~ : @basic.Span)
   Attribute(
     value~ : Expr,
@@ -260,6 +273,18 @@ pub(all) struct ExceptHandler {
   name : String?
   body : Array[Stmt]
   span : @basic.Span
+} derive(Eq, Debug)
+
+///|
+/// One piece of an f-string: literal text, or an interpolation.
+///
+/// `conversion` is the `r` of `f"{x!r}"`, and `=` for the `f"{x=}"` debug
+/// form, which has the same shape and the same decision behind it. `spec` is
+/// the `>10` of `f"{x:>10}"`, kept as source: it is a language of its own, and
+/// nothing here pretends to implement it.
+pub(all) enum FStringPart {
+  Text(String)
+  Hole(value~ : Expr, conversion~ : Char?, spec~ : String?)
 } derive(Eq, Debug)
 
 ///|

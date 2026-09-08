@@ -52,6 +52,8 @@ pub fn fv_e_list(Array[@ast.Expr]) -> @sorted_set.SortedSet[String]
 
 pub fn fv_stmt(@ast.Stmt) -> @sorted_set.SortedSet[String]
 
+pub fn hole_values(Array[@ast.FStringPart]) -> Array[@ast.Expr]
+
 pub fn is_import(@ast.Stmt) -> Bool
 
 pub fn is_qualified_name(@ast.Expr) -> Bool

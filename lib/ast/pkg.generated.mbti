@@ -108,7 +108,7 @@ pub(all) enum Expr {
   YieldFrom(value~ : Expr, span~ : @basic.Span)
   Compare(left~ : Expr, ops~ : Array[CmpOp], comparators~ : Array[Expr], span~ : @basic.Span)
   Call(func~ : Expr, args~ : Array[Expr], keywords~ : Array[Keyword], span~ : @basic.Span)
-  JoinedStr(raw~ : String, span~ : @basic.Span)
+  JoinedStr(raw~ : String, parts~ : Array[FStringPart], span~ : @basic.Span)
   Constant(value~ : Constant, span~ : @basic.Span)
   Attribute(value~ : Expr, attr~ : String, ctx~ : ExprContext, span~ : @basic.Span)
   Subscript(value~ : Expr, slice~ : Expr, ctx~ : ExprContext, span~ : @basic.Span)
@@ -147,6 +147,11 @@ pub(all) enum ExprContext {
   Del
 } derive(Eq, @debug.Debug)
 pub fn ExprContext::name(Self) -> String
+
+pub(all) enum FStringPart {
+  Text(String)
+  Hole(value~ : Expr, conversion~ : Char?, spec~ : String?)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Keyword {
   arg : String?

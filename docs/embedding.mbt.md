@@ -507,7 +507,16 @@ A profile is opt-in, and it stacks: `@profile.core` is PurePy, and each named
 profile is the one below it plus features. `@profile.pending()` holds the forms
 the specification intends to have and has not settled -- the ones the sieve
 refuses today with an issue number: chained `and`/`or` and chained comparisons,
-`is` and `is not`, slicing, and destructuring assignment.
+`is` and `is not`, slicing, destructuring assignment, default arguments and
+f-strings.
+
+Two of those are drawn narrower than Python's. A **default argument must be a
+literal** -- Python evaluates a default once, when the `def` runs, and there is
+nowhere in this evaluator to put a once; a literal has no effect and reads no
+name, so when it is evaluated cannot be observed and the question stops
+existing. An **f-string takes expressions and `!r`, and not a format spec** --
+`f"{x:>10}"` is a language of its own, and refusing it by name beats
+implementing a piece of it.
 
 It is a set, and it grows. Ask it what it holds -- `Profile::features`, or
 `pure-py profiles` -- rather than assuming a form from that table is in it.

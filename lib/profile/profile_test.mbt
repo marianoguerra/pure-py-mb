@@ -62,6 +62,10 @@ test "features answers in tag order" {
 /// sieve passes to `not_yet`, so a rename there must be a rename here.
 test "accepted_by names the profile that opens the gate" {
   assert_eq(@profile.accepted_by("chained boolean operator"), Some("pending"))
-  assert_eq(@profile.accepted_by("f-strings"), None)
+  assert_eq(@profile.accepted_by("f-strings"), Some("pending"))
+  // A feature no profile has yet answers with nothing, so the hint stays
+  // silent rather than pointing somewhere that would not help.
+  assert_eq(@profile.accepted_by("*args"), None)
+  // And a prohibition is never a profile away, so it never gets a hint.
   assert_eq(@profile.accepted_by("for loops prohibited"), None)
 }

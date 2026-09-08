@@ -159,6 +159,8 @@ test "forms that are planned and not yet supported" {
     ("def f(**kw):\n    pass\n", "2: **kwargs not yet supported (#57)"),
     ("def f(x=1):\n    pass\n", "2: default arguments not yet supported (#56)"),
     ("f = lambda x=1: x\n", "2: default arguments not yet supported (#56)"),
+    ("x = f\"{a}\"\n", "2: f-strings not yet supported (#55)"),
+    ("x = f\"plain\"\n", "2: f-strings not yet supported (#55)"),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)
@@ -240,16 +242,16 @@ test "an unchained boolean operator is untouched" {
 /// forgiving the raise after the fact.
 test "a profile keeps walking past the gate it opened" {
   // The second violation has to be one `pending` does NOT open, or the test
-  // stops asking anything. f-strings are the durable choice: the parser keeps
-  // one raw, so it will be the last of the table to land.
-  let source = "a = b and c and d\ne = f\"{g}\"\n"
+  // stops asking anything. `*args` is the durable choice now that f-strings
+  // have landed: it needs an arity model this evaluator does not have.
+  let source = "a = b and c and d\ndef f(*g):\n    return 1\n"
   assert_eq(
     verdict(source),
     "2: chained boolean operator not yet supported (#82)",
   )
   assert_eq(
     verdict_under(source, @profile.pending()),
-    "2: f-strings not yet supported (#55)",
+    "2: *args not yet supported (#57)",
   )
 }
 
@@ -321,7 +323,6 @@ test "a destructuring target may not assign an item or an attribute" {
 /// show up here as a changed message rather than as a silence.
 test "the rest of the pending table is still closed" {
   let cases = [
-    ("x = f\"{a}\"\n", "2: f-strings not yet supported (#55)"),
     ("def f(*a):\n    return 1\n", "2: *args not yet supported (#57)"),
     ("def f(**a):\n    return 1\n", "2: **kwargs not yet supported (#57)"),
     ("@deco\ndef f():\n    pass\n", "2: decorators not yet supported (#58)"),
@@ -335,6 +336,49 @@ test "the rest of the pending table is still closed" {
   for c in cases {
     assert_eq(verdict_under(c.0, @profile.pending()), c.1, msg=c.0)
   }
+}
+
+///|
+/// What an f-string takes, and the three shapes of it that are still #55.
+///
+/// The holes are walked like any other expression, so a form the sieve refuses
+/// inside one is refused with its own message rather than with the f-string's.
+test "an f-string takes expressions and not a format language" {
+  let p = @profile.pending()
+  for
+    source in [
+      "x = f\"plain\"\n", "x = f\"{a}\"\n", "x = f\"{a} and {b}\"\n", "x = f\"{{braces}} {a}\"\n",
+      "x = f\"{a!r} {a!s}\"\n", "x = f\"{a[0]}\"\n", "x = f\"{f'{a}'}\"\n", "x = f\"\"\n",
+      "x = f\"a\" \"b\" f\"{c}\"\n",
+    ] {
+    assert_eq(verdict_under(source, p), "ok", msg=source)
+  }
+  // A format spec is a language of its own; the debug form keeps the source
+  // of the expression; `!a` is `ascii()`, which PurePy does not have. Each is
+  // named rather than lumped in with "f-strings", so the message says which
+  // half was missing.
+  assert_eq(
+    verdict_under("x = f\"{a:>10}\"\n", p),
+    "2: an f-string format spec not yet supported (#55)",
+  )
+  assert_eq(
+    verdict_under("x = f\"{a=}\"\n", p),
+    "2: the f-string debug form (f\"{x=}\") not yet supported (#55)",
+  )
+  assert_eq(
+    verdict_under("x = f\"{a!a}\"\n", p),
+    "2: an f-string conversion not yet supported (#55)",
+  )
+  // A hole is walked, so what is prohibited in an expression is prohibited in
+  // one -- with the message it has anywhere else.
+  assert_eq(
+    verdict_under("x = f\"{a | b}\"\n", p),
+    "1: binary operator '|' prohibited",
+  )
+  assert_eq(
+    verdict_under("x = f\"{1 is 1}\"\n", p),
+    "1: identity against a literal: PurePy values have no identity apart from None",
+  )
 }
 
 ///|

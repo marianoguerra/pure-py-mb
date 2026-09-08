@@ -97,6 +97,13 @@ pub(all) enum Feature {
   /// cannot be observed, and the question goes away instead of being answered
   /// wrongly. A default that is not a literal stays refused.
   DefaultArguments
+  /// `f"the answer is {x}"` (#55), with `!r` and `!s` conversions.
+  ///
+  /// A format spec -- the `>10` of `f"{x:>10}"` -- is a language of its own,
+  /// and this does not implement it. Nor the `f"{x=}"` debug form, which
+  /// prints the source of the expression alongside its value. Both are still
+  /// refused, and named in the message so it is clear which half was missing.
+  FStrings
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
@@ -111,6 +118,7 @@ pub fn Feature::name(self : Feature) -> String {
     ExtraBuiltins => "extra-builtins"
     BuiltinMethods => "builtin-methods"
     DefaultArguments => "default-arguments"
+    FStrings => "f-strings"
   }
 }
 
@@ -205,6 +213,7 @@ pub fn pending() -> Profile {
     Slicing,
     DestructuringAssignment,
     DefaultArguments,
+    FStrings,
   ])
 }
 
@@ -267,7 +276,8 @@ pub fn accepted_by(feature : String) -> String? {
     | "identity operator (is/is not)"
     | "slicing"
     | "destructuring assignment"
-    | "default arguments" => Some("pending")
+    | "default arguments"
+    | "f-strings" => Some("pending")
     _ => None
   }
 }

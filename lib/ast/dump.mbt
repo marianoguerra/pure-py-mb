@@ -423,7 +423,7 @@ fn Dumper::expr(self : Dumper, e : Expr, depth : Int) -> Unit {
         self.keyword(k, d + 1)
       }
     }
-    JoinedStr(raw~, span~) =>
+    JoinedStr(raw~, span~, ..) =>
       self.node("JoinedStr", [("raw", @basic.py_repr(raw))], depth, span)
     Constant(value~, span~) =>
       self.node("Constant", [("value", value.to_literal())], depth, span)

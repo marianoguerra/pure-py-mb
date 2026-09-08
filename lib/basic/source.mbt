@@ -110,6 +110,27 @@ pub fn Source::offset_of(self : Source, index : Int) -> Int {
 }
 
 ///|
+/// The code-point index of a UTF-16 offset: the inverse of `offset_of`.
+///
+/// A `Pos` carries both, and everything that walks the source walks code
+/// points, so a caller handed a `Pos` from somewhere else needs the way back.
+/// A binary search rather than a scan, because `offsets` is sorted by
+/// construction -- it is a running total.
+pub fn Source::index_of_offset(self : Source, offset : Int) -> Int {
+  let mut lo = 0
+  let mut hi = self.offsets.length() - 1
+  while lo < hi {
+    let mid = (lo + hi) / 2
+    if self.offsets[mid] < offset {
+      lo = mid + 1
+    } else {
+      hi = mid
+    }
+  }
+  lo
+}
+
+///|
 /// The text a span covers.
 pub fn Source::slice(self : Source, span : Span) -> String {
   self.text[span.start.offset:span.end.offset].to_owned()

@@ -637,7 +637,11 @@ fn Parser::parse_string_literal(self : Parser) -> Expr raise {
     // The whole group as it was written, whitespace between the parts
     // included: CPython's `ast.get_source_segment` of the node, which is what
     // the oracle compares. Reassembling it from the lexemes loses the gaps.
-    return JoinedStr(raw=self.src.slice(span), span~)
+    return JoinedStr(
+      raw=self.src.slice(span),
+      parts=self.fstring_parts(parts),
+      span~,
+    )
   }
   if any_bytes {
     let out = Array::new()
@@ -960,5 +964,91 @@ pub fn set_context(e : Expr, ctx : @ast.ExprContext) -> Expr {
     Tuple(elts~, span~, ..) =>
       Tuple(elts=elts.map(fn(x) { set_context(x, ctx) }), ctx~, span~)
     other => other
+  }
+}
+
+///|
+/// The pieces of an adjacent-string group that contains an f-string.
+///
+/// Token by token rather than over the group's raw text, because the group may
+/// be several literals -- `f"a" "b" f"{c}"` -- with different prefixes, quote
+/// styles and raw-ness. Each token knows its own.
+///
+/// A hole is parsed as a whole module and its one expression taken out, over a
+/// source whose text is the FILE up to the hole, blanked, followed by the
+/// hole. That is what makes the positions real: line, column and offset all
+/// land where they land in the file, so `f"{x}"` with `x` unassigned reports
+/// the `x` and not a character in a fragment nobody wrote.
+fn Parser::fstring_parts(
+  self : Parser,
+  tokens : Array[@token.Token],
+) -> Array[@ast.FStringPart] raise {
+  let out : Array[@ast.FStringPart] = []
+  for t in tokens {
+    match t.kind {
+      FString(..) =>
+        for piece in t.fstring_pieces() {
+          match piece {
+            Text(s) => out.push(Text(s))
+            Hole(source~, at~, conversion~, spec~) => {
+              let value = self.parse_hole(source, t, at)
+              out.push(Hole(value~, conversion~, spec~))
+            }
+          }
+        }
+      // A plain literal in the group is literal text, escapes and all.
+      _ => out.push(Text(t.str_value()))
+    }
+  }
+  out
+}
+
+///|
+/// One hole's expression, positioned where it sits in the file.
+fn Parser::parse_hole(
+  self : Parser,
+  source : String,
+  tok : @token.Token,
+  at : Int,
+) -> @ast.Expr raise {
+  // The hole begins `at` code points into the token, and the token begins at
+  // its span. Everything before it becomes whitespace -- a newline stays a
+  // newline so lines line up, anything else becomes as many spaces as it was
+  // UTF-16 units so offsets do too -- and the whole thing is wrapped in
+  // brackets.
+  //
+  // The brackets are not decoration. Blank space at the start of a line is
+  // INDENTATION, and a module that begins with some is an error; inside
+  // brackets the tokenizer joins lines implicitly and indentation means
+  // nothing, which is exactly the reading this needs. They also cost no
+  // position: the `(` replaces the file's first character and the `)` comes
+  // after the hole, so every token of the hole lands where it lands in the
+  // file. `f"{a, b}"` becomes `(a, b)`, which is the tuple Python makes of it
+  // too.
+  let start = self.src.index_of_offset(tok.span.start.offset) + at
+  let pad = StringBuilder()
+  pad.write_char('(')
+  if self.src.chars.length() > 0 && self.src.chars[0].to_int() >= 0x10000 {
+    pad.write_char(' ')
+  }
+  for i in 1..<start {
+    let c = self.src.chars[i]
+    if c == '\n' {
+      pad.write_char('\n')
+    } else if c.to_int() >= 0x10000 {
+      pad.write_string("  ")
+    } else {
+      pad.write_char(' ')
+    }
+  }
+  let text = pad.to_string() + source + ")"
+  let m = parse(@basic.Source::new(text, name=self.src.name))
+  match m.body {
+    [ExprStmt(value~, ..)] => value
+    _ =>
+      raise error_at(
+        "f-string: invalid expression in an interpolation",
+        tok.span,
+      )
   }
 }

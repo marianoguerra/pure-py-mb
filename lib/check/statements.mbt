@@ -417,6 +417,9 @@ fn check_expr(e : @ast.Expr, ctx : Ctx) -> Unit raise {
     // decide beyond the bounds being expressions of the context: PurePy's
     // checker carries no types, so whether the thing sliced HAS a slice is a
     // question only the evaluator can ask.
+    // An f-string's holes are expressions of the context, and its literal
+    // text is not an expression at all (#55).
+    JoinedStr(parts~, ..) => check_exprs(@analysis.hole_values(parts), ctx)
     Slice(lower~, upper~, step~, ..) =>
       for b in [lower, upper, step] {
         match b {

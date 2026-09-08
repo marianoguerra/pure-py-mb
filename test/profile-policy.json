@@ -6,9 +6,9 @@
     "methods: accepted": 3,
     "methods: agrees with CPython": 3,
     "methods: fails under core": 3,
-    "pending: accepted": 6,
-    "pending: agrees with CPython": 6,
-    "pending: fails under core": 6,
+    "pending: accepted": 7,
+    "pending: agrees with CPython": 7,
+    "pending: fails under core": 7,
     "prohibited: stays refused": 3
   },
   "note": "A ratchet, not a target, and separate from test/conform-policy.json on purpose: a profile must never be able to move a PurePy floor. Rerun with --regen-policy and commit the moved floor in the change that earned it.",
@@ -19,9 +19,9 @@
     "methods: accepted": 3,
     "methods: agrees with CPython": 3,
     "methods: fails under core": 3,
-    "pending: accepted": 6,
-    "pending: agrees with CPython": 6,
-    "pending: fails under core": 6,
+    "pending: accepted": 7,
+    "pending: agrees with CPython": 7,
+    "pending: fails under core": 7,
     "prohibited: stays refused": 3
   }
 }

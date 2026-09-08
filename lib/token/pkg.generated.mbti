@@ -17,6 +17,11 @@ pub let soft_keywords : Array[String]
 // Errors
 
 // Types and methods
+pub(all) enum FStringPiece {
+  Text(String)
+  Hole(source~ : String, at~ : Int, conversion~ : Char?, spec~ : String?)
+} derive(Eq, @debug.Debug)
+
 pub(all) enum NumberValue {
   Int(@bigint.BigInt)
   Float(Double)
@@ -29,6 +34,7 @@ pub(all) struct Token {
   span : @basic.Span
 } derive(Eq, @debug.Debug)
 pub fn Token::bytes_value(Self) -> Bytes raise
+pub fn Token::fstring_pieces(Self) -> Array[FStringPiece] raise
 pub fn Token::int_value(Self) -> @bigint.BigInt raise
 pub fn Token::is_name(Self, String) -> Bool
 pub fn Token::is_op(Self, String) -> Bool
