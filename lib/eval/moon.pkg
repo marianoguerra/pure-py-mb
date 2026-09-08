@@ -16,14 +16,3 @@ import {
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/value",
 } for "test"
-
-// The default call-stack limit is per backend, because the ceiling is the
-// host's and a JavaScript engine's stack is two orders of magnitude smaller
-// than a native thread's. Each file explains its own number.
-
-options(
-  targets: {
-    "depth_native.mbt": [ "native", "llvm" ],
-    "depth_js.mbt": [ "not", "native", "llvm" ],
-  },
-)

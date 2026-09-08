@@ -116,20 +116,12 @@ pub fn analyze_with(source : String, profile_name : String) -> String {
         "{\"state\":\"not-run\",\"detail\":\"the program was refused\",\"output\":\"\",\"log\":[]}",
       )
     None => {
-      // A modest limit: a browser tab's stack is not a native thread's, and a
-      // playground should report rather than take the page down with it.
-      //
-      // 250, not the 12 the library defaults to on this backend, because
-      // this page knows two things the library cannot assume. It ships a
-      // release build put through `wasm-opt -Oz`, and it is called as a bare
-      // export with nothing of ours beneath it -- and both matter more than
-      // the backend does. Measured by calling THIS module from Node until
-      // the engine threw, over a program that recurses with a small
-      // expression in each frame: about 781 guest calls. 250 is under a
-      // third of that.
-      //
-      // Do not raise it to the ceiling. A `RangeError` is not catchable and
-      // takes the tab; `max_depth` firing is a line of output.
+      // A modest limit, so that "not stopping" stops while you are looking
+      // at it. Nothing about the host requires one: the evaluator keeps its
+      // continuation on the heap, so a runaway costs an array of frames and
+      // not the tab. This is a demonstration's number, not a safety one --
+      // 250 is a wait a visitor will sit through and 10000, the library's
+      // default, is not.
       let result = @purepy.run_with(tree, host, max_depth=250, profile~)
       let (state, detail) = match result {
         Finished => ("finished", "")

@@ -434,10 +434,12 @@ print(first((1, 2)))
         name: 'Not stopping',
         note:
           "No check can rule out a program that runs forever. Recursion is " +
-          "bounded instead, and the bound belongs to the host: a browser tab " +
-          "holds far fewer frames than a native thread, so this page sets it " +
-          "to 250 -- measured by calling the very module this page loads " +
-          "until the engine threw, which is about 780 deep.",
+          "bounded instead, by a limit the embedder chooses -- this page " +
+          "picks 250 so the answer arrives while you are looking at it. The " +
+          "bound used to belong to the host, because the evaluator recursed " +
+          "and a browser tab holds far fewer frames than a native thread. It " +
+          "keeps its continuation on the heap now, so a runaway costs an " +
+          "array of frames and not the tab.",
         expect: 'undefined',
         src: `def forever(n):
     return forever(n + 1)

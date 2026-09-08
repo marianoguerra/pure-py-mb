@@ -666,12 +666,13 @@ test "a guest may recurse as deep as it is allowed to" {
 Twenty thousand levels, none of them tail calls -- `1 + count(n - 1)` has work
 left to do at every one -- on `wasm`, `wasm-gc`, `js` and `native` alike.
 
-**The DEFAULTS are still the old, conservative ones**: 500 on `native` and 12
-on the three backends that run on a JavaScript engine. Twelve was the tightest
-host ceiling anyone measured, back when the host was what decided; it is far
-below anything the machine needs. It is a number waiting to be chosen rather
-than measured. Until it is, pass `max_depth` explicitly and pick it for your
-application rather than inheriting a leftover.
+**The default is 10000, on every backend.** It used to be two numbers -- 500 on
+a native thread and 12 on the three that run on a JavaScript engine -- because
+the host's stack was the real limit and a JavaScript engine's is two orders of
+magnitude smaller. There is nothing left for the backend to decide, so there is
+one number, and it is a policy rather than a measurement: deep enough that no
+reasonable program meets it, shallow enough that a runaway stops in an array of
+ten thousand frames rather than in an out-of-memory.
 
 There is no instruction budget: a guest that loops without recursing -- a
 comprehension over a long range, say -- runs until it is done. A host that
@@ -700,7 +701,7 @@ Everything a host can supply, in one place:
 | what those functions do | `Host::new(call=...)` | `Stuck` |
 | the guest's code | `source_tree` or `source_tree_from` | — |
 | what those functions do, later | `Host::new(call=...)` and `run_with(done=...)` | answers now |
-| how deep it may recurse | `max_depth` | 500 native, 12 on a JavaScript engine |
+| how deep it may recurse | `max_depth` | 10000, on every backend |
 | how large a language the guest may use | `profile`, on every call that decides what a program may say AND on `run` | `@profile.core`: PurePy |
 
 And everything a host does NOT have to defend against, because the language

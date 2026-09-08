@@ -40,36 +40,27 @@ Three functions left the API with the walk that needed them:
 `eval_expr`, `eval_body`, `eval_seq` and `apply` keep their signatures and are
 entry points into the machine.
 
-### The stack position a probe measures from
+### One recursion limit, and the probe is gone
 
-Documentation and tools only. Note that the machine, above, removes what this
-was measuring FOR: the host stack no longer bounds a guest's recursion, so a
-probe of it no longer sets `max_depth`. The measurement is still the way to
-find an engine's ceiling; it is no longer the way to choose the limit.
+`default_max_depth` is **10000 on every backend**. It was two numbers -- 500 on
+a native thread, 12 on the three that run on a JavaScript engine -- because the
+evaluator recursed and the real limit was the HOST's stack. With the
+continuation on the heap there is nothing left for the backend to decide, so
+`depth_native.mbt` and `depth_js.mbt` are one `depth.mbt`, and the number is a
+policy: deep enough that no reasonable program meets it, shallow enough that a
+runaway stops in an array of ten thousand frames rather than in an
+out-of-memory.
 
-The depth probes named their columns after a syntax -- `await` against
-`setTimeout` -- and that is the wrong axis. What varies is who RESUMED you: a
-promise settled by I/O resumes on the stack of whatever drained the queue
-after that operation, while a timer callback starts near the bottom. The same
-`await` gives different answers depending on what the promise was waiting for,
-so the columns are named after the resumer now, and each position is
-established from scratch rather than inherited from the last measurement --
-which the browser probe was not doing, leaving two of its three rows comparing
-one position against itself.
+`tools/depth-probe.mjs` and `tools/depth-probe-page/` are deleted, with the
+three `just` recipes that drove them. They measured how many guest calls a host
+could hold before its stack gave out -- warm against cold, V8 against
+SpiderMonkey, debug against `-Oz`, and how much of the stack the caller had
+already spent. Every one of those axes mattered, and none of them does now. The
+guest's depth costs an array.
 
-With that fixed, in Node over the playground's release module:
-
-| shape | top level | after I/O | fresh task |
-|---|---|---|---|
-| tail | 1487 | 1463 | 1488 |
-| accumulating | 991 | 975 | 992 |
-| nested | 781 | 768 | 781 |
-
-Under two per cent, but consistent in direction and on every shape. Chromium
-152 and Firefox 155 show no gap at all under the corrected harness, and the
-embedder who raised it measures a much larger one on a different module. So
-the guide asks for a measurement from the position the application actually
-calls from, rather than offering a rule.
+The playground keeps an explicit 250, and for a different reason than it had:
+not because a browser tab cannot hold more, but because "not stopping" should
+stop while you are looking at it.
 
 ## 0.6.0 — 2026-09-08
 
