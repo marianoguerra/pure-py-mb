@@ -707,3 +707,73 @@ test "a tree nobody read has nowhere to point at" {
     _ => fail("the missing key is a KeyError wherever the tree came from")
   }
 }
+
+///|
+/// Guest recursion is bounded by `max_depth` and by nothing else.
+///
+/// This is what the machine is for. The evaluator used to spend host stack in
+/// proportion to how deep the guest went -- about a dozen frames per call once
+/// the `async` transform was counted -- so `max_depth` had to be a guess about
+/// the host's ceiling, 12 on a JavaScript engine, and it had to be re-measured
+/// whenever the evaluator changed shape. The continuation is a heap array now,
+/// so the driver is one host frame however deep this goes.
+///
+/// Twenty thousand deep, NOT tail recursive -- `1 + count(n - 1)` has work
+/// left to do at every level, so every one of those levels is a live frame --
+/// and it runs on wasm, wasm-gc, js and native alike. Twelve was the old
+/// ceiling on three of those four.
+test "a guest may recurse as deep as it is allowed to" {
+  let source =
+    #|def count(n):
+    #|    if n == 0:
+    #|        return 0
+    #|    return 1 + count(n - 1)
+    #|
+    #|print(count(20000))
+    #|
+  let tree = @program.SourceTree::of(
+    Map([("__main__", @parser.parse_string(source))]),
+  )
+  let (out, result) = @eval.run_program(tree, max_depth=100000)
+  assert_true(result is Finished)
+  assert_eq(out, "20000\n")
+}
+
+///|
+/// And the bound still bounds: `max_depth` is a policy now, not a guess, but
+/// it is still enforced and still says so.
+test "max_depth is still what stops a runaway" {
+  let source =
+    #|def f(n):
+    #|    return f(n)
+    #|
+    #|print(f(1))
+    #|
+  let tree = @program.SourceTree::of(
+    Map([("__main__", @parser.parse_string(source))]),
+  )
+  let (_, result) = @eval.run_program(tree, max_depth=64)
+  match result {
+    Undefined(why) => assert_eq(why, "a call stack deeper than 64")
+    _ => fail("f calls itself forever")
+  }
+}
+
+///|
+/// A deep chain of calls unwinds an abort without touching the host stack
+/// either: the machine pops frames rather than returning through them.
+test "an abort twenty thousand calls down is reported, not crashed into" {
+  let source =
+    #|def down(n):
+    #|    if n == 0:
+    #|        return 1 // 0
+    #|    return down(n - 1)
+    #|
+    #|print(down(20000))
+    #|
+  let tree = @program.SourceTree::of(
+    Map([("__main__", @parser.parse_string(source))]),
+  )
+  let (_, result) = @eval.run_program(tree, max_depth=100000)
+  assert_true(result is Terminated(ZeroDivisionError, _))
+}

@@ -611,135 +611,20 @@ PurePy's `and` wants a `bool` and always did.
 ## Bounding a run
 
 A guest can still loop forever -- PurePy is Turing-complete, and no check can
-say otherwise. Two bounds are available, and neither is a substitute for the
-other.
+say otherwise. `max_depth` is the bound, and it bounds recursion, which is how
+a PurePy program loops.
 
-`max_depth` bounds recursion, which is how a PurePy program loops. Past it the
-run ends undefined rather than overflowing the host's stack, and the limit is
-a parameter because the ceiling belongs to the host: a JavaScript engine holds
-far fewer frames than a native thread.
+**It is a policy and not a measurement.** The evaluator keeps its continuation
+on the heap -- `lib/eval/machine.mbt` -- so the host's stack does not grow with
+the guest's recursion, and one host frame drives a guest twenty thousand calls
+deep on every backend. `max_depth` therefore answers a question about your
+application: how deep may a guest go before you would rather stop it? It used
+to answer a question about the host -- how deep can a guest go before the
+engine throws a `RangeError` no MoonBit code can catch -- and that question is
+gone.
 
-**How much fewer is not a detail, and the backend is not the whole of it.**
-Evaluation is `async`, so that a host function may suspend, and the transform
-spends roughly a dozen host frames per guest call. Measured by recursing at
-increasing depths until the host's own stack went, over a program with a small
-expression in each frame:
-
-| how the evaluator is called | debug | release | release + `-Oz` |
-|---|---|---|---|
-| `native`, as a process | about 1050 | over 6000 | — |
-| `wasm-gc` under `moon test` | about 26 | about 130 | — |
-| `wasm-gc` as a bare export | about 370 | about 600 | about 780 |
-
-The build matters, as you would expect. **The caller matters more.** The same
-`wasm-gc` module holds fourteen times as many guest calls entered directly as
-it does under a test harness, because whatever is already on the stack is
-stack the guest does not get. An embedder who measures under `moon test` and
-ships a page is measuring the wrong number, and so is one who does the
-reverse.
-
-So the default is per backend -- 500 on `native`, **12** on the three that run
-on a JavaScript engine -- and 12 is the tightest of the rows above rather than
-a guess at yours. It is the configuration a consumer reaches without choosing
-it: `moon test --target wasm-gc` on a debug build, where the ceiling really is
-about 26.
-
-Twelve is small, and it is deliberate. On a native thread an overflow is a
-crash the developer sees; on a JavaScript engine it is a `RangeError` that no
-MoonBit code can catch, and in a browser it takes the tab. `a call stack
-deeper than 12` is an ordinary termination that a page can render, a model can
-read and a program can be rewritten around.
-
-**It is a floor, not a recommendation. Measure your own and pass
-`max_depth`.** Call your module the way your application calls it -- same
-build, same optimizer, same depth of caller beneath it -- at increasing depths
-until the engine throws, and take about a third. Do it more than once at each
-depth: the answer depends on what is already on the stack, so a single try can
-disagree with itself. The playground does this and passes 250, against a
-measured ceiling of about 780 for the release module it actually ships.
-
-Pass it at every call site, including the ones where the default looks right
-today. 0.5.0 moved this default from 500 to 12 on three backends, and that
-release changed no type: a call site that had dropped its `max_depth` compiled
-clean and landed on a number two orders of magnitude away from the one it was
-written against. A default that can move under a release the type checker
-approves of is the argument for passing it explicitly, not against it -- and a
-local default that happens to equal the library's is a coincidence of
-arithmetic, not agreement about what the number means.
-
-`tools/depth-probe.mjs` in this repository is that measurement, and it will
-sweep any wasm module exporting `analyze` -- point it at yours. `just
-depth-probe` runs it over the page's own.
-
-**And the engine is an axis of its own.** Node is V8, so a Node figure is not
-a browser figure -- it is a Chromium figure. The playground's release module,
-same probe, same five tries per depth, in guest calls:
-
-| engine | tail | accumulating | nested |
-|---|---|---|---|
-| V8 (Node 24) | 1488 | 992 | 781 |
-| V8 (Chromium 152, headless) | 1500 | 987 | 783 |
-| SpiderMonkey (Firefox 155, headless) | 3687 | 2456 | 1965 |
-
-The shapes do not order the way their names suggest and the spread between
-them is a factor of two, which is why the worst one is what a limit should be
-set against.
-
-**And "where you call it from" is not a syntactic category.** What varies is
-who RESUMED you: a promise settled by I/O resumes on the stack of whatever
-drained the queue after that operation, while a timer callback starts near the
-bottom. The same `await` keyword gives different answers depending on what the
-promise was waiting for. So the probe sweeps each shape from several positions
-and reports all of them. In Node, over the playground's release module:
-
-| shape | top level | after I/O | fresh task |
-|---|---|---|---|
-| tail | 1487 | 1463 | 1488 |
-| accumulating | 991 | 975 | 992 |
-| nested | 781 | 768 | 781 |
-
-Small -- under two per cent -- but consistent in direction and present on
-every shape. In Chromium 152 and Firefox 155 the same comparison shows no gap
-at all, and an embedder measuring a different module reports a much larger one
-on one shape in one engine. None of that resolves into a rule, which is the
-point: measure from the position your application actually calls from, and
-report more than one so that an engine's behaviour can be told apart from the
-harness's own mistake.
-
-The columns are three positions and not a spectrum. Module top level in
-particular is not reliably the shallow one: here it is within a call of the
-timer, and the embedder above measures it a third TIGHTER than the timer on
-the same shape. A probe that runs at module top level and reports one number
-is not measuring the roomiest stack a caller can arrange, it is measuring one
-arbitrary position that happens to be neutral here and pessimistic there.
-
-`just depth-probe-browser firefox` is that measurement, and `chromium` the
-other; with no argument it serves the page for an engine neither of us
-automated. It also asks the question that actually decides whether a page
-survives -- does the module we serve hold at its own limit, and report rather
-than throw past it -- and for the playground's 250 the answer in both engines
-is yes.
-
-What is NOT safe to carry away is the ratio. An embedder measuring a different
-module got SpiderMonkey at a third of V8 where this one gets it at two and a
-half times, on the same worst shape and the same method. Which engine binds is
-a property of the module, so **measure your own module in the engines you ship
-to** -- and if you ship to WebKit or to a phone, measure there, because neither
-of us could.
-
-**A measured ceiling belongs to a VERSION of this library, not to PurePy.**
-How many host frames a guest call costs is an implementation detail that
-moves: the `async` transform in 0.3.0 spent about a dozen of them where there
-had been one, and the abort sites in 0.4.0 spent a little more again. Probed
-with `def down(n): return 0 if n == 0 else 1 + down(n - 1)` on `wasm-gc`
-debug, the ceiling went from about 40 guest calls to about 38.
-
-Two calls is nothing; the direction is the point. A number measured against
-one version can sit above the ceiling in the next, and that regression does
-not appear as a failing test -- it appears in production as the host's own
-stack overflow, which on a JavaScript engine is a `RangeError` no MoonBit
-code can catch and in a browser takes the tab. **Re-measure after upgrading**,
-and leave the note in the code that says why the number is what it is.
+Past the limit the run ends undefined, with a message a page can render and a
+program can be rewritten around:
 
 ```mbt check
 ///|
@@ -753,6 +638,40 @@ test "an unbounded recursion is reported, not crashed into" {
   }
 }
 ```
+
+And depth costs memory rather than stack, so a large limit buys a large array
+of frames instead of a crash:
+
+```mbt check
+///|
+test "a guest may recurse as deep as it is allowed to" {
+  let source =
+    #|def count(n):
+    #|    if n == 0:
+    #|        return 0
+    #|    return 1 + count(n - 1)
+    #|
+    #|print(count(20000))
+    #|
+  let modules = Map([("__main__", @purepy.parse(source))])
+  let (out, result) = @purepy.run(
+    @purepy.source_tree(modules),
+    max_depth=100000,
+  )
+  inspect(result is Finished, content="true")
+  inspect(out, content="20000\n")
+}
+```
+
+Twenty thousand levels, none of them tail calls -- `1 + count(n - 1)` has work
+left to do at every one -- on `wasm`, `wasm-gc`, `js` and `native` alike.
+
+**The DEFAULTS are still the old, conservative ones**: 500 on `native` and 12
+on the three backends that run on a JavaScript engine. Twelve was the tightest
+host ceiling anyone measured, back when the host was what decided; it is far
+below anything the machine needs. It is a number waiting to be chosen rather
+than measured. Until it is, pass `max_depth` explicitly and pick it for your
+application rather than inheriting a leftover.
 
 There is no instruction budget: a guest that loops without recursing -- a
 comprehension over a long range, say -- runs until it is done. A host that

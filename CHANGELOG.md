@@ -2,10 +2,50 @@
 
 ## Unreleased
 
+### The evaluator is a machine with an explicit stack
+
+`lib/eval/machine.mbt` replaces the recursive tree walk. The continuation is a
+value now -- an `Array[Frame]` on the heap -- and the driver loop is ONE host
+frame however deep the guest goes.
+
+PurePy has no loops, so recursion is the only iteration a guest has, and a
+tree-walking evaluator spent host stack in proportion to how deep the guest
+went: about a dozen host frames per guest call once MoonBit's `async` transform
+was counted. That is why `default_max_depth` was 12 on the backends that run on
+a JavaScript engine, why it had to be measured rather than chosen, and why it
+had to be RE-measured whenever the evaluator changed shape -- adding one match
+arm to `eval_expr` cost four frames of guest depth in this same release,
+because a frame is sized by the whole function.
+
+None of that is true any more. Twenty thousand levels of NON-tail recursion --
+`1 + count(n - 1)`, with work left to do at every level -- run on `wasm`,
+`wasm-gc`, `js` and `native` alike. `max_depth` still bounds a runaway, and now
+it answers a question about the application rather than about the engine.
+
+It is also closer to what is being ported: PurePy is specified as a small-step
+operational semantics, and a machine with an explicit continuation is that
+semantics written down. The recursive walk was the paraphrase.
+
+`Ctl` has five states and `Frame` about twenty, and three things still recurse
+because none of them can recurse WITH the guest: patterns are bounded by their
+own nesting, a `MatchValue` head is a qualified name with no call in it, and
+imports are bounded by the module graph and already guarded against cycles.
+
+**The defaults are unchanged** -- 500 on `native`, 12 on the rest -- and are now
+conservative leftovers rather than measurements. Choosing them is a one-line
+decision that wants making on its own.
+
+Three functions left the API with the walk that needed them:
+`Interp::eval_exprs`, `Interp::eval_bound` and `Interp::eval_quals`.
+`eval_expr`, `eval_body`, `eval_seq` and `apply` keep their signatures and are
+entry points into the machine.
+
 ### The stack position a probe measures from
 
-Documentation and tools only: this particular change touches no `lib/` source.
-(Profiles, above, do.)
+Documentation and tools only. Note that the machine, above, removes what this
+was measuring FOR: the host stack no longer bounds a guest's recursion, so a
+probe of it no longer sets `max_depth`. The measurement is still the way to
+find an engine's ceiling; it is no longer the way to choose the limit.
 
 The depth probes named their columns after a syntax -- `await` against
 `setTimeout` -- and that is the wrong axis. What varies is who RESUMED you: a
