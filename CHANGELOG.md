@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### How to choose `max_steps`
+
+0.9.0 shipped the bound with a default and no advice, so the first embedder to
+set one had to work out the method themselves. The guide now carries it: measure
+your heaviest genuine workload, take a multiple, then measure what exhausting
+the budget costs in the slowest build and caller you actually ship -- because
+that pause is what a runaway buys you, and a budget which is itself a freeze has
+not prevented one.
+
+Deliberately no rate. What a step costs depends on the build, the backend and
+what the guest is doing, and a number measured in one configuration and carried
+into another is the mistake the recursion ceiling took three releases to stop
+making. The method transfers; the figures do not.
+
 ## 0.9.0 — 2026-09-08
 
 One addition: `max_steps`, on `run` and `run_with`. Additive, so an 0.8.0

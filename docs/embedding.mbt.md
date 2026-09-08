@@ -728,9 +728,31 @@ test "a guest that loops without recursing is bounded too" {
 }
 ```
 
-The default is 100000000, which no program a person is waiting on comes near; a
-notebook cell wants a much smaller one and a batch job on a native thread may
-want a much larger one.
+The default is 100000000. That is a BACKSTOP -- a number a program which was
+never going to finish will reach, and nothing else will -- and it is not a
+number anybody with a person waiting should inherit.
+
+**Choosing one.** The trade has two ends: the budget has to be large enough
+that no real workload meets it, and small enough that meeting it is not itself
+the freeze it exists to prevent. So take both measurements, in that order.
+
+  1. Run your heaviest genuine workload with a large budget and count what it
+     spends. Take a multiple of that -- an embedder who found their heavy case
+     at about 256000 steps settled on 2000000, roughly eight times.
+  2. Then check what exhausting the budget COSTS, in the slowest build and
+     caller you actually ship, because that is the pause a runaway buys you.
+     Steps are cheap and uniform enough that this is close to linear, so one
+     measurement gives you the rate and the rate gives you every other number.
+
+Do not carry someone else's rate across. What a step costs depends on the
+build, the backend and what the guest is doing, in the way everything else
+about a host does -- the useful part of the paragraph above is the method, not
+the figures.
+
+A test that pins your heavy case under the budget is worth having, and worth a
+note saying which number moves if it ever fails: if a workload has to be made
+smaller to keep passing, the budget was too close to real work and the budget
+is what should move.
 
 **It is deterministic, and a wall-clock timeout would not be.** Two runs of the
 same program over the same host answers take the same number of steps and stop
