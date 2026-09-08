@@ -137,7 +137,7 @@ embed-smoke:
 
 # Check, format, unit tests, boundaries, conformance -- run before committing.
 [group('gates')]
-quick: check fmt test boundary-check embed-smoke conform
+quick: check fmt test boundary-check embed-smoke conform profile-conform
 
 # Mirrors .github/workflows/check.yml, including the `git diff --exit-code`
 # steps -- which is how a stale `.mbti` or an unformatted file is caught.
@@ -158,6 +158,7 @@ ci:
     tools/astdiff.py --show 5
     tools/unparse_check.sh
     tools/conform.py --show 5
+    tools/profile-conform.py --show 5
     tools/fuzz.py --count 2000 --seed 1
     tools/diffrun.py --count 300 --seed 1
     moon build --target wasm-gc --release
@@ -206,6 +207,18 @@ conform *args: build
     tools/astdiff.py --show 5
     tools/unparse_check.sh
     {{conform}} --show 5 {{args}}
+
+# The PROFILE corpus, where the reference cannot be the oracle and CPython is.
+#
+# A profile accepts what the reference refuses, so pointing the reference at
+# `test/profile/` would only reproduce the refusal. Every profile feature is
+# outside the PurePy specification and inside Python, so this asks three things
+# per file: still refused under `core`, accepted under the profile, and prints
+# what `python3` prints. Its own ratchet, in test/profile-policy.json, because a
+# profile must never be able to move a PurePy floor.
+[group('conform')]
+profile-conform *args: build
+    tools/profile-conform.py --show 5 {{args}}
 
 # Our token stream against CPython's `tokenize`, over the suite and the corpus.
 [group('conform')]
@@ -278,6 +291,13 @@ ratchet: build
     tools/tokdiff.py --regen-policy --show 0
     tools/astdiff.py --regen-policy --show 0
     {{conform}} --regen-policy --show 0
+    tools/profile-conform.py --regen-policy
+
+# Rewrite `test/profile/`'s expectations: .expected from python3, .core.expected
+# from our CLI under `core`. The first is an oracle, the second a snapshot.
+[group('regen')]
+profile-expected: build
+    tools/profile-conform.py --regen
 
 # Rewrite the CPython indexes the `tokens` and `ast` oracles compare against.
 [group('regen')]

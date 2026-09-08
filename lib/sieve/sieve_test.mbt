@@ -239,15 +239,101 @@ test "an unchained boolean operator is untouched" {
 /// first must go on to find the second, and must not have been implemented by
 /// forgiving the raise after the fact.
 test "a profile keeps walking past the gate it opened" {
-  let source = "a = b and c and d\ne = f is g\n"
+  // The second violation has to be one `pending` does NOT open, or the test
+  // stops asking anything. f-strings are the durable choice: the parser keeps
+  // one raw, so it will be the last of the table to land.
+  let source = "a = b and c and d\ne = f\"{g}\"\n"
   assert_eq(
     verdict(source),
     "2: chained boolean operator not yet supported (#82)",
   )
   assert_eq(
     verdict_under(source, @profile.pending()),
-    "2: identity operator (is/is not) not yet supported (#81)",
+    "2: f-strings not yet supported (#55)",
   )
+}
+
+///|
+/// Every feature `pending` holds, as the pair: refused under `core` with the
+/// message and issue number the reference prints, accepted under the profile.
+///
+/// A row here is the sieve half of a feature. The other two halves -- the
+/// checker having a case for the node, and the run agreeing with CPython --
+/// are `test/profile/`, driven by `tools/profile-conform.py`.
+test "every pending feature is gated, not removed" {
+  let cases = [
+    (
+      "a = b and c and d\n", "2: chained boolean operator not yet supported (#82)",
+    ),
+    ("a = 1 < b < 3\n", "2: chained comparison not yet supported (#82)"),
+    (
+      "a = b is None\n", "2: identity operator (is/is not) not yet supported (#81)",
+    ),
+    (
+      "a = b is not None\n", "2: identity operator (is/is not) not yet supported (#81)",
+    ),
+    ("a = xs[1:2]\n", "2: slicing not yet supported (#59)"),
+    ("a = xs[::-1]\n", "2: slicing not yet supported (#59)"),
+    ("a, b = 1, 2\n", "2: destructuring assignment not yet supported (#54)"),
+    (
+      "a, (b, c) = 1, (2, 3)\n", "2: destructuring assignment not yet supported (#54)",
+    ),
+  ]
+  for c in cases {
+    assert_eq(verdict(c.0), c.1, msg=c.0)
+    assert_eq(verdict_under(c.0, @profile.core), c.1, msg=c.0)
+    assert_eq(verdict_under(c.0, @profile.pending()), "ok", msg=c.0)
+  }
+}
+
+///|
+/// A destructuring target is a nest of NAMES. The messages inside one are the
+/// ones a bare target gets, because the rule is the same rule: `a.b, c = ...`
+/// is attribute assignment however it is spelled.
+test "a destructuring target may not assign an item or an attribute" {
+  let p = @profile.pending()
+  assert_eq(
+    verdict_under("a.b, c = 1, 2\n", p),
+    "1: attribute assignment prohibited",
+  )
+  assert_eq(
+    verdict_under("xs[0], c = 1, 2\n", p),
+    "1: item assignment prohibited",
+  )
+  // A starred target never reaches the shape test: it is prohibited outright,
+  // which is what keeps a destructuring target exact in its arity.
+  assert_eq(
+    verdict_under("a, *rest = [1, 2, 3]\n", p),
+    "1: starred expressions prohibited",
+  )
+}
+
+///|
+/// The features `pending` does NOT hold yet, each still refused under it with
+/// the message it has under `core`.
+///
+/// This is the list that shrinks as the profile grows, and it is worth
+/// asserting rather than describing: a feature that quietly half-landed would
+/// show up here as a changed message rather than as a silence.
+test "the rest of the pending table is still closed" {
+  let cases = [
+    ("x = f\"{a}\"\n", "2: f-strings not yet supported (#55)"),
+    (
+      "def f(x=1):\n    return x\n", "2: default arguments not yet supported (#56)",
+    ),
+    ("def f(*a):\n    return 1\n", "2: *args not yet supported (#57)"),
+    ("def f(**a):\n    return 1\n", "2: **kwargs not yet supported (#57)"),
+    ("@deco\ndef f():\n    pass\n", "2: decorators not yet supported (#58)"),
+    ("s = {1, 2}\n", "2: set literals not yet supported (#147)"),
+    ("s = {x for x in y}\n", "2: set comprehensions not yet supported (#147)"),
+    ("import a as b\n", "2: import-as not yet supported (#53)"),
+    (
+      "xs = [a for a, b in items]\n", "2: destructuring in comprehensions not yet supported (#54)",
+    ),
+  ]
+  for c in cases {
+    assert_eq(verdict_under(c.0, @profile.pending()), c.1, msg=c.0)
+  }
 }
 
 ///|

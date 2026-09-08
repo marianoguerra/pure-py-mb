@@ -22,9 +22,11 @@ pub fn result_type(node : @ast.Stmt) -> ResultType {
     Assign(targets~, ..) => {
       let entries : Array[(String, Status)] = []
       for t in targets {
-        match t {
-          Name(id~, ..) => entries.push((id, TT))
-          _ => ()
+        // A destructuring target assigns every leaf of it (#54). Whether the
+        // value HAS that many elements is not a question the checker can ask:
+        // it carries no types, so an arity mismatch is a run-time answer.
+        for id in @analysis.target_names(t) {
+          entries.push((id, TT))
         }
       }
       Assigns(@context.vars_of(entries))
@@ -235,15 +237,15 @@ fn check_stmt(s : @ast.Stmt, ctx : Ctx) -> Unit raise {
     Pass(..) => ()
     Assign(targets~, value~, ..) => {
       check_expr(value, ctx)
-      // `f = lambda: f` captures the name it is about to bind.
+      // `f = lambda: f` captures the name it is about to bind, and so does
+      // `f, g = lambda: f, 1` -- the rule is about the name, not the shape of
+      // the target, so it reaches every leaf of a destructuring one (#54).
       let captured = @analysis.captures_e(value)
       for t in targets {
-        match t {
-          Name(id~, span~, ..) =>
-            if captured.contains(id) {
-              raise @err.ill_formed(SelfCaptureAssignment(name=id), span~)
-            }
-          _ => ()
+        for id in @analysis.target_names(t) {
+          if captured.contains(id) {
+            raise @err.ill_formed(SelfCaptureAssignment(name=id), span=t.span())
+          }
         }
       }
     }
@@ -411,6 +413,17 @@ fn check_expr(e : @ast.Expr, ctx : Ctx) -> Unit raise {
       check_comprehension([elt], generators, ctx)
     DictComp(key~, value~, generators~, ..) =>
       check_comprehension([key, value], generators, ctx)
+    // Slicing (#59), under a profile that opens it. There is nothing to
+    // decide beyond the bounds being expressions of the context: PurePy's
+    // checker carries no types, so whether the thing sliced HAS a slice is a
+    // question only the evaluator can ask.
+    Slice(lower~, upper~, step~, ..) =>
+      for b in [lower, upper, step] {
+        match b {
+          Some(x) => check_expr(x, ctx)
+          None => ()
+        }
+      }
     _ => abort("unreachable after the sieve: " + e.kind_name())
   }
 }

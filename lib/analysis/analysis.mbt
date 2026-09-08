@@ -201,6 +201,10 @@ pub fn fv_e(e : @ast.Expr) -> NameSet {
     ListComp(elt~, generators~, ..) => fv_e_comprehension([elt], generators)
     DictComp(key~, value~, generators~, ..) =>
       fv_e_comprehension([key, value], generators)
+    // A slice's bounds are expressions like any other, and an omitted one
+    // names nothing. Reached only under a profile that opens slicing (#59);
+    // under `core` the sieve takes this node before anyone asks.
+    Slice(lower~, upper~, step~, ..) => fv_e_list(present([lower, upper, step]))
     _ => abort("unreachable after the sieve: " + e.kind_name())
   }
 }
@@ -317,9 +321,8 @@ pub fn assigns_stmt(s : @ast.Stmt) -> NameSet {
     Assign(targets~, ..) => {
       let out : Array[String] = []
       for t in targets {
-        match t {
-          Name(id~, ..) => out.push(id)
-          _ => ()
+        for id in target_names(t) {
+          out.push(id)
         }
       }
       names(out)
@@ -381,6 +384,8 @@ pub fn captures_e(e : @ast.Expr) -> NameSet {
         .union(captures_e(value))
         .difference(binds_quals(generators)),
       )
+    Slice(lower~, upper~, step~, ..) =>
+      captures_e_list(present([lower, upper, step]))
     _ => abort("unreachable after the sieve: " + e.kind_name())
   }
 }
@@ -576,4 +581,34 @@ pub fn is_qualified_name(e : @ast.Expr) -> Bool {
 /// array rather than a view.
 pub fn captures_quals_of(generators : Array[@ast.Comprehension]) -> NameSet {
   captures_quals(generators[:])
+}
+
+///|
+/// The names an assignment target binds.
+///
+/// A plain `x` binds one. A destructuring target -- `a, b = ...`, or the
+/// nested `a, (b, c) = ...` -- binds the leaves of the tuple, and Python lets
+/// a list stand where a tuple does. Anything else binds nothing: the sieve has
+/// already refused item and attribute assignment, so nothing else reaches
+/// here, and answering with the empty set rather than aborting keeps this
+/// usable by the sieve itself.
+///
+/// One definition, because the checker's definite-assignment table, the
+/// evaluator's environment and `assigns_stmt` have to agree about what `a, b
+/// = f()` assigned or the three disagree about whether `b` exists.
+pub fn target_names(e : @ast.Expr) -> Array[String] {
+  let out : Array[String] = []
+  fn walk(t : @ast.Expr) -> Unit {
+    match t {
+      Name(id~, ..) => out.push(id)
+      Tuple(elts~, ..) | List(elts~, ..) =>
+        for x in elts {
+          walk(x)
+        }
+      _ => ()
+    }
+  }
+
+  walk(e)
+  out
 }

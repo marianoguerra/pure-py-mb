@@ -83,6 +83,14 @@ async fn Interp::eval_stmt(
         Val(v) =>
           match targets[0] {
             Name(id~, ..) => Assigns(@value.env_of([(id, v)]))
+            // Destructuring (#54), under a profile that opens it.
+            Tuple(..) | List(..) => {
+              let entries : Array[(String, Value)] = []
+              match destructure(targets[0], v, entries) {
+                None => Assigns(@value.env_of(entries))
+                Some(why) => ResultStuck(why)
+              }
+            }
             _ => ResultStuck("an assignment target that is not a name")
           }
         Aborts(k) => ResultAborts(k)
@@ -198,5 +206,48 @@ async fn Interp::eval_stmt(
       Assigns(@value.env_of([(name, Value::Class(entry))]))
     }
     _ => ResultStuck("statement " + s.kind_name())
+  }
+}
+
+///|
+/// Match a destructuring target against a value, collecting what it binds.
+///
+/// Answers `None` when it bound everything and the reason when it could not.
+/// Python raises `ValueError` for an arity mismatch and `TypeError` for a
+/// value with no elements; PurePy models neither as a termination, so both are
+/// undefined here rather than borrowing a kind that means something else.
+///
+/// Bindings are collected into one array rather than merged environment by
+/// environment, so a repeated name -- `a, a = 1, 2`, which Python allows and
+/// leaves at 2 -- resolves left to right the way Python resolves it.
+fn destructure(
+  target : @ast.Expr,
+  v : Value,
+  out : Array[(String, Value)],
+) -> String? {
+  match target {
+    Name(id~, ..) => {
+      out.push((id, v))
+      None
+    }
+    Tuple(elts~, ..) | List(elts~, ..) => {
+      let xs = match @value.elems(v) {
+        Some(xs) => xs
+        None => return Some("unpacking " + v.kind_name())
+      }
+      if xs.length() != elts.length() {
+        return Some(
+          "unpacking \{xs.length()} values into \{elts.length()} targets",
+        )
+      }
+      for i, t in elts {
+        match destructure(t, xs[i], out) {
+          None => ()
+          some => return some
+        }
+      }
+      None
+    }
+    _ => Some("an assignment target that is not a name")
   }
 }

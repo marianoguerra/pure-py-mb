@@ -46,6 +46,8 @@ pub fn floor_mod(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
 
 pub fn getitem(Value, Value) -> Outcome
 
+pub fn getslice(Value, SliceBounds) -> Outcome
+
 pub fn host_fn(String) -> Value
 
 pub fn iter(Value) -> Array[Value]?
@@ -104,6 +106,12 @@ pub(all) enum Primitive {
   Opaque(String)
   Foreign(String)
 } derive(Eq, @debug.Debug)
+
+pub(all) struct SliceBounds {
+  lower : Value?
+  upper : Value?
+  step : Value?
+}
 
 pub(all) enum StmtResult {
   Assigns(@hashmap.HashMap[String, Value])

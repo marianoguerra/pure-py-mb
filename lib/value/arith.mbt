@@ -434,8 +434,37 @@ pub fn compare(op : @ast.CmpOp, a : Value, b : Value) -> Outcome {
             b.kind_name(),
           )
       }
-    // The sieve rejects `is` and `is not` as not yet supported (#81).
-    Is | IsNot => Stuck("identity operator '" + op.symbol() + "'")
+    // `is` asks whether two expressions denote the SAME object, and a PurePy
+    // value has no identity to ask about: nothing is mutable, so no program
+    // can tell two equal values apart, and there is no rule that could answer
+    // `[1] is [1]` without inventing one.
+    //
+    // `None` is the exception, and it is the reason `is` is worth having at
+    // all. Python's `None` is a singleton, `x is None` is how Python spells
+    // the question, and here it is total: a value either is `None` or is not.
+    // Everything else stays undefined rather than guessing -- `True is True`
+    // and `1 is 1` are True in CPython only because it interns them, which is
+    // an implementation's answer and not a language's.
+    Is | IsNot => {
+      let identical = match (a, b) {
+        (None, None) => Some(true)
+        (None, _) | (_, None) => Some(false)
+        _ => Option::None
+      }
+      match identical {
+        Some(r) => Val(Bool(if op is Is { r } else { !r }))
+        None =>
+          Stuck(
+            "'" +
+            op.symbol() +
+            "' between " +
+            a.kind_name() +
+            " and " +
+            b.kind_name() +
+            ": PurePy values have no identity apart from None",
+          )
+      }
+    }
   }
 }
 

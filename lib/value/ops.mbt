@@ -262,3 +262,114 @@ pub fn entries(
   }
   out
 }
+
+// ---------------------------------------------------------------------------
+// Slicing (#59), which a profile opens
+
+///|
+/// A slice's three parts, each absent unless the source wrote it.
+///
+/// A `Value` and not an `@ast.Slice`, because `lib/value` is where the rule
+/// lives and an evaluator should hand it what it evaluated rather than what it
+/// parsed. `None` is "the source left it out", which is not the same as `None`
+/// the PurePy value: `xs[None:]` is a TypeError in Python and is one here.
+pub(all) struct SliceBounds {
+  lower : Value?
+  upper : Value?
+  step : Value?
+}
+
+///|
+/// `xs[i:j:k]`, by CPython's own rule.
+///
+/// Slicing is total where indexing is partial: an index past the end is an
+/// `IndexError` and a slice past the end is empty, which is why this cannot
+/// borrow `getitem`'s arithmetic. The clamping below is `PySlice_AdjustIndices`
+/// written out -- a negative bound counts from the end and then clamps, and
+/// which end it clamps to depends on the sign of the step.
+///
+/// `k == 0` is a `ValueError` in Python. PurePy does not model `ValueError`,
+/// so it is undefined here rather than pretending to be one of the seven
+/// terminations the semantics has.
+pub fn getslice(v : Value, bounds : SliceBounds) -> Outcome {
+  let xs = match elems(v) {
+    Some(xs) => xs
+    None =>
+      match v {
+        Dict(_) => return Stuck("slicing a dict")
+        _ => return Aborts(TypeError)
+      }
+  }
+  let step = match bounds.step {
+    None | Some(Value::None) => 1
+    Some(Int(k)) =>
+      if k == 0N {
+        return Stuck("a slice with a step of zero")
+      } else if k > 1000000000N {
+        1000000000
+      } else if k < -1000000000N {
+        -1000000000
+      } else {
+        k.to_int()
+      }
+    Some(_) => return Aborts(TypeError)
+  }
+  let len = xs.length()
+  let bound = fn(b : Value?, if_absent : Int) -> Int? {
+    match b {
+      None | Some(Value::None) => Some(if_absent)
+      Some(Int(n)) => {
+        // Clamp before narrowing: an index far outside the sequence is legal
+        // in a slice and must not wrap when it stops being a BigInt.
+        let big = BigInt::from_int(len)
+        let i = if n < 0N { n + big } else { n }
+        if i < 0N {
+          Some(if step < 0 { -1 } else { 0 })
+        } else if i > big {
+          Some(if step < 0 { len - 1 } else { len })
+        } else {
+          Some(i.to_int())
+        }
+      }
+      Some(_) => Option::None
+    }
+  }
+  // Absent bounds run the whole way, in whichever direction the step goes.
+  let start = match bound(bounds.lower, if step < 0 { len - 1 } else { 0 }) {
+    Some(i) => i
+    None => return Aborts(TypeError)
+  }
+  let stop = match bound(bounds.upper, if step < 0 { -1 } else { len }) {
+    Some(i) => i
+    None => return Aborts(TypeError)
+  }
+  let out : Array[Value] = []
+  if step > 0 {
+    let mut i = start
+    while i < stop {
+      out.push(xs[i])
+      i += step
+    }
+  } else {
+    let mut i = start
+    while i > stop {
+      out.push(xs[i])
+      i += step
+    }
+  }
+  match v {
+    // A slice of a string is a string, not a list of one-character strings.
+    Str(_) => {
+      let sb = StringBuilder()
+      for c in out {
+        match c {
+          Str(t) => sb.write_string(t)
+          _ => return Stuck("slicing a str")
+        }
+      }
+      Val(Str(sb.to_string()))
+    }
+    Tuple(_) => Val(Tuple(out))
+    _ => Val(List(out))
+  }
+}

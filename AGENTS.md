@@ -76,6 +76,15 @@ checker or the evaluator.
 - **`test/conform-policy.json` is a ratchet that fails from both sides.** A run
   below a floor is a regression; a run above one is an improvement nobody
   recorded. `just ratchet` moves the floors, in the commit that earned them.
+- **A profile has its own oracle and its own ratchet.** `lib/profile` lets a
+  caller opt in to a superset of PurePy, and the reference refuses everything
+  in it -- so the reference cannot be the oracle there. Every profile feature is
+  outside the specification and inside Python, so CPython is: `test/profile/`
+  and `tools/profile-conform.py` ask, per file, that it is still refused under
+  `core`, accepted under the profile, and prints what `python3` prints.
+  `test/profile-policy.json` is a SEPARATE ratchet, so a profile can never move
+  a PurePy floor. A profile may open a `not_yet` gate and never a `prohibited`
+  one; `test/profile/refused/` is that claim as a corpus.
 - **Three modules, one workspace.** `lib/` is `marianoguerra/pure-py`, `cli/`
   is `marianoguerra/pure-py-cli`, and the root is a development module that is
   never published: it holds the conformance suite, the goldens, the corpora,

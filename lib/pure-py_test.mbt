@@ -122,3 +122,65 @@ test "a profile does not make an undefined operation defined" {
   let (_, result) = @purepy.run(tree)
   assert_true(result is Undefined(_))
 }
+
+///|
+/// Run one source under a profile and say how it ended.
+fn outcome_under(source : String, profile : @profile.Profile) -> String raise {
+  let m = @purepy.parse(source)
+  match @purepy.check(m, profile~) {
+    Some(d) => return "refused: " + d.message()
+    None => ()
+  }
+  let tree = @purepy.source_tree(Map([("__main__", m)]))
+  match @purepy.run(tree) {
+    (out, Finished) => "ok: " + out
+    (_, Terminated(k, _)) => "aborts: " + k.to_text().to_string()
+    (_, Undefined(op)) => "undefined: " + op
+    (_, Suspended) => "suspended"
+  }
+}
+
+///|
+/// Where a profile's features are UNDEFINED rather than wrong.
+///
+/// These cannot live in `test/profile/`, whose whole claim is that our answer
+/// is CPython's: CPython has an answer for every one of them and PurePy
+/// deliberately does not. Being undefined is the answer, and it is worth
+/// pinning, because the alternative to a rule is not "no rule" but "someone
+/// invents one later".
+test "a pending feature is undefined where PurePy has no rule" {
+  let p = @profile.pending()
+  // `is` asks about identity, and a PurePy value has none apart from `None`.
+  // CPython says True for both of these, by interning.
+  assert_true(outcome_under("print(1 is 1)\n", p).has_prefix("undefined: "))
+  assert_true(
+    outcome_under("print(True is True)\n", p).has_prefix("undefined: "),
+  )
+  // A slice step of zero is a ValueError in Python, which is not one of the
+  // seven terminations PurePy models.
+  assert_eq(
+    outcome_under("print([1, 2][::0])\n", p),
+    "undefined: a slice with a step of zero",
+  )
+  // An arity mismatch is a ValueError too.
+  assert_eq(
+    outcome_under("a, b = 1, 2, 3\n", p),
+    "undefined: unpacking 3 values into 2 targets",
+  )
+  // A chain is only as defined as its links: PurePy's `<` between an int and
+  // a str has no rule, and neither does the chain that contains one.
+  assert_true(
+    outcome_under("print(1 < 2 < \"a\")\n", p).has_prefix("undefined: "),
+  )
+}
+
+///|
+/// Where a profile's features ABORT, which is a different thing.
+test "a pending feature aborts where Python raises" {
+  let p = @profile.pending()
+  assert_eq(outcome_under("print(1[1:2])\n", p), "aborts: TypeError")
+  assert_eq(outcome_under("a, b = 1\n", p), "undefined: unpacking int")
+  // A chain short-circuits: the third comparison is never made, so its
+  // undefined operand never matters.
+  assert_eq(outcome_under("print(2 < 1 < \"a\")\n", p), "ok: False\n")
+}

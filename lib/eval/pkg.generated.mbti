@@ -58,6 +58,7 @@ pub struct Interp {
 pub async fn Interp::apply(Self, @value.Value, Array[@value.Value]) -> @value.Outcome noraise
 pub async fn Interp::dispatch(Self, @hashmap.HashMap[String, @value.Value], @value.Value, Array[@ast.MatchCase]) -> Dispatch noraise
 pub async fn Interp::eval_body(Self, Array[@ast.Stmt], @hashmap.HashMap[String, @value.Value]) -> @value.StmtResult noraise
+pub async fn Interp::eval_bound(Self, @ast.Expr?, @hashmap.HashMap[String, @value.Value]) -> Result[@value.Value?, @value.Outcome] noraise
 pub async fn Interp::eval_expr(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @value.Outcome noraise
 pub async fn Interp::eval_exprs(Self, Array[@ast.Expr], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@value.Value], @value.Outcome] noraise
 pub async fn Interp::eval_quals(Self, ArrayView[@ast.Comprehension], @hashmap.HashMap[String, @value.Value]) -> Result[Array[@hashmap.HashMap[String, @value.Value]], @value.Outcome] noraise

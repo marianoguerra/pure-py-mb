@@ -45,6 +45,23 @@
 pub(all) enum Feature {
   /// `a and b and c`: three or more operands in one boolean expression (#82).
   ChainedBoolean
+  /// `1 < x < 10`: more than one operator in one comparison (#82).
+  ChainedComparison
+  /// `x is None`, `x is not None` (#81). PurePy values have no identity, so
+  /// this is defined against `None` -- which is a singleton in Python and the
+  /// only thing `is` is reliably asked about -- and undefined elsewhere.
+  Identity
+  /// `xs[1:]`, `s[::-1]` (#59). Slicing is total where indexing is partial: a
+  /// bound past the end clamps rather than aborting.
+  Slicing
+  /// `a, b = 1, 2`, and the nested `a, (b, c) = ...` (#54). `*rest` is not
+  /// part of it: a starred expression is prohibited outright, so a target
+  /// under this feature is always exact in its arity.
+  ///
+  /// A destructuring COMPREHENSION target -- `[a for a, b in items]` -- cites
+  /// the same issue and is a separate gate, still closed: it binds through
+  /// `eval_quals` rather than through an assignment, so it is its own rule.
+  DestructuringAssignment
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
@@ -52,6 +69,10 @@ pub(all) enum Feature {
 pub fn Feature::name(self : Feature) -> String {
   match self {
     ChainedBoolean => "chained-boolean"
+    ChainedComparison => "chained-comparison"
+    Identity => "identity"
+    Slicing => "slicing"
+    DestructuringAssignment => "destructuring-assignment"
   }
 }
 
@@ -139,7 +160,13 @@ pub fn Profile::contains(self : Profile, other : Profile) -> Bool {
 /// what it holds -- `Profile::features`, or `pure-py profiles` -- rather than
 /// assuming a feature from that table is in it yet.
 pub fn pending() -> Profile {
-  core.adding([ChainedBoolean])
+  core.adding([
+    ChainedBoolean,
+    ChainedComparison,
+    Identity,
+    Slicing,
+    DestructuringAssignment,
+  ])
 }
 
 ///|
@@ -169,7 +196,11 @@ pub let names : Array[String] = ["core", "pending"]
 /// should print what it printed before profiles existed.
 pub fn accepted_by(feature : String) -> String? {
   match feature {
-    "chained boolean operator" => Some("pending")
+    "chained boolean operator"
+    | "chained comparison"
+    | "identity operator (is/is not)"
+    | "slicing"
+    | "destructuring assignment" => Some("pending")
     _ => None
   }
 }

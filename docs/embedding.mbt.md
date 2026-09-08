@@ -506,7 +506,11 @@ not asking. A host that wants a slightly larger language asks for a **profile**.
 A profile is opt-in, and it stacks: `@profile.core` is PurePy, and each named
 profile is the one below it plus features. `@profile.pending()` holds the forms
 the specification intends to have and has not settled -- the ones the sieve
-refuses today with an issue number.
+refuses today with an issue number: chained `and`/`or` and chained comparisons,
+`is` and `is not`, slicing, and destructuring assignment.
+
+It is a set, and it grows. Ask it what it holds -- `Profile::features`, or
+`pure-py profiles` -- rather than assuming a form from that table is in it.
 
 ```mbt check
 ///|

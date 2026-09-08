@@ -68,6 +68,8 @@ pub fn split_imports(Array[@ast.Stmt]) -> (Array[@ast.Stmt], Array[@ast.Stmt])
 
 pub fn statements(Array[@ast.Stmt]) -> Array[Statement]
 
+pub fn target_names(@ast.Expr) -> Array[String]
+
 // Errors
 
 // Types and methods

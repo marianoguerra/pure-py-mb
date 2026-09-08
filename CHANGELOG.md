@@ -2,6 +2,57 @@
 
 ## Unreleased
 
+### `pending` holds five features, and CPython is its oracle
+
+The profile grew from one feature to five: chained boolean operators and
+chained comparisons (#82), `is` and `is not` (#81), slicing (#59), and
+destructuring assignment (#54).
+
+Each is a whole vertical slice -- a sieve gate, a case wherever the checker and
+`lib/analysis` would otherwise have walked a node they had none for, and a rule
+in the evaluator -- because opening a gate without the rest of it does not
+produce a rejection, it produces an `abort("unreachable after the sieve")`.
+
+Two of the five have an edge PurePy declines to invent an answer for.
+
+`is` asks whether two expressions denote the same object, and a PurePy value
+has no identity: nothing is mutable, so no program can tell two equal values
+apart. `None` is the exception and the reason `is` is worth having -- it is a
+singleton, `x is None` is how Python spells the question, and here it is total.
+`1 is 1` and `True is True` are undefined, not True: CPython answers True by
+interning, which is an implementation's answer and not a language's.
+
+A slice step of zero, and an arity mismatch in a destructuring target, are both
+`ValueError` in Python. PurePy models seven terminations and `ValueError` is
+not one of them, so both are undefined rather than borrowing a kind that means
+something else.
+
+### A conformance oracle for profiles, because the reference cannot be one
+
+`tools/conform.py` drives our CLI against the reference checker's answers, and
+that works because the reference decides what PurePy is. A profile is the case
+it has no answer for: it accepts what the reference refuses, so pointing the
+reference at a profile corpus would only reproduce the refusal.
+
+But **every profile feature is outside the specification and inside Python**,
+and CPython is already this project's oracle for what a run prints. So
+`tools/profile-conform.py` asks three things of every file in `test/profile/`:
+
+  1. still refused under `core`, with the message in `.core.expected` -- the
+     question that makes it a profile test rather than a Python test, and the
+     one a feature that leaked into the default would fail;
+  2. accepted under the profile, so the sieve gate and the checker agree;
+  3. prints what `python3` prints.
+
+`test/profile/refused/` asks the opposite: a file there must stay refused under
+every profile there is. That is the corpus form of "no profile lifts a
+prohibition", which is the claim everything in `docs/embedding.mbt.md` rests
+on, tested from outside rather than only in a unit test.
+
+`test/profile-policy.json` is a second ratchet, separate on purpose: a profile
+must never be able to move a PurePy floor. PurePy's own numbers are unchanged
+at 983/983.
+
 ### Profiles: a superset a library user can opt in to
 
 `sieve`, `check`, `check_program` and `source_tree_from` take a `profile`,

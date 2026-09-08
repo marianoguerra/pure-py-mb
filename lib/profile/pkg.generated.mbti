@@ -22,6 +22,10 @@ pub fn pending() -> Profile
 // Types and methods
 pub(all) enum Feature {
   ChainedBoolean
+  ChainedComparison
+  Identity
+  Slicing
+  DestructuringAssignment
 } derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Feature::name(Self) -> String
 

@@ -82,15 +82,34 @@ pub async fn Interp::eval_expr(
       }
       result
     }
-    Compare(left~, ops~, comparators~, ..) =>
-      match self.eval_expr(left, env) {
-        Val(a) =>
-          match self.eval_expr(comparators[0], env) {
-            Val(b) => self.sited(e, @value.compare(ops[0], a, b))
-            other => other
-          }
-        other => other
+    // A chain is `a < b < c`, and Python's rule for it is two things at once:
+    // `b` is evaluated ONCE, and the chain stops at the first False. Written
+    // as a fold rather than as a desugaring to `and`, because the desugaring
+    // would evaluate `b` twice and PurePy's `and` wants a real `Bool` where
+    // the chain's own operators already answer with one.
+    //
+    // A single-operator comparison -- every comparison PurePy has -- takes the
+    // first turn of this loop and nothing else, so its behaviour is the rule
+    // it always had.
+    Compare(left~, ops~, comparators~, ..) => {
+      let mut a = match self.eval_expr(left, env) {
+        Val(v) => v
+        other => return other
       }
+      let mut result = Outcome::Val(Value::Bool(true))
+      for i, op in ops {
+        let b = match self.eval_expr(comparators[i], env) {
+          Val(v) => v
+          other => return other
+        }
+        result = self.sited(e, @value.compare(op, a, b))
+        match result {
+          Val(Bool(true)) => a = b
+          _ => return result
+        }
+      }
+      result
+    }
     // eval-cond-true, eval-cond-false
     IfExp(cond~, body~, or_else~, ..) =>
       match self.eval_expr(cond, env) {
@@ -184,18 +203,69 @@ pub async fn Interp::eval_expr(
         other => other
       }
     // eval-subscript
+    //
+    // A `Slice` in the subscript position is not an expression that evaluates
+    // to a value -- PurePy has no slice object and adding one would put a new
+    // kind across the host boundary for nothing. Its three bounds are
+    // evaluated in source order and handed to `getslice`, so the node never
+    // becomes a value at all. Reached only under a profile that opens
+    // slicing (#59).
     Subscript(value~, slice~, ..) =>
       match self.eval_expr(value, env) {
         Val(v) =>
-          match self.eval_expr(slice, env) {
-            Val(k) => self.sited(e, @value.getitem(v, k))
-            other => other
+          match slice {
+            Slice(lower~, upper~, step~, ..) => {
+              let lo = match self.eval_bound(lower, env) {
+                Ok(w) => w
+                Err(o) => return o
+              }
+              let hi = match self.eval_bound(upper, env) {
+                Ok(w) => w
+                Err(o) => return o
+              }
+              let st = match self.eval_bound(step, env) {
+                Ok(w) => w
+                Err(o) => return o
+              }
+              self.sited(
+                e,
+                @value.getslice(v, { lower: lo, upper: hi, step: st, }),
+              )
+            }
+            _ =>
+              match self.eval_expr(slice, env) {
+                Val(k) => self.sited(e, @value.getitem(v, k))
+                other => other
+              }
           }
         other => other
       }
     Call(func~, args~, keywords~, ..) =>
       self.eval_call(func, args, keywords, env, e)
     _ => Stuck("expression " + e.kind_name())
+  }
+}
+
+///|
+/// One bound of a slice: the value it evaluates to, or nothing when the source
+/// left it out.
+///
+/// An omitted bound is not `None` the PurePy value. `xs[:2]` and `xs[None:2]`
+/// are different programs -- Python makes the second a `TypeError` -- so the
+/// absence has to survive as far as `getslice`, which is why this answers with
+/// a `Value?` rather than substituting a default here.
+pub async fn Interp::eval_bound(
+  self : Interp,
+  b : @ast.Expr?,
+  env : Env,
+) -> Result[Value?, Outcome] noraise {
+  match b {
+    Some(x) =>
+      match self.eval_expr(x, env) {
+        Val(w) => Ok(Some(w))
+        other => Err(other)
+      }
+    None => Ok(None)
   }
 }
 

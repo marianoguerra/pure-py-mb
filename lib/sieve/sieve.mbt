@@ -129,6 +129,32 @@ fn Sieve::check_top_level(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise 
 }
 
 ///|
+/// A destructuring target: a nest of names, and nothing else (#54).
+///
+/// The messages are the ones a bare target gets, because the rule is the same
+/// one: `a.b, c = ...` IS attribute assignment, and saying so beats saying the
+/// target had an unexpected shape. `*rest` never reaches here -- a starred
+/// expression is prohibited outright, so a destructuring target under this
+/// profile is always exact in its arity.
+fn Sieve::check_target(
+  self : Sieve,
+  t : @ast.Expr,
+  span : @basic.Span,
+) -> Unit raise {
+  match t {
+    Name(..) => ()
+    Tuple(elts~, ..) | List(elts~, ..) =>
+      for x in elts {
+        self.check_target(x, span)
+      }
+    Subscript(..) => raise prohibited("item assignment prohibited", span)
+    Attribute(..) => raise prohibited("attribute assignment prohibited", span)
+    Starred(..) => raise prohibited("starred expressions prohibited", span)
+    _ => raise prohibited("assignment target must be a name", span)
+  }
+}
+
+///|
 fn Sieve::check_body(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise {
   for s in stmts {
     self.check_stmt(s)
@@ -149,7 +175,15 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
         Attribute(..) =>
           raise prohibited("attribute assignment prohibited", span)
         Name(..) => ()
-        _ => raise not_yet("destructuring assignment", 54, span)
+        _ => {
+          self.gate(
+            DestructuringAssignment,
+            "destructuring assignment",
+            54,
+            span,
+          )
+          self.check_target(targets[0], span)
+        }
       }
       self.check_expr(value)
     }
@@ -420,11 +454,11 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
     }
     Compare(left~, ops~, comparators~, ..) => {
       if ops.length() > 1 {
-        raise not_yet("chained comparison", 82, span)
+        self.gate(ChainedComparison, "chained comparison", 82, span)
       }
       for op in ops {
         if op is (Is | IsNot) {
-          raise not_yet("identity operator (is/is not)", 81, span)
+          self.gate(Identity, "identity operator (is/is not)", 81, span)
         }
       }
       self.check_expr(left)
@@ -485,7 +519,15 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       }
     }
     SetComp(..) => raise not_yet("set comprehensions", 147, span)
-    Slice(..) => raise not_yet("slicing", 59, span)
+    Slice(lower~, upper~, step~, ..) => {
+      self.gate(Slicing, "slicing", 59, span)
+      for b in [lower, upper, step] {
+        match b {
+          Some(x) => self.check_expr(x)
+          None => ()
+        }
+      }
+    }
     GeneratorExp(..) =>
       raise prohibited("generator expressions prohibited", span)
     NamedExpr(..) => raise prohibited("walrus operator (:=) prohibited", span)
