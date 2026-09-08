@@ -2,6 +2,49 @@
 
 ## Unreleased
 
+### The stack position a probe measures from
+
+Documentation and tools only: this particular change touches no `lib/` source.
+(Profiles, above, do.)
+
+The depth probes named their columns after a syntax -- `await` against
+`setTimeout` -- and that is the wrong axis. What varies is who RESUMED you: a
+promise settled by I/O resumes on the stack of whatever drained the queue
+after that operation, while a timer callback starts near the bottom. The same
+`await` gives different answers depending on what the promise was waiting for,
+so the columns are named after the resumer now, and each position is
+established from scratch rather than inherited from the last measurement --
+which the browser probe was not doing, leaving two of its three rows comparing
+one position against itself.
+
+With that fixed, in Node over the playground's release module:
+
+| shape | top level | after I/O | fresh task |
+|---|---|---|---|
+| tail | 1487 | 1463 | 1488 |
+| accumulating | 991 | 975 | 992 |
+| nested | 781 | 768 | 781 |
+
+Under two per cent, but consistent in direction and on every shape. Chromium
+152 and Firefox 155 show no gap at all under the corrected harness, and the
+embedder who raised it measures a much larger one on a different module. So
+the guide asks for a measurement from the position the application actually
+calls from, rather than offering a rule.
+
+## 0.6.0 — 2026-09-08
+
+A library user can opt in to a superset of PurePy. `@profile.core` is PurePy
+exactly as specified and is the default of every call that takes one, so a
+consumer who never heard of profiles gets what they got before: the same
+verdicts, the same messages, 983/983 conformance with no floor moved.
+Everything below is opt-in.
+
+**The API changes are additive except in three places**, which is why this is a
+minor bump. `@ast.JoinedStr` gained a `parts` field, `@value.LamClosure` gained
+`defaults`, and `@value.Primitive` gained eighteen arms -- so a consumer who
+CONSTRUCTS one of the first two, or matches `Primitive` exhaustively, has a
+line to change. Everything else is a new optional argument or a new name.
+
 ### f-strings
 
 `f"the answer is {x}"` joins `pending`, with `!r` and `!s`. A format spec --
@@ -247,35 +290,6 @@ runs.
 
 The playground has a selector beside the example list, and `analyze` keeps its
 one-argument shape: `analyze_with(source, profile)` is the new export.
-
-### The stack position a probe measures from
-
-Documentation and tools only: this particular change touches no `lib/` source.
-(Profiles, above, do.)
-
-The depth probes named their columns after a syntax -- `await` against
-`setTimeout` -- and that is the wrong axis. What varies is who RESUMED you: a
-promise settled by I/O resumes on the stack of whatever drained the queue
-after that operation, while a timer callback starts near the bottom. The same
-`await` gives different answers depending on what the promise was waiting for,
-so the columns are named after the resumer now, and each position is
-established from scratch rather than inherited from the last measurement --
-which the browser probe was not doing, leaving two of its three rows comparing
-one position against itself.
-
-With that fixed, in Node over the playground's release module:
-
-| shape | top level | after I/O | fresh task |
-|---|---|---|---|
-| tail | 1487 | 1463 | 1488 |
-| accumulating | 991 | 975 | 992 |
-| nested | 781 | 768 | 781 |
-
-Under two per cent, but consistent in direction and on every shape. Chromium
-152 and Firefox 155 show no gap at all under the corrected harness, and the
-embedder who raised it measures a much larger one on a different module. So
-the guide asks for a measurement from the position the application actually
-calls from, rather than offering a rule.
 
 ## 0.5.0 — 2026-09-08
 
