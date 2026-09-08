@@ -548,6 +548,15 @@ depth: the answer depends on what is already on the stack, so a single try can
 disagree with itself. The playground does this and passes 250, against a
 measured ceiling of about 780 for the release module it actually ships.
 
+Pass it at every call site, including the ones where the default looks right
+today. 0.5.0 moved this default from 500 to 12 on three backends, and that
+release changed no type: a call site that had dropped its `max_depth` compiled
+clean and landed on a number two orders of magnitude away from the one it was
+written against. A default that can move under a release the type checker
+approves of is the argument for passing it explicitly, not against it -- and a
+local default that happens to equal the library's is a coincidence of
+arithmetic, not agreement about what the number means.
+
 `tools/depth-probe.mjs` in this repository is that measurement, and it will
 sweep any wasm module exporting `analyze` -- point it at yours. `just
 depth-probe` runs it over the page's own.
