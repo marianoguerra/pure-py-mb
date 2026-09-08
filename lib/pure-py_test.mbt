@@ -257,3 +257,91 @@ test "the checker and the run want the same profile" {
   assert_true(agreed is Finished)
   assert_eq(out, "[1, 2]\n")
 }
+
+///|
+/// A profile that adds methods does not make anything mutable.
+///
+/// This is the claim the whole embedding guide rests on, so it is asserted
+/// against the names rather than described. Every mutating method Python has
+/// on a list or a dict is absent from `lib/value/method.mbt`, and absent is
+/// the same undefined operation an unknown attribute has always been.
+///
+/// The regression this catches is somebody adding `sort` by analogy with the
+/// `sorted` of the profile below -- one letter apart, and one of them mutates.
+test "no method a profile adds can mutate" {
+  let p = @profile.methods()
+  let mutators = [
+    "xs = [1, 2]\nxs.append(3)\n", "xs = [1, 2]\nxs.extend([3])\n", "xs = [1, 2]\nxs.insert(0, 3)\n",
+    "xs = [1, 2]\nxs.pop()\n", "xs = [1, 2]\nxs.remove(1)\n", "xs = [1, 2]\nxs.sort()\n",
+    "xs = [1, 2]\nxs.reverse()\n", "xs = [1, 2]\nxs.clear()\n", "d = {'a': 1}\nd.update({'b': 2})\n",
+    "d = {'a': 1}\nd.setdefault('b', 2)\n", "d = {'a': 1}\nd.pop('a')\n", "d = {'a': 1}\nd.clear()\n",
+  ]
+  for source in mutators {
+    let got = outcome_under(source, p)
+    assert_true(got.has_prefix("undefined: an attribute of"), msg=source)
+  }
+}
+
+///|
+/// Methods are not first class, and the bare attribute is untouched.
+///
+/// A bound method would be a new kind of `Value`, needing a `repr`, an `eq`
+/// and an ordering the specification does not define -- and it would start
+/// crossing the host boundary, which is an embedding change wearing an
+/// evaluator change's clothes. So the profile adds a rule for the CALL, and
+/// `"a".upper` is the undefined operation it has always been.
+test "a method is a call and not a value" {
+  let p = @profile.methods()
+  assert_eq(outcome_under("print(\"a\".upper())\n", p), "ok: A\n")
+  assert_eq(
+    outcome_under("f = \"a\".upper\n", p),
+    "undefined: an attribute of str",
+  )
+  // A name no table has reads the way a typo has always read.
+  assert_eq(
+    outcome_under("print(\"a\".uper())\n", p),
+    "undefined: an attribute of str",
+  )
+  assert_eq(
+    outcome_under("print((1).bit_length())\n", p),
+    "undefined: an attribute of int",
+  )
+}
+
+///|
+/// The method rule must not have taken the paths that were already there.
+///
+/// `eval_call` looks at an `Attribute` callee before it evaluates it now, so
+/// a module member and a dataclass field reach their own rules through new
+/// code. Both are ordinary PurePy and are what would break silently.
+test "a module member and a field still resolve as they did" {
+  for p in [@profile.core, @profile.methods()] {
+    assert_eq(
+      outcome_under("import math\nprint(math.floor(2.7))\n", p),
+      "ok: 2\n",
+    )
+    assert_eq(
+      outcome_under(
+        "from dataclasses import dataclass\nfrom typing import Any\n" +
+        "@dataclass\nclass P:\n    x: Any\n\np = P(1)\nprint(p.x)\n",
+        p,
+      ),
+      "ok: 1\n",
+    )
+    // A module member that is not there is the CHECKER's answer, before
+    // anything runs -- the one attribute PurePy can decide statically, and
+    // the one the method rule must not have moved to run time.
+    assert_eq(
+      outcome_under("import math\nprint(math.nope())\n", p),
+      "refused: module 'math' has no member 'nope'",
+    )
+    assert_eq(
+      outcome_under(
+        "from dataclasses import dataclass\nfrom typing import Any\n" +
+        "@dataclass\nclass P:\n    x: Any\n\np = P(1)\nprint(p.y())\n",
+        p,
+      ),
+      "aborts: AttributeError",
+    )
+  }
+}

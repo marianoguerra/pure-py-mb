@@ -15,6 +15,8 @@ pub fn by_name(String) -> Profile?
 
 pub let core : Profile
 
+pub fn methods() -> Profile
+
 pub let names : Array[String]
 
 pub fn pending() -> Profile
@@ -29,6 +31,7 @@ pub(all) enum Feature {
   Slicing
   DestructuringAssignment
   ExtraBuiltins
+  BuiltinMethods
 } derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Feature::name(Self) -> String
 

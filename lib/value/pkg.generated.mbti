@@ -20,6 +20,8 @@ pub fn contains(Value, Value) -> Bool?
 
 pub fn contains_elems(Array[Value], Value) -> Bool?
 
+pub fn dict_method(Array[(String, Value)], String, Array[Value]) -> Outcome?
+
 pub fn elems(Value) -> Array[Value]?
 
 pub fn empty_env() -> @hashmap.HashMap[String, Value]
@@ -55,6 +57,10 @@ pub fn iter(Value) -> Array[Value]?
 pub fn order(Value, Value) -> Int?
 
 pub fn override_env(@hashmap.HashMap[String, Value], @hashmap.HashMap[String, Value]) -> @hashmap.HashMap[String, Value]
+
+pub fn seq_method(Array[Value], String, Array[Value]) -> Outcome?
+
+pub fn str_method(String, String, Array[Value]) -> Outcome?
 
 pub fn unop(@ast.UnaryOp, Value) -> Outcome
 

@@ -15,12 +15,21 @@ the oracle for a profile is CPython, and the harness that uses it is this one.
 Three questions per file, and the first is the one that makes this a profile
 test rather than a Python test:
 
-  1. **Still refused by default.** `pure-py check FILE` under `core` gives the
-     exit code and message in `FILE.core.expected`. A profile that leaked into
-     the default would pass questions 2 and 3 and fail this one. (The
-     REFERENCE's answer for these forms is pinned separately, by `conform.py`
-     over the vendored `semantically-valid/pending/` files; this pins that our
-     own corpus is still opt-in.)
+  1. **Does not work by default.** `pure-py run FILE` under `core` FAILS, with
+     the exit code and output in `FILE.core.expected`. A profile that leaked
+     into the default would pass questions 2 and 3 and fail this one.
+
+     The whole pipeline and not just `check`, because where a profile bites
+     depends on what kind of feature it is, and asking the wrong half asks
+     nothing. A syntax feature is refused by the sieve (exit 2); a builtin is a
+     name the checker has never heard of (exit 3); a METHOD is neither -- the
+     checker carries no types, so `s.upper()` type-checks under `core` and is
+     an undefined operation only when it runs (exit 5). Asking `check` would
+     have recorded `ok` for every methods file and quietly asked nothing.
+
+     (The REFERENCE's answer for the pending forms is pinned separately, by
+     `conform.py` over the vendored `semantically-valid/pending/` files; this
+     pins that our own corpus is still opt-in.)
   2. **Accepted under the profile.** `pure-py --profile P check FILE` exits 0,
      so the sieve gate and the checker agree.
   3. **Agrees with CPython.** `pure-py --profile P run FILE` prints what
@@ -45,7 +54,9 @@ profile must never be able to move a PurePy floor.
 `--regen` writes `FILE.expected` from **python3** and `FILE.core.expected`
 from our CLI under `core`. The first is an oracle and the second is a
 snapshot; the docstring above says which is which so a regeneration is not
-mistaken for agreement.
+mistaken for agreement. A regeneration will not record a SUCCESS under `core`:
+a corpus file that works without its profile is not testing a profile, and
+`--regen` says so rather than writing it down.
 """
 
 from __future__ import annotations
@@ -115,11 +126,13 @@ class Report:
 
 
 def check_core(impl: pathlib.Path, src: pathlib.Path) -> str | None:
-    """Question 1: still refused by default."""
+    """Question 1: does not work by default."""
     want_file = src.with_suffix(".core.expected")
     if not want_file.exists():
         return "no .core.expected; run --regen"
-    code, out = run([str(impl), "check", str(src)])
+    code, out = run([str(impl), "run", str(src)])
+    if code == 0:
+        return "runs under core: this file is not testing a profile"
     got = f"{code}: {strip_path(out, src)}"
     want = want_file.read_text().strip()
     return None if got == want else f"under core got {got!r}, want {want!r}"
@@ -171,7 +184,12 @@ def regen(impl: pathlib.Path) -> None:
         if not d.exists():
             continue
         for src in sources(d):
-            code, out = run([str(impl), "check", str(src)])
+            verb = "check" if name == REFUSED else "run"
+            code, out = run([str(impl), verb, str(src)])
+            if code == 0:
+                print(f"{RED}! {src.name}: works under core; "
+                      f"it is not testing a profile{RESET}")
+                continue
             src.with_suffix(".core.expected").write_text(
                 f"{code}: {strip_path(out, src)}\n"
             )
@@ -212,7 +230,7 @@ def main() -> int:
 
     reports = []
     for name in names:
-        opt_in = Report(f"{name}: still opt-in")
+        opt_in = Report(f"{name}: fails under core")
         accepts = Report(f"{name}: accepted")
         agrees = Report(f"{name}: agrees with CPython")
         for src in sources(CORPUS / name):

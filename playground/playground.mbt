@@ -130,7 +130,7 @@ pub fn analyze_with(source : String, profile_name : String) -> String {
       //
       // Do not raise it to the ceiling. A `RangeError` is not catchable and
       // takes the tab; `max_depth` firing is a line of output.
-      let result = @purepy.run_with(tree, host, max_depth=250)
+      let result = @purepy.run_with(tree, host, max_depth=250, profile~)
       let (state, detail) = match result {
         Finished => ("finished", "")
         Terminated(SystemExit(n), _) => ("exited", "status " + n.to_string())

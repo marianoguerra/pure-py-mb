@@ -529,6 +529,26 @@ handed the same one**. They are two calls and nothing can make that automatic;
 give `run` a poorer profile than `check` and a name type-checks and is then not
 there.
 
+`@profile.methods()` is the largest, and adds the non-mutating methods of
+`str`, `list`, `tuple` and `dict`: `",".join(parts)`, `s.split()`,
+`xs.index(x)`, `d.get(k, 0)`.
+
+**It does not make anything mutable.** That is worth saying plainly, because
+the absence of methods is what made a list immutable in the first place: the
+evaluator has no attribute rule for a builtin value, so `xs.append(1)` was
+unreachable rather than forbidden. What the profile adds is a rule for the
+CALL, and only for methods that answer with a NEW value. `append`, `extend`,
+`insert`, `pop`, `remove`, `sort`, `reverse`, `clear`, `update` and
+`setdefault` are absent from the table, and absent is the same undefined
+operation an unknown attribute has always been. It could not be otherwise: a
+`Value` is an immutable enum with no identity, so a mutating method would have
+nothing to write to and nothing that could observe a write.
+
+Methods are also not first class -- `"a".upper()` works and `f = "a".upper`
+stays undefined. A bound method would be a new kind of value, needing a `repr`,
+an `eq` and an ordering the specification does not define, and it would begin
+crossing this boundary: `Host.call` receives `Value`s.
+
 ```mbt check
 ///|
 test "a guest written in a superset" {

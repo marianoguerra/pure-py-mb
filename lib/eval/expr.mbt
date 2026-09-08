@@ -187,19 +187,7 @@ pub async fn Interp::eval_expr(
     // eval-attr-module, eval-attr-object, eval-attr-missing
     Attribute(value~, attr~, ..) =>
       match self.eval_expr(value, env) {
-        Val(Mod(q, members)) =>
-          match members.get(attr) {
-            Some(v) => Val(v)
-            None => Stuck("module '" + q + "' has no member '" + attr + "'")
-          }
-        Val(Obj(_, fields_env)) =>
-          match fields_env.get(attr) {
-            Some(v) => Val(v)
-            None => self.sited(e, Aborts(AttributeError))
-          }
-        // The attributes of a built-in value are undefined: `xs.append` has
-        // no rule, which is what makes list mutation unreachable.
-        Val(v) => Stuck("an attribute of " + v.kind_name())
+        Val(v) => self.attribute_of(v, attr, e)
         other => other
       }
     // eval-subscript
@@ -243,6 +231,59 @@ pub async fn Interp::eval_expr(
     Call(func~, args~, keywords~, ..) =>
       self.eval_call(func, args, keywords, env, e)
     _ => Stuck("expression " + e.kind_name())
+  }
+}
+
+///|
+/// The attribute rule, on a receiver that has already been evaluated.
+///
+/// A function so that a method call can consult it without evaluating the
+/// receiver a second time: `eval_call` has the value in hand by the time it
+/// knows the receiver is a module or an object.
+///
+/// The last case is the one that matters. The attributes of a builtin value
+/// are undefined -- `xs.append` has no rule -- and that is what makes list
+/// mutation unreachable. A profile that adds methods does NOT change it: it
+/// adds a rule for `xs.append()`, the call, and leaves `xs.append` the bare
+/// attribute exactly as undefined as it was.
+fn Interp::attribute_of(
+  self : Interp,
+  v : Value,
+  attr : String,
+  at : @ast.Expr,
+) -> Outcome {
+  match v {
+    Mod(q, members) =>
+      match members.get(attr) {
+        Some(w) => Val(w)
+        None => Stuck("module '" + q + "' has no member '" + attr + "'")
+      }
+    Obj(_, fields_env) =>
+      match fields_env.get(attr) {
+        Some(w) => Val(w)
+        None => self.sited(at, Aborts(AttributeError))
+      }
+    _ => Stuck("an attribute of " + v.kind_name())
+  }
+}
+
+///|
+/// A method call on a builtin value (`Feature::BuiltinMethods`).
+///
+/// The tables live in `lib/value` because they are rules about values; the
+/// dispatch is here because only the evaluator knows a call happened. A name
+/// no table has is the message an unknown attribute already produces, so a
+/// typo under this profile reads the way it reads without one.
+fn call_method(recv : Value, name : String, args : Array[Value]) -> Outcome {
+  let answer = match recv {
+    Str(s) => @value.str_method(s, name, args)
+    List(xs) | Tuple(xs) => @value.seq_method(xs, name, args)
+    Dict(entries) => @value.dict_method(entries, name, args)
+    _ => None
+  }
+  match answer {
+    Some(o) => o
+    None => Stuck("an attribute of " + recv.kind_name())
   }
 }
 
@@ -398,6 +439,62 @@ async fn Interp::eval_call(
       }
     }
     None => {
+      // A method call on a builtin value, under a profile that has them.
+      //
+      // Handled HERE, as a call, rather than by giving `Attribute` a rule that
+      // answers with a bound method. A bound method would be a new kind of
+      // `Value`: it would need a `repr`, an `eq` and an ordering the
+      // specification does not define, and it would start crossing the host
+      // boundary -- `Host.call` receives `Value`s -- which is an embedding
+      // change wearing an evaluator change's clothes. So `"a".upper()` works
+      // and `f = "a".upper` is exactly the `Stuck` it has always been.
+      if self.profile.has(BuiltinMethods) &&
+        func is Attribute(value=recv_e, attr~, ..) {
+        let recv = match self.eval_expr(recv_e, env) {
+          Val(v) => v
+          other => return other
+        }
+        // A module or an object has its own attribute rule and reaches it
+        // unchanged: `math.sqrt(2)` and `p.field(...)` are not method calls on
+        // a builtin, and the receiver is already evaluated, so they finish
+        // here rather than going round again.
+        match recv {
+          Mod(_, _) | ModStub(_) | Obj(_, _) => {
+            let callee = match self.attribute_of(recv, attr, func) {
+              Val(v) => v
+              other => return other
+            }
+            if !keywords.is_empty() {
+              return Stuck(
+                "a keyword argument on a call that is not a constructor",
+              )
+            }
+            let actual = match self.eval_exprs(args, env) {
+              Ok(vs) => vs
+              Err(o) => return o
+            }
+            let o = self.apply(callee, actual)
+            if o is Aborts(_) {
+              self.record(call.span())
+            }
+            return o
+          }
+          _ => {
+            if !keywords.is_empty() {
+              return Stuck("a keyword argument on a method call")
+            }
+            let actual = match self.eval_exprs(args, env) {
+              Ok(vs) => vs
+              Err(o) => return o
+            }
+            let o = call_method(recv, attr, actual)
+            if o is Aborts(_) {
+              self.record(call.span())
+            }
+            return o
+          }
+        }
+      }
       let callee = match self.eval_expr(func, env) {
         Val(v) => v
         other => return other

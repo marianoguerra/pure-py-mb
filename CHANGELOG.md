@@ -2,6 +2,48 @@
 
 ## Unreleased
 
+### `methods`: the builtin types get their non-mutating half
+
+`@profile.methods()` adds `"a".upper()`, `s.split(",")`, `",".join(parts)`,
+`xs.index(x)`, `d.get(k, 0)` and the rest of what `str`, `list`, `tuple` and
+`dict` can be asked without being changed. It is the profile that makes PurePy
+read like Python rather than like a calculator.
+
+**It does not make anything mutable**, and that needed care rather than
+intention. The absence of methods is what made a list immutable in the first
+place: the evaluator had no attribute rule for a builtin value, so
+`xs.append(1)` was unreachable rather than forbidden. So the profile adds a
+rule for the CALL and only for methods that answer with a new value.
+`append`, `extend`, `insert`, `pop`, `remove`, `sort`, `reverse`, `clear`,
+`update` and `setdefault` are absent from `lib/value/method.mbt`, and absent is
+the same undefined operation an unknown attribute has always been. It could not
+be otherwise -- a `Value` is an immutable enum with no identity, so a mutating
+method would have nothing to write to -- but there is a test naming all ten,
+because `sort` and the `sorted` of the profile below are one letter apart.
+
+Methods are not first class either. `"a".upper()` works and `f = "a".upper` is
+the `Stuck` it has always been, because a bound method would be a new kind of
+`Value` -- needing a `repr`, an `eq` and an ordering the specification does not
+define -- and it would start crossing the host boundary, which is an embedding
+change wearing an evaluator change's clothes.
+
+`d.keys()`, `d.values()` and `d.items()` answer with lists rather than views,
+as `range` answers with a list.
+
+### The profile oracle asks the whole pipeline, not just `check`
+
+Question 1 was "still refused by `pure-py check`". For a methods corpus that
+asked nothing: the checker carries no types, so `s.upper()` type-checks under
+`core` and is an undefined operation only when it runs. Every methods file
+recorded `ok` and the question was vacuous.
+
+It asks `pure-py run` now, and requires a NON-ZERO exit -- a corpus file that
+works without its profile is not testing a profile, and `--regen` refuses to
+write that down rather than recording it. Where a profile bites then shows up
+in the expectation itself: exit 4 and `slicing not yet supported (#59)` for a
+syntax feature, exit 3 and `'abs' is not definitely assigned` for a builtin,
+exit 5 and `stuck: an attribute of str` for a method.
+
 ### `builtins`: a profile that adds names and no syntax
 
 `@profile.builtins()` is `pending` plus eighteen builtin functions -- `abs`,

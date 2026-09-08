@@ -70,6 +70,20 @@ pub(all) enum Feature {
   /// where Python would answer by truthiness or by treating a `bool` as a
   /// number, this is undefined, because PurePy is.
   ExtraBuiltins
+  /// The non-mutating methods of `str`, `list`, `tuple` and `dict`:
+  /// `"a".upper()`, `s.split(",")`, `xs.index(x)`, `d.get(k)`.
+  ///
+  /// Methods are not first class. `"a".upper()` is a rule about the CALL, and
+  /// `f = "a".upper` stays the undefined operation it has always been -- a
+  /// bound method would be a new kind of value, needing a `repr`, an `eq` and
+  /// an ordering the specification does not define.
+  ///
+  /// Only methods that answer with a NEW value are here. `append`, `sort`,
+  /// `update` and the rest of Python's mutating half are absent, and absent is
+  /// the same undefined operation an unknown attribute has always been. It
+  /// could not be otherwise: a `Value` is immutable and has no identity, so a
+  /// mutating method has nothing to write to.
+  BuiltinMethods
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
@@ -82,6 +96,7 @@ pub fn Feature::name(self : Feature) -> String {
     Slicing => "slicing"
     DestructuringAssignment => "destructuring-assignment"
     ExtraBuiltins => "extra-builtins"
+    BuiltinMethods => "builtin-methods"
   }
 }
 
@@ -191,18 +206,33 @@ pub fn builtins() -> Profile {
 }
 
 ///|
+/// `builtins`, and the non-mutating methods of the builtin types.
+///
+/// The largest superset here, and the one that makes PurePy read like Python
+/// rather than like a calculator: `",".join(parts)`, `s.split()`,
+/// `d.get(k, 0)`.
+///
+/// It does not make anything mutable. Every method it adds answers with a new
+/// value, because a `Value` is immutable and has no identity, so there is
+/// nothing a mutating one could write to -- see `lib/value/method.mbt`.
+pub fn methods() -> Profile {
+  builtins().adding([BuiltinMethods])
+}
+
+///|
 pub fn by_name(name : String) -> Profile? {
   match name {
     "core" | "purepy" => Some(core)
     "pending" => Some(pending())
     "builtins" => Some(builtins())
+    "methods" => Some(methods())
     _ => None
   }
 }
 
 ///|
 /// Every name `by_name` answers to, in the order they stack.
-pub let names : Array[String] = ["core", "pending", "builtins"]
+pub let names : Array[String] = ["core", "pending", "builtins", "methods"]
 
 ///|
 /// Which named profile accepts a form the sieve refused, if any does.
