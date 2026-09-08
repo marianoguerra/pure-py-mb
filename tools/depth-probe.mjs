@@ -15,6 +15,7 @@
 // guest's own guard answers first and the ceiling is never reached. Set it in
 // `playground/playground.mbt`, rebuild, and put it back afterwards.
 import { readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 
 const wasmPath = process.argv[2]
   ? new URL(process.argv[2], `file://${process.cwd()}/`)
@@ -56,24 +57,44 @@ const holds = (shape, depth) => {
   return true;
 };
 
+// The stack a call gets depends on WHO RESUMED IT, and that is not a
+// syntactic category: the same `await` gives different answers depending on
+// what settled the promise. A promise settled by I/O resumes on the stack of
+// whatever drained the queue after that operation; a timer callback starts
+// near the bottom; module top level is neither. So the sweep is run from
+// three of them and all three are reported.
+const POSITIONS = {
+  'top-level': (fn) => fn(),
+  'after-io': async (fn) => {
+    await readFile(wasmPath);
+    return fn();
+  },
+  'fresh-task': (fn) => new Promise((resolve) => setTimeout(() => resolve(fn()), 0)),
+};
+
 const CEILING = 1 << 16;
-console.log(`${wasmPath.pathname.split('/').pop()}, guest calls before the host stack goes:`);
-for (const shape of Object.keys(SHAPES)) {
-  if (holds(shape, CEILING)) {
-    console.log(`  ${shape.padEnd(13)} > ${CEILING}`);
-    continue;
-  }
+function sweep(shape) {
+  if (holds(shape, CEILING)) return { depth: `>${CEILING}`, wall: 'held' };
   let lo = 0, hi = CEILING;
   while (hi - lo > 1) {
     const mid = (lo + hi) >> 1;
     if (holds(shape, mid)) lo = mid; else hi = mid;
   }
   // Which wall was hit at `hi` decides whether this is a measurement at all.
-  const wall = attempt(shape, hi);
-  const note = wall === 'guarded'
-    ? "  <- the module's own max_depth, not the stack: raise it and rebuild"
-    : wall === 'other'
-      ? '  <- the run did not overflow; check the program, not the stack'
-      : '';
-  console.log(`  ${shape.padEnd(13)} ${lo}${note}`);
+  return { depth: lo, wall: attempt(shape, hi) };
+}
+
+const names = Object.keys(POSITIONS);
+console.log(`${wasmPath.pathname.split('/').pop()}, guest calls before the host stack goes:`);
+console.log(`  ${''.padEnd(13)} ${names.map((n) => n.padStart(11)).join('')}`);
+for (const shape of Object.keys(SHAPES)) {
+  const row = [];
+  let note = '';
+  for (const name of names) {
+    const { depth, wall } = await POSITIONS[name](() => sweep(shape));
+    row.push(String(depth).padStart(11));
+    if (wall === 'guarded') note = "  <- the module's own max_depth, not the stack: raise it and rebuild";
+    else if (wall === 'other') note = '  <- the run did not overflow; check the program, not the stack';
+  }
+  console.log(`  ${shape.padEnd(13)}${row.join('')}${note}`);
 }

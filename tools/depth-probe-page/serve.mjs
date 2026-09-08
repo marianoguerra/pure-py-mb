@@ -91,7 +91,9 @@ server.listen(PORT, () => {
   child.on('error', (e) => { console.error(`${cmd}: ${e.message}`); process.exit(1); });
 });
 
+// Six bisections at up to 65536, five tries each, in a browser. It takes
+// minutes, and a headless browser that has died says nothing at all.
 setTimeout(() => {
-  console.error('no result in three minutes; run without an engine argument and open the URL yourself');
+  console.error('no result in ten minutes; run without an engine argument and open the URL yourself');
   process.exit(1);
-}, 180000);
+}, 600000);

@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased
+
+### The stack position a probe measures from
+
+Documentation and tools only; `lib/` is untouched, so 0.5.0 is still the
+published library.
+
+The depth probes named their columns after a syntax -- `await` against
+`setTimeout` -- and that is the wrong axis. What varies is who RESUMED you: a
+promise settled by I/O resumes on the stack of whatever drained the queue
+after that operation, while a timer callback starts near the bottom. The same
+`await` gives different answers depending on what the promise was waiting for,
+so the columns are named after the resumer now, and each position is
+established from scratch rather than inherited from the last measurement --
+which the browser probe was not doing, leaving two of its three rows comparing
+one position against itself.
+
+With that fixed, in Node over the playground's release module:
+
+| shape | top level | after I/O | fresh task |
+|---|---|---|---|
+| tail | 1487 | 1463 | 1488 |
+| accumulating | 991 | 975 | 992 |
+| nested | 781 | 768 | 781 |
+
+Under two per cent, but consistent in direction and on every shape. Chromium
+152 and Firefox 155 show no gap at all under the corrected harness, and the
+embedder who raised it measures a much larger one on a different module. So
+the guide asks for a measurement from the position the application actually
+calls from, rather than offering a rule.
+
 ## 0.5.0 — 2026-09-08
 
 ### The default recursion limit is per backend

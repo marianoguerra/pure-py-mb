@@ -74,12 +74,18 @@ function sweep(analyze, shape) {
   return wall === 'overflowed' ? lo : `${lo} (${wall})`;
 }
 
-// The same sweep from the shallowest stack a page can arrange. An `await`
-// resumes inside the async function's continuation; a `setTimeout` callback
-// starts a fresh macrotask. V8 and SpiderMonkey do not account for those
-// identically, so a harness that reports one column cannot tell an engine
-// difference from its own mistake.
-const fromTask = (fn) => new Promise((resolve) => setTimeout(() => resolve(fn()), 0));
+// The same sweep from two stack positions. The axis is not `await` against
+// `setTimeout` -- it is WHO RESUMED YOU. A promise settled by the network
+// resumes on the stack of whatever drained the microtask queue after that
+// task, which can be deep; a timer callback starts near the bottom. The same
+// `await` keyword gives different answers depending on what settled the
+// promise, so the positions are named after the resumer and each is
+// re-established from scratch rather than inherited from the last one.
+const afterFetch = async (fn) => {
+  await fetch('probe.html', { cache: 'no-store' });
+  return fn();
+};
+const freshTask = (fn) => new Promise((resolve) => setTimeout(() => resolve(fn()), 0));
 
 const result = { ua: navigator.userAgent };
 try {
@@ -88,9 +94,12 @@ try {
   const analyze = await load('unguarded.wasm');
   result.ceiling = {};
   for (const shape of Object.keys(SHAPES)) {
+    // Order matters only in that neither may inherit the other's position:
+    // `afterFetch` awaits its own fetch, and `freshTask` runs inside the
+    // timer callback rather than after awaiting one.
     result.ceiling[shape] = {
-      await: sweep(analyze, shape),
-      task: await fromTask(() => sweep(analyze, shape)),
+      'after-fetch': await afterFetch(() => sweep(analyze, shape)),
+      'fresh-task': await freshTask(() => sweep(analyze, shape)),
     };
   }
   // And the question that actually decides whether a page survives: does the

@@ -566,13 +566,26 @@ The shapes do not order the way their names suggest and the spread between
 them is a factor of two, which is why the worst one is what a limit should be
 set against.
 
-The probe sweeps each shape from two stack positions -- inside an `async`
-function after an `await`, and from a fresh `setTimeout` callback, the
-shallowest stack a page can arrange -- and reports both. Here they agree to
-within one call everywhere. They are reported anyway, because an embedder
-measuring a different module found them disagreeing on one shape in one
-engine, and a harness with a single column cannot tell an engine's behaviour
-from its own mistake.
+**And "where you call it from" is not a syntactic category.** What varies is
+who RESUMED you: a promise settled by I/O resumes on the stack of whatever
+drained the queue after that operation, while a timer callback starts near the
+bottom. The same `await` keyword gives different answers depending on what the
+promise was waiting for. So the probe sweeps each shape from several positions
+and reports all of them. In Node, over the playground's release module:
+
+| shape | top level | after I/O | fresh task |
+|---|---|---|---|
+| tail | 1487 | 1463 | 1488 |
+| accumulating | 991 | 975 | 992 |
+| nested | 781 | 768 | 781 |
+
+Small -- under two per cent -- but consistent in direction and present on
+every shape. In Chromium 152 and Firefox 155 the same comparison shows no gap
+at all, and an embedder measuring a different module reports a much larger one
+on one shape in one engine. None of that resolves into a rule, which is the
+point: measure from the position your application actually calls from, and
+report more than one so that an engine's behaviour can be told apart from the
+harness's own mistake.
 
 `just depth-probe-browser firefox` is that measurement, and `chromium` the
 other; with no argument it serves the page for an engine neither of us
