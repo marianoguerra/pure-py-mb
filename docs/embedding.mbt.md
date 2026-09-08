@@ -554,13 +554,25 @@ depth-probe` runs it over the page's own.
 
 **And the engine is an axis of its own.** Node is V8, so a Node figure is not
 a browser figure -- it is a Chromium figure. The playground's release module,
-same probe, same five tries per depth:
+same probe, same five tries per depth, in guest calls:
 
-| engine | ceiling |
-|---|---|
-| V8 (Node 24) | 781 |
-| V8 (Chromium 152, headless) | 783 |
-| SpiderMonkey (Firefox 154, headless) | 1966 |
+| engine | tail | accumulating | nested |
+|---|---|---|---|
+| V8 (Node 24) | 1488 | 992 | 781 |
+| V8 (Chromium 152, headless) | 1500 | 987 | 783 |
+| SpiderMonkey (Firefox 155, headless) | 3687 | 2456 | 1965 |
+
+The shapes do not order the way their names suggest and the spread between
+them is a factor of two, which is why the worst one is what a limit should be
+set against.
+
+The probe sweeps each shape from two stack positions -- inside an `async`
+function after an `await`, and from a fresh `setTimeout` callback, the
+shallowest stack a page can arrange -- and reports both. Here they agree to
+within one call everywhere. They are reported anyway, because an embedder
+measuring a different module found them disagreeing on one shape in one
+engine, and a harness with a single column cannot tell an engine's behaviour
+from its own mistake.
 
 `just depth-probe-browser firefox` is that measurement, and `chromium` the
 other; with no argument it serves the page for an engine neither of us

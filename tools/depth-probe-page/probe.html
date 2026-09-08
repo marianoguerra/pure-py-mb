@@ -17,13 +17,19 @@
 <script type="module">
 const out = document.getElementById('out');
 
-// A program that recurses with a small expression in each frame. A frame's
-// cost is its pending expressions and not only its call, so this is the shape
-// that binds; `tools/depth-probe.mjs` sweeps three and they do not order
-// consistently across builds.
-const program = (n) =>
-  `def down(n):\n    if n == 0:\n        return 0\n` +
-  `    return ((down(n - 1) + 1) * 2 - 2) // 2\n\nprint(down(${n}))\n`;
+// Three shapes: a frame's cost is its pending expressions and not only its
+// call, and they do not order consistently across builds or engines.
+const SHAPES = {
+  tail: (n) =>
+    `def down(n):\n    if n == 0:\n        return 0\n` +
+    `    return down(n - 1)\n\nprint(down(${n}))\n`,
+  accumulating: (n) =>
+    `def down(n):\n    if n == 0:\n        return 0\n` +
+    `    return 1 + down(n - 1)\n\nprint(down(${n}))\n`,
+  nested: (n) =>
+    `def down(n):\n    if n == 0:\n        return 0\n` +
+    `    return ((down(n - 1) + 1) * 2 - 2) // 2\n\nprint(down(${n}))\n`,
+};
 
 async function load(name) {
   const mod = await WebAssembly.compile(await (await fetch(name)).arrayBuffer(), {
@@ -36,9 +42,9 @@ async function load(name) {
 // Three outcomes that mean different things: the stack held, the engine threw
 // (the ceiling), or the module's own `max_depth` answered first (not the
 // ceiling at all, and the easiest wrong number to publish).
-function attempt(analyze, depth) {
+function attempt(analyze, shape, depth) {
   try {
-    const r = JSON.parse(analyze(program(depth))).run;
+    const r = JSON.parse(analyze(SHAPES[shape](depth))).run;
     if (r.state === 'finished') return 'held';
     return /call stack deeper than/.test(r.detail || '') ? 'guarded' : 'other';
   } catch {
@@ -48,32 +54,50 @@ function attempt(analyze, depth) {
 
 // Five tries per depth: the stack available to a call depends on what is
 // already on it, so one try is not a measurement.
-const holds = (analyze, depth) => {
-  for (let i = 0; i < 5; i++) if (attempt(analyze, depth) !== 'held') return false;
+const holds = (analyze, shape, depth) => {
+  for (let i = 0; i < 5; i++) if (attempt(analyze, shape, depth) !== 'held') return false;
   return true;
 };
+
+// One bisection, run synchronously so that the stack beneath it is whatever
+// the caller arranged and nothing else.
+function sweep(analyze, shape) {
+  let lo = 0, hi = 1 << 16;
+  if (holds(analyze, shape, hi)) return `>${hi}`;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (holds(analyze, shape, mid)) lo = mid; else hi = mid;
+  }
+  // Which wall was hit decides whether this is a measurement of the engine at
+  // all, or of the module's own guard answering first.
+  const wall = attempt(analyze, shape, hi);
+  return wall === 'overflowed' ? lo : `${lo} (${wall})`;
+}
+
+// The same sweep from the shallowest stack a page can arrange. An `await`
+// resumes inside the async function's continuation; a `setTimeout` callback
+// starts a fresh macrotask. V8 and SpiderMonkey do not account for those
+// identically, so a harness that reports one column cannot tell an engine
+// difference from its own mistake.
+const fromTask = (fn) => new Promise((resolve) => setTimeout(() => resolve(fn()), 0));
 
 const result = { ua: navigator.userAgent };
 try {
   // `unguarded.wasm` must carry a `max_depth` far above anything probed, or
   // the guest answers before the engine does.
   const analyze = await load('unguarded.wasm');
-  let lo = 0, hi = 1 << 16;
-  if (holds(analyze, hi)) {
-    result.ceiling = `>${hi}`;
-  } else {
-    while (hi - lo > 1) {
-      const mid = (lo + hi) >> 1;
-      if (holds(analyze, mid)) lo = mid; else hi = mid;
-    }
-    result.ceiling = lo;
-    result.wall = attempt(analyze, hi);
+  result.ceiling = {};
+  for (const shape of Object.keys(SHAPES)) {
+    result.ceiling[shape] = {
+      await: sweep(analyze, shape),
+      task: await fromTask(() => sweep(analyze, shape)),
+    };
   }
   // And the question that actually decides whether a page survives: does the
   // module we ship hold at its own limit, and report rather than throw past it?
   const shipped = await load('shipped.wasm');
-  result.atOwnLimit = attempt(shipped, 249);
-  result.pastOwnLimit = attempt(shipped, 300);
+  result.atOwnLimit = attempt(shipped, 'nested', 249);
+  result.pastOwnLimit = attempt(shipped, 'nested', 300);
 } catch (e) {
   result.error = String(e);
 }

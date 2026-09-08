@@ -55,13 +55,22 @@ the mistake it is easiest to publish.
 ### And the engine is an axis of its own
 
 Node is V8, so a Node figure is a Chromium figure and not a browser figure.
-Over the playground's release module:
+Over the playground's release module, in guest calls:
 
-| engine | ceiling |
-|---|---|
-| V8 (Node 24) | 781 |
-| V8 (Chromium 152, headless) | 783 |
-| SpiderMonkey (Firefox 154, headless) | 1966 |
+| engine | tail | accumulating | nested |
+|---|---|---|---|
+| V8 (Node 24) | 1488 | 992 | 781 |
+| V8 (Chromium 152, headless) | 1500 | 987 | 783 |
+| SpiderMonkey (Firefox 155, headless) | 3687 | 2456 | 1965 |
+
+Each shape is swept from two stack positions, after an `await` and from a
+fresh `setTimeout` callback, and both are reported. They agree to within one
+call in both engines here; they are reported anyway, because an embedder
+measuring a different module found them disagreeing, and a harness with one
+column cannot tell an engine's behaviour from its own mistake. The same
+module also read 1966 on Firefox 154 before the browser updated mid-session,
+which is the only evidence here about how these numbers move across engine
+versions.
 
 `just depth-probe-browser firefox` is that measurement and `chromium` the
 other, from `tools/depth-probe-page/`: a page that bisects and a server that
