@@ -295,23 +295,36 @@ pub fn Value::kind_name(self : Value) -> String {
 }
 
 ///|
-/// The name a primitive is bound under, which is the name a person knows it by.
+/// What to call a primitive, for an embedder that has to render one.
 ///
 /// A `Prim` has no printable form -- `Value::str` and `Value::repr` answer
 /// `None` for one, because Python prints an address no implementation can
-/// reproduce -- so an embedder that wants to show something in its place has to
-/// name it. Without this it spells all thirty out, which is a fourth table
-/// agreeing with the three this library already keeps in line, and the only one
-/// of the four that upstream cannot test.
+/// reproduce -- so a host that wants to show something in its place has to name
+/// it. Without this it spells all thirty out, which is a fourth table agreeing
+/// with the three this library already keeps in line, and the only one of the
+/// four that upstream cannot test.
 ///
-/// It is tested, in `lib/eval/predefined_wbtest.mbt`: every primitive bound in
-/// a predefined module answers with the name it is bound under, under every
-/// profile. So this is not a fourth table. It is the same table, read back.
+/// **The answer comes from two different places, and the difference is worth
+/// knowing before you render it.**
 ///
-/// `MathFloor` answers `floor` rather than `math.floor`: the name is the
-/// member's, and which module it came from is the environment's business.
-/// `Opaque` and `Foreign` carry theirs, so a host function answers with the
-/// name the host registered it under.
+///   * A primitive the SPECIFICATION defines answers with the name it is bound
+///     under. `MathFloor` is `floor` and not `math.floor`: the name is the
+///     member's, and which module it came from is the environment's business.
+///     `lib/eval/predefined_wbtest.mbt` asserts exactly that, for every
+///     predefined module under every profile -- so this is not a fourth table,
+///     it is the same table read back, and a builtin some later profile adds
+///     fails that test rather than quietly leaving a consumer's list short.
+///
+///   * A primitive the HOST defines answers with the name the host registered,
+///     which is `@value.host_fn`'s argument and NOT necessarily the name it is
+///     bound under. A host is free to bind `record` to `host_fn("host.record")`
+///     -- `docs/embedding.mbt.md` does -- and then this answers `host.record`.
+///     That is the useful answer rather than an accident of it: a qualified
+///     name is the spelling a reader would have to type, and the host is the
+///     only party that knows what qualification means to it.
+///
+/// So a host that wants its own functions rendered a particular way chooses
+/// that when it registers them, not when it renders them.
 pub fn Primitive::name(self : Primitive) -> String {
   match self {
     Print => "print"

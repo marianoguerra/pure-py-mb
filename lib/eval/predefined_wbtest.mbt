@@ -111,14 +111,37 @@ test "a primitive answers with the name it is bound under" {
 }
 
 ///|
-/// A host function answers with the name the host registered it under, which
-/// is the case an embedder actually hits: its own functions are the ones it
-/// has to render.
-test "a host function is named by its host" {
-  match @value.host_fn("search") {
+/// A host function answers with the name the HOST registered, which is not
+/// necessarily the name it is bound under.
+///
+/// This is the one case where `Primitive::name` does not answer the binding
+/// name, and it is deliberate: a host is free to bind `record` in its module
+/// while registering `host.record`, and then a reader is shown the qualified
+/// spelling -- the one they would have to type. `docs/embedding.mbt.md` does
+/// exactly that, and an embedder renders these far more often than it renders
+/// `sum`, so the divergence is pinned rather than left to be discovered.
+test "a host function is named by its host, not by its binding" {
+  let host = Host::new(modules=[
+    {
+      name: "host",
+      members: [
+        // Bound as `record`; registered as `host.record`.
+        ("record", @value.host_fn("host.record")),
+        // Bound and registered alike, which is the ordinary case.
+        ("search", @value.host_fn("search")),
+      ],
+    },
+  ])
+  let members = host.modules.get("host").unwrap()
+  match members.get("record").unwrap() {
+    Prim(p) => assert_eq(p.name(), "host.record")
+    _ => fail("host_fn makes a primitive")
+  }
+  match members.get("search").unwrap() {
     Prim(p) => assert_eq(p.name(), "search")
     _ => fail("host_fn makes a primitive")
   }
+  // An empty name is the host's business too, and answers as given.
   match @value.host_fn("") {
     Prim(p) => assert_eq(p.name(), "")
     _ => fail("host_fn makes a primitive")
