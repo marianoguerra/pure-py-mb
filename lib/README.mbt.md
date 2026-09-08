@@ -49,6 +49,13 @@ import {
 }
 ```
 
+**Upgrading**: the
+[changelog](https://github.com/marianoguerra/pure-py-mb/blob/main/CHANGELOG.md)
+is where a version says what it changed and what it removed. It is not in this
+package -- it belongs to the repository, which also holds the conformance suite
+-- so it is a link rather than a file beside this one. Read it before a minor
+bump: this is a pre-1.0 library and a minor bump is where an API change goes.
+
 ## Parsing
 
 The tree is CPython's, node for node.

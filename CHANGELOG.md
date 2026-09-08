@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### And so do the upgrade notes
+
+Same defect, one document over, found by running the same check twice instead
+of once. This file is in the root module and the root module is never
+published, so a consumer who upgraded 0.6.0 to 0.7.0 met a compile error from
+three removed functions with nothing in the package to explain it. The shipped
+README now links here, in the section about installing, where somebody about to
+change a version number is looking.
+
 ### The two bounds reach a consumer who never opens the repository
 
 `docs/` is in the root module, which is never published, so everything written
