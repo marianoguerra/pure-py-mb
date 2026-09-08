@@ -156,6 +156,7 @@ test "a closure has no printable form, so printing one is undefined" {
   let f = @value.Value::Lam({
     env: env([]),
     params: ["x"],
+    defaults: [],
     body: @ast.Expr::name("x"),
     in_module: "__main__",
   })

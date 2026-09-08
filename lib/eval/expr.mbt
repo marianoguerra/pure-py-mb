@@ -40,6 +40,7 @@ pub async fn Interp::eval_expr(
         Lam({
           env,
           params: args.args.map(fn(p) { p.arg }),
+          defaults: literal_defaults(args),
           body,
           in_module: self.in_module,
         }),
@@ -232,6 +233,60 @@ pub async fn Interp::eval_expr(
       self.eval_call(func, args, keywords, env, e)
     _ => Stuck("expression " + e.kind_name())
   }
+}
+
+///|
+/// The values of a parameter list's default arguments (#56).
+///
+/// Only a literal can be a default -- the sieve refuses anything else under
+/// the profile that opens them, and the profile is what lets one through at
+/// all -- and a literal has no effect and reads no name. So evaluating it here
+/// rather than once when the `def` ran is not observable, which is the whole
+/// reason the restriction is worth having: Python evaluates a default once and
+/// this evaluator has nowhere to put a once, so the feature is drawn where the
+/// difference cannot be seen.
+///
+/// Anything unexpected answers with no defaults, which makes the call an arity
+/// error rather than a wrong answer.
+fn literal_defaults(args : @ast.Arguments) -> Array[Value] {
+  let out : Array[Value] = []
+  for d in args.defaults {
+    match d {
+      Constant(value=Int(n), ..) => out.push(Int(n))
+      Constant(value=Float(x), ..) => out.push(Float(x))
+      Constant(value=Str(t), ..) => out.push(Str(t))
+      Constant(value=Bool(b), ..) => out.push(Bool(b))
+      Constant(value=None, ..) => out.push(Value::None)
+      _ => return []
+    }
+  }
+  out
+}
+
+///|
+/// The arguments a call really binds: what it passed, then defaults for the
+/// parameters it left out.
+///
+/// Defaults cover the LAST parameters, as Python's do. `None` is an arity the
+/// function has no shape for, which the caller turns into the `TypeError`
+/// Python raises.
+fn fill_defaults(
+  arity : Int,
+  defaults : Array[Value],
+  actual : Array[Value],
+) -> Array[Value]? {
+  if actual.length() == arity {
+    return Some(actual)
+  }
+  let required = arity - defaults.length()
+  if actual.length() < required || actual.length() > arity {
+    return None
+  }
+  let out = actual.copy()
+  for i in (actual.length() - required)..<defaults.length() {
+    out.push(defaults[i])
+  }
+  Some(out)
 }
 
 ///|
@@ -542,8 +597,9 @@ async fn Interp::apply_(
 ) -> Outcome noraise {
   match callee {
     Lam(c) => {
-      if c.params.length() != actual.length() {
-        return Aborts(TypeError)
+      let actual = match fill_defaults(c.params.length(), c.defaults, actual) {
+        Some(vs) => vs
+        None => return Aborts(TypeError)
       }
       // The body runs in the module it was WRITTEN in, not the one calling
       // it, so that an abort inside it is reported against the right file.
@@ -557,12 +613,14 @@ async fn Interp::apply_(
     // callee's environment, which is what lets its siblings name each other.
     Def(c) => {
       let d = c.region[c.index]
-      let (params, body) = match d {
-        FunctionDef(args~, body~, ..) => (args.args.map(fn(p) { p.arg }), body)
+      let (params, defaults, body) = match d {
+        FunctionDef(args~, body~, ..) =>
+          (args.args.map(fn(p) { p.arg }), literal_defaults(args), body)
         _ => return Stuck("a definition closure over something else")
       }
-      if params.length() != actual.length() {
-        return Aborts(TypeError)
+      let actual = match fill_defaults(params.length(), defaults, actual) {
+        Some(vs) => vs
+        None => return Aborts(TypeError)
       }
       let region_env = region_bindings(c.env, c.region, c.in_module)
       let inner = bind(region_env, params, actual)

@@ -79,6 +79,7 @@ pub(all) struct DefClosure {
 pub(all) struct LamClosure {
   env : @hashmap.HashMap[String, Value]
   params : Array[String]
+  defaults : Array[Value]
   body : @ast.Expr
   in_module : String
 } derive(@debug.Debug)

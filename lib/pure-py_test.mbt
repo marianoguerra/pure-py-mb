@@ -153,11 +153,14 @@ fn outcome_under(source : String, profile : @profile.Profile) -> String raise {
 /// invents one later".
 test "a pending feature is undefined where PurePy has no rule" {
   let p = @profile.pending()
-  // `is` asks about identity, and a PurePy value has none apart from `None`.
-  // CPython says True for both of these, by interning.
-  assert_true(outcome_under("print(1 is 1)\n", p).has_prefix("undefined: "))
+  // `is` between two things that are not `None` has no answer. Where an
+  // operand is a LITERAL it is visible in the source, and the sieve refuses it
+  // before the run rather than stopping halfway through one -- see
+  // "identity against a literal is refused, not deferred". Where it is not,
+  // there is nothing to see, so it stops when it runs. Still a stop, and never
+  // an invented answer.
   assert_true(
-    outcome_under("print(True is True)\n", p).has_prefix("undefined: "),
+    outcome_under("x = 1\ny = 1\nprint(x is y)\n", p).has_prefix("undefined: "),
   )
   // A slice step of zero is a ValueError in Python, which is not one of the
   // seven terminations PurePy models.
@@ -344,4 +347,57 @@ test "a module member and a field still resolve as they did" {
       "aborts: AttributeError",
     )
   }
+}
+
+///|
+/// A default argument fills the parameters a call left out, and nothing else.
+///
+/// Arity is still checked: a default widens the shapes a call may take, from
+/// one to a range, and outside that range it is the `TypeError` Python raises.
+test "a default argument fills a missing parameter" {
+  let p = @profile.pending()
+  let f = "def f(a, b=2, c=3):\n    return [a, b, c]\n"
+  assert_eq(outcome_under(f + "print(f(1))\n", p), "ok: [1, 2, 3]\n")
+  assert_eq(outcome_under(f + "print(f(1, 9))\n", p), "ok: [1, 9, 3]\n")
+  assert_eq(outcome_under(f + "print(f(1, 9, 8))\n", p), "ok: [1, 9, 8]\n")
+  // Too few for the required parameters, and too many for the whole list.
+  assert_eq(outcome_under(f + "print(f())\n", p), "aborts: TypeError")
+  assert_eq(outcome_under(f + "print(f(1, 2, 3, 4))\n", p), "aborts: TypeError")
+  // A lambda takes the same rule, through the same code.
+  assert_eq(
+    outcome_under("g = lambda x, y=10: x + y\nprint(g(1), g(1, 2))\n", p),
+    "ok: 11 3\n",
+  )
+  assert_eq(
+    outcome_under("g = lambda x, y=10: x\nprint(g())\n", p),
+    "aborts: TypeError",
+  )
+}
+
+///|
+/// A default is a literal, so WHEN it is evaluated cannot be observed.
+///
+/// This is the restriction's whole justification, and it is worth a test that
+/// would fail if the restriction were lifted without the machinery to support
+/// it: a `Def` closure is rebuilt every time one member of its mutual region
+/// is called, so a default with an effect would fire once per call and Python
+/// fires it once per `def`. With literals there is nothing to fire.
+test "a default argument cannot be evaluated at an observable time" {
+  let p = @profile.pending()
+  let source =
+    #|def even(n, step=1):
+    #|    if n == 0:
+    #|        return True
+    #|    return odd(n - step)
+    #|
+    #|def odd(n, step=1):
+    #|    if n == 0:
+    #|        return False
+    #|    return even(n - step)
+    #|
+    #|print(even(4), odd(4), even(3, 3))
+    #|
+  // Sixteen calls through a mutual region, each rebuilding both closures and
+  // each re-reading the same two defaults. Nothing observes the difference.
+  assert_eq(outcome_under(source, p), "ok: True False False\n")
 }

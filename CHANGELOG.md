@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+### Default arguments, where the default is a literal
+
+`def f(x=1)` and `lambda x=1: x` join `pending`, provided the default is a
+literal int, float, str, bool or `None`. Anything else is still #56.
+
+The restriction IS the feature. Python evaluates a default once, when the `def`
+runs, and that is observable for anything with an effect or a free name -- a
+default of `print("hi")` prints once however often `f` is called. This
+evaluator has nowhere to put a once: calling one function of a mutual region
+rebuilds the whole region, so a `Def` closure is remade per call. A general
+default would therefore have to be evaluated at the wrong time. A literal has
+no effect and reads no name, so when it is evaluated cannot be observed, and
+the question stops existing rather than being answered wrongly. The feature is
+drawn exactly at the line where the difference disappears.
+
+Arity is still checked. A default widens the shapes a call may take from one to
+a range, and outside that range it is the `TypeError` Python raises.
+
+### `is` against a literal is refused rather than left to stop
+
+`1 is 1` had no answer and said so when it ran. It says so before it runs now.
+A PurePy value has no identity and `None` is the whole of the exception, so an
+`is` with an operand that is literally not `None` can never mean anything --
+and that is visible in the token, with no types needed. It is `prohibited`
+rather than `not yet`, because nothing is pending and no profile should lift
+it.
+
+Where the operand is not a literal there is nothing to see, so `x is y` still
+stops when it runs. That is still a stop: exit 5, before any value comes back,
+never an invented answer.
+
 ### `methods`: the builtin types get their non-mutating half
 
 `@profile.methods()` adds `"a".upper()`, `s.split(",")`, `",".join(parts)`,

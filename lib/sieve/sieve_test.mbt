@@ -278,6 +278,10 @@ test "every pending feature is gated, not removed" {
     (
       "a, (b, c) = 1, (2, 3)\n", "2: destructuring assignment not yet supported (#54)",
     ),
+    (
+      "def f(x=1):\n    return x\n", "2: default arguments not yet supported (#56)",
+    ),
+    ("f = lambda x=1: x\n", "2: default arguments not yet supported (#56)"),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)
@@ -318,9 +322,6 @@ test "a destructuring target may not assign an item or an attribute" {
 test "the rest of the pending table is still closed" {
   let cases = [
     ("x = f\"{a}\"\n", "2: f-strings not yet supported (#55)"),
-    (
-      "def f(x=1):\n    return x\n", "2: default arguments not yet supported (#56)",
-    ),
     ("def f(*a):\n    return 1\n", "2: *args not yet supported (#57)"),
     ("def f(**a):\n    return 1\n", "2: **kwargs not yet supported (#57)"),
     ("@deco\ndef f():\n    pass\n", "2: decorators not yet supported (#58)"),
@@ -333,6 +334,84 @@ test "the rest of the pending table is still closed" {
   ]
   for c in cases {
     assert_eq(verdict_under(c.0, @profile.pending()), c.1, msg=c.0)
+  }
+}
+
+///|
+/// A default argument must be a LITERAL, and anything else is still #56.
+///
+/// The restriction is the feature. Python evaluates a default once, when the
+/// `def` runs, and that is observable for anything with an effect or a free
+/// name; this evaluator has nowhere to put a once, because calling one member
+/// of a mutual region rebuilds the whole region. A literal has neither, so
+/// when it is evaluated cannot be seen -- and the feature is drawn exactly
+/// where the difference disappears, rather than answered wrongly outside it.
+test "a default argument must be a literal" {
+  let p = @profile.pending()
+  for
+    source in [
+      "def f(x=1):\n    return x\n", "def f(x=1.5):\n    return x\n", "def f(x='a'):\n    return x\n",
+      "def f(x=True):\n    return x\n", "def f(x=None):\n    return x\n", "def f(a, b=1, c='x'):\n    return a\n",
+      "f = lambda x=None: x\n",
+    ] {
+    assert_eq(verdict_under(source, p), "ok", msg=source)
+  }
+  for
+    source in [
+      // A name: which one, and when, is the question this avoids.
+      "y = 1\ndef f(x=y):\n    return x\n",
+      // An effect: Python prints once, at the `def`.
+       "def f(x=print(1)):\n    return x\n",
+      // A container is harmless here, since nothing is mutable -- but the
+      // line is drawn at literals, not at safety, so that it is one line.
+       "def f(x=[]):\n    return x\n", "def f(x=(1, 2)):\n    return x\n",
+      // `-1` is a unary minus applied to a literal, not a literal.
+       "def f(x=-1):\n    return x\n",
+    ] {
+    assert_eq(
+      verdict_under(source, p),
+      "2: a default argument that is not a literal not yet supported (#56)",
+      msg=source,
+    )
+  }
+}
+
+///|
+/// `is` against a literal that is not `None` is refused outright, under every
+/// profile -- including the one that opens `is` in the first place.
+///
+/// `prohibited` and not `not_yet`, because nothing is pending: a PurePy value
+/// has no identity and `None` is the whole of the exception, so there is no
+/// version of `1 is 1` that gets an answer later. It is worth catching here
+/// rather than at run time for the reason PurePy catches anything here --
+/// stopping before the program starts beats stopping in the middle of it --
+/// and it costs no types, only a look at the token.
+test "identity against a literal is refused, not deferred" {
+  // Under `core` the operator itself is refused first, and that message is
+  // the reference's, unchanged.
+  assert_eq(
+    verdict("x = 1 is 1\n"),
+    "2: identity operator (is/is not) not yet supported (#81)",
+  )
+  for name in @profile.names {
+    let p = @profile.by_name(name).unwrap()
+    if !p.has(Identity) {
+      continue
+    }
+    for source in ["x = 1 is 1\n", "x = y is 'a'\n", "x = 2.0 is not y\n"] {
+      assert_eq(
+        verdict_under(source, p),
+        "1: identity against a literal: PurePy values have no identity apart from None",
+        msg=source,
+      )
+    }
+    // `None` on either side is the case the operator exists for.
+    for
+      source in [
+        "x = y is None\n", "x = None is y\n", "x = None is None\n", "x = y is not None\n",
+      ] {
+      assert_eq(verdict_under(source, p), "ok", msg=source)
+    }
   }
 }
 

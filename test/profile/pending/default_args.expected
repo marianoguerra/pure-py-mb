@@ -1,0 +1,8 @@
+['hello', 'a', False, None]
+['hi', 'a', False, None]
+['hi', 'a', True, None]
+['hi', 'a', True, 'x']
+10.0 12.0
+11 3
+[1, 'two'] [9, 'two'] [9, '!']
+True False

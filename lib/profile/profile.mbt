@@ -84,6 +84,19 @@ pub(all) enum Feature {
   /// could not be otherwise: a `Value` is immutable and has no identity, so a
   /// mutating method has nothing to write to.
   BuiltinMethods
+  /// `def f(x=1)` and `lambda x=1: x` (#56), where the default is a LITERAL
+  /// int, float, str, bool or `None`.
+  ///
+  /// The restriction is what makes the feature small. Python evaluates a
+  /// default once, when the `def` is executed, and that is observable: a
+  /// default of `print("hi")` prints once however often `f` is called. This
+  /// evaluator has nowhere to put a once -- calling one function of a mutual
+  /// region rebinds the whole region, so a `Def` closure is rebuilt per call
+  /// -- so a general default would have to be evaluated at the wrong time.
+  /// A literal has no side effect and reads no name, so WHEN it is evaluated
+  /// cannot be observed, and the question goes away instead of being answered
+  /// wrongly. A default that is not a literal stays refused.
+  DefaultArguments
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
@@ -97,6 +110,7 @@ pub fn Feature::name(self : Feature) -> String {
     DestructuringAssignment => "destructuring-assignment"
     ExtraBuiltins => "extra-builtins"
     BuiltinMethods => "builtin-methods"
+    DefaultArguments => "default-arguments"
   }
 }
 
@@ -190,6 +204,7 @@ pub fn pending() -> Profile {
     Identity,
     Slicing,
     DestructuringAssignment,
+    DefaultArguments,
   ])
 }
 
@@ -251,7 +266,8 @@ pub fn accepted_by(feature : String) -> String? {
     | "chained comparison"
     | "identity operator (is/is not)"
     | "slicing"
-    | "destructuring assignment" => Some("pending")
+    | "destructuring assignment"
+    | "default arguments" => Some("pending")
     _ => None
   }
 }

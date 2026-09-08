@@ -80,6 +80,23 @@ fn Sieve::gate(
 }
 
 ///|
+/// The same, for the node kinds CPython gives no position.
+///
+/// `arguments`, `comprehension` and `match_case` carry no `lineno`, and the
+/// reference prints `path: msg` with no line for them; the diagnostic has no
+/// span for the same reason.
+fn Sieve::gate_nowhere(
+  self : Sieve,
+  f : @profile.Feature,
+  feature : String,
+  issue : Int,
+) -> Unit raise {
+  if !self.profile.has(f) {
+    raise not_yet_nowhere(feature, issue)
+  }
+}
+
+///|
 /// A form PurePy excludes on purpose, and the one thing no profile can open.
 ///
 /// There is deliberately no `Sieve::gate` for this the way there is for
@@ -202,7 +219,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     // examined: it is simply "async prohibited".
     FunctionDef(is_async=true, ..) => raise prohibited("async prohibited", span)
     FunctionDef(args~, body~, decorators~, returns~, ..) => {
-      check_arguments(args)
+      self.check_arguments(args)
       if decorators.length() > 0 {
         raise not_yet("decorators", 58, span)
       }
@@ -459,6 +476,22 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       for op in ops {
         if op is (Is | IsNot) {
           self.gate(Identity, "identity operator (is/is not)", 81, span)
+          // `1 is 1` cannot be given an answer and never will be: a PurePy
+          // value has no identity, and `None` is the whole of the exception.
+          // Where an operand is a literal that is not `None`, that is visible
+          // HERE -- no types needed, just the token -- so it is refused before
+          // the program runs rather than left to stop halfway through it.
+          //
+          // `prohibited` and not `not_yet`: this is not waiting on anything.
+          // Which also means no profile lifts it, which is correct.
+          for operand in [left, ..comparators] {
+            if operand is Constant(value~, ..) && !(value is None) {
+              raise prohibited(
+                "identity against a literal: PurePy values have no identity apart from None",
+                operand.span(),
+              )
+            }
+          }
         }
       }
       self.check_expr(left)
@@ -481,7 +514,7 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       self.check_expr(or_else)
     }
     Lambda(args~, body~, ..) => {
-      check_arguments(args)
+      self.check_arguments(args)
       self.check_expr(body)
     }
     List(elts~, ..) | Tuple(elts~, ..) =>
@@ -559,7 +592,7 @@ fn Sieve::check_generator(
 
 ///|
 /// A parameter list. `arguments` carries no position either.
-fn check_arguments(node : @ast.Arguments) -> Unit raise {
+fn Sieve::check_arguments(self : Sieve, node : @ast.Arguments) -> Unit raise {
   if node.vararg is Some(_) {
     raise not_yet_nowhere("*args", 57)
   }
@@ -569,11 +602,33 @@ fn check_arguments(node : @ast.Arguments) -> Unit raise {
   if node.kwonlyargs.length() > 0 {
     raise prohibited_nowhere("keyword-only arguments prohibited")
   }
-  if node.defaults.length() > 0 {
-    raise not_yet_nowhere("default arguments", 56)
-  }
-  if node.kw_defaults.length() > 0 {
-    raise not_yet_nowhere("default arguments", 56)
+  if node.defaults.length() > 0 || node.kw_defaults.length() > 0 {
+    self.gate_nowhere(DefaultArguments, "default arguments", 56)
+    // A default has to be a LITERAL. Python evaluates one once, when the
+    // `def` runs, and that is observable for anything with an effect or a
+    // free name; there is nowhere in this evaluator to put a once, because
+    // calling one function of a mutual region rebuilds the whole region. A
+    // literal has no effect and reads no name, so when it is evaluated cannot
+    // be seen and the question does not arise. Anything else is still #56.
+    for d in node.defaults {
+      match d {
+        Constant(value~, ..) =>
+          if value is (Bytes(_) | Complex(_) | Ellipsis) {
+            // Already prohibited as literals in their own right; refused here
+            // too so the message names the same thing wherever it is written.
+            raise prohibited(
+              "\{value.type_name()} literals prohibited",
+              d.span(),
+            )
+          }
+        _ =>
+          raise not_yet(
+            "a default argument that is not a literal",
+            56,
+            d.span(),
+          )
+      }
+    }
   }
   if node.posonlyargs.length() > 0 {
     raise prohibited_nowhere("positional-only arguments prohibited")

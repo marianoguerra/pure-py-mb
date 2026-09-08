@@ -51,6 +51,11 @@ pub(all) enum Value {
 pub(all) struct LamClosure {
   env : Env
   params : Array[String]
+  /// The values of the trailing parameters' defaults (#56), empty without the
+  /// profile that opens them. They are literals, so evaluating them when the
+  /// closure was made and evaluating them at the call are the same thing --
+  /// which is why they can be values here rather than expressions.
+  defaults : Array[Value]
   body : @ast.Expr
   /// The module whose source `body` was read from.
   in_module : String
