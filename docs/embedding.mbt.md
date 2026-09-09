@@ -357,7 +357,12 @@ ends *or* when it parks, whichever comes first, and says which:
 /// The compiler's own suspension primitive, which a host declares once: it
 /// hands `register` the continuation of the parked run and returns whatever
 /// that continuation is eventually called with.
-async fn[T] suspend(register : ((T) -> Unit) -> Unit) -> T noraise = "%async.suspend"
+///
+/// `nocancel` is part of the declaration and not decoration: this library
+/// never abandons a parked run, so a continuation it hands out is one that
+/// will be called. Copy the line as it stands -- a `%async.suspend` declared
+/// without it does not compile.
+async fn[T] suspend(register : ((T) -> Unit) -> Unit) -> T noraise + nocancel = "%async.suspend"
 ```
 
 ```mbt check

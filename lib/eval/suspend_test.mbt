@@ -7,7 +7,7 @@
 /// value the guest sees, and that a synchronous embedder is told which of the
 /// two things happened -- `Suspended` and a `done` that fires later, or the
 /// answer and a `done` that fired already.
-async fn[T] park(register : ((T) -> Unit) -> Unit) -> T noraise = "%async.suspend"
+async fn[T] park(register : ((T) -> Unit) -> Unit) -> T noraise + nocancel = "%async.suspend"
 
 ///|
 /// A host that never answers on the spot: every call parks, and the
