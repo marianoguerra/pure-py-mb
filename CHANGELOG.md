@@ -1,6 +1,52 @@
 # Changelog
 
-## Unreleased
+## 0.9.1 — 2026-09-09
+
+Nothing in the API moved and no `.mbti` changed. This is the release that
+builds: 0.9.0 does not, against either the current compiler or the current
+`moonbitlang/x`, and a consumer resolving both for the first time gets the
+newest of each. An 0.9.0 consumer upgrades by changing the version.
+
+### `moonbitlang/x` 0.5.4, whose `read_dir` answers with a view
+
+`@fs.read_dir` returned `Array[String]` and returns `ArrayView[String]` since
+x 0.5.2 -- the one break in the three releases between 0.5.1 and 0.5.4 that
+reaches this library. One call site, `program`'s directory walk, which sorts
+what it gets so a `SourceTree` is the same on every platform rather than in
+the filesystem's own order. Sorting is in place and a view is not a place, so
+the listing is copied first.
+
+**This is why the release exists.** `moon.mod` states a minimum and not a pin,
+so pure-py 0.9.0 resolved against x 0.5.2 or later is a type error in a
+library the consumer did not touch, and every new consumer resolves the
+newest. `marianoguerra/error-report` is at 0.1.0 and 0.1.0 is the latest, so
+it does not move.
+
+### `%async.suspend` is declared `nocancel` now
+
+A host that answers later declares the compiler's suspension primitive itself
+-- the embedding guide has the line, and `docs/embedding.mbt.md` is where an
+embedder copies it from. moonc grew cancellation, `%async.suspend` carries a
+`nocancel` effect in its declared type, and the old spelling no longer
+compiles. It is `noraise + nocancel` in the guide and in this library's own
+suspension tests.
+
+`nocancel` is true of this library rather than a formality: it never abandons
+a parked run, so a continuation it hands out is one that will be called. The
+guide says so, beside the line.
+
+Nothing in the shipped package declared one, so an 0.9.0 consumer who is not
+suspending is unaffected. One who is has the fix in a document rather than in
+a package: the guide is in the repository, which is the copy they read.
+
+### What `--deny-warn` now rejects
+
+`Array::new()` is deprecated in favour of `Array(capacity=...)`, and a
+deprecation is an error under the flag CI gates on, so CI had been red at its
+first step since the 2026-09-07 toolchain. Two calls, both wanting an empty
+array, both now `Array()`. Behind that: `lib/token` imported itself for a test
+directory with no test files, scaffolding left by the three-module split,
+unreadable as a warning until the package compiled again.
 
 ### And so do the upgrade notes
 
