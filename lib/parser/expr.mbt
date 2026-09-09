@@ -644,7 +644,7 @@ fn Parser::parse_string_literal(self : Parser) -> Expr raise {
     )
   }
   if any_bytes {
-    let out = Array::new()
+    let out = Array()
     for p in parts {
       for b in p.bytes_value() {
         out.push(b)

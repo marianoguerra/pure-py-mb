@@ -193,7 +193,7 @@ fn unicode_named(name : String, tok : Token) -> String raise {
 /// tokenizer refused the literal otherwise -- but an escape can name any byte.
 pub fn Token::bytes_value(self : Token) -> Bytes raise {
   let text = self.str_value()
-  let out = Array::new()
+  let out = Array()
   for c in text {
     let n = c.to_int()
     if n > 0xFF {

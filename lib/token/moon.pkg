@@ -4,7 +4,3 @@ import {
   "moonbitlang/core/double",
   "moonbitlang/core/string",
 }
-
-import {
-  "marianoguerra/pure-py/token",
-} for "test"
