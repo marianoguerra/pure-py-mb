@@ -20,7 +20,7 @@ import {
   "marianoguerra/error-report@0.1.0",
   "marianoguerra/pure-py@0.9.0",
   "marianoguerra/pure-py-cli@0.9.0",
-  "moonbitlang/x@0.5.1",
+  "moonbitlang/x@0.5.4",
 }
 
 license = "Apache-2.0"

@@ -236,7 +236,9 @@ fn source_tree_names(base_dir : String, entry_path : String) -> Array[String] {
 /// Every `.py` file under a directory, `__pycache__` excluded.
 fn walk_py_files(dir : String) -> Array[String] {
   let out : Array[String] = []
-  let entries = @fs.read_dir(dir) catch { _ => return out }
+  // `read_dir` answers with a view; the sort below is in place, and a
+  // directory's order is the platform's, not one we may rely on.
+  let entries = @fs.read_dir(dir).to_owned() catch { _ => return out }
   @basic.sort_names(entries)
   for e in entries {
     if e == "__pycache__" || e == "." || e == ".." {
