@@ -253,6 +253,150 @@ A host that does not recognise a call gets the default, which is `Stuck`. That
 is the honest answer for anything the semantics does not cover, and it is
 reported the same way as PurePy's own undefined operations.
 
+## Replacing what the specification predefines
+
+`write` is handed text: `str` of each argument, joined by a space, terminated
+by a newline. That is the right shape for a terminal and the wrong one for
+anything that wanted the arguments, because by then they are gone.
+
+`redefined` replaces a member of one of the five predefined modules with a
+value of the host's own. A redefined `print` is an ordinary host function --
+the same `host_fn` a host module holds, answered by the same `call` -- so it is
+handed the values the guest passed and answers `Val`, `Aborts` or `Stuck` like
+any other.
+
+```mbt check
+///|
+test "a redefined print is handed the values" {
+  let captured : Array[Array[@value.Value]] = []
+  let host = @eval.Host::new(
+    call=(_, args) => {
+      captured.push(args)
+      Val(None)
+    },
+    redefined=[("builtins.print", @value.host_fn("cap.print"))],
+  )
+  let modules = Map([
+    ("__main__", @purepy.parse("print(1, \"a\", [2, 3])\nprint()\n")),
+  ])
+  let tree = @purepy.source_tree(modules)
+  // The checker needs to hear nothing about this. A redefinition moves the
+  // VALUE behind a name it already knew, so `print` type-checks as it always
+  // did -- and, since the checker never knew how many arguments `print` took,
+  // a redefined one may take any number.
+  assert_true(@purepy.check_program(tree) is None)
+  inspect(@purepy.run_with(tree, host) is Finished, content="true")
+  // Two calls, with what the guest wrote and nothing added.
+  assert_eq(captured.length(), 2)
+  assert_eq(captured[0].length(), 3)
+  assert_true(captured[0][2] is List(_))
+  assert_eq(captured[1].length(), 0)
+}
+```
+
+A redefinition is a BINDING and not a shadow, which is the whole difference
+between this and prepending `from cap import print` to the guest's source. A
+shadow can be seen around; this cannot.
+
+```mbt check
+///|
+test "every way of naming print reaches the redefinition" {
+  for
+    source in [
+      "print(1)\n", "from builtins import print\nprint(1)\n", "import builtins\nbuiltins.print(1)\n",
+    ] {
+    let seen : Array[Array[@value.Value]] = []
+    let leaked : Array[String] = []
+    let host = @eval.Host::new(
+      // A `write` that records anything reaching the specification's print.
+      write=text => leaked.push(text),
+      call=(_, args) => {
+        seen.push(args)
+        Val(None)
+      },
+      redefined=[("builtins.print", @value.host_fn("cap.print"))],
+    )
+    let modules = Map([("__main__", @purepy.parse(source))])
+    @purepy.run_with(@purepy.source_tree(modules), host) |> ignore
+    assert_eq(seen.length(), 1, msg=source)
+    assert_eq(leaked, [], msg=source)
+  }
+}
+```
+
+It is not only `builtins`. A key is a predefined module's name, a dot, and the
+member within it, so `sys.exit` and `math.sqrt` are the same field -- and a
+host that wants the transcript as well as the values asks `print_text` for the
+text `print` would have written, rather than writing the join a second time and
+drifting from CPython on the first argument that renders unusually.
+
+```mbt check
+///|
+test "sys.exit redefined, and the text print would have written" {
+  let log : Array[String] = []
+  let host = @eval.Host::new(
+    call=(name, args) => {
+      match name {
+        "cap.print" => {
+          log.push("print " + @value.print_text(args).unwrap_or("?"))
+          Val(None)
+        }
+        // The host notes the code and then ends the run the way `sys.exit`
+        // would have ended it.
+        _ =>
+          match args {
+            [Int(n)] => {
+              log.push("exit \{n}")
+              Aborts(SystemExit(n))
+            }
+            _ => Stuck("exit of the wrong shape")
+          }
+      }
+    },
+    redefined=[
+      ("builtins.print", @value.host_fn("cap.print")),
+      ("sys.exit", @value.host_fn("cap.exit")),
+    ],
+  )
+  let modules = Map([
+    ("__main__", @purepy.parse("import sys\nprint(1, [2, 3])\nsys.exit(2)\n")),
+  ])
+  match @purepy.run_with(@purepy.source_tree(modules), host) {
+    Terminated(SystemExit(n), _) => inspect(n, content="2")
+    _ => fail("the host's exit ends the run")
+  }
+  assert_eq(log, ["print 1 [2, 3]\n", "exit 2"])
+}
+```
+
+**A key that names nothing is a silence.** A redefinition is matched by name,
+so `builtins.pirnt` lands in no environment and the run proceeds as though the
+host had said nothing at all. `unknown_redefinitions` is how a host finds out,
+and it takes the profile because a profile decides which names `builtins` has.
+
+```mbt check
+///|
+test "a redefinition that names nothing" {
+  let host = @eval.Host::new(redefined=[
+    ("builtins.print", @value.host_fn("cap.print")),
+    ("builtins.pirnt", @value.host_fn("cap.print")),
+    ("builtins.sorted", @value.host_fn("cap.sorted")),
+  ])
+  // `sorted` is nothing under `core` and a member under a profile that asked.
+  assert_eq(host.unknown_redefinitions(), ["builtins.pirnt", "builtins.sorted"])
+  assert_eq(host.unknown_redefinitions(profile=@profile.builtins()), [
+    "builtins.pirnt",
+  ])
+}
+```
+
+**And the cost, which is real.** This is the one part of a host that changes
+what a program MEANS. Everything else here leaves the language exactly as the
+specification has it, and a run under it is a run CPython is the oracle for; a
+run that redefines a builtin is not. It is the same admission the profiles
+make, for the same reason -- and, as with a profile, the answer is to own the
+divergence rather than to pretend the oracle still applies.
+
 ## Where a run aborted
 
 `Terminated` carries a `Site` beside the termination kind: the module the
@@ -787,6 +931,7 @@ Everything a host can supply, in one place:
 | `sys.argv` | `Host::new(argv=...)` | empty |
 | importable modules | `Host::new(modules=[HostModule::{...}])` | none |
 | what those functions do | `Host::new(call=...)` | `Stuck` |
+| what a predefined name means | `Host::new(redefined=...)` | the specification |
 | the guest's code | `source_tree` or `source_tree_from` | — |
 | what those functions do, later | `Host::new(call=...)` and `run_with(done=...)` | answers now |
 | how deep it may recurse | `max_depth` | 10000, on every backend |

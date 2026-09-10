@@ -147,3 +147,74 @@ test "a host function is named by its host, not by its binding" {
     _ => fail("host_fn makes a primitive")
   }
 }
+
+///|
+/// A redefinition replaces a VALUE and never a name.
+///
+/// This is what lets the checker stay out of it. `@context.predefined_members`
+/// is what a program is checked against, and the checker types every member
+/// `Var(TT)`, so as long as a host only ever moves the value behind a name the
+/// two tables above are still one table -- and a redefined `print` may take
+/// any number of arguments, because nothing ever said how many it took.
+test "a redefinition moves a value and leaves the names alone" {
+  let tree = @program.SourceTree::of(Map([]))
+  let host = Host::new(redefined=[
+    ("builtins.print", @value.host_fn("cap.print")),
+    ("math.pi", @value.Value::Int(3N)),
+  ])
+  let plain = Interp::new(tree)
+  let redefining = Interp::new(tree, host~)
+  for q in @context.predefined_modules {
+    let before = plain.predefined(q).unwrap()
+    let after = redefining.predefined(q).unwrap()
+    let names : Array[String] = []
+    before.each(fn(k, _) { names.push(k) })
+    @basic.sort_names(names)
+    let after_names : Array[String] = []
+    after.each(fn(k, _) { after_names.push(k) })
+    @basic.sort_names(after_names)
+    assert_eq(after_names, names, msg=q)
+  }
+  // And the value behind the name really did move.
+  assert_true(
+    redefining.predefined("builtins").unwrap().get("print")
+    is Some(Prim(Foreign("cap.print"))),
+  )
+  assert_true(redefining.predefined("math").unwrap().get("pi") is Some(Int(_)))
+  // Everything the host did not name is what it was.
+  assert_true(
+    redefining.predefined("builtins").unwrap().get("len") is Some(Prim(Len)),
+  )
+}
+
+///|
+/// A redefinition wins over the entry it replaces, at every length.
+///
+/// `@value.env_of` keeps the FIRST of a duplicate key, not the last, and past
+/// sixty-four entries builds by a different path altogether. So a redefinition
+/// appended to the entries would lose -- and lose differently on either side
+/// of a length nobody would think to test. `Interp::redefine` lays it over
+/// with `override_env` instead, and this is what says so: a `builtins` padded
+/// well past the threshold, with the redefinition still on top.
+test "a redefinition wins past the length where env_of changes shape" {
+  let entries : Array[(String, @value.Value)] = [
+    ("builtins.print", @value.host_fn("cap.print")),
+  ]
+  // Names the checker does not have, which is exactly why they are only ever
+  // padding: no well-formed program can reach one.
+  for i in 0..<80 {
+    entries.push(("builtins.pad\{i}", @value.Value::Int(BigInt::from_int(i))))
+  }
+  let interp = Interp::new(
+    @program.SourceTree::of(Map([])),
+    host=Host::new(redefined=entries),
+    profile=@profile.builtins(),
+  )
+  let env = interp.predefined("builtins").unwrap()
+  let bound : Array[String] = []
+  env.each(fn(k, _) { bound.push(k) })
+  assert_true(bound.length() > 64)
+  assert_true(env.get("print") is Some(Prim(Foreign("cap.print"))))
+  // The profile's own names are untouched by the padding around them.
+  assert_true(env.get("sorted") is Some(Prim(Sorted)))
+}

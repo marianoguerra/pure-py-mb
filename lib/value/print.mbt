@@ -17,6 +17,27 @@ pub fn Value::str(self : Value) -> String? {
 }
 
 ///|
+/// What `print` writes for these arguments: `str` of each, joined by a single
+/// space, and a newline. `None` if one of them has no printable form, which is
+/// the operation `print` leaves undefined.
+///
+/// A host that REDEFINES `builtins.print` is handed the arguments and not the
+/// text, and most of them still want the text for something -- a transcript
+/// beside the values, a fallback for a shape they do not recognise. This is
+/// how they get it without writing the join a second time and drifting from
+/// the oracle on the first argument that renders unusually.
+pub fn print_text(args : Array[Value]) -> String? {
+  let parts : Array[String] = []
+  for a in args {
+    match a.str() {
+      Some(t) => parts.push(t)
+      None => return None
+    }
+  }
+  Some(parts.join(" ") + "\n")
+}
+
+///|
 pub fn Value::repr(self : Value) -> String? {
   match self {
     None => Some("None")

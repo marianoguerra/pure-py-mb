@@ -29,15 +29,29 @@
 ///     that answered late from one that answered at once. See `run_with` for
 ///     how a synchronous embedder drives a run that can park.
 ///
+///   * **Redefinitions.** `redefined` replaces members of the modules the
+///     SPECIFICATION predefines -- `builtins.print`, `sys.exit`, `math.sqrt`
+///     -- with values of the host's own. A redefined `print` is an ordinary
+///     host function: it is handed the arguments the guest passed, as VALUES
+///     rather than as the text `write` would have received, and it answers
+///     like any other.
+///
+///     It is the one part of a host that changes what a program MEANS, and so
+///     it is the one part that costs something: a run that redefines a
+///     builtin is not a run CPython is the oracle for. Everything else here
+///     leaves the language exactly as the specification has it.
+///
 /// Everything else about a run is already a value: the program is a
 /// `SourceTree`, so a host that keeps its guest code in a database, a zip file
 /// or a string never touches the filesystem.
 ///
 /// Note what is NOT here. There is no way for the host to mutate a guest
 /// value, because there is no mutation; no way to install a callback the guest
-/// invokes implicitly, because there are no hooks; and no ambient authority at
-/// all -- a guest can reach exactly the modules the host handed it. A host
-/// that gives no modules gives a program that can only compute and print.
+/// invokes implicitly, because there are no hooks -- a redefinition is not
+/// one, any more than `store.get` is, since the guest calls a NAME and gets
+/// whatever the host bound to it; and no ambient authority at all -- a guest
+/// can reach exactly the modules the host handed it. A host that gives no
+/// modules gives a program that can only compute and print.
 ///
 /// Suspension adds nothing to that list. A parked run is not a concurrent
 /// one: there is one guest, it is at exactly one point, and the host holds
@@ -48,6 +62,9 @@ pub struct Host {
   argv : Array[String]
   modules : Map[String, @value.Env]
   call : async (String, Array[@value.Value]) -> @value.Outcome noraise
+  /// Members of the predefined modules the host has replaced, by the dotted
+  /// name the guest reaches them under.
+  redefined : Map[String, @value.Value]
 }
 
 ///|
@@ -64,8 +81,14 @@ pub(all) struct HostModule {
 /// A host.
 ///
 /// Every part has a default that does nothing observable: output is dropped,
-/// `sys.argv` is empty, no modules are defined, and a foreign call is an
-/// operation the semantics does not cover. A host supplies the parts it wants.
+/// `sys.argv` is empty, no modules are defined, nothing is redefined, and a
+/// foreign call is an operation the semantics does not cover. A host supplies
+/// the parts it wants.
+///
+/// `redefined` is given as `("builtins.print", value)` pairs: a predefined
+/// module's name, a dot, and the member within it. A key naming nothing is
+/// silently no redefinition at all, which is what `unknown_redefinitions` is
+/// for.
 ///
 /// A `call` that answers on the spot is written exactly as it was before it
 /// could do otherwise: a plain function is a valid `async` one.
@@ -81,6 +104,7 @@ pub fn Host::new(
       "a call to the host function '" + name + "', which it does not answer",
     )
   },
+  redefined? : Array[(String, @value.Value)] = [],
 ) -> Host {
   let table : Map[String, @value.Env] = Map([])
   for m in modules {
@@ -91,7 +115,7 @@ pub fn Host::new(
     }
     table[m.name] = @value.env_of(entries)
   }
-  { write, argv, modules: table, call, }
+  { write, argv, modules: table, call, redefined: Map::from_array(redefined), }
 }
 
 ///|
@@ -121,6 +145,40 @@ pub fn Host::module_names(self : Host) -> Array[String] {
   }
   for name, _ in self.modules {
     if !out.contains(name) {
+      out.push(name)
+    }
+  }
+  @basic.sort_names(out)
+  out
+}
+
+///|
+/// The redefinitions that name nothing.
+///
+/// A redefinition is matched by NAME, so a key nobody has -- `builtins.pirnt`,
+/// or a module that is the host's own rather than the specification's -- lands
+/// in no environment and the run proceeds as though the host had said nothing
+/// at all. That is a silence, and this is how a host breaks it: assert this is
+/// empty, once, beside the run.
+///
+/// The profile has to be the one the run will use, because a profile decides
+/// which names `builtins` has -- `builtins.sorted` is nothing under
+/// `@profile.core` and a real member under a profile that asked for it.
+pub fn Host::unknown_redefinitions(
+  self : Host,
+  profile? : @profile.Profile = @profile.core,
+) -> Array[String] {
+  let out : Array[String] = []
+  for name, _ in self.redefined {
+    let known = match name.split_once(".") {
+      Some((q, within)) =>
+        match @context.predefined_members(q.to_owned(), profile~) {
+          Some(names) => names.contains(within.to_owned())
+          None => false
+        }
+      None => false
+    }
+    if !known {
       out.push(name)
     }
   }

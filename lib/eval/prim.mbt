@@ -16,19 +16,16 @@ async fn Interp::call_primitive(
   args : Array[Value],
 ) -> Outcome noraise {
   match p {
-    Print => {
-      let parts : Array[String] = []
-      for a in args {
-        match a.str() {
-          Some(t) => parts.push(t)
-          // A closure, a module or a class has no printable form: Python
-          // prints an address, which no implementation can reproduce.
-          None => return Stuck("printing " + a.kind_name())
+    Print =>
+      match @value.print_text(args) {
+        Some(text) => {
+          self.write(text)
+          Val(None)
         }
+        // A closure, a module or a class has no printable form: Python prints
+        // an address, which no implementation can reproduce.
+        None => Stuck("printing " + unprintable(args))
       }
-      self.write(parts.join(" ") + "\n")
-      Val(None)
-    }
     Len =>
       if args.length() != 1 {
         Aborts(TypeError)
@@ -185,6 +182,21 @@ async fn Interp::call_primitive(
     // other undefined operation, and reported the same way.
     Foreign(name) => (self.host.call)(name, args)
   }
+}
+
+///|
+/// The kind of the first argument `print` could not render, for the message.
+///
+/// A second pass, on the path where the run has already ended, so that the
+/// join itself stays in one place. `print_text` answered `None`, so one of
+/// them is here.
+fn unprintable(args : Array[Value]) -> String {
+  for a in args {
+    if a.str() is None {
+      return a.kind_name()
+    }
+  }
+  "a value with no printable form"
 }
 
 ///|

@@ -1,5 +1,63 @@
 # Changelog
 
+## Unreleased
+
+### A host can redefine what the specification predefines
+
+`Host.write` is handed text: `str` of each argument, joined by a space,
+terminated by a newline. That is the right shape for a terminal and the wrong
+one for anything that wanted the arguments, because by then they are gone. An
+embedder capturing what a guest prints -- a notebook rendering a value, a test
+harness collecting them -- had one way to get at them, and it was a trick:
+prepend `from cap import print` to the guest's body, so a host function shadows
+the binding. It mutates a tree nobody wrote, it needs a module invented for the
+checker, and the guest can see around it -- `from builtins import print`
+reaches the real one, and so does `import builtins`.
+
+`Host::new(redefined=...)` replaces the member instead of shadowing it. A key
+is a predefined module's name, a dot, and the member within it, so `sys.exit`
+and `math.pi` are the same field:
+
+```
+let host = @eval.Host::new(
+  redefined=[("builtins.print", @value.host_fn("cap.print"))],
+  call=(_, args) => { captured.push(args); Val(None) },
+)
+```
+
+**It invents nothing.** The value is an ordinary `host_fn`, answered by the
+`call` a host already writes, so `async`, suspension, `Val`/`Aborts`/`Stuck`
+and an abort sited at the guest's call all work because they already did. There
+is no second way for host code to answer a guest call, and nothing new to
+learn.
+
+**There is one `print`.** `print(1)`, `from builtins import print` and
+`import builtins` all reach the redefinition. That is the whole difference
+between a binding and a shadow, and it is what the trick could not claim.
+
+**The checker hears nothing about it.** Every predefined member is typed `TT`,
+so a redefinition moves the value behind a name the checker already had:
+`check_program` takes no new argument, the goldens do not move, and a redefined
+`print` may take any number of arguments -- nothing ever said how many it took.
+
+**And the cost, which is real.** This is the one part of a host that changes
+what a program MEANS. A run under any other part is a run CPython is the oracle
+for; a run that redefines a builtin is not. It is the admission the profiles
+already make, and the answer is the same: own the divergence rather than
+pretend the oracle still applies.
+
+Two things come with it. `@value.print_text` is the text `print` would have
+written, so a host that wants the transcript beside the values does not write
+the join a second time and drift from CPython on the first argument that
+renders unusually -- `print` itself now calls it, so there is one
+implementation rather than two. And `Host::unknown_redefinitions` answers with
+the keys that name nothing: a redefinition is matched by NAME, so
+`builtins.pirnt` lands in no environment and the run proceeds as though the
+host had said nothing at all. That silence is the failure mode this feature
+has, and it is one assertion to break it.
+
+Asked for by an embedder who was about to shadow `print`.
+
 ## 0.9.1 — 2026-09-09
 
 Nothing in the API moved and no `.mbti` changed. This is the release that

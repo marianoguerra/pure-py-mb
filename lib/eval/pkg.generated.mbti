@@ -38,10 +38,12 @@ pub struct Host {
   argv : Array[String]
   modules : Map[String, @hashmap.HashMap[String, @value.Value]]
   call : async (String, Array[@value.Value]) -> @value.Outcome noraise
+  redefined : Map[String, @value.Value]
 }
 pub fn Host::member_names(Self) -> Map[String, Array[String]]
 pub fn Host::module_names(Self) -> Array[String]
-pub fn Host::new(write? : (String) -> Unit, argv? : Array[String], modules? : Array[HostModule], call? : async (String, Array[@value.Value]) -> @value.Outcome noraise) -> Self
+pub fn Host::new(write? : (String) -> Unit, argv? : Array[String], modules? : Array[HostModule], call? : async (String, Array[@value.Value]) -> @value.Outcome noraise, redefined? : Array[(String, @value.Value)]) -> Self
+pub fn Host::unknown_redefinitions(Self, profile? : @profile.Profile) -> Array[String]
 
 pub(all) struct HostModule {
   name : String

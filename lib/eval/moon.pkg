@@ -13,6 +13,7 @@ import {
 import {
   "marianoguerra/pure-py/eval",
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/value",
 } for "test"

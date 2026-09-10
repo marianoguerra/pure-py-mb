@@ -180,6 +180,9 @@ fn Interp::write(self : Interp, text : String) -> Unit {
 /// `typing` exposes `Any` alone. Figure 2.7 also lists `Callable`; the
 /// reference checker does not, and the signature and the environment have to
 /// agree or a from-import would type-check and then fail to run.
+///
+/// The host's redefinitions are laid over the result and not mixed into it,
+/// for which see `Interp::redefine`.
 pub fn Interp::predefined(self : Interp, q : String) -> Env? {
   let entries : Array[(String, Value)] = [("__name__", Str(q))]
   match q {
@@ -215,7 +218,40 @@ pub fn Interp::predefined(self : Interp, q : String) -> Env? {
     "dataclasses" => entries.push(("dataclass", Prim(Opaque("dataclass"))))
     _ => return None
   }
-  Some(@value.env_of(entries))
+  Some(self.redefine(q, @value.env_of(entries)))
+}
+
+///|
+/// What the host put in `q` instead of what the specification has.
+///
+/// Laid OVER the environment with `override_env`, and never appended to the
+/// entries it was built from. `@value.env_of` resolves a duplicate key by
+/// keeping the FIRST -- `hash_map_from_array_by_add` folds the array backwards
+/// -- and past sixty-four entries builds by another path entirely, so a
+/// redefinition pushed onto `entries` would lose, and lose differently on
+/// either side of a length nobody would think to test. `override_env` is `add`
+/// per key and says what it means.
+///
+/// A key that names no module, or a member the module does not have, binds a
+/// name the checker has never heard of: no well-formed program can reach it,
+/// so it is not an error here. `Host::unknown_redefinitions` is where a host
+/// finds out.
+fn Interp::redefine(self : Interp, q : String, env : Env) -> Env {
+  if self.host.redefined.is_empty() {
+    return env
+  }
+  let mine : Array[(String, Value)] = []
+  for name, v in self.host.redefined {
+    // No predefined module's name has a dot in it, so the first is the one.
+    if name.split_once(".") is Some((mod_name, within)) && mod_name == q {
+      mine.push((within.to_owned(), v))
+    }
+  }
+  if mine.is_empty() {
+    env
+  } else {
+    @value.override_env(env, @value.env_of(mine))
+  }
 }
 
 ///|
