@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.10.0 — 2026-09-10
+
+One addition: `redefined`, on `Host`, which replaces a member of a module
+the specification predefines. Additive, so an 0.9.1 consumer upgrades by
+changing the version.
 
 ### A host can redefine what the specification predefines
 
