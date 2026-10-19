@@ -122,7 +122,7 @@ test "a qualified class name prints by its last segment" {
 }
 
 ///|
-fn map_text(m : Array[(String, Int)]?) -> String {
+fn map_text(m : Array[(String, Int32)]?) -> String {
   match m {
     None => "-"
     Some(entries) =>

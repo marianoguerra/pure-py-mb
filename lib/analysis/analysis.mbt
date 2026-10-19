@@ -66,7 +66,7 @@ pub fn find_import(stmts : Array[@ast.Stmt]) -> @ast.Stmt? {
 /// where an import is not allowed at all.
 pub fn find_nested_import(
   stmts : Array[@ast.Stmt],
-  nested? : Bool = false,
+  nested~ : Bool = false,
 ) -> @ast.Stmt? {
   for s in stmts {
     if nested && is_import(s) {
@@ -629,3 +629,13 @@ pub fn hole_values(parts : Array[@ast.FStringPart]) -> Array[@ast.Expr] {
   }
   out
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Statement with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Statement with Debug::{to_repr}

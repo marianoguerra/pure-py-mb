@@ -13,12 +13,12 @@ import {
 // Types and methods
 pub struct Gen {
   state : @splitmix.RandomState
-  mut budget : Int
+  mut budget : Int32
 }
 pub fn Gen::atom(Self) -> @ast.Expr
-pub fn Gen::below(Self, Int) -> Int
+pub fn Gen::below(Self, Int32) -> Int32
 pub fn Gen::expr(Self) -> @ast.Expr
-pub fn Gen::new(UInt64, budget? : Int) -> Self
+pub fn Gen::new(UInt64, budget? : Int32) -> Self
 pub fn Gen::pattern(Self) -> @ast.Pattern
 pub fn Gen::pick(Self, Array[String]) -> String
 pub fn Gen::stmt(Self, top_level? : Bool) -> @ast.Stmt

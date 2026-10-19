@@ -10,7 +10,7 @@ fn render(source : String, path : String, d : @err.Diagnostic) -> String {
 }
 
 ///|
-fn span(from : Int, to : Int, line : Int, col : Int) -> @basic.Span {
+fn span(from : Int32, to : Int32, line : Int32, col : Int32) -> @basic.Span {
   {
     start: { line, col, offset: from, },
     end: { line, col: col + (to - from), offset: to, },

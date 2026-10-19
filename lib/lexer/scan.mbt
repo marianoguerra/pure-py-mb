@@ -87,7 +87,7 @@ fn Lexer::matches(self : Lexer, s : String) -> Bool {
 
 ///|
 /// Four uppercase hexadecimal digits, as CPython spells a code point.
-fn hex4(n : Int) -> String {
+fn hex4(n : Int32) -> String {
   let digits = "0123456789ABCDEF".to_array()
   let out = StringBuilder()
   let mut started = false
@@ -163,7 +163,7 @@ fn Lexer::scan_digits(
   self : Lexer,
   ok : (Char) -> Bool,
   msg : String,
-  leading_underscore? : Bool = false,
+  leading_underscore~ : Bool = false,
 ) -> Unit raise {
   let mut seen = false
   while !self.at_end() {

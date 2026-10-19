@@ -56,7 +56,7 @@ fn literal_defaults(args : @ast.Arguments) -> Array[Value] {
 /// function has no shape for, which the caller turns into the `TypeError`
 /// Python raises.
 fn fill_defaults(
-  arity : Int,
+  arity : Int32,
   defaults : Array[Value],
   actual : Array[Value],
 ) -> Array[Value]? {

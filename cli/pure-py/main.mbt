@@ -169,7 +169,7 @@ fn read_source(path : String) -> @basic.Source {
 ///|
 /// `tokens FILE`: one token per line, `L:C-L:C KIND text`, the format
 /// `tools/pytokens.py` prints for CPython's `tokenize`.
-fn cmd_tokens(path : String) -> Int {
+fn cmd_tokens(path : String) -> Int32 {
   let src = read_source(path)
   try @lexer.lex(src) catch {
     @err.PurePyError(d) => {
@@ -197,7 +197,7 @@ fn cmd_tokens(path : String) -> Int {
 ///|
 /// `dump FILE [--pos]`: the tree, in the format `tools/pyast_dump.py` prints
 /// for CPython's.
-fn cmd_dump(path : String, pos~ : Bool) -> Int {
+fn cmd_dump(path : String, pos~ : Bool) -> Int32 {
   let src = read_source(path)
   try @parser.parse(src) catch {
     @err.PurePyError(d) => {
@@ -218,7 +218,7 @@ fn cmd_dump(path : String, pos~ : Bool) -> Int {
 
 ///|
 /// `unparse FILE`: the source rebuilt from the tree.
-fn cmd_unparse(path : String) -> Int {
+fn cmd_unparse(path : String) -> Int32 {
   let src = read_source(path)
   try @parser.parse(src) catch {
     @err.PurePyError(d) => {
@@ -246,9 +246,9 @@ fn cmd_unparse(path : String) -> Int {
 /// Several files in one invocation, and the LAST non-zero code wins.
 fn cmd_parse(
   paths : ArrayView[String],
-  profile? : @profile.Profile = @profile.core,
-  asked? : Bool = false,
-) -> Int {
+  profile~ : @profile.Profile = @profile.core,
+  asked~ : Bool = false,
+) -> Int32 {
   let mut code = 0
   for path in paths {
     let src = read_source(path)
@@ -284,9 +284,9 @@ fn cmd_check(
   paths : Array[String],
   format~ : @render.Format,
   color~ : @style.ColorMode,
-  profile? : @profile.Profile = @profile.core,
-  asked? : Bool = false,
-) -> Int {
+  profile~ : @profile.Profile = @profile.core,
+  asked~ : Bool = false,
+) -> Int32 {
   let mut code = 0
   for path in paths {
     let src = read_source(path)
@@ -381,9 +381,9 @@ fn parse_error_options(
 /// no line, because that is what the reference prints.
 fn cmd_check_program(
   path : String,
-  profile? : @profile.Profile = @profile.core,
-  asked? : Bool = false,
-) -> Int {
+  profile~ : @profile.Profile = @profile.core,
+  asked~ : Bool = false,
+) -> Int32 {
   match @check.check_entry(path, profile~) {
     None => {
       println("\{path}: ok")
@@ -411,9 +411,9 @@ fn cmd_check_program(
 fn cmd_run(
   path : String,
   args : ArrayView[String],
-  profile? : @profile.Profile = @profile.core,
-  asked? : Bool = false,
-) -> Int {
+  profile~ : @profile.Profile = @profile.core,
+  asked~ : Bool = false,
+) -> Int32 {
   let argv = [path]
   for a in args {
     argv.push(a)

@@ -19,7 +19,7 @@ pub let soft_keywords : Array[String]
 // Types and methods
 pub(all) enum FStringPiece {
   Text(String)
-  Hole(source~ : String, at~ : Int, conversion~ : Char?, spec~ : String?)
+  Hole(source~ : String, at~ : Int32, conversion~ : Char?, spec~ : String?)
 } derive(Eq, @debug.Debug)
 
 pub(all) enum NumberValue {

@@ -5,8 +5,8 @@
 
 ///|
 priv enum Want {
-  WantStr(Array[Int])
-  WantBytes(Array[Int])
+  WantStr(Array[Int32])
+  WantBytes(Array[Int32])
   Refused
 }
 

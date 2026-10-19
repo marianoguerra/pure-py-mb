@@ -54,7 +54,7 @@ test "by_name answers to every name it publishes" {
 /// between two profiles, so the order is a promise.
 test "features answers in tag order" {
   let p = @profile.core.adding([ChainedBoolean, ChainedBoolean])
-  assert_eq(p.features().map(Feature::name), ["chained-boolean"])
+  assert_eq(p.features().map(@profile.Feature::name), ["chained-boolean"])
 }
 
 ///|

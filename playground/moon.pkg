@@ -20,7 +20,6 @@ import {
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/eval",
   "marianoguerra/pure-py/lexer",
-  "marianoguerra/pure-py/token",
   "marianoguerra/pure-py/value",
 }
 

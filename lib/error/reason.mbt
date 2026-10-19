@@ -15,15 +15,15 @@ pub(all) enum Reason {
   SelfCaptureAssignment(name~ : String)
   CapturedGeneratorVariable(name~ : String)
   UnreachableStatement
-  ConstructorArityMismatch(cls~ : String, expected~ : Int, got~ : Int)
+  ConstructorArityMismatch(cls~ : String, expected~ : Int32, got~ : Int32)
   UnknownConstructorKeyword(cls~ : String, expected_fields~ : Array[String])
-  PatternArityMismatch(cls~ : String, expected~ : Int, got~ : Int)
+  PatternArityMismatch(cls~ : String, expected~ : Int32, got~ : Int32)
   UnknownClassInPattern(cls~ : String)
   UnknownFieldInPattern(cls~ : String, expected_fields~ : Array[String])
   DuplicatePatternKeyword(cls~ : String)
   DuplicateDictKey(key~ : String)
-  NonlinearPattern(index~ : Int)
-  UnreachableCase(index~ : Int, subsumed_by~ : Int)
+  NonlinearPattern(index~ : Int32)
+  UnreachableCase(index~ : Int32, subsumed_by~ : Int32)
   DuplicateMutualName(name~ : String)
   NonTopLevelImport
   ImportAfterStatement
@@ -135,3 +135,13 @@ pub fn Reason::code(self : Reason) -> String {
   }
   "purepy::" + name
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Reason with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Reason with Debug::{to_repr}

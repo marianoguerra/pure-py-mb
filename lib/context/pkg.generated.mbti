@@ -88,6 +88,7 @@ pub(all) enum Status {
   TT
   FF
 } derive(Compare, Eq, @debug.Debug)
+pub fn Status::compare(Self, Self) -> Int32
 
 // Type aliases
 pub type Context = @sorted_map.SortedMap[String, Entry]

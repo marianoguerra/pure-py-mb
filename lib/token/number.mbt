@@ -137,3 +137,13 @@ fn pad_point(s : String) -> String {
   }
   out.to_string()
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend NumberValue with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend NumberValue with Debug::{to_repr}

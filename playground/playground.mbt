@@ -183,7 +183,7 @@ pub fn analyze_with(source : String, profile_name : String) -> String {
 /// recognise falls through to `Stuck`, which is how anything undefined is
 /// reported whether the host or the language left it so.
 fn playground_host(printed : StringBuilder, log : Array[String]) -> @eval.Host {
-  let counters : Map[String, Int] = Map([])
+  let counters : Map[String, Int32] = Map([])
   @eval.Host::new(
     write=fn(text) { printed.write_string(text) },
     argv=["playground.py", "--demo"],

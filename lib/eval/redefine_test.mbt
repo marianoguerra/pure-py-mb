@@ -7,7 +7,7 @@
 fn capturing(
   captured : Array[Array[@value.Value]],
   wrote : Array[String],
-  name? : String = "builtins.print",
+  name~ : String = "builtins.print",
 ) -> @eval.Host {
   @eval.Host::new(
     write=text => wrote.push(text),

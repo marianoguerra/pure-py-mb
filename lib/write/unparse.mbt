@@ -31,7 +31,7 @@ pub fn unparse_expr(e : @ast.Expr) -> String {
 ///|
 priv struct Writer {
   out : StringBuilder
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|
@@ -69,58 +69,58 @@ fn Writer::block(self : Writer, body : Array[@ast.Stmt]) -> Unit {
 // level its position demands.
 
 ///|
-let prec_tuple : Int = 0
+let prec_tuple : Int32 = 0
 
 ///|
-let prec_yield : Int = 1
+let prec_yield : Int32 = 1
 
 ///|
-let prec_test : Int = 2
+let prec_test : Int32 = 2
 
 ///|
-let prec_or : Int = 3
+let prec_or : Int32 = 3
 
 ///|
-let prec_and : Int = 4
+let prec_and : Int32 = 4
 
 ///|
-let prec_not : Int = 5
+let prec_not : Int32 = 5
 
 ///|
-let prec_cmp : Int = 6
+let prec_cmp : Int32 = 6
 
 ///|
-let prec_bor : Int = 7
+let prec_bor : Int32 = 7
 
 ///|
-let prec_bxor : Int = 8
+let prec_bxor : Int32 = 8
 
 ///|
-let prec_band : Int = 9
+let prec_band : Int32 = 9
 
 ///|
-let prec_shift : Int = 10
+let prec_shift : Int32 = 10
 
 ///|
-let prec_arith : Int = 11
+let prec_arith : Int32 = 11
 
 ///|
-let prec_term : Int = 12
+let prec_term : Int32 = 12
 
 ///|
-let prec_factor : Int = 13
+let prec_factor : Int32 = 13
 
 ///|
-let prec_power : Int = 14
+let prec_power : Int32 = 14
 
 ///|
-let prec_await : Int = 15
+let prec_await : Int32 = 15
 
 ///|
-let prec_atom : Int = 16
+let prec_atom : Int32 = 16
 
 ///|
-fn operator_precedence(op : @ast.Operator) -> Int {
+fn operator_precedence(op : @ast.Operator) -> Int32 {
   match op {
     BitOr => prec_bor
     BitXor => prec_bxor
@@ -134,7 +134,7 @@ fn operator_precedence(op : @ast.Operator) -> Int {
 
 ///|
 /// The level at which an expression may be written without brackets.
-fn expr_precedence(e : @ast.Expr) -> Int {
+fn expr_precedence(e : @ast.Expr) -> Int32 {
   match e {
     // A tuple and a generator always carry their own brackets here, so
     // nothing can ever demand more of them.
@@ -156,7 +156,7 @@ fn expr_precedence(e : @ast.Expr) -> Int {
 
 ///|
 /// Write `e`, bracketed if its level is below `demanded`.
-fn Writer::expr(self : Writer, e : @ast.Expr, demanded : Int) -> Unit {
+fn Writer::expr(self : Writer, e : @ast.Expr, demanded : Int32) -> Unit {
   let need = expr_precedence(e) < demanded
   if need {
     self.out.write_string("(")
@@ -500,7 +500,7 @@ fn join(items : Array[String], sep : String) -> String {
 fn Writer::comma_exprs(
   self : Writer,
   items : Array[@ast.Expr],
-  demanded : Int,
+  demanded : Int32,
 ) -> Unit {
   for i, e in items {
     if i > 0 {

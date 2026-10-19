@@ -30,14 +30,14 @@ priv struct Lexer {
   chars : Array[Char]
   tokens : Array[Token]
   /// Code-point index of the next character.
-  mut i : Int
+  mut i : Int32
   /// 1-based line of `i`.
-  mut line : Int
+  mut line : Int32
   /// Code-point index at which the current line begins.
-  mut line_start : Int
+  mut line_start : Int32
   /// Nesting depth of `()`, `[]` and `{}`. Inside brackets a newline is NL,
   /// indentation is not measured and a backslash is not needed.
-  mut depth : Int
+  mut depth : Int32
   /// True when `i` is at the first character of a physical line that is also
   /// the first physical line of a logical line.
   mut fresh_line : Bool
@@ -45,8 +45,8 @@ priv struct Lexer {
   /// end of line, so the next newline closes a logical line.
   mut pending_newline : Bool
   /// The indentation stack, in the two units CPython measures.
-  indents : Array[Int]
-  alt_indents : Array[Int]
+  indents : Array[Int32]
+  alt_indents : Array[Int32]
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn lex(src : Source) -> Array[Token] raise {
 /// Tokenize a string, for a test or a caller with no file.
 pub fn lex_string(
   text : String,
-  name? : String = "<string>",
+  name~ : String = "<string>",
 ) -> Array[Token] raise {
   lex(Source::new(text, name~))
 }
@@ -90,7 +90,7 @@ fn Lexer::at_end(self : Lexer) -> Bool {
 ///|
 /// The character `n` ahead, or `'\u{0}'` past the end -- which never occurs in
 /// a Python source that got this far, and is not a character any rule accepts.
-fn Lexer::peek(self : Lexer, n : Int) -> Char {
+fn Lexer::peek(self : Lexer, n : Int32) -> Char {
   let k = self.i + n
   if k < self.chars.length() {
     self.chars[k]
@@ -110,7 +110,7 @@ fn Lexer::pos(self : Lexer) -> Pos {
 
 ///|
 /// A position on the current line at a given code-point index.
-fn Lexer::pos_at(self : Lexer, index : Int) -> Pos {
+fn Lexer::pos_at(self : Lexer, index : Int32) -> Pos {
   {
     line: self.line,
     col: index - self.line_start,
@@ -121,7 +121,7 @@ fn Lexer::pos_at(self : Lexer, index : Int) -> Pos {
 ///|
 /// A position at column 0 of a line that may not exist -- where the dedents
 /// and the end marker of a finished file sit.
-fn Lexer::pos_line_start(self : Lexer, line : Int) -> Pos {
+fn Lexer::pos_line_start(self : Lexer, line : Int32) -> Pos {
   { line, col: 0, offset: self.src.offset_of(self.chars.length()), }
 }
 
@@ -137,7 +137,7 @@ fn Lexer::bump(self : Lexer) -> Unit {
 
 ///|
 /// The text between two code-point indexes.
-fn Lexer::text(self : Lexer, from : Int, to : Int) -> String {
+fn Lexer::text(self : Lexer, from : Int32, to : Int32) -> String {
   String::from_array(self.chars[from:to])
 }
 
@@ -253,7 +253,7 @@ fn Lexer::line_start_work(self : Lexer) -> Bool raise {
 /// return the index of the first character that is not indentation.
 ///
 /// A form feed resets both counts, as it does in CPython.
-fn Lexer::measure_indent(self : Lexer) -> (Int, Int, Int) {
+fn Lexer::measure_indent(self : Lexer) -> (Int32, Int32, Int32) {
   let mut col = 0
   let mut altcol = 0
   let mut k = self.i
@@ -283,9 +283,9 @@ fn Lexer::measure_indent(self : Lexer) -> (Int, Int, Int) {
 /// calls for, at `next` -- which is where CPython puts both tokens.
 fn Lexer::apply_indent(
   self : Lexer,
-  col : Int,
-  altcol : Int,
-  next : Int,
+  col : Int32,
+  altcol : Int32,
+  next : Int32,
 ) -> Unit raise {
   let top = self.indents[self.indents.length() - 1]
   let alt_top = self.alt_indents[self.alt_indents.length() - 1]

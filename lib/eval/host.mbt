@@ -93,10 +93,10 @@ pub(all) struct HostModule {
 /// A `call` that answers on the spot is written exactly as it was before it
 /// could do otherwise: a plain function is a valid `async` one.
 pub fn Host::new(
-  write? : (String) -> Unit = fn(_) {  },
-  argv? : Array[String] = [],
-  modules? : Array[HostModule] = [],
-  call? : async (String, Array[@value.Value]) -> @value.Outcome noraise = fn(
+  write~ : (String) -> Unit = fn(_) {  },
+  argv~ : Array[String] = [],
+  modules~ : Array[HostModule] = [],
+  call~ : async (String, Array[@value.Value]) -> @value.Outcome noraise = fn(
     name,
     _,
   ) {
@@ -104,7 +104,7 @@ pub fn Host::new(
       "a call to the host function '" + name + "', which it does not answer",
     )
   },
-  redefined? : Array[(String, @value.Value)] = [],
+  redefined~ : Array[(String, @value.Value)] = [],
 ) -> Host {
   let table : Map[String, @value.Env] = Map([])
   for m in modules {
@@ -166,7 +166,7 @@ pub fn Host::module_names(self : Host) -> Array[String] {
 /// `@profile.core` and a real member under a profile that asked for it.
 pub fn Host::unknown_redefinitions(
   self : Host,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> Array[String] {
   let out : Array[String] = []
   for name, _ in self.redefined {

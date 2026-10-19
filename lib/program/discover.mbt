@@ -30,7 +30,7 @@ pub struct SourceTree {
 /// Build a source tree in memory, for a test or a library caller.
 pub fn SourceTree::of(
   modules : Map[String, @ast.Module],
-  base_dir? : String = ".",
+  base_dir~ : String = ".",
 ) -> SourceTree {
   let paths : Map[String, String] = Map([])
   for name in modules.keys() {
@@ -275,8 +275,8 @@ fn walk_py_files(dir : String) -> Array[String] {
 pub fn SourceTree::from_entry(
   entry_path : String,
   predefined~ : Array[String],
-  sweep? : Bool = true,
-  profile? : @profile.Profile = @profile.core,
+  sweep~ : Bool = true,
+  profile~ : @profile.Profile = @profile.core,
 ) -> SourceTree raise {
   let base_dir = parent(entry_path)
   let entry_tree = load(stem(entry_path), base_dir, profile)

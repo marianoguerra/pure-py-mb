@@ -65,7 +65,7 @@ pub(all) struct LamClosure {
 pub(all) struct DefClosure {
   env : Env
   region : Array[@ast.Stmt]
-  index : Int
+  index : Int32
   /// The module whose source `region` was read from.
   in_module : String
 } derive(Debug)
@@ -370,3 +370,53 @@ pub fn Primitive::name(self : Primitive) -> String {
 pub fn host_fn(name : String) -> Value {
   Prim(Foreign(name))
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Value with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend LamClosure with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend DefClosure with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Primitive with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Primitive with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Termination with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Termination with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Outcome with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend StmtResult with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend MatchResult with Debug::{to_repr}

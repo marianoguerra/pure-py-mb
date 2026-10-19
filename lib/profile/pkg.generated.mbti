@@ -35,6 +35,7 @@ pub(all) enum Feature {
   DefaultArguments
   FStrings
 } derive(Compare, Eq, Hash, @debug.Debug)
+pub fn Feature::compare(Self, Self) -> Int32
 pub fn Feature::name(Self) -> String
 
 pub struct Profile {

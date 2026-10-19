@@ -18,7 +18,7 @@
 /// the caller catches.
 pub fn check_module(
   m : @ast.Module,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> Unit raise {
   Sieve::{ profile, }.check_top_level(m.body)
 }
@@ -27,7 +27,7 @@ pub fn check_module(
 /// Whether a module passes the sieve, as a diagnostic rather than a raise.
 pub fn result(
   m : @ast.Module,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   try check_module(m, profile~) catch {
     @err.PurePyError(d) => Some(d)
@@ -71,7 +71,7 @@ fn Sieve::gate(
   self : Sieve,
   f : @profile.Feature,
   feature : String,
-  issue : Int,
+  issue : Int32,
   span : @basic.Span,
 ) -> Unit raise {
   if !self.profile.has(f) {
@@ -89,7 +89,7 @@ fn Sieve::gate_nowhere(
   self : Sieve,
   f : @profile.Feature,
   feature : String,
-  issue : Int,
+  issue : Int32,
 ) -> Unit raise {
   if !self.profile.has(f) {
     raise not_yet_nowhere(feature, issue)
@@ -118,7 +118,7 @@ fn prohibited_nowhere(msg : String) -> @err.PurePyError {
 ///|
 fn not_yet(
   feature : String,
-  issue : Int,
+  issue : Int32,
   span : @basic.Span,
 ) -> @err.PurePyError {
   @err.PurePyError(
@@ -127,7 +127,7 @@ fn not_yet(
 }
 
 ///|
-fn not_yet_nowhere(feature : String, issue : Int) -> @err.PurePyError {
+fn not_yet_nowhere(feature : String, issue : Int32) -> @err.PurePyError {
   @err.PurePyError(@err.Diagnostic::new(NotYetSupported(feature~, issue~)))
 }
 

@@ -8,7 +8,6 @@ import {
 
 import {
   "marianoguerra/pure-py/ast",
-  "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/parser",
 } for "test"

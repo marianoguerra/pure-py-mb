@@ -7,7 +7,7 @@
 /// which of several names a message reports -- the captured-then-reassigned
 /// name, the clashing inherited field, the shadowed submodule, the list of
 /// constructor keywords -- so every such place goes through here.
-pub fn lexical_compare(a : String, b : String) -> Int {
+pub fn lexical_compare(a : String, b : String) -> Int32 {
   let xs = a.to_array()
   let ys = b.to_array()
   let n = if xs.length() < ys.length() { xs.length() } else { ys.length() }

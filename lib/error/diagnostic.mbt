@@ -28,7 +28,7 @@ pub(all) enum Kind {
   /// Exit 1. `syntax.py`'s text, verbatim.
   Prohibited(msg~ : String)
   /// Exit 2, printed as `<feature> not yet supported (#<issue>)`.
-  NotYetSupported(feature~ : String, issue~ : Int)
+  NotYetSupported(feature~ : String, issue~ : Int32)
   /// Exit 3. `check_module.py`'s answer.
   IllFormed(Reason)
   /// Exit 4.
@@ -61,7 +61,7 @@ pub fn Diagnostic::new(
   kind : Kind,
   span? : @basic.Span,
   in_module? : String,
-  related? : Array[(@basic.Span, String)] = [],
+  related~ : Array[(@basic.Span, String)] = [],
 ) -> Diagnostic {
   { kind, span, in_module, related, prefix: None, }
 }
@@ -69,7 +69,7 @@ pub fn Diagnostic::new(
 ///|
 /// The exit code this rejection carries, as `implementation-plan.md` §2.1 and
 /// the reference's scripts fix them.
-pub fn Diagnostic::exit_code(self : Diagnostic) -> Int {
+pub fn Diagnostic::exit_code(self : Diagnostic) -> Int32 {
   match self.kind {
     PythonSyntax(..) | Prohibited(..) => 1
     NotYetSupported(..) => 2
@@ -200,3 +200,43 @@ pub fn Diagnostic::raise_(self : Diagnostic) -> PurePyError {
 pub fn syntax_error(msg : String, span : @basic.Span) -> PurePyError {
   PurePyError(Diagnostic::new(PythonSyntax(msg~), span~))
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Stage with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Stage with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Kind with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Kind with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Diagnostic with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Diagnostic with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend PurePyError with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend PurePyError with Debug::{to_repr}

@@ -207,7 +207,7 @@ fn all_chars(s : String, p : (Char) -> Bool) -> Bool {
 
 ///|
 /// The code-point index of `needle` in `haystack`, or -1.
-fn index_of(haystack : String, needle : String) -> Int {
+fn index_of(haystack : String, needle : String) -> Int32 {
   let hs = haystack.to_array()
   let ns = needle.to_array()
   if ns.is_empty() {
@@ -233,7 +233,7 @@ fn index_of(haystack : String, needle : String) -> Int {
 
 ///|
 /// Non-overlapping occurrences, as Python counts them.
-fn count_of(haystack : String, needle : String) -> Int {
+fn count_of(haystack : String, needle : String) -> Int32 {
   let hs = haystack.to_array()
   let ns = needle.to_array()
   if ns.is_empty() {

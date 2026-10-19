@@ -7,8 +7,8 @@
 /// came from, so a program whose `helper.py` is ill formed says so.
 pub fn check_program(
   tree : @program.SourceTree,
-  host_members? : Map[String, Array[String]] = Map([]),
-  profile? : @profile.Profile = @profile.core,
+  host_members~ : Map[String, Array[String]] = Map([]),
+  profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   let modules = tree.modules_map()
   // The five predefined modules and the host's own have no source, so each
@@ -55,7 +55,7 @@ pub fn check_program(
 /// checker, which reads it for the names `builtins` exports.
 pub fn check_entry(
   entry_path : String,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   let tree = @program.SourceTree::from_entry(
     entry_path,

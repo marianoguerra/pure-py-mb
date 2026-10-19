@@ -10,12 +10,12 @@
 /// use alone: `tools/embed-smoke.sh` builds a program from them and checks
 /// that doing so links neither the lexer, the parser, the checker nor the
 /// evaluator.
-pub fn Expr::name(id : String, ctx? : ExprContext = Load) -> Expr {
+pub fn Expr::name(id : String, ctx~ : ExprContext = Load) -> Expr {
   Name(id~, ctx~, span=@basic.nowhere)
 }
 
 ///|
-pub fn Expr::int(n : Int) -> Expr {
+pub fn Expr::int(n : Int32) -> Expr {
   Constant(value=Int(BigInt::from_int(n)), span=@basic.nowhere)
 }
 
@@ -48,7 +48,7 @@ pub fn Expr::none() -> Expr {
 pub fn Expr::call(
   func : Expr,
   args : Array[Expr],
-  keywords? : Array[Keyword] = [],
+  keywords~ : Array[Keyword] = [],
 ) -> Expr {
   Call(func~, args~, keywords~, span=@basic.nowhere)
 }
@@ -57,7 +57,7 @@ pub fn Expr::call(
 pub fn Expr::attribute(
   value : Expr,
   attr : String,
-  ctx? : ExprContext = Load,
+  ctx~ : ExprContext = Load,
 ) -> Expr {
   Attribute(value~, attr~, ctx~, span=@basic.nowhere)
 }
@@ -66,7 +66,7 @@ pub fn Expr::attribute(
 pub fn Expr::subscript(
   value : Expr,
   slice : Expr,
-  ctx? : ExprContext = Load,
+  ctx~ : ExprContext = Load,
 ) -> Expr {
   Subscript(value~, slice~, ctx~, span=@basic.nowhere)
 }
@@ -102,12 +102,12 @@ pub fn Expr::if_exp(cond : Expr, body : Expr, or_else : Expr) -> Expr {
 }
 
 ///|
-pub fn Expr::list(elts : Array[Expr], ctx? : ExprContext = Load) -> Expr {
+pub fn Expr::list(elts : Array[Expr], ctx~ : ExprContext = Load) -> Expr {
   List(elts~, ctx~, span=@basic.nowhere)
 }
 
 ///|
-pub fn Expr::tuple(elts : Array[Expr], ctx? : ExprContext = Load) -> Expr {
+pub fn Expr::tuple(elts : Array[Expr], ctx~ : ExprContext = Load) -> Expr {
   Tuple(elts~, ctx~, span=@basic.nowhere)
 }
 
@@ -165,7 +165,7 @@ pub fn Stmt::pass() -> Stmt {
 pub fn Stmt::if_(
   cond : Expr,
   body : Array[Stmt],
-  or_else? : Array[Stmt] = [],
+  or_else~ : Array[Stmt] = [],
 ) -> Stmt {
   If(cond~, body~, or_else~, span=@basic.nowhere)
 }
@@ -264,7 +264,7 @@ pub fn Pattern::literal(c : Constant) -> Pattern {
 pub fn Pattern::constr(
   cls : String,
   patterns : Array[Pattern],
-  keywords? : Array[(String, Pattern)] = [],
+  keywords~ : Array[(String, Pattern)] = [],
 ) -> Pattern {
   MatchClass(
     cls=Expr::name(cls),

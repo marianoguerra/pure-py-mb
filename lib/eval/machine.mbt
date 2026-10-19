@@ -70,7 +70,7 @@ priv enum Then {
   /// answer to `kwnames`, in order.
   DoCtor(
     entry~ : @context.ClassEntry,
-    positional~ : Int,
+    positional~ : Int32,
     kwnames~ : Array[String],
     at~ : @ast.Expr
   )
@@ -82,7 +82,7 @@ priv enum Then {
 /// A run of sub-expressions being evaluated left to right.
 priv struct Collect {
   exprs : Array[@ast.Expr]
-  mut next : Int
+  mut next : Int32
   acc : Array[Value]
   env : Env
   then_ : Then
@@ -93,7 +93,7 @@ priv struct Collect {
 priv struct DictJob {
   keys : Array[@ast.Expr?]
   values : Array[@ast.Expr]
-  mut next : Int
+  mut next : Int32
   /// The key of the pair being built, and whether it has one yet. A flag and
   /// not a sentinel, because `{"": 1}` is a dictionary with an empty key.
   mut key : String
@@ -109,7 +109,7 @@ priv struct DictJob {
 priv struct SliceJob {
   obj : Value
   bounds : Array[@ast.Expr?]
-  mut next : Int
+  mut next : Int32
   acc : Array[Value?]
   env : Env
   at : @ast.Expr
@@ -124,7 +124,7 @@ priv struct SliceJob {
 /// what keeps a function body's locals out of its caller.
 priv struct SeqJob {
   items : ArrayView[@analysis.Statement]
-  mut next : Int
+  mut next : Int32
   mut env : Env
   mut delta : Env
 }
@@ -135,7 +135,7 @@ priv struct SeqJob {
 priv struct CompLevel {
   name : String
   items : Array[Value]
-  mut index : Int
+  mut index : Int32
   outer : Env
 }
 
@@ -169,7 +169,7 @@ priv enum Frame {
   BinRight(op~ : @ast.Operator, right~ : @ast.Expr, env~ : Env, at~ : @ast.Expr)
   BinApply(op~ : @ast.Operator, left~ : Value, at~ : @ast.Expr)
   /// `and` and `or`: the operand that decides stops the run.
-  Bool(op~ : @ast.BoolOp, values~ : Array[@ast.Expr], next~ : Int, env~ : Env)
+  Bool(op~ : @ast.BoolOp, values~ : Array[@ast.Expr], next~ : Int32, env~ : Env)
   /// A comparison chain, waiting for its left operand.
   CmpLeft(
     ops~ : Array[@ast.CmpOp],
@@ -182,7 +182,7 @@ priv enum Frame {
   CmpRight(
     ops~ : Array[@ast.CmpOp],
     comparators~ : Array[@ast.Expr],
-    next~ : Int,
+    next~ : Int32,
     left~ : Value,
     env~ : Env,
     at~ : @ast.Expr
@@ -198,7 +198,7 @@ priv enum Frame {
   Slice(SliceJob)
   FString(
     parts~ : Array[@ast.FStringPart],
-    next~ : Int,
+    next~ : Int32,
     acc~ : StringBuilder,
     env~ : Env
   )
@@ -219,7 +219,7 @@ priv enum Frame {
   )
   // -- comprehensions -----------------------------------------------------
   CompIter(CompJob)
-  CompGuard(job~ : CompJob, index~ : Int)
+  CompGuard(job~ : CompJob, index~ : Int32)
   CompFirst(CompJob)
   CompSecond(CompJob)
   // -- statements ---------------------------------------------------------
@@ -593,7 +593,7 @@ fn step_dict(job : DictJob, stack : Array[Frame]) -> Ctl {
 /// a hole is evaluated.
 fn step_fstring(
   parts : Array[@ast.FStringPart],
-  from : Int,
+  from : Int32,
   acc : StringBuilder,
   env : Env,
   stack : Array[Frame],
@@ -778,7 +778,7 @@ async fn Interp::enter(
 /// The no-defaults path is the one every PurePy program takes and costs
 /// nothing: no allocation, no walk.
 fn arguments(
-  arity : Int,
+  arity : Int32,
   defaults : Array[Value],
   actual : Array[Value],
 ) -> Array[Value]? {
@@ -1326,7 +1326,7 @@ fn comp_enter(job : CompJob, stack : Array[Frame]) -> Ctl {
 
 ///|
 /// The guards of the innermost level, in order.
-fn comp_guard_from(job : CompJob, from : Int, stack : Array[Frame]) -> Ctl {
+fn comp_guard_from(job : CompJob, from : Int32, stack : Array[Frame]) -> Ctl {
   let g = job.generators[job.levels.length() - 1]
   if from < g.ifs.length() {
     stack.push(CompGuard(job~, index=from))
@@ -1339,7 +1339,7 @@ fn comp_guard_from(job : CompJob, from : Int, stack : Array[Frame]) -> Ctl {
 /// A guard answered.
 fn comp_guard(
   job : CompJob,
-  index : Int,
+  index : Int32,
   v : Value,
   stack : Array[Frame],
 ) -> Ctl {

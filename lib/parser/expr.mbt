@@ -311,7 +311,7 @@ fn binary_levels() -> Array[Array[(String, @ast.Operator)]] {
 }
 
 ///|
-fn Parser::parse_binary(self : Parser, level : Int) -> Expr raise {
+fn Parser::parse_binary(self : Parser, level : Int32) -> Expr raise {
   let levels = binary_levels()
   if level >= levels.length() {
     return self.parse_unary()
@@ -867,7 +867,7 @@ fn Parser::parse_comprehension_condition(self : Parser) -> Expr raise {
 /// A parameter list, for `def` (with annotations) or `lambda` (without).
 fn Parser::parse_parameters(
   self : Parser,
-  annotations? : Bool = true,
+  annotations~ : Bool = true,
 ) -> @ast.Arguments raise {
   let posonlyargs : Array[@ast.Arg] = []
   let args : Array[@ast.Arg] = []
@@ -1009,7 +1009,7 @@ fn Parser::parse_hole(
   self : Parser,
   source : String,
   tok : @token.Token,
-  at : Int,
+  at : Int32,
 ) -> @ast.Expr raise {
   // The hole begins `at` code points into the token, and the token begins at
   // its span. Everything before it becomes whitespace -- a newline stays a

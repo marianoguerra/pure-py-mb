@@ -65,7 +65,7 @@ pub fn is_printable(c : Char) -> Bool {
 
 ///|
 /// `\xNN`, `\uNNNN` or `\UNNNNNNNN`, by size, lowercase as Python writes them.
-fn escape_code_point(n : Int) -> String {
+fn escape_code_point(n : Int32) -> String {
   if n < 0x100 {
     "\\x" + hex_digits(n, 2)
   } else if n < 0x10000 {
@@ -77,7 +77,7 @@ fn escape_code_point(n : Int) -> String {
 
 ///|
 /// `n` in lowercase hexadecimal, zero-padded to `width`.
-fn hex_digits(n : Int, width : Int) -> String {
+fn hex_digits(n : Int32, width : Int32) -> String {
   let digits = "0123456789abcdef".to_array()
   let out = StringBuilder()
   for k = width - 1; k >= 0; k = k - 1 {
@@ -132,6 +132,6 @@ pub fn py_bytes_repr(b : Bytes) -> String {
 
 ///|
 /// Four lowercase hexadecimal digits, for a JSON escape or a code point.
-pub fn hex4(n : Int) -> String {
+pub fn hex4(n : Int32) -> String {
   hex_digits(n, 4)
 }

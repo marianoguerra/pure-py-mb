@@ -128,7 +128,7 @@ pub fn Expr::compare(Self, CmpOp, Self) -> Self
 pub fn Expr::dict(Array[(Self, Self)]) -> Self
 pub fn Expr::float(Double) -> Self
 pub fn Expr::if_exp(Self, Self, Self) -> Self
-pub fn Expr::int(Int) -> Self
+pub fn Expr::int(Int32) -> Self
 pub fn Expr::kind_name(Self) -> String
 pub fn Expr::lambda(Array[String], Self) -> Self
 pub fn Expr::list(Array[Self], ctx? : ExprContext) -> Self
@@ -229,7 +229,7 @@ pub(all) enum Stmt {
   Try(body~ : Array[Stmt], handlers~ : Array[ExceptHandler], or_else~ : Array[Stmt], finalbody~ : Array[Stmt], is_star~ : Bool, span~ : @basic.Span)
   Assert(cond~ : Expr, msg~ : Expr?, span~ : @basic.Span)
   Import(names~ : Array[Alias], span~ : @basic.Span)
-  ImportFrom(module_name~ : String?, names~ : Array[Alias], level~ : Int, span~ : @basic.Span)
+  ImportFrom(module_name~ : String?, names~ : Array[Alias], level~ : Int32, span~ : @basic.Span)
   Global(names~ : Array[String], span~ : @basic.Span)
   Nonlocal(names~ : Array[String], span~ : @basic.Span)
   ExprStmt(value~ : Expr, span~ : @basic.Span)

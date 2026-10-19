@@ -25,12 +25,12 @@ priv struct Parser {
   /// span covers, which an f-string keeps verbatim until #55 parses its parts.
   src : Source
   tokens : Array[Token]
-  mut i : Int
+  mut i : Int32
   /// How deep the recursion is. A recursive-descent parser turns nesting in
   /// the input into nesting on the machine stack, and `((((...))))` with
   /// enough brackets is a segmentation fault rather than an answer. This
   /// makes it a syntax error instead, as CPython's own bracket limit does.
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|
@@ -40,7 +40,7 @@ priv struct Parser {
 /// compiler has its own recursion limit; this is one number for both, chosen
 /// an order of magnitude above anything a person writes and two below what
 /// this parser's stack can take.
-let max_depth : Int = 500
+let max_depth : Int32 = 500
 
 ///|
 /// Parse a source into a module. Raises `PurePyError` with a
@@ -62,7 +62,7 @@ pub fn parse(src : Source) -> Module raise {
 }
 
 ///|
-pub fn parse_string(text : String, name? : String = "<string>") -> Module raise {
+pub fn parse_string(text : String, name~ : String = "<string>") -> Module raise {
   parse(Source::new(text, name~))
 }
 
@@ -79,7 +79,7 @@ fn Parser::peek(self : Parser) -> Token {
 }
 
 ///|
-fn Parser::peek_at(self : Parser, n : Int) -> Token {
+fn Parser::peek_at(self : Parser, n : Int32) -> Token {
   let k = self.i + n
   self.tokens[if k < self.tokens.length() {
     k

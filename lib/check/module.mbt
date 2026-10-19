@@ -39,8 +39,8 @@ pub struct Program {
 /// A program from a map of module name to parsed module.
 pub fn Program::new(
   modules : Map[String, @ast.Module],
-  host_members? : Map[String, Array[String]] = Map([]),
-  profile? : @profile.Profile = @profile.core,
+  host_members~ : Map[String, Array[String]] = Map([]),
+  profile~ : @profile.Profile = @profile.core,
 ) -> Program {
   { modules, host_members, profile, signatures: Map([]), loading: [], }
 }
@@ -51,8 +51,8 @@ pub fn Program::new(
 /// builds, plus whatever an embedder added.
 pub fn Program::single(
   m : @ast.Module,
-  host_members? : Map[String, Array[String]] = Map([]),
-  profile? : @profile.Profile = @profile.core,
+  host_members~ : Map[String, Array[String]] = Map([]),
+  profile~ : @profile.Profile = @profile.core,
 ) -> Program {
   let modules : Map[String, @ast.Module] = Map([])
   for p in @context.predefined_modules {
@@ -443,8 +443,8 @@ fn signature(
 /// importable -- what `pure-py check FILE` does.
 pub fn check_single(
   m : @ast.Module,
-  host_members? : Map[String, Array[String]] = Map([]),
-  profile? : @profile.Profile = @profile.core,
+  host_members~ : Map[String, Array[String]] = Map([]),
+  profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   let program = Program::single(m, host_members~, profile~)
   try check_module(program, "__main__") |> ignore catch {

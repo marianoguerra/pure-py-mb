@@ -297,10 +297,10 @@ pub async fn Interp::run(self : Interp) -> RunResult noraise {
 /// and the result is never `Suspended`. The transcript is complete.
 pub fn run_program(
   tree : @program.SourceTree,
-  argv? : Array[String] = [],
-  max_depth? : Int = default_max_depth,
-  profile? : @profile.Profile = @profile.core,
-  max_steps? : Int = default_max_steps,
+  argv~ : Array[String] = [],
+  max_depth~ : Int32 = default_max_depth,
+  profile~ : @profile.Profile = @profile.core,
+  max_steps~ : Int32 = default_max_steps,
 ) -> (String, RunResult) {
   let sink = Sink::new()
   let host = Host::new(write=fn(text) { sink.write(text) }, argv~)
@@ -335,10 +335,10 @@ pub fn run_program(
 pub fn run_with(
   tree : @program.SourceTree,
   host : Host,
-  max_depth? : Int = default_max_depth,
-  done? : (RunResult) -> Unit = fn(_) {  },
-  profile? : @profile.Profile = @profile.core,
-  max_steps? : Int = default_max_steps,
+  max_depth~ : Int32 = default_max_depth,
+  done~ : (RunResult) -> Unit = fn(_) {  },
+  profile~ : @profile.Profile = @profile.core,
+  max_steps~ : Int32 = default_max_steps,
 ) -> RunResult {
   let interp = Interp::new(tree, host~, max_depth~, profile~, max_steps~)
   let mut answer : RunResult = Suspended
@@ -358,3 +358,8 @@ pub fn run_with(
 /// whoever took its continuation calls it, on whatever stack that happens to
 /// be -- so the work may still be running after this has returned.
 fn run_async(work : async () -> Unit noraise) -> Unit = "%async.run"
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend RunResult with Debug::{to_repr}

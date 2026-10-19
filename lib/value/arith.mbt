@@ -180,7 +180,7 @@ let too_long : Outcome = Stuck("a repetition count too large to build")
 ///|
 /// A repetition count as a length: Python treats every non-positive count as
 /// zero, and `None` where the count is too large to be one.
-fn repeat_count(n : BigInt) -> Int? {
+fn repeat_count(n : BigInt) -> Int32? {
   if n <= 0N {
     Some(0)
   } else if n > BigInt::from_int(@int.MAX_VALUE) {
@@ -203,7 +203,7 @@ fn concat(x : Array[Value], y : Array[Value]) -> Array[Value] {
 }
 
 ///|
-fn repeat(xs : Array[Value], k : Int) -> Array[Value] {
+fn repeat(xs : Array[Value], k : Int32) -> Array[Value] {
   let out : Array[Value] = []
   for _ in 0..<k {
     for v in xs {
@@ -536,7 +536,7 @@ fn numeric_nan(a : Value, b : Value) -> Bool {
 /// Numbers with numbers, strings by code point, lists with lists and tuples
 /// with tuples lexicographically. A `nan` anywhere makes the pair unordered,
 /// which is how Python's comparisons all come out False.
-pub fn order(a : Value, b : Value) -> Int? {
+pub fn order(a : Value, b : Value) -> Int32? {
   match (a, b) {
     (Int(x), Int(y)) => Some(x.compare(y))
     (Float(x), Float(y)) =>
@@ -563,7 +563,7 @@ pub fn order(a : Value, b : Value) -> Int? {
 
 ///|
 /// An integer against a float, exactly.
-fn int_float_order(n : BigInt, d : Double) -> Int? {
+fn int_float_order(n : BigInt, d : Double) -> Int32? {
   if d.is_nan() {
     return None
   }
@@ -593,7 +593,7 @@ fn int_float_order(n : BigInt, d : Double) -> Int? {
 ///|
 /// Lexicographic order over two sequences, as Python compares them: the first
 /// unequal pair decides, and otherwise the shorter is smaller.
-fn order_elems(xs : Array[Value], ys : Array[Value]) -> Int? {
+fn order_elems(xs : Array[Value], ys : Array[Value]) -> Int32? {
   let n = if xs.length() < ys.length() { xs.length() } else { ys.length() }
   for i in 0..<n {
     match eq(xs[i], ys[i]) {

@@ -315,7 +315,7 @@ pub fn getslice(v : Value, bounds : SliceBounds) -> Outcome {
     Some(_) => return Aborts(TypeError)
   }
   let len = xs.length()
-  let bound = fn(b : Value?, if_absent : Int) -> Int? {
+  let bound = fn(b : Value?, if_absent : Int32) -> Int32? {
     match b {
       None | Some(Value::None) => Some(if_absent)
       Some(Int(n)) => {

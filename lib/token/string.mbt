@@ -26,7 +26,7 @@ pub fn Token::str_value(self : Token) -> String raise {
 ///|
 /// The text between the quotes: drop the prefix, then one or three quotes at
 /// each end.
-fn strip_quotes(text : String, prefix_len : Int, tok : Token) -> String raise {
+fn strip_quotes(text : String, prefix_len : Int32, tok : Token) -> String raise {
   let cs = text.to_array()
   if cs.length() < prefix_len + 2 {
     raise @err.syntax_error("malformed string literal", tok.span)
@@ -117,11 +117,11 @@ fn decode_escapes(s : String, tok : Token) -> String raise {
 /// Exactly `width` hexadecimal digits, as Python demands.
 fn hex_escape(
   cs : Array[Char],
-  from : Int,
-  width : Int,
+  from : Int32,
+  width : Int32,
   tok : Token,
   what : String,
-) -> (Int, Int) raise {
+) -> (Int32, Int32) raise {
   let mut n = 0
   for k = 0; k < width; k = k + 1 {
     let i = from + k
@@ -137,7 +137,7 @@ fn hex_escape(
 }
 
 ///|
-fn hex_value(c : Char) -> Int {
+fn hex_value(c : Char) -> Int32 {
   if c.is_ascii_digit() {
     c.to_int() - '0'.to_int()
   } else {
@@ -149,9 +149,9 @@ fn hex_value(c : Char) -> Int {
 /// `\N{LATIN SMALL LETTER A}`: the name between the braces.
 fn named_escape(
   cs : Array[Char],
-  from : Int,
+  from : Int32,
   tok : Token,
-) -> (String, Int) raise {
+) -> (String, Int32) raise {
   if from >= cs.length() || cs[from] != '{' {
     raise @err.syntax_error("malformed \\N character escape", tok.span)
   }
@@ -224,7 +224,7 @@ pub fn Token::bytes_value(self : Token) -> Bytes raise {
 /// the f-string and not at character zero of a fragment.
 pub(all) enum FStringPiece {
   Text(String)
-  Hole(source~ : String, at~ : Int, conversion~ : Char?, spec~ : String?)
+  Hole(source~ : String, at~ : Int32, conversion~ : Char?, spec~ : String?)
 } derive(Eq, Debug)
 
 ///|
@@ -286,7 +286,7 @@ pub fn Token::fstring_pieces(self : Token) -> Array[FStringPiece] raise {
 
 ///|
 /// How many quote characters open this literal: three or one.
-fn quote_run(cs : Array[Char], prefix_len : Int) -> Int {
+fn quote_run(cs : Array[Char], prefix_len : Int32) -> Int32 {
   if cs.length() >= prefix_len + 6 &&
     cs[prefix_len + 1] == cs[prefix_len] &&
     cs[prefix_len + 2] == cs[prefix_len] {
@@ -301,9 +301,9 @@ fn quote_run(cs : Array[Char], prefix_len : Int) -> Int {
 fn Token::scan_hole(
   self : Token,
   cs : Array[Char],
-  from : Int,
-  end : Int,
-) -> (FStringPiece, Int) raise {
+  from : Int32,
+  end : Int32,
+) -> (FStringPiece, Int32) raise {
   let mut depth = 0
   let mut quote : Char? = None
   let mut i = from
@@ -390,3 +390,13 @@ fn Token::scan_hole(
   }
   raise @err.syntax_error("f-string: expecting '}'", self.span)
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend FStringPiece with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend FStringPiece with Debug::{to_repr}

@@ -35,11 +35,11 @@ let names : Array[String] = ["a", "b", "c"]
 /// A seeded cursor over the random state, with a budget so recursion ends.
 struct Draw {
   state : @splitmix.RandomState
-  mut budget : Int
+  mut budget : Int32
 }
 
 ///|
-fn Draw::below(self : Draw, n : Int) -> Int {
+fn Draw::below(self : Draw, n : Int32) -> Int32 {
   let v = self.state.next_uint().reinterpret_as_int()
   let x = if v < 0 { -(v + 1) } else { v }
   x % n
@@ -199,7 +199,7 @@ fn Draw::simple_expr(self : Draw) -> @ast.Expr {
 }
 
 ///|
-fn Draw::atom(self : Draw, pool? : Bool = true) -> @ast.Expr {
+fn Draw::atom(self : Draw, pool~ : Bool = true) -> @ast.Expr {
   let n = if pool { 9 } else { 7 }
   match self.below(n) {
     // Never a negative literal: Python has none, so `-1` is a negation.
@@ -338,7 +338,7 @@ fn expr_shrinks(e : @ast.Expr) -> Array[@ast.Expr] {
 ///|
 /// The imports, the dataclass and `f`: the statements every generated module
 /// opens with and no shrink may remove.
-const PRELUDE : Int = 4
+const PRELUDE : Int32 = 4
 
 // ---------------------------------------------------------------------------
 
@@ -363,7 +363,7 @@ fn main {
     ["gen", seed, count] => {
       let seed = @string.parse_uint64(seed) catch { _ => 1UL }
       let count = @string.parse_int(count) catch { _ => 10 }
-      let state = @splitmix.new(seed~)
+      let state = @splitmix.RandomState(seed~)
       for i in 0..<count {
         // The size grows with the index, the way quickcheck's own driver
         // grows it: small programs first, so a shallow bug is found shallow.

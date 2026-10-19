@@ -17,10 +17,10 @@ name = "marianoguerra/pure-py-dev"
 version = "0.0.0"
 
 import {
-  "marianoguerra/error-report@0.1.0",
+  "marianoguerra/error-report@0.1.1",
   "marianoguerra/pure-py@0.10.0",
   "marianoguerra/pure-py-cli@0.10.0",
-  "moonbitlang/x@0.5.4",
+  "moonbitlang/x@0.5.5",
 }
 
 license = "Apache-2.0"

@@ -13,17 +13,17 @@ pub struct Gen {
   state : @splitmix.RandomState
   /// How much more structure the generator may build. Every recursive step
   /// spends one, so a tree is finite by construction.
-  mut budget : Int
+  mut budget : Int32
 }
 
 ///|
-pub fn Gen::new(seed : UInt64, budget? : Int = 24) -> Gen {
-  { state: @splitmix.new(seed~), budget, }
+pub fn Gen::new(seed : UInt64, budget~ : Int32 = 24) -> Gen {
+  { state: @splitmix.RandomState(seed~), budget, }
 }
 
 ///|
 /// A number in `[0, n)`.
-pub fn Gen::below(self : Gen, n : Int) -> Int {
+pub fn Gen::below(self : Gen, n : Int32) -> Int32 {
   let v = self.state.next_uint().reinterpret_as_int()
   let x = if v < 0 { -(v + 1) } else { v }
   x % n
@@ -54,7 +54,7 @@ pub fn Gen::whole_module(self : Gen) -> @ast.Module {
 }
 
 ///|
-pub fn Gen::stmt(self : Gen, top_level? : Bool = false) -> @ast.Stmt {
+pub fn Gen::stmt(self : Gen, top_level~ : Bool = false) -> @ast.Stmt {
   if self.budget <= 0 {
     return @ast.Stmt::assign(self.pick(names), self.atom())
   }

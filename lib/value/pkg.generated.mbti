@@ -56,7 +56,7 @@ pub fn host_fn(String) -> Value
 
 pub fn iter(Value) -> Array[Value]?
 
-pub fn order(Value, Value) -> Int?
+pub fn order(Value, Value) -> Int32?
 
 pub fn override_env(@hashmap.HashMap[String, Value], @hashmap.HashMap[String, Value]) -> @hashmap.HashMap[String, Value]
 
@@ -76,7 +76,7 @@ pub fn update(Array[(String, Value)], String, Value) -> Array[(String, Value)]
 pub(all) struct DefClosure {
   env : @hashmap.HashMap[String, Value]
   region : Array[@ast.Stmt]
-  index : Int
+  index : Int32
   in_module : String
 } derive(@debug.Debug)
 

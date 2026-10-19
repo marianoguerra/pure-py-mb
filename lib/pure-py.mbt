@@ -23,7 +23,7 @@
 /// applies to every run, and the profile only decides what was in scope to be
 /// written. The checker and the evaluator must be handed the SAME one, or a
 /// name type-checks and is then not there.
-pub fn parse(source : String, name? : String = "<string>") -> @ast.Module raise {
+pub fn parse(source : String, name~ : String = "<string>") -> @ast.Module raise {
   @parser.parse(@basic.Source::new(source, name~))
 }
 
@@ -40,7 +40,7 @@ pub fn parse(source : String, name? : String = "<string>") -> @ast.Module raise 
 /// the exit-1 ones, which are what PurePy excludes on purpose.
 pub fn sieve(
   m : @ast.Module,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   @sieve.result(m, profile~)
 }
@@ -56,7 +56,7 @@ pub fn sieve(
 pub fn check(
   m : @ast.Module,
   host? : @eval.Host,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   match @sieve.result(m, profile~) {
     Some(d) => Some(d)
@@ -82,7 +82,7 @@ pub fn check(
 pub fn check_program(
   tree : @program.SourceTree,
   host? : @eval.Host,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   for q in tree.module_names() {
     match tree.get(q) {
@@ -112,10 +112,10 @@ pub fn check_program(
 /// undefined operation can reach one.
 pub fn run(
   tree : @program.SourceTree,
-  argv? : Array[String] = [],
-  max_depth? : Int = @eval.default_max_depth,
-  profile? : @profile.Profile = @profile.core,
-  max_steps? : Int = @eval.default_max_steps,
+  argv~ : Array[String] = [],
+  max_depth~ : Int32 = @eval.default_max_depth,
+  profile~ : @profile.Profile = @profile.core,
+  max_steps~ : Int32 = @eval.default_max_steps,
 ) -> (String, @eval.RunResult) {
   @eval.run_program(tree, argv~, max_depth~, profile~, max_steps~)
 }
@@ -134,10 +134,10 @@ pub fn run(
 pub fn run_with(
   tree : @program.SourceTree,
   host : @eval.Host,
-  max_depth? : Int = @eval.default_max_depth,
-  done? : (@eval.RunResult) -> Unit = fn(_) {  },
-  profile? : @profile.Profile = @profile.core,
-  max_steps? : Int = @eval.default_max_steps,
+  max_depth~ : Int32 = @eval.default_max_depth,
+  done~ : (@eval.RunResult) -> Unit = fn(_) {  },
+  profile~ : @profile.Profile = @profile.core,
+  max_steps~ : Int32 = @eval.default_max_steps,
 ) -> @eval.RunResult {
   @eval.run_with(tree, host, max_depth~, done~, profile~, max_steps~)
 }
@@ -163,8 +163,8 @@ pub fn source_tree(modules : Map[String, @ast.Module]) -> @program.SourceTree {
 /// is what running wants.
 pub fn source_tree_from(
   entry_path : String,
-  sweep? : Bool = true,
-  profile? : @profile.Profile = @profile.core,
+  sweep~ : Bool = true,
+  profile~ : @profile.Profile = @profile.core,
 ) -> @program.SourceTree raise {
   @program.SourceTree::from_entry(
     entry_path,

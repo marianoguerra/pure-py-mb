@@ -17,13 +17,13 @@ pub(all) struct Source {
   chars : Array[Char]
   /// `offsets[i]` is the UTF-16 offset of `chars[i]`; one longer than `chars`,
   /// so `offsets[chars.length()]` is the length of `text`.
-  offsets : Array[Int]
+  offsets : Array[Int32]
   /// `line_starts[n]` is the code-point index at which line `n + 1` begins.
-  line_starts : Array[Int]
+  line_starts : Array[Int32]
 }
 
 ///|
-pub fn Source::new(text : String, name? : String = "<string>") -> Source {
+pub fn Source::new(text : String, name~ : String = "<string>") -> Source {
   let normalised = normalise_newlines(text)
   let chars = normalised.to_array()
   let offsets = Array::make(chars.length() + 1, 0)
@@ -74,18 +74,18 @@ fn normalise_newlines(text : String) -> String {
 ///|
 /// How many code points the source has. One past the last is where the
 /// tokenizer's end marker sits.
-pub fn Source::length(self : Source) -> Int {
+pub fn Source::length(self : Source) -> Int32 {
   self.chars.length()
 }
 
 ///|
-pub fn Source::line_count(self : Source) -> Int {
+pub fn Source::line_count(self : Source) -> Int32 {
   self.line_starts.length()
 }
 
 ///|
 /// The text of a 1-based line, without its newline. Out of range gives "".
-pub fn Source::line_text(self : Source, line : Int) -> String {
+pub fn Source::line_text(self : Source, line : Int32) -> String {
   if line < 1 || line > self.line_starts.length() {
     return ""
   }
@@ -99,7 +99,7 @@ pub fn Source::line_text(self : Source, line : Int) -> String {
 
 ///|
 /// The UTF-16 offset of a code-point index.
-pub fn Source::offset_of(self : Source, index : Int) -> Int {
+pub fn Source::offset_of(self : Source, index : Int32) -> Int32 {
   if index <= 0 {
     0
   } else if index >= self.offsets.length() {
@@ -116,7 +116,7 @@ pub fn Source::offset_of(self : Source, index : Int) -> Int {
 /// points, so a caller handed a `Pos` from somewhere else needs the way back.
 /// A binary search rather than a scan, because `offsets` is sorted by
 /// construction -- it is a running total.
-pub fn Source::index_of_offset(self : Source, offset : Int) -> Int {
+pub fn Source::index_of_offset(self : Source, offset : Int32) -> Int32 {
   let mut lo = 0
   let mut hi = self.offsets.length() - 1
   while lo < hi {
@@ -142,7 +142,7 @@ pub fn Source::slice(self : Source, span : Span) -> String {
 ///
 /// The reference checker prints `node.col_offset`, so every message in its
 /// format goes through here. Nothing else in this port converts.
-pub fn Source::byte_col(self : Source, pos : Pos) -> Int {
+pub fn Source::byte_col(self : Source, pos : Pos) -> Int32 {
   let start = if pos.line >= 1 && pos.line <= self.line_starts.length() {
     self.line_starts[pos.line - 1]
   } else {
@@ -161,7 +161,7 @@ pub fn Source::byte_col(self : Source, pos : Pos) -> Int {
 
 ///|
 /// How many bytes a code point takes in UTF-8.
-fn utf8_length(c : Char) -> Int {
+fn utf8_length(c : Char) -> Int32 {
   let n = c.to_int()
   if n < 0x80 {
     1

@@ -38,15 +38,15 @@ pub struct Interp {
   /// machine stack meets a stack overflow rather than running forever. The
   /// limit turns that into an answer -- an operation the semantics does not
   /// cover -- which a person can read.
-  mut depth : Int
-  max_depth : Int
+  mut depth : Int32
+  max_depth : Int32
   /// How many machine steps are left, and how many there were.
   ///
   /// `max_depth` bounds a runaway that recurses; this bounds one that does
   /// not. A comprehension over a long sequence is the shape that needs it:
   /// it loops without recursing, so nothing else stops it.
-  mut fuel : Int
-  max_steps : Int
+  mut fuel : Int32
+  max_steps : Int32
   /// The superset of PurePy this run's program was accepted under.
   ///
   /// The evaluator reads it in one place: which values `builtins` loads to. A
@@ -123,10 +123,10 @@ fn Interp::sited(self : Interp, e : @ast.Expr, o : Outcome) -> Outcome {
 ///|
 pub fn Interp::new(
   tree : @program.SourceTree,
-  host? : Host = Host::new(),
-  max_depth? : Int = default_max_depth,
-  profile? : @profile.Profile = @profile.core,
-  max_steps? : Int = default_max_steps,
+  host~ : Host = Host::new(),
+  max_depth~ : Int32 = default_max_depth,
+  profile~ : @profile.Profile = @profile.core,
+  max_steps~ : Int32 = default_max_steps,
 ) -> Interp {
   {
     tree,
@@ -283,3 +283,13 @@ fn extra_builtins() -> Array[(String, Value)] {
     ("zip", Prim(Zip)),
   ]
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Site with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Site with Debug::{to_repr}

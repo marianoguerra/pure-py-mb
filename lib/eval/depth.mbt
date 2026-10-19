@@ -21,7 +21,7 @@
 /// enough that no reasonable program meets it, shallow enough that a runaway
 /// stops in an array of ten thousand frames rather than in an out-of-memory.
 /// A caller who wants a different one passes `max_depth`.
-pub let default_max_depth : Int = 10000
+pub let default_max_depth : Int32 = 10000
 
 ///|
 /// How many steps a run may take by default.
@@ -48,4 +48,4 @@ pub let default_max_depth : Int = 10000
 /// the same program over the same host answers take the same number of steps
 /// and stop in the same place, so a guest that hits the limit hits it
 /// reproducibly and a test can pin it.
-pub let default_max_steps : Int = 100_000_000
+pub let default_max_steps : Int32 = 100_000_000

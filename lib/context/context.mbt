@@ -369,7 +369,7 @@ pub fn extend_context(g1 : Context, g2 : Context) -> Context {
 /// upstream settles it.
 pub fn predefined_members(
   q : String,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> Array[String]? {
   // The core names come first and in this order under every profile. Not for
   // tidiness: `check_submodule_clash` walks a module's own members and reports
@@ -423,7 +423,7 @@ pub let extra_builtin_names : Array[String] = [
 /// `__name__`, which every module has.
 pub fn predefined_context(
   q : String,
-  profile? : @profile.Profile = @profile.core,
+  profile~ : @profile.Profile = @profile.core,
 ) -> Context {
   let entries : Array[(String, Entry)] = [("__name__", Var(TT))]
   match predefined_members(q, profile~) {
@@ -441,3 +441,61 @@ pub fn predefined_context(
 pub fn own_fields(node : @ast.Stmt) -> Array[String] {
   @analysis.own_fields(node)
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Status with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Status with Debug::{to_repr}
+
+///|
+pub extend Status with Compare::{compare}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Status with Compare::{op_lt, op_le, op_ge, op_gt}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Entry with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Entry with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ClassEntry with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ClassEntry with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ModuleContext with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ModuleContext with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ResultType with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ResultType with Debug::{to_repr}

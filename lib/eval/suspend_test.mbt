@@ -15,8 +15,8 @@ async fn[T] park(register : ((T) -> Unit) -> Unit) -> T noraise + nocancel = "%a
 fn parking_host(
   queue : Array[(@value.Value) -> Unit],
   out : StringBuilder,
-) -> Host {
-  Host::new(
+) -> @eval.Host {
+  @eval.Host::new(
     write=text => out.write_string(text),
     modules=[{ name: "io", members: [("ask", @value.host_fn("io.ask"))], }],
     call=(_name, _args) => Val(park(k => queue.push(k))),
@@ -39,8 +39,8 @@ test "a host call parks the run and resumes it with a value" {
   // Both calls are operands of one expression, so the second parks with the
   // first one's value already in hand and half an addition still to do.
   let tree = tree_of("from io import ask\nprint(ask() + ask())\n")
-  let mut ended : RunResult? = None
-  let returned = run_with(tree, parking_host(queue, out), done=r => {
+  let mut ended : @eval.RunResult? = None
+  let returned = @eval.run_with(tree, parking_host(queue, out), done=r => {
     ended = Some(r)
   })
   // The run has not ended, and the driver says so rather than guessing.
@@ -66,8 +66,8 @@ test "a parked run that is never resumed stays parked" {
   let queue : Array[(@value.Value) -> Unit] = []
   let out = StringBuilder()
   let tree = tree_of("from io import ask\nprint(ask())\n")
-  let mut ended : RunResult? = None
-  let returned = run_with(tree, parking_host(queue, out), done=r => {
+  let mut ended : @eval.RunResult? = None
+  let returned = @eval.run_with(tree, parking_host(queue, out), done=r => {
     ended = Some(r)
   })
   inspect(returned is Suspended, content="true")
@@ -82,14 +82,14 @@ test "a parked run that is never resumed stays parked" {
 ///|
 test "a host that answers on the spot is unchanged by any of this" {
   let out = StringBuilder()
-  let host = Host::new(
+  let host = @eval.Host::new(
     write=text => out.write_string(text),
     modules=[{ name: "io", members: [("ask", @value.host_fn("io.ask"))], }],
     call=(_name, _args) => Val(Int(7N)),
   )
   let tree = tree_of("from io import ask\nprint(ask() * ask())\n")
-  let mut ended : RunResult? = None
-  let returned = run_with(tree, host, done=r => ended = Some(r))
+  let mut ended : @eval.RunResult? = None
+  let returned = @eval.run_with(tree, host, done=r => ended = Some(r))
   // The answer is the return value, `done` has already fired, and the guest
   // cannot tell that a call was allowed to park.
   inspect(returned is Finished, content="true")

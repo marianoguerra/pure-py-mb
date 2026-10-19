@@ -67,7 +67,7 @@ pub fn py_float_layout(d : Double, dot_zero~ : Bool) -> String {
 /// `body` is MoonBit's rendering of a non-negative finite double, in any of
 /// the forms it produces: `3.14`, `0.000001`, `100000000000000000000`,
 /// `1e+100`.
-fn decompose(body : String) -> (String, Int) {
+fn decompose(body : String) -> (String, Int32) {
   let mut mant = body
   let mut exp = 0
   match find_char(body, 'e') {
@@ -109,7 +109,7 @@ fn decompose(body : String) -> (String, Int) {
 }
 
 ///|
-fn find_char(s : String, c : Char) -> Int? {
+fn find_char(s : String, c : Char) -> Int32? {
   for i in 0..<s.length() {
     if s.get_char(i) is Some(x) && x == c {
       return Some(i)
@@ -119,7 +119,7 @@ fn find_char(s : String, c : Char) -> Int? {
 }
 
 ///|
-fn parse_signed_int(s : String) -> Int {
+fn parse_signed_int(s : String) -> Int32 {
   let mut i = 0
   let mut neg = false
   if s.get_char(0) is Some('-') {
@@ -148,7 +148,7 @@ fn parse_signed_int(s : String) -> Int {
 fn write_positional(
   out : StringBuilder,
   digits : String,
-  exp10 : Int,
+  exp10 : Int32,
   dot_zero : Bool,
 ) -> Unit {
   if exp10 >= 0 {
@@ -178,7 +178,11 @@ fn write_positional(
 ///|
 /// `1e+16`, `2.5e-07` -- a point only when there is more than one digit, a
 /// sign always, and at least two exponent digits.
-fn write_exponential(out : StringBuilder, digits : String, exp10 : Int) -> Unit {
+fn write_exponential(
+  out : StringBuilder,
+  digits : String,
+  exp10 : Int32,
+) -> Unit {
   out.write_char(digits.get_char(0).unwrap())
   if digits.length() > 1 {
     out.write_char('.')

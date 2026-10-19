@@ -7,7 +7,6 @@ import {
   "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/write",
-  "moonbitlang/core/immut/sorted_map",
 }
 
 import {

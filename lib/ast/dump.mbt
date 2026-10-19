@@ -23,7 +23,7 @@
 /// re-parsing is the only way to compare it structurally, and it renders a
 /// constant through Python's own `repr` of an arbitrary object. Defining our
 /// own costs one Python script and buys a line-oriented diff.
-pub fn dump(m : Module, pos? : Bool = false) -> String {
+pub fn dump(m : Module, pos~ : Bool = false) -> String {
   let d = { out: StringBuilder(), pos, }
   // `Module`, `arguments`, `comprehension`, `withitem` and `match_case` carry
   // no position in CPython's tree, so they carry none here either.
@@ -39,7 +39,7 @@ priv struct Dumper {
 }
 
 ///|
-fn Dumper::indent(self : Dumper, depth : Int) -> Unit {
+fn Dumper::indent(self : Dumper, depth : Int32) -> Unit {
   for _ in 0..<depth {
     self.out.write_string("  ")
   }
@@ -51,7 +51,7 @@ fn Dumper::node(
   self : Dumper,
   kind : String,
   scalars : Array[(String, String)],
-  depth : Int,
+  depth : Int32,
   span : @basic.Span,
 ) -> Unit {
   self.indent(depth)
@@ -70,8 +70,8 @@ fn Dumper::node(
 fn Dumper::field(
   self : Dumper,
   name : String,
-  depth : Int,
-  absent? : Bool = false,
+  depth : Int32,
+  absent~ : Bool = false,
 ) -> Unit {
   self.indent(depth)
   self.out.write_string(if absent { "\{name}: -\n" } else { "\{name}:\n" })
@@ -120,7 +120,7 @@ fn Dumper::field_stmts(
   self : Dumper,
   name : String,
   body : Array[Stmt],
-  depth : Int,
+  depth : Int32,
 ) -> Unit {
   self.field(name, depth)
   for s in body {
@@ -133,7 +133,7 @@ fn Dumper::field_exprs(
   self : Dumper,
   name : String,
   items : Array[Expr],
-  depth : Int,
+  depth : Int32,
 ) -> Unit {
   self.field(name, depth)
   for e in items {
@@ -146,7 +146,7 @@ fn Dumper::field_expr(
   self : Dumper,
   name : String,
   e : Expr,
-  depth : Int,
+  depth : Int32,
 ) -> Unit {
   self.field(name, depth)
   self.expr(e, depth + 1)
@@ -157,7 +157,7 @@ fn Dumper::field_opt_expr(
   self : Dumper,
   name : String,
   e : Expr?,
-  depth : Int,
+  depth : Int32,
 ) -> Unit {
   match e {
     None => self.field(name, depth, absent=true)
@@ -169,7 +169,7 @@ fn Dumper::field_opt_expr(
 }
 
 ///|
-fn Dumper::stmt(self : Dumper, s : Stmt, depth : Int) -> Unit {
+fn Dumper::stmt(self : Dumper, s : Stmt, depth : Int32) -> Unit {
   let d = depth + 1
   match s {
     FunctionDef(name~, args~, body~, decorators~, returns~, is_async~, span~) => {
@@ -325,7 +325,7 @@ fn id_list(names : Array[String]) -> String {
 // Expressions
 
 ///|
-fn Dumper::expr(self : Dumper, e : Expr, depth : Int) -> Unit {
+fn Dumper::expr(self : Dumper, e : Expr, depth : Int32) -> Unit {
   let d = depth + 1
   match e {
     BoolOp(op~, values~, span~) => {
@@ -480,7 +480,7 @@ fn op_list(ops : Array[CmpOp]) -> String {
 fn Dumper::comprehensions(
   self : Dumper,
   gens : Array[Comprehension],
-  depth : Int,
+  depth : Int32,
 ) -> Unit {
   self.field("generators", depth)
   for g in gens {
@@ -493,7 +493,7 @@ fn Dumper::comprehensions(
 }
 
 ///|
-fn Dumper::arguments(self : Dumper, a : Arguments, depth : Int) -> Unit {
+fn Dumper::arguments(self : Dumper, a : Arguments, depth : Int32) -> Unit {
   self.indent(depth)
   self.out.write_string("arguments\n")
   let d = depth + 1
@@ -537,19 +537,19 @@ fn Dumper::arguments(self : Dumper, a : Arguments, depth : Int) -> Unit {
 }
 
 ///|
-fn Dumper::arg(self : Dumper, a : Arg, depth : Int) -> Unit {
+fn Dumper::arg(self : Dumper, a : Arg, depth : Int32) -> Unit {
   self.node("arg", [("arg", a.arg)], depth, a.span)
   self.field_opt_expr("annotation", a.annotation, depth + 1)
 }
 
 ///|
-fn Dumper::keyword(self : Dumper, k : Keyword, depth : Int) -> Unit {
+fn Dumper::keyword(self : Dumper, k : Keyword, depth : Int32) -> Unit {
   self.node("keyword", [("arg", opt_id(k.arg))], depth, k.span)
   self.field_expr("value", k.value, depth + 1)
 }
 
 ///|
-fn Dumper::import_alias(self : Dumper, a : Alias, depth : Int) -> Unit {
+fn Dumper::import_alias(self : Dumper, a : Alias, depth : Int32) -> Unit {
   self.node(
     "alias",
     [("name", a.name), ("asname", opt_id(a.asname))],
@@ -559,7 +559,7 @@ fn Dumper::import_alias(self : Dumper, a : Alias, depth : Int) -> Unit {
 }
 
 ///|
-fn Dumper::with_item(self : Dumper, w : WithItem, depth : Int) -> Unit {
+fn Dumper::with_item(self : Dumper, w : WithItem, depth : Int32) -> Unit {
   self.indent(depth)
   self.out.write_string("withitem\n")
   self.field_expr("context_expr", w.context_expr, depth + 1)
@@ -567,14 +567,14 @@ fn Dumper::with_item(self : Dumper, w : WithItem, depth : Int) -> Unit {
 }
 
 ///|
-fn Dumper::handler(self : Dumper, h : ExceptHandler, depth : Int) -> Unit {
+fn Dumper::handler(self : Dumper, h : ExceptHandler, depth : Int32) -> Unit {
   self.node("ExceptHandler", [("name", opt_id(h.name))], depth, h.span)
   self.field_opt_expr("type", h.type_, depth + 1)
   self.field_stmts("body", h.body, depth + 1)
 }
 
 ///|
-fn Dumper::match_case(self : Dumper, c : MatchCase, depth : Int) -> Unit {
+fn Dumper::match_case(self : Dumper, c : MatchCase, depth : Int32) -> Unit {
   self.indent(depth)
   self.out.write_string("match_case\n")
   let d = depth + 1
@@ -592,7 +592,7 @@ fn Dumper::field_patterns(
   self : Dumper,
   name : String,
   ps : Array[Pattern],
-  depth : Int,
+  depth : Int32,
 ) -> Unit {
   self.field(name, depth)
   for p in ps {
@@ -601,7 +601,7 @@ fn Dumper::field_patterns(
 }
 
 ///|
-fn Dumper::pattern(self : Dumper, p : Pattern, depth : Int) -> Unit {
+fn Dumper::pattern(self : Dumper, p : Pattern, depth : Int32) -> Unit {
   let d = depth + 1
   match p {
     MatchValue(value~, span~) => {

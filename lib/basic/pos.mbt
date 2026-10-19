@@ -14,9 +14,9 @@
 ///     It exists to slice a MoonBit `String` and to hand a span to
 ///     `error-report`, and it is never reported.
 pub(all) struct Pos {
-  line : Int
-  col : Int
-  offset : Int
+  line : Int32
+  col : Int32
+  offset : Int32
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -66,7 +66,7 @@ pub fn Span::merge(self : Span, other : Span) -> Span {
 
 ///|
 /// Length in UTF-16 code units -- the unit `error-report` spans are in.
-pub fn Span::units(self : Span) -> Int {
+pub fn Span::units(self : Span) -> Int32 {
   self.end.offset - self.start.offset
 }
 
@@ -75,3 +75,31 @@ pub fn Span::units(self : Span) -> Int {
 pub fn Span::to_display(self : Span) -> String {
   "\{self.start.to_display()}-\{self.end.to_display()}"
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Pos with Eq::{not_equal, equal}
+
+///|
+pub extend Pos with Compare::{compare}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Pos with Compare::{op_lt, op_le, op_ge, op_gt}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Pos with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Debug::{to_repr}

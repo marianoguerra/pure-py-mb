@@ -31,7 +31,7 @@ pub fn Diagnostic::as_parse_error(Self) -> Self
 pub fn Diagnostic::at_path(Self, String) -> Self
 pub fn Diagnostic::attribute_to(Self, String) -> Self
 pub fn Diagnostic::code(Self) -> String?
-pub fn Diagnostic::exit_code(Self) -> Int
+pub fn Diagnostic::exit_code(Self) -> Int32
 pub fn Diagnostic::help(Self) -> String?
 pub fn Diagnostic::message(Self) -> String
 pub fn Diagnostic::new(Kind, span? : @basic.Span, in_module? : String, related? : Array[(@basic.Span, String)]) -> Self
@@ -44,7 +44,7 @@ pub fn Diagnostic::with_related(Self, @basic.Span, String) -> Self
 pub(all) enum Kind {
   PythonSyntax(msg~ : String)
   Prohibited(msg~ : String)
-  NotYetSupported(feature~ : String, issue~ : Int)
+  NotYetSupported(feature~ : String, issue~ : Int32)
   IllFormed(Reason)
   Program(msg~ : String)
 } derive(Eq, @debug.Debug)
@@ -59,15 +59,15 @@ pub(all) enum Reason {
   SelfCaptureAssignment(name~ : String)
   CapturedGeneratorVariable(name~ : String)
   UnreachableStatement
-  ConstructorArityMismatch(cls~ : String, expected~ : Int, got~ : Int)
+  ConstructorArityMismatch(cls~ : String, expected~ : Int32, got~ : Int32)
   UnknownConstructorKeyword(cls~ : String, expected_fields~ : Array[String])
-  PatternArityMismatch(cls~ : String, expected~ : Int, got~ : Int)
+  PatternArityMismatch(cls~ : String, expected~ : Int32, got~ : Int32)
   UnknownClassInPattern(cls~ : String)
   UnknownFieldInPattern(cls~ : String, expected_fields~ : Array[String])
   DuplicatePatternKeyword(cls~ : String)
   DuplicateDictKey(key~ : String)
-  NonlinearPattern(index~ : Int)
-  UnreachableCase(index~ : Int, subsumed_by~ : Int)
+  NonlinearPattern(index~ : Int32)
+  UnreachableCase(index~ : Int32, subsumed_by~ : Int32)
   DuplicateMutualName(name~ : String)
   NonTopLevelImport
   ImportAfterStatement

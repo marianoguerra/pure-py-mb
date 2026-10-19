@@ -367,7 +367,7 @@ fn Writer::arg_text(self : Writer, a : @ast.Arg) -> String {
 
 ///|
 /// An expression rendered on its own, for assembling a list of pieces.
-fn Writer::sub_expr(_self : Writer, e : @ast.Expr, demanded : Int) -> String {
+fn Writer::sub_expr(_self : Writer, e : @ast.Expr, demanded : Int32) -> String {
   let w : Writer = { out: StringBuilder(), depth: 0, }
   w.expr(e, demanded)
   w.out.to_string()
