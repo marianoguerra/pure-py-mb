@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.10.1 — 2026-10-19
+
+Nothing in the API moved in meaning. This is the release that builds clean
+on the current toolchain (moon 0.1.20261016, moonc v0.10.16) under
+`--deny-warn`, against the newest of every dependency. An 0.10.0 consumer
+upgrades by changing the version.
+
+### Trait methods are extended explicitly
+
+moonc v0.10.16 warns (0079) when a trait method reaches a consumer only
+through an implementation. The ones a consumer is meant to call --
+`Show::to_string`, `Compare::compare` and this library's own trait methods --
+are now `pub extend`ed, so `Pos::compare` and `Status::compare` appear in the
+`.mbti` as the methods they always were. The rest -- `Eq`, `Debug`, `Hash`,
+`ToJson`, `Default`, `Show::output` and the `Compare` operators -- are
+deprecated as methods by the compiler and stay hidden.
+
+### And the rest of what the compiler now asks
+
+`moon fmt` spells `Int` as `Int32` and a defaulted label as `x~ : T = d`;
+the `.mbti` diff is that spelling and nothing else. Unused imports are gone
+from `check`, `lexer` and `parser`, and test names are qualified.
+
+### Dependencies
+
+`marianoguerra/error-report` 0.1.1 and `moonbitlang/x` 0.5.5, the newest of
+each.
+
 ## 0.10.0 — 2026-09-10
 
 One addition: `redefined`, on `Host`, which replaces a member of a module
