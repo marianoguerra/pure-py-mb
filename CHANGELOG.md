@@ -6,6 +6,11 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.22.3
+
+Nothing a program sees: the reference's runner changed, and the
+specification accepted the change marks of v0.22.1.
+
 ### Specification v0.22.2
 
 Nothing a program sees: the suite moved into the reference's package, as

@@ -1229,6 +1229,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.22.0 | the reference becomes the `purepy` package, `python -m purepy --check [--module]`; "not yet supported" gone, every such form prohibited (exit 1); a rejection in a program printed against its module's file with its position | `tools/conform.py` and `tools/ref_parse.py`, `lib/sieve`, `lib/error` (`Diagnostic::file`), the CLI, the profile corpus |
 | v0.22.1 | the specification states that a return ends a sequence (`eval-seq-return`), which the evaluator already did | none |
 | v0.22.2 | the suite moves into the reference's package, `src/purepy/conformance-suite/`; its runner is `purepy.conformance` | `tools/fetch-reference.sh` (copies the suite from there), `test/conformance/` (the suite alone, without the runner) |
+| v0.22.3 | the reference's runner and the specification's change marks only | none |
 
 Decisions made on the way, recorded as §9's are:
 
