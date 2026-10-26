@@ -256,6 +256,60 @@ pub fn int_to_float(n : BigInt) -> Double? {
 }
 
 ///|
+/// Python's `x / y` on integers: the quotient correctly rounded to a double,
+/// ties to even, however large `x` and `y` are; `None` where it is too large
+/// for one, where Python raises OverflowError. `y` is not zero.
+pub fn true_divide(x : BigInt, y : BigInt) -> Double? {
+  let limit = 1N << 53
+  let a = if x < 0N { -x } else { x }
+  let b = if y < 0N { -y } else { y }
+  let negative = (x < 0N) != (y < 0N)
+  // Both exact as doubles: IEEE division rounds correctly.
+  if a <= limit && b <= limit {
+    return Some(big_to_double(x) / big_to_double(y))
+  }
+  if a == 0N {
+    return Some(if negative { -0.0 } else { 0.0 })
+  }
+  // A quotient of at least 55 bits, scaled by 2^e, and whether it is exact.
+  let e = a.bit_length() - b.bit_length() - 55
+  let (q, r) = if e >= 0 {
+    let d = b << e
+    (a / d, a % d)
+  } else {
+    let n = a << -e
+    (n / b, n % b)
+  }
+  // The exponent of the result's last bit: 53 significant bits, or fewer
+  // where the result is subnormal.
+  let top = q.bit_length() - 1 + e
+  let ulp = if top - 52 < -1074 { -1074 } else { top - 52 }
+  let shift = ulp - e
+  let m = if shift <= 0 {
+    q << -shift
+  } else {
+    // Round half to even, with the remainder below the quotient as a sticky
+    // bit.
+    let kept = q >> shift
+    let dropped = q - (kept << shift)
+    let half = 1N << (shift - 1)
+    if dropped > half || (dropped == half && (!r.is_zero() || kept % 2N == 1N)) {
+      kept + 1N
+    } else {
+      kept
+    }
+  }
+  // `m` is at most 2^53 and so exact; scaling by a power of two is exact
+  // unless it overflows.
+  let d = big_to_double(m) * @math.pow(2.0, ulp.to_double())
+  if d.is_inf() {
+    None
+  } else {
+    Some(if negative { -d } else { d })
+  }
+}
+
+///|
 fn to_double(x : Num) -> Double {
   match x {
     I(n) => big_to_double(n)
@@ -288,7 +342,10 @@ fn int_arith(op : @ast.Operator, x : BigInt, y : BigInt) -> Outcome {
       if y == 0N {
         Aborts(ZeroDivisionError)
       } else {
-        Val(Float(big_to_double(x) / big_to_double(y)))
+        match true_divide(x, y) {
+          Some(d) => Val(Float(d))
+          None => Aborts(OverflowError)
+        }
       }
     FloorDiv =>
       if y == 0N {

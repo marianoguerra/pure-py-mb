@@ -25,7 +25,9 @@ prefix binds twice is refused.
 
 `round` of an infinity aborts with `OverflowError` and of a nan with
 `ValueError`, and so does arithmetic that meets a float with an integer too
-large to be one, as Python's does.
+large to be one, as Python's does. `/` on two integers is Python's: the exact
+quotient correctly rounded, however large the integers (`10**400 / 10**399` is
+`10.0`), and `OverflowError` where it is too large for a float.
 
 The suite is flat: `<Python outcome>/<PurePy outcome>/...`, with
 `python-succeeds/agrees/` and the like, and a program is any directory with a

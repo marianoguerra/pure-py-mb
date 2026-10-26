@@ -76,6 +76,8 @@ pub fn seq_method(Array[Value], String, Array[Value]) -> Outcome?
 
 pub fn str_method(String, String, Array[Value]) -> Outcome?
 
+pub fn true_divide(@bigint.BigInt, @bigint.BigInt) -> Double?
+
 pub fn unop(@ast.UnaryOp, Value) -> Outcome
 
 pub fn update(Array[(String, Value)], String, Value) -> Array[(String, Value)]
