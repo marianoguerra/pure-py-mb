@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.2 — 2026-10-26
+
+Nothing in the API moved. This release builds clean on the current toolchain
+(moon 0.1.20261023, moonc v0.10.17) under `--deny-warn` on every backend,
+with no source change. An 0.10.1 consumer upgrades by changing the version.
+
+### Dependencies
+
+`moonbitlang/x` 0.5.6, the newest; `marianoguerra/error-report` stays at
+0.1.1, still the newest.
+
 ## 0.10.1 — 2026-10-19
 
 Nothing in the API moved in meaning. This is the release that builds clean
