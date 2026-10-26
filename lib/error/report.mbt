@@ -62,7 +62,7 @@ pub fn Diagnostic::code(self : Diagnostic) -> String? {
 /// say what is wrong with THAT position.
 fn Diagnostic::anchor_note(self : Diagnostic) -> String? {
   match self.kind {
-    IllFormed(CapturedReassignment(..)) => Some("reassigned here")
+    IllFormed(Reassignment(..)) => Some("assigned again here")
     IllFormed(UnreachableStatement) => Some("never reached")
     IllFormed(UnreachableCase(..)) => Some("never reached")
     IllFormed(DuplicateMember(..)) => Some("bound here")
@@ -78,19 +78,17 @@ fn Diagnostic::anchor_note(self : Diagnostic) -> String? {
 /// line; "duplicate field name 'x'" does not.
 pub fn Diagnostic::help(self : Diagnostic) -> String? {
   match self.kind {
-    IllFormed(UnassignedVariable(..)) =>
+    IllFormed(PossiblyUnassigned(..)) =>
       Some("assign it in every branch, or before the if")
+    IllFormed(UnassignedVariable(..)) =>
+      Some("a declaration gives a variable its type; assign it before using it")
+    IllFormed(UndeclaredAssignment(x~)) =>
+      Some("declare it with its type first: `" + x + ": T = ...`")
+    IllFormed(Reassignment(..)) =>
+      Some("a PurePy variable is assigned once; bind a new name instead")
     IllFormed(UnassignedMember(..)) =>
       Some(
         "the module assigns it in some branches only; assign it in every branch",
-      )
-    IllFormed(CapturedReassignment(..)) =>
-      Some(
-        "a closure captured this name, and PurePy has no cell for it to see a later value; bind a new name instead",
-      )
-    IllFormed(SelfCaptureAssignment(..)) =>
-      Some(
-        "the right-hand side closes over the name being bound; give one of them another name",
       )
     IllFormed(CapturedGeneratorVariable(..)) =>
       Some(

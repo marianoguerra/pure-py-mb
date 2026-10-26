@@ -4,8 +4,10 @@ program-level/excluded/contained_module_import	3	pkg/__init__.py: 'pkg.sub' is c
 program-level/excluded/duplicate_member	3	pkg/__init__.py: duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'
 program-level/excluded/duplicate_member_import	3	pkg/__init__.py: duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'
 program-level/excluded/import_after_statement	1	main.py: imports must precede all other statements
+program-level/excluded/import_bound_by_pattern	3	main.py: 'x' is already declared
+program-level/excluded/import_redeclared	3	main.py: 'C' is already declared
 program-level/excluded/import_unassigned	3	main.py: member 'x' of module 'm' is not definitely assigned
-program-level/excluded/imported_module_rejected	3	helper.py: duplicate name 'f' in mutual region
+program-level/excluded/imported_module_rejected	3	helper.py: 'f' is already declared
 program-level/excluded/parents_cycle	4	import cycle: x -> y -> x
 program-level/excluded/qualified_class_as_value	3	main.py: 'mod.C' refers to a class; classes are not first-class values
 program-level/excluded/reexport_from_import	3	main.py: module 'mid' has no member 'y'

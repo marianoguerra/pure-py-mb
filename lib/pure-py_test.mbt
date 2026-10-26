@@ -160,7 +160,9 @@ test "a pending feature is undefined where PurePy has no rule" {
   // deferred". Where it is not, it stops when it runs. Still a stop, and
   // never an invented answer.
   assert_true(
-    outcome_under("x = 1\ny = 1\nprint(x is y)\n", p).has_prefix("undefined: "),
+    outcome_under("x: int = 1\ny: int = 1\nprint(x is y)\n", p).has_prefix(
+      "undefined: ",
+    ),
   )
   // A slice step of zero is a ValueError in Python, which is not one of the
   // seven terminations PurePy models.
@@ -178,11 +180,11 @@ test "a pending feature is typed" {
   let p = @profile.pending()
   // An arity mismatch in a destructuring is the shape of a tuple type.
   assert_eq(
-    outcome_under("a, b = 1, 2, 3\n", p),
+    outcome_under("a: int\nb: int\na, b = 1, 2, 3\n", p),
     "refused: expected type tuple of 2 components, given tuple[Literal[1], Literal[2], Literal[3]]",
   )
   assert_eq(
-    outcome_under("a, b = 1\n", p),
+    outcome_under("a: int\nb: int\na, b = 1\n", p),
     "refused: expected type tuple of 2 components, given Literal[1]",
   )
   // A chain is only as typed as its links.
@@ -277,10 +279,12 @@ test "the checker and the run want the same profile" {
 test "no method a profile adds can mutate" {
   let p = @profile.methods()
   let mutators = [
-    "xs = [1, 2]\nxs.append(3)\n", "xs = [1, 2]\nxs.extend([3])\n", "xs = [1, 2]\nxs.insert(0, 3)\n",
-    "xs = [1, 2]\nxs.pop()\n", "xs = [1, 2]\nxs.remove(1)\n", "xs = [1, 2]\nxs.sort()\n",
-    "xs = [1, 2]\nxs.reverse()\n", "xs = [1, 2]\nxs.clear()\n", "d = {'a': 1}\nd.update({'b': 2})\n",
-    "d = {'a': 1}\nd.setdefault('b', 2)\n", "d = {'a': 1}\nd.pop('a')\n", "d = {'a': 1}\nd.clear()\n",
+    "xs: list[int] = [1, 2]\nxs.append(3)\n", "xs: list[int] = [1, 2]\nxs.extend([3])\n",
+    "xs: list[int] = [1, 2]\nxs.insert(0, 3)\n", "xs: list[int] = [1, 2]\nxs.pop()\n",
+    "xs: list[int] = [1, 2]\nxs.remove(1)\n", "xs: list[int] = [1, 2]\nxs.sort()\n",
+    "xs: list[int] = [1, 2]\nxs.reverse()\n", "xs: list[int] = [1, 2]\nxs.clear()\n",
+    "d: dict[str, int] = {'a': 1}\nd.update({'b': 2})\n", "d: dict[str, int] = {'a': 1}\nd.setdefault('b', 2)\n",
+    "d: dict[str, int] = {'a': 1}\nd.pop('a')\n", "d: dict[str, int] = {'a': 1}\nd.clear()\n",
   ]
   for source in mutators {
     let got = outcome_under(source, p)
@@ -301,7 +305,7 @@ test "a method is a call and not a value" {
   let p = @profile.methods()
   assert_eq(outcome_under("print(\"a\".upper())\n", p), "ok: A\n")
   assert_eq(
-    outcome_under("f = \"a\".upper\n", p),
+    outcome_under("print(\"a\".upper)\n", p),
     "refused: values of type Literal['a'] have no attributes",
   )
   // A name no table has is refused by name.
@@ -330,7 +334,7 @@ test "a module member and a field still resolve as they did" {
     assert_eq(
       outcome_under(
         "from dataclasses import dataclass\n" +
-        "@dataclass\nclass P:\n    x: int\n\np = P(1)\nprint(p.x)\n",
+        "@dataclass\nclass P:\n    x: int\n\np: P = P(1)\nprint(p.x)\n",
         p,
       ),
       "ok: 1\n",
@@ -346,7 +350,7 @@ test "a module member and a field still resolve as they did" {
     assert_eq(
       outcome_under(
         "from dataclasses import dataclass\n" +
-        "@dataclass\nclass P:\n    x: int\n\np = P(1)\nprint(p.y())\n",
+        "@dataclass\nclass P:\n    x: int\n\np: P = P(1)\nprint(p.y())\n",
         p,
       ),
       "refused: class 'P' has no field 'y'",
@@ -429,27 +433,25 @@ test "a default argument cannot be evaluated at an observable time" {
 ///
 /// The holes are real expressions at their real positions in the file, not a
 /// fragment parsed somewhere else, so the checker's rules reach into them:
-/// definite assignment, the capture rules, everything.
+/// scope, definite assignment, types, everything.
 test "an f-string is checked like the expressions it holds" {
   let p = @profile.pending()
-  assert_eq(outcome_under("x = 1\nprint(f\"{x} {x + 1}\")\n", p), "ok: 1 2\n")
+  assert_eq(
+    outcome_under("x: int = 1\nprint(f\"{x} {x + 1}\")\n", p),
+    "ok: 1 2\n",
+  )
   // Not definitely assigned, reported at the name inside the hole.
-  let m = @purepy.parse("a = 1\nprint(f\"x is {nope} here\")\n")
+  let m = @purepy.parse("a: int = 1\nprint(f\"x is {nope} here\")\n")
   let d = @purepy.check(m, profile=p).unwrap()
   assert_eq(d.message(), "'nope' is not defined")
   assert_eq(d.span.unwrap().start.line, 2)
   assert_eq(d.span.unwrap().start.col, 14)
-  // The capture rule reaches inside one too.
+  // So does definite assignment.
   assert_eq(
-    @purepy.check(
-      @purepy.parse(
-        "from typing import Callable\nx = 1\nf: Callable[[], str] = lambda: f\"{x}\"\nx = 2\n",
-      ),
-      profile=p,
-    )
+    @purepy.check(@purepy.parse("x: int\nprint(f\"{x}\")\n"), profile=p)
     .unwrap()
     .message(),
-    "'x' captured by previous statement, reassigned here",
+    "'x' is declared but not yet assigned",
   )
 }
 

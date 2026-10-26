@@ -71,6 +71,7 @@ fn resolve_type(
     ClassName(q) =>
       match resolve_name(q, ctx) {
         Some(Class(c)) => Class(c)
+        Some(Unbound) => raise ill(UnboundName(x=q.join(".")), span)
         _ => raise ill(NotClass(q=q.join(".")), span)
       }
     ListE(p) => {
@@ -169,8 +170,7 @@ fn check_body(
 }
 
 ///|
-/// A module body: like a sequence, except that a class declaration may appear
-/// and may not be rebound afterwards.
+/// A module body: like a sequence, except that a class declaration may appear.
 fn check_top_seq(
   ts : ArrayView[@analysis.Statement],
   ctx : ModCtx,
@@ -178,40 +178,11 @@ fn check_top_seq(
   if ts.is_empty() {
     return ctx
   }
-  let t = ts[0]
-  let rest = ts[1:]
-  let delta = match check_top_statement(t, ctx) {
+  let delta = match check_top_statement(ts[0], ctx) {
     Assigns(d) => d
     Returns => abort("a top-level return is rejected by check_stmt")
   }
-  let after = ctx.override_gamma(delta)
-  if rest.is_empty() {
-    return after
-  }
-  check_captured_reassignment(t, rest)
-  let rebound : Array[String] = []
-  for c in @analysis.assigns_seq(rest).to_array() {
-    if delta.get(c) is Some(Class(_)) {
-      rebound.push(c)
-    }
-  }
-  if !rebound.is_empty() {
-    let names = @analysis.names(rebound)
-    let stmt = first_assigning(rest, names)
-    raise ill(ClassRebound(c=min_name(names)), stmt.span())
-  }
-  check_top_seq(rest, after)
-}
-
-///|
-fn first_assigning(
-  ss : ArrayView[@analysis.Statement],
-  names : @analysis.NameSet,
-) -> @ast.Stmt {
-  match @analysis.find_first_reassigning(ss, names) {
-    Some(s) => s
-    None => abort("some statement assigns the name")
-  }
+  check_top_seq(ts[1:], ctx.override_gamma(delta))
 }
 
 ///|
@@ -243,23 +214,8 @@ fn check_seq(
   guard r is Assigns(delta) else {
     raise ill(UnreachableStatement, first_node(rest[0]).span())
   }
-  check_captured_reassignment(s, rest)
   let r_ = check_seq(rest, ctx.override_gamma(delta), returns)
   override_outcomes(r, r_)
-}
-
-///|
-fn check_captured_reassignment(
-  s : @analysis.Statement,
-  rest : ArrayView[@analysis.Statement],
-) -> Unit raise {
-  let reassigned = @analysis.captures_statement(s).intersection(
-    @analysis.assigns_seq(rest),
-  )
-  if !reassigned.is_empty() {
-    let stmt = first_assigning(rest, reassigned)
-    raise ill(CapturedReassignment(x=min_name(reassigned)), stmt.span())
-  }
 }
 
 ///|
@@ -270,7 +226,7 @@ fn check_statement(
 ) -> Outcome raise {
   match s {
     Region(defs) => {
-      check_mutual_region(defs, ctx)
+      check_bodies(defs, ctx)
       let entries : Array[(String, Entry)] = []
       for d in defs {
         entries.push((def_parts(d).0, Var(signature(d, ctx))))
@@ -282,37 +238,23 @@ fn check_statement(
 }
 
 ///|
-fn check_mutual_region(defs : Array[@ast.Stmt], ctx : ModCtx) -> Unit raise {
-  let seen : Array[String] = []
-  for d in defs {
-    let name = def_parts(d).0
-    if seen.contains(name) {
-      raise ill(DuplicateMutualName(x=name), d.span())
-    }
-    seen.push(name)
-  }
-  check_bodies(defs, ctx)
-}
-
-///|
 fn check_bodies(defs : Array[@ast.Stmt], ctx : ModCtx) -> Unit raise {
   let f_names : Array[(String, Entry)] = []
   for d in defs {
     f_names.push((def_parts(d).0, Var(signature(d, ctx))))
   }
   for d in defs {
-    let (name, _, body, returns) = def_parts(d)
+    let (name, args, body, returns) = def_parts(d)
+    let param_names = args.map(fn(a) { a.arg })
+    let locals = scope(param_names, body)
     check_defaults(d, ctx)
     let params = parameters(d, ctx)
+    check_assignments_declared(body, param_names)
     let mut delta = context_of(f_names)
     for p in params {
       delta = delta.add(p.0, Var(p.1))
     }
-    for x in @analysis.assigns_body(body).to_array() {
-      if !params.iter().any(fn(p) { p.0 == x }) {
-        delta = delta.add(x, Unassigned)
-      }
-    }
+    delta = override_context(delta, locals)
     let declared = resolve_type(type_expr(returns), d.span(), ctx)
     let r = check_body(body, ctx.override_gamma(delta), Some(declared))
     if !(r is Returns) && !@types.subtype(ctx.sigma(), @types.t_none, declared) {
@@ -322,14 +264,72 @@ fn check_bodies(defs : Array[@ast.Stmt], ctx : ModCtx) -> Unit raise {
 }
 
 ///|
-fn check_assign_target(
-  target : @ast.Expr,
-  captured : @analysis.NameSet,
-) -> Unit raise {
-  for x in @analysis.target_names(target) {
-    if captured.contains(x) {
-      raise ill(SelfCaptureAssignment(x~), target.span())
+/// The scope of a body: a name may be declared once -- by an annotation, a
+/// `def`, a class or an import -- and never where a parameter or a pattern
+/// already binds it. Every name the body assigns starts out unbound.
+fn scope(ys : Array[String], body : Array[@ast.Stmt]) -> Context raise {
+  let patterns = @analysis.pattern_bound(body)
+  let is_pattern = fn(x : String) { patterns.iter().any(fn(p) { p.0 == x }) }
+  let seen = [..ys]
+  for d in @analysis.declares_body(body) {
+    if seen.contains(d.0) || is_pattern(d.0) {
+      raise ill(Redeclaration(x=d.0), d.1.span())
     }
+    seen.push(d.0)
+  }
+  let clash = ys.filter(is_pattern)
+  @basic.sort_names(clash)
+  for x in clash {
+    for p in patterns {
+      if p.0 == x {
+        raise ill(Redeclaration(x~), p.1.span())
+      }
+    }
+  }
+  let mut out = empty_context()
+  for x in @analysis.assigns_body(body).to_array() {
+    out = out.add(x, Unbound)
+  }
+  out
+}
+
+///|
+/// An assignment to a name the scope never declared: the rules would reject
+/// it as unbound, and this says why.
+fn check_assignments_declared(
+  body : Array[@ast.Stmt],
+  bound : Array[String],
+) -> Unit raise {
+  let declared = @analysis.declares_body(body).map(fn(d) { d.0 })
+  let patterns = @analysis.pattern_bound(body)
+  for t in @analysis.assign_targets(body) {
+    if !declared.contains(t.0) &&
+      !bound.contains(t.0) &&
+      !patterns.iter().any(fn(p) { p.0 == t.0 }) {
+      raise ill(UndeclaredAssignment(x=t.0), t.1.span())
+    }
+  }
+}
+
+///|
+/// What assigning `x` at a type does to its entry: a declared variable is
+/// assigned, anything else is refused, each for its own reason.
+fn assign_name(
+  x : String,
+  span : @basic.Span,
+  ctx : ModCtx,
+  check : (@types.Type) -> Unit raise,
+) -> @types.Type raise {
+  match ctx.gamma.get(x) {
+    Some(DU(tau)) => {
+      check(tau)
+      tau
+    }
+    Some(PU(_)) => raise ill(MaybeAssigned(x~), span)
+    Some(Unbound) => raise ill(AssignmentBeforeDeclaration(x~), span)
+    Some(Class(_) | ModuleStub(_) | ModuleLoaded(_, _) | Predefined) =>
+      raise ill(Redeclaration(x~), span)
+    _ => raise ill(Reassignment(x~), span)
   }
 }
 
@@ -341,23 +341,27 @@ fn check_stmt(
 ) -> Outcome raise {
   match s {
     Pass(..) => assigns_nothing()
-    Assign(targets~, value~, ..) => {
-      let target = targets[0]
-      check_assign_target(target, @analysis.captures_e(value))
-      match target {
-        Name(id~, ..) =>
-          Assigns(context_of([(id, Var(synth_expr(value, ctx)))]))
-        _ => Assigns(destructure(target, synth_expr(value, ctx), ctx))
+    Assign(targets~, value~, span~) =>
+      match targets[0] {
+        Name(id~, ..) => {
+          let tau = assign_name(id, span, ctx, fn(t) raise {
+            check_expr(value, t, ctx)
+          })
+          Assigns(context_of([(id, Var(tau))]))
+        }
+        target =>
+          Assigns(destructure(target, synth_expr(value, ctx), span, ctx))
       }
-    }
     AnnAssign(target~, annotation~, value~, span~, ..) => {
-      guard value is Some(v) && target is Name(id~, ..) else {
-        abort("rejected by the sieve")
+      guard target is Name(id~, ..) else { abort("rejected by the sieve") }
+      let tau = resolve_type(type_expr(Some(annotation)), span, ctx)
+      match value {
+        None => Assigns(context_of([(id, DU(tau))]))
+        Some(v) => {
+          check_expr(v, tau, ctx)
+          Assigns(context_of([(id, Var(tau))]))
+        }
       }
-      let declared = resolve_type(type_expr(Some(annotation)), span, ctx)
-      check_expr(v, declared, ctx)
-      check_assign_target(target, @analysis.captures_e(v))
-      Assigns(context_of([(id, Var(declared))]))
     }
     ExprStmt(value~, ..) => {
       synth_expr(value, ctx) |> ignore
@@ -387,7 +391,7 @@ fn check_stmt(
           check_body(or_else, ctx, returns)
         },
       )
-      merge_outcomes(ctx.sigma(), branches)
+      merge_outcomes(branches)
     }
     Assert(cond~, msg~, ..) => {
       check_expr(cond, @types.t_bool, ctx)
@@ -406,15 +410,24 @@ fn check_stmt(
 }
 
 ///|
-/// A destructuring target, under a profile that has it: each name gets the
-/// type of the component it lands on.
+/// A destructuring target, under a profile that has it: each name is
+/// assigned as a plain assignment assigns it, at the type of the component
+/// it lands on.
 fn destructure(
   target : @ast.Expr,
   tau : @types.Type,
+  stmt : @basic.Span,
   ctx : ModCtx,
 ) -> Context raise {
   match target {
-    Name(id~, ..) => context_of([(id, Var(tau))])
+    Name(id~, span~, ..) => {
+      let declared = assign_name(id, stmt, ctx, fn(t) raise {
+        if !@types.subtype(ctx.sigma(), tau, t) {
+          raise ill(TypeMismatch(expected=render(t), actual=render(tau)), span)
+        }
+      })
+      context_of([(id, Var(declared))])
+    }
     Tuple(elts~, span~, ..) | List(elts~, span~, ..) => {
       let components = match tau {
         Tuple(ts) if ts.length() == elts.length() => ts
@@ -430,7 +443,7 @@ fn destructure(
       }
       let mut out = empty_context()
       for i, t in elts {
-        out = override_context(out, destructure(t, components[i], ctx))
+        out = override_context(out, destructure(t, components[i], stmt, ctx))
       }
       out
     }
@@ -461,7 +474,7 @@ fn check_match_cases(
   if partial {
     branches.push(assigns_nothing())
   }
-  merge_outcomes(ctx.sigma(), branches)
+  merge_outcomes(branches)
 }
 
 ///|
@@ -509,8 +522,10 @@ fn synth_expr(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
         match ctx.gamma.get(id) {
           Some(Class(_)) => raise ill(ClassAsValue(q=id), span)
           Some(Predefined) => raise ill(PredefinedNameAsValue(q=id), span)
-          None => raise ill(UndefinedVariable(x=id), span)
-          _ => raise ill(UnassignedVariable(x=id), span)
+          Some(Unbound) => raise ill(UnboundName(x=id), span)
+          Some(DU(_)) => raise ill(UnassignedVariable(x=id), span)
+          Some(PU(_)) => raise ill(PossiblyUnassigned(x=id), span)
+          _ => raise ill(UndefinedVariable(x=id), span)
         }
       }
       match ctx.assigned_type(id) {
@@ -671,7 +686,7 @@ fn attr_module(
       raise ill(ClassAsValue(q=@analysis.qualified_name(e)), span)
     Some(Predefined) =>
       raise ill(PredefinedNameAsValue(q=@analysis.qualified_name(e)), span)
-    Some(Unassigned) => raise ill(UnassignedMember(x~, q~), span)
+    Some(Unbound | DU(_) | PU(_)) => raise ill(UnassignedMember(x~, q~), span)
     Some(Var(t)) => t
   }
 }

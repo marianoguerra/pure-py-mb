@@ -25,7 +25,7 @@ describes.
 
 ## Status
 
-The conformance suite of specification v0.16.0 passes in full: 1282
+The conformance suite of specification v0.17.0 passes in full: 1310
 assertions across four oracles, compared against the reference's own answers
 for every one of its sources.
 Two more oracles compare the token stream and the parse tree against CPython's
@@ -104,20 +104,20 @@ test "the sieve rejects what PurePy excludes" {
 }
 
 ///|
-test "the checker decides definite assignment and the capture rules" {
-  let good = @purepy.parse("x = 1\nprint(x)\n")
+test "the checker decides types and definite assignment" {
+  let good = @purepy.parse("x: int = 1\nprint(x)\n")
   inspect(@purepy.check(good) is None, content="true")
-  let bad = @purepy.parse(
-    "from typing import Callable\nx = 1\nf: Callable[[], int] = lambda: x\nx = 2\n",
-  )
+  // A variable is declared once, with its type, and assigned once.
+  let bad = @purepy.parse("x: int = 1\nx = 2\n")
   match @purepy.check(bad) {
-    Some(d) =>
-      inspect(
-        d.message(),
-        content="'x' captured by previous statement, reassigned here",
-      )
-    None => fail("a captured name may not be reassigned")
+    Some(d) => inspect(d.message(), content="'x' is already assigned")
+    None => fail("a variable is assigned once")
   }
+  let ill_typed = @purepy.parse("x: int = 'one'\n")
+  inspect(
+    @purepy.check(ill_typed).unwrap().message(),
+    content="expected type int, given Literal['one']",
+  )
 }
 ```
 

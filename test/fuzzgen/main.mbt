@@ -69,6 +69,16 @@ fn Ty::annotation(self : Ty) -> @ast.Expr {
 struct Draw {
   state : @splitmix.RandomState
   mut budget : Int32
+  /// The names bound so far, each at its type. A PurePy variable is declared
+  /// once and assigned once, so every statement that binds binds a FRESH name.
+  vars : Array[(String, Ty)]
+  mut fresh : Int32
+}
+
+///|
+fn Draw::fresh_name(self : Draw) -> String {
+  self.fresh += 1
+  "v\{self.fresh}"
 }
 
 ///|
@@ -112,9 +122,10 @@ fn Draw::program(self : Draw) -> Program {
   // The pool, bound to literals, so a later reference is well formed.
   for v in pool {
     body.push(self.bind(v.0, v.1, self.literal(v.1)))
+    self.vars.push(v)
   }
   for _ in 0..<(1 + self.below(3)) {
-    body.push(self.stmt())
+    body.append(self.stmts())
   }
   for _ in 0..<(1 + self.below(2)) {
     body.push(@ast.Stmt::expr_stmt(self.print_of(self.expr(self.ty()))))
@@ -136,38 +147,55 @@ fn Draw::print_of(self : Draw, e : @ast.Expr) -> @ast.Expr {
 }
 
 ///|
-fn Draw::assign_pool(self : Draw) -> @ast.Stmt {
-  let v = pool[self.below(pool.length())]
-  self.bind(v.0, v.1, self.expr(v.1))
+/// A fresh name bound to an expression of a type, and then in scope.
+fn Draw::bind_fresh(self : Draw, t : Ty, e : @ast.Expr) -> @ast.Stmt {
+  let x = self.fresh_name()
+  let s = self.bind(x, t, e)
+  self.vars.push((x, t))
+  s
 }
 
 ///|
-fn Draw::stmt(self : Draw) -> @ast.Stmt {
+/// Statements, some of them a declaration and its assignment, which is why
+/// one draw may give several.
+fn Draw::stmts(self : Draw) -> Array[@ast.Stmt] {
   if self.budget <= 0 {
-    let v = pool[self.below(pool.length())]
-    return self.bind(v.0, v.1, self.literal(v.1))
+    let t = self.ty()
+    return [self.bind_fresh(t, self.literal(t))]
   }
   self.budget -= 1
   match self.below(6) {
-    0 | 1 => self.assign_pool()
+    0 | 1 => {
+      let t = self.ty()
+      [self.bind_fresh(t, self.expr(t))]
+    }
     2 => {
-      // Both branches assign the same name, so it stays definitely assigned.
-      let v = pool[self.below(pool.length())]
-      @ast.Stmt::if_(self.expr(TBool), [self.bind(v.0, v.1, self.expr(v.1))], or_else=[
-        self.bind(v.0, v.1, self.expr(v.1)),
-      ])
+      // Declared before the `if`, assigned once on each path, so it is
+      // definitely assigned after it.
+      let t = self.ty()
+      let x = self.fresh_name()
+      let decl = @ast.Stmt::declaration(x, t.annotation())
+      let s = @ast.Stmt::if_(
+        self.expr(TBool),
+        [@ast.Stmt::assign(x, self.expr(t))],
+        or_else=[@ast.Stmt::assign(x, self.expr(t))],
+      )
+      self.vars.push((x, t))
+      [decl, s]
     }
     3 => {
       let t = [TInt, TStr, TP][self.below(3)]
-      @ast.Stmt::match_(self.expr(t), [
-        @ast.case_(self.pattern(t), [
-          @ast.Stmt::expr_stmt(self.print_of(@ast.Expr::str("m"))),
+      [
+        @ast.Stmt::match_(self.expr(t), [
+          @ast.case_(self.pattern(t), [
+            @ast.Stmt::expr_stmt(self.print_of(@ast.Expr::str("m"))),
+          ]),
+          @ast.case_(@ast.Pattern::wildcard(), [@ast.Stmt::pass()]),
         ]),
-        @ast.case_(@ast.Pattern::wildcard(), [@ast.Stmt::pass()]),
-      ])
+      ]
     }
-    4 => @ast.Stmt::expr_stmt(self.print_of(self.expr(self.ty())))
-    _ => @ast.Stmt::pass()
+    4 => [@ast.Stmt::expr_stmt(self.print_of(self.expr(self.ty())))]
+    _ => [@ast.Stmt::pass()]
   }
 }
 
@@ -194,13 +222,12 @@ fn Draw::literal(self : Draw, t : Ty) -> @ast.Expr {
 }
 
 ///|
-/// A leaf of a type: a literal, or the pool name that has it.
+/// A leaf of a type: a literal, or a name bound at it.
 fn Draw::atom(self : Draw, t : Ty) -> @ast.Expr {
   if self.below(2) == 0 {
-    for v in pool {
-      if v.1 == t {
-        return @ast.Expr::name(v.0)
-      }
+    let named = self.vars.filter(fn(v) { v.1 == t })
+    if !named.is_empty() {
+      return @ast.Expr::name(named[self.below(named.length())].0)
     }
   }
   self.literal(t)
@@ -343,7 +370,7 @@ fn Draw::pattern(self : Draw, t : Ty) -> @ast.Pattern {
         if self.below(2) == 0 {
           @ast.Pattern::literal(Int(BigInt::from_int(self.below(10))))
         } else {
-          @ast.Pattern::capture("h")
+          @ast.Pattern::capture(self.fresh_name())
         },
         @ast.Pattern::literal(Int(BigInt::from_int(self.below(10)))),
       ])
@@ -357,7 +384,7 @@ fn Draw::pattern(self : Draw, t : Ty) -> @ast.Pattern {
 impl @quickcheck.Arbitrary for Program with fn arbitrary(size, state) {
   // `size` is quickcheck's growth parameter: an early sample is small, a late
   // one is deep. It becomes the recursion budget directly.
-  Draw::{ state, budget: 4 + size, }.program()
+  Draw::{ state, budget: 4 + size, vars: [], fresh: 0, }.program()
 }
 
 ///|

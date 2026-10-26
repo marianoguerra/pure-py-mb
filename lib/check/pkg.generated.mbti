@@ -37,7 +37,9 @@ pub let predefined_modules : Array[String]
 // Types and methods
 pub(all) enum Entry {
   Var(@types.Type)
-  Unassigned
+  Unbound
+  DU(@types.Type)
+  PU(@types.Type)
   ModuleStub(String)
   ModuleLoaded(String, @sorted_map.SortedMap[String, Entry])
   Class(String)

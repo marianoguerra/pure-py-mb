@@ -241,6 +241,7 @@ pub(all) enum Stmt {
 pub fn Stmt::ann_assign(String, Expr, Expr) -> Self
 pub fn Stmt::assign(String, Expr) -> Self
 pub fn Stmt::dataclass(String, Array[(String, Expr)], base? : String) -> Self
+pub fn Stmt::declaration(String, Expr) -> Self
 pub fn Stmt::def_(String, Array[(String, Expr)], Array[Self], returns? : Expr) -> Self
 pub fn Stmt::expr_stmt(Expr) -> Self
 pub fn Stmt::from_import(String, Array[String]) -> Self

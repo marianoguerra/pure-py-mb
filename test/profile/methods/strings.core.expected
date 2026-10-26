@@ -1,1 +1,1 @@
-3: strings.py: values of type Literal['Hello, World'] have no attributes
+3: strings.py: values of type str have no attributes

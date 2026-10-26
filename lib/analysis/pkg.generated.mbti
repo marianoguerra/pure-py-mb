@@ -8,6 +8,8 @@ import {
 }
 
 // Values
+pub fn assign_targets(Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)]
+
 pub fn assigns_body(Array[@ast.Stmt]) -> @sorted_set.SortedSet[String]
 
 pub fn assigns_seq(ArrayView[Statement]) -> @sorted_set.SortedSet[String]
@@ -36,6 +38,10 @@ pub fn captures_region(Array[@ast.Stmt]) -> @sorted_set.SortedSet[String]
 
 pub fn captures_statement(Statement) -> @sorted_set.SortedSet[String]
 
+pub fn declares(@ast.Stmt) -> Array[(String, @ast.Stmt)]
+
+pub fn declares_body(Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)]
+
 pub let empty : @sorted_set.SortedSet[String]
 
 pub fn find_first_reassigning(ArrayView[Statement], @sorted_set.SortedSet[String]) -> @ast.Stmt?
@@ -63,6 +69,8 @@ pub fn names(Array[String]) -> @sorted_set.SortedSet[String]
 pub fn names_in_target(@ast.Expr) -> @sorted_set.SortedSet[String]
 
 pub fn own_fields(@ast.Stmt) -> Array[String]
+
+pub fn pattern_bound(Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)]
 
 pub fn qualified_name(@ast.Expr) -> String
 

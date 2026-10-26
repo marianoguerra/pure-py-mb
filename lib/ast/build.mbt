@@ -233,6 +233,19 @@ pub fn Stmt::ann_assign(
 }
 
 ///|
+/// `x: T`, a declaration with no value: the variable has its type and is not
+/// yet assigned.
+pub fn Stmt::declaration(target : String, annotation : Expr) -> Stmt {
+  AnnAssign(
+    target=Expr::name(target, ctx=Store),
+    annotation~,
+    value=None,
+    simple=true,
+    span=@basic.nowhere,
+  )
+}
+
+///|
 /// A PurePy dataclass: `@dataclass` on a class whose body declares each field
 /// with its type, and an optional base class. That is the only class form
 /// PurePy accepts, so it is the only one the builder offers.

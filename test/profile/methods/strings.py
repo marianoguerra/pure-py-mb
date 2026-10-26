@@ -1,4 +1,4 @@
-s = "Hello, World"
+s: str = "Hello, World"
 print([s.upper(), s.lower()])
 print(["  pad  ".strip(), "|" + "  pad  ".lstrip() + "|", "|" + "  pad  ".rstrip() + "|"])
 print([s.startswith("Hello"), s.endswith("World"), s.startswith("x")])

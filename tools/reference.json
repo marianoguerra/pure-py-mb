@@ -1,8 +1,8 @@
 {
   "repository": "https://github.com/pure-py/pure-py-spec",
-  "commit": "6766a814a5f7fd413ec984626e32334a1b542141",
-  "ref": "v0.16.0",
-  "date": "2026-09-17",
-  "spec_version": "0.16.0",
+  "commit": "135ac6948913a609d0d1f196f6aa5f570d30bdae",
+  "ref": "v0.17.0",
+  "date": "2026-09-24",
+  "spec_version": "0.17.0",
   "note": "The reference checker (src/) and the conformance suite (test/). The suite is copied into test/conformance/ and committed, so the differential harness is hermetic; the checker is read-only material this port is written from and the source of the goldens under test/golden/."
 }

@@ -1,5 +1,5 @@
-x = None
-y = 1
+x: None = None
+y: int = 1
 print(x is None)
 print(x is not None)
 print(y is None)

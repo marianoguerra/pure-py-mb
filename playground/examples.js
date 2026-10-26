@@ -45,10 +45,10 @@ print([1e16, 1e15, 1e-5])
         src: `s: str = "héllo"
 print([len(s), s[0], s[-1]])
 print("bc" in "abcd")
-xs = [1, "a", (2, 3), {"k": 1.5}, None, True]
+xs: list[int | str | tuple[int, int] | dict[str, float] | None | bool] = [1, "a", (2, 3), {"k": 1.5}, None, True]
 print(xs)
 print(len(xs))
-d = {"one": 1, "two": 2}
+d: dict[str, int] = {"one": 1, "two": 2}
 print([d["one"], len(d)])
 print("two" in d)
 `,
@@ -104,7 +104,7 @@ print([even(10), odd(10)])
         expect: 'finished',
         src: `from typing import Callable
 
-factor = 3
+factor: int = 3
 triple: Callable[[int], int] = lambda n: n * factor
 print(triple(7))
 
@@ -120,7 +120,7 @@ print(adder(10)(5))
           "Over a list, a string or a dictionary's keys, with as many " +
           "clauses and conditions as you like.",
         expect: 'finished',
-        src: `xs = [1, 2, 3, 4, 5]
+        src: `xs: list[int] = [1, 2, 3, 4, 5]
 print([n * n for n in xs])
 print([n for n in xs if n % 2 == 0])
 print([a * b for a in [1, 2] for b in [10, 20]])
@@ -194,7 +194,7 @@ def flip(p: Point) -> Point:
 import math
 from geometry import Point, flip
 
-p = Point(3, 4)
+p: Point = Point(3, 4)
 print([p, flip(p)])
 print(math.sqrt(p.x * p.x + p.y * p.y))
 `,
@@ -259,7 +259,7 @@ print([sys.argv[0], sys.argv[1]])
           "The sieve refuses what the language excludes on sight, and says " +
           "which construct and where. Loops are out because recursion is in.",
         expect: 'refused',
-        src: `xs = [1, 2, 3]
+        src: `xs: list[int] = [1, 2, 3]
 for x in xs:
     print(x)
 `,
@@ -271,31 +271,32 @@ for x in xs:
           "`del` are all excluded, and each has its own message. Try " +
           "deleting the first line to see the next one.",
         expect: 'refused',
-        src: `xs = [1, 2, 3]
+        src: `xs: list[int] = [1, 2, 3]
 xs[0] = 9
 `,
       },
       {
         name: 'Not definitely assigned',
         note:
-          "A name has to be bound on every path that reaches it. Assigning " +
-          "in one branch only is not enough -- add an `else` and it is " +
-          "accepted.",
+          "A variable is declared with its type, and has to be assigned on " +
+          "every path that reaches a use. Assigning in one branch only is " +
+          "not enough -- add an `else` and it is accepted.",
         expect: 'refused',
-        src: `c = True
+        src: `c: bool = True
+x: int
 if c:
     x = 1
 print(x)
 `,
       },
       {
-        name: 'Reassigning a captured name',
+        name: 'Assigning twice',
         note:
-          "This is the rule that makes closures behave without mutable " +
-          "cells: once a statement has captured a name, nothing after it may " +
-          "rebind that name. The report shows both places.",
+          "A PurePy variable is declared once and assigned once. That is " +
+          "what makes closures behave without mutable cells: there is no " +
+          "later value for a function that read the name to miss.",
         expect: 'refused',
-        src: `x = 5
+        src: `x: int = 5
 
 def show() -> int:
     return x
@@ -310,7 +311,7 @@ print(show())
           "A pattern an earlier case already covers is refused, and the " +
           "report points at both.",
         expect: 'refused',
-        src: `v = 1
+        src: `v: int = 1
 match v:
     case a:
         print("anything")
@@ -331,7 +332,7 @@ class Point:
     x: int
     y: int
 
-p = Point(1, 2, 3)
+p: Point = Point(1, 2, 3)
 `,
       },
       {
@@ -362,7 +363,7 @@ print(double("two"))
           "The attributes of a built-in value are not PurePy's, which is what " +
           "makes list mutation unreachable rather than merely discouraged.",
         expect: 'refused',
-        src: `xs = [1, 2]
+        src: `xs: list[int] = [1, 2]
 xs.append(3)
 `,
       },
@@ -373,9 +374,9 @@ xs.append(3)
           "yet. These are refused with the issue that tracks them, which is " +
           "a different answer from “never”.",
         expect: 'not-yet',
-        src: `a = 1
-b = 2
-c = 3
+        src: `a: int = 1
+b: int = 2
+c: int = 3
 print(a < b < c)
 `,
       },
@@ -399,7 +400,7 @@ print(1 // 0)
         name: 'Assertions',
         note: 'An assertion message is evaluated only when the check fails.',
         expect: 'terminated',
-        src: `n = 3
+        src: `n: int = 3
 assert n > 0, "n must be positive"
 print("checked")
 assert n > 10, "n is too small"
@@ -425,8 +426,8 @@ print("never reached")
           "values have none -- so the run has no answer, and this " +
           "implementation says so rather than guessing Python's.",
         expect: 'undefined',
-        src: `inf = 1e309
-nan = inf - inf
+        src: `inf: float = 1e309
+nan: float = inf - inf
 print(nan == nan)
 print([nan] == [nan])
 `,

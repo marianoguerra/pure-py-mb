@@ -1,4 +1,4 @@
-d = {"a": 1, "b": 2}
+d: dict[str, int] = {"a": 1, "b": 2}
 print([d.get("a"), d.get("z")])
 print([d.get("z", 0), d.get("b", 99)])
 print(list(d.keys()))

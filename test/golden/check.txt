@@ -2,52 +2,49 @@
 module-level/excluded/dynamic/eq_nan_container.py	0	: ok
 module-level/excluded/static/and_non_bool.py	3	:2:6: expected type bool, given Literal[1]
 module-level/excluded/static/any_not_defined.py	3	:2:0: module 'typing' has no member 'Any'
+module-level/excluded/static/assign_undeclared.py	3	:2:0: 'x' is assigned but never declared
 module-level/excluded/static/attr_builtin_method.py	3	:3:0: values of type list[int] have no attributes
 module-level/excluded/static/bare_return_type.py	3	:3:4: expected type int, given None
 module-level/excluded/static/binop_bool_int.py	3	:3:6: no overload of '+' at operand types bool and Literal[1]
 module-level/excluded/static/bool_not_int.py	3	:2:9: expected type int, given Literal[True]
+module-level/excluded/static/branch_declared_use.py	3	:5:11: 'y' is not definitely assigned
+module-level/excluded/static/builtin_use_before_declaration.py	3	:2:9: 'len' is unbound
 module-level/excluded/static/call_arg_type.py	3	:5:8: expected type int, given Literal['a']
-module-level/excluded/static/callable_as_value.py	3	:4:4: 'Callable' is usable only in annotations or as a decorator
+module-level/excluded/static/callable_as_value.py	3	:4:9: 'Callable' is usable only in annotations or as a decorator
 module-level/excluded/static/callable_param_narrower.py	3	:7:28: expected type Callable[[float], int], given Callable[[int], int]
 module-level/excluded/static/callable_result_wider.py	3	:7:26: expected type Callable[[int], int], given Callable[[int], float]
-module-level/excluded/static/captured-reassign/constr_assign.py	3	:11:0: 'C' is bound to a class and cannot be rebound at top level
-module-level/excluded/static/captured-reassign/def_assign.py	3	:6:4: 'x' captured by previous statement, reassigned here
-module-level/excluded/static/captured-reassign/def_class.py	3	:10:0: 'x' captured by previous statement, reassigned here
-module-level/excluded/static/captured-reassign/keyword_arg.py	3	:11:0: 'y' captured by previous statement, reassigned here
-module-level/excluded/static/captured-reassign/lambda_def.py	3	:9:0: 'g' captured by previous statement, reassigned here
-module-level/excluded/static/captured-reassign/match.py	3	:7:4: 'y' captured by previous statement, reassigned here
-module-level/excluded/static/class_as_value.py	3	:6:4: 'Point' refers to a class; classes are not first-class values
-module-level/excluded/static/class_name_rebound.py	3	:10:0: 'C' is bound to a class and cannot be rebound at top level
-module-level/excluded/static/class_rebound_def.py	3	:10:0: 'C' is bound to a class and cannot be rebound at top level
-module-level/excluded/static/class_rebound_pattern.py	3	:10:0: 'C' is bound to a class and cannot be rebound at top level
-module-level/excluded/static/class_redeclared.py	3	:10:0: 'C' is bound to a class and cannot be rebound at top level
+module-level/excluded/static/class_as_value.py	3	:6:9: 'Point' refers to a class; classes are not first-class values
+module-level/excluded/static/class_name_rebound.py	3	:10:0: 'C' is already declared
+module-level/excluded/static/class_rebound_def.py	3	:10:0: 'C' is already declared
+module-level/excluded/static/class_rebound_pattern.py	3	:6:0: 'C' is already declared
+module-level/excluded/static/class_redeclared.py	3	:10:0: 'C' is already declared
+module-level/excluded/static/class_shadows_variable.py	3	:7:0: 'value' is already declared
 module-level/excluded/static/comp_guard_bool.py	3	:2:28: expected type bool, given int
-module-level/excluded/static/comprehension_capture.py	3	:2:29: 'i' bound by generator, captured by lambda
-module-level/excluded/static/comprehension_capture_qualifier.py	3	:2:12: 'i' bound by generator, captured by lambda
+module-level/excluded/static/comprehension_capture.py	3	:3:57: 'i' bound by generator, captured by lambda
+module-level/excluded/static/comprehension_capture_qualifier.py	3	:3:37: 'i' bound by generator, captured by lambda
 module-level/excluded/static/cond_non_bool.py	3	:2:14: expected type bool, given Literal[0]
-module-level/excluded/static/cond_partial_def.py	3	:9:11: 'x' is not definitely assigned
-module-level/excluded/static/constr_field_type.py	3	:9:13: expected type int, given Literal['b']
-module-level/excluded/static/dataclass_dup_class.py	3	:9:0: 'C' is bound to a class and cannot be rebound at top level
+module-level/excluded/static/cond_partial_def.py	3	:10:11: 'x' is not definitely assigned
+module-level/excluded/static/constr_field_type.py	3	:9:20: expected type int, given Literal['b']
+module-level/excluded/static/dataclass_dup_class.py	3	:9:0: 'C' is already declared
 module-level/excluded/static/dataclass_dup_field.py	3	:5:0: duplicate field 'x' in class 'C'
 module-level/excluded/static/dataclass_inherited_field_clash.py	3	:9:0: duplicate field 'x' in class 'Sub'
 module-level/excluded/static/dict_comp_int_keys.py	3	:3:7: expected type str, given int
 module-level/excluded/static/dict_comp_value_type.py	3	:3:9: expected type str, given int
-module-level/excluded/static/dict_int_keys.py	3	:2:5: expected type str, given Literal[1]
+module-level/excluded/static/dict_int_keys.py	3	:2:21: expected type str, given Literal[1]
 module-level/excluded/static/dict_invariant.py	3	:3:22: expected type dict[str, float], given dict[str, int]
-module-level/excluded/static/duplicate_def_in_region.py	3	:6:0: duplicate name 'g' in mutual region
-module-level/excluded/static/elif_no_else.py	3	:7:6: 'y' is not definitely assigned
+module-level/excluded/static/duplicate_def_in_region.py	3	:6:0: 'g' is already declared
+module-level/excluded/static/elif_no_else.py	3	:8:6: 'y' is not definitely assigned
 module-level/excluded/static/eq_bool_int.py	3	:2:6: no overload of '==' at operand types Literal[True] and Literal[1]
 module-level/excluded/static/eq_function.py	3	:4:6: no overload of '==' at operand types Callable[[int], int] and Callable[[int], int]
 module-level/excluded/static/eq_short_circuit.py	3	:8:6: no overload of '==' at operand types tuple[int, Callable[[int], int]] and tuple[int, Callable[[int], int]]
 module-level/excluded/static/eq_short_circuit_undefined.py	3	:11:6: no overload of '==' at operand types tuple[int, Callable[[int], int]] and tuple[int, Callable[[int], int]]
 module-level/excluded/static/eq_unrelated_types.py	3	:2:6: no overload of '==' at operand types Literal[1] and Literal['a']
-module-level/excluded/static/forward_class_in_def.py	3	:4:11: 'Point' is not defined
+module-level/excluded/static/forward_class_in_def.py	3	:5:11: 'Point' is unbound
 module-level/excluded/static/if_nonbool.py	3	:2:3: expected type bool, given Literal[5]
 module-level/excluded/static/lambda_applied_result.py	3	:2:20: expected type str, given int
 module-level/excluded/static/lambda_arity.py	3	:4:31: expected type Callable[[int, int], int], given a lambda of 1 parameter
 module-level/excluded/static/lambda_not_callable.py	3	:2:9: expected type int, given a lambda
 module-level/excluded/static/lambda_result_type.py	3	:4:36: expected type str, given int
-module-level/excluded/static/lambda_unannotated.py	3	:2:4: cannot infer type of this expression; annotate the assignment
 module-level/excluded/static/list_comp_elem_type.py	3	:3:16: expected type list[str], given list[int]
 module-level/excluded/static/list_invariant.py	3	:3:18: expected type list[float], given list[int]
 module-level/excluded/static/match_as_subsumed.py	3	:6:9: case 2 is unreachable
@@ -59,11 +56,11 @@ module-level/excluded/static/match_dup_neg_literal.py	3	:6:9: case 2 is unreacha
 module-level/excluded/static/match_empty_seq.py	3	:4:13: list pattern requires values of list type, not list[int] | tuple[]
 module-level/excluded/static/match_int_pat_on_list.py	3	:4:9: case 1 is unreachable
 module-level/excluded/static/match_list_lengths.py	3	:2:0: 'f' declares result type int but does not always return
-module-level/excluded/static/match_list_pat_on_tuple.py	3	:4:9: list pattern requires values of list type, not tuple[Literal[1], Literal[2]]
-module-level/excluded/static/match_literal_catch_all.py	3	:6:9: case 2 is unreachable
-module-level/excluded/static/match_partial_def.py	3	:8:6: 'y' is not definitely assigned
+module-level/excluded/static/match_list_pat_on_tuple.py	3	:4:9: list pattern requires values of list type, not tuple[int, int]
+module-level/excluded/static/match_literal_catch_all.py	3	:7:9: case 2 is unreachable
+module-level/excluded/static/match_partial_def.py	3	:9:6: 'y' is not definitely assigned
 module-level/excluded/static/match_seq_kinds.py	3	:4:13: list pattern requires values of list type, not list[int] | tuple[int, int]
-module-level/excluded/static/match_shadowed_class.py	3	:11:0: 'C' is bound to a class and cannot be rebound at top level
+module-level/excluded/static/match_shadowed_class.py	3	:11:0: 'C' is already declared
 module-level/excluded/static/match_str_pat_on_int.py	3	:4:9: case 1 is unreachable
 module-level/excluded/static/match_tuple_pat_on_int.py	3	:4:9: case 1 is unreachable
 module-level/excluded/static/match_tuple_pat_on_list.py	3	:4:9: tuple pattern requires values of tuple type, not list[int]
@@ -71,12 +68,19 @@ module-level/excluded/static/match_tuple_union_bind.py	3	:5:19: expected type in
 module-level/excluded/static/match_union_bind_narrow.py	3	:5:19: expected type int, given int | str
 module-level/excluded/static/match_unreachable.py	3	:8:9: case 2 is unreachable
 module-level/excluded/static/match_var_leak.py	3	:7:6: 'x' is not definitely assigned
+module-level/excluded/static/maybe_assigned.py	3	:6:4: 'x' may already be assigned
 module-level/excluded/static/missing_return.py	3	:2:0: 'f' declares result type int but does not always return
-module-level/excluded/static/module_as_value.py	3	:4:4: 'sys' refers to a module; modules are not first-class values
-module-level/excluded/static/mutual_def_block_local.py	3	:13:6: 'g' is not definitely assigned
-module-level/excluded/static/mutual_lambdas.py	3	:4:53: 'g' is not defined
-module-level/excluded/static/mutual_split_by_assign.py	3	:5:11: 'g' is not defined
+module-level/excluded/static/module_as_value.py	3	:4:9: 'sys' refers to a module; modules are not first-class values
+module-level/excluded/static/mutual_after_rebind.py	3	:7:0: 'g' is already declared
+module-level/excluded/static/mutual_def_block_local.py	3	:10:6: 'g' is not definitely assigned
+module-level/excluded/static/mutual_def_in_branch.py	3	:10:4: 'f' is already declared
+module-level/excluded/static/mutual_def_in_branch_shadows.py	3	:10:4: 'g' is already declared
+module-level/excluded/static/mutual_lambdas.py	3	:4:53: 'g' is unbound
+module-level/excluded/static/mutual_split_by_assign.py	3	:5:11: 'g' is unbound
 module-level/excluded/static/no_else.py	3	:6:11: 'x' is not definitely assigned
+module-level/excluded/static/param_bound_by_pattern.py	3	:3:4: 'x' is already declared
+module-level/excluded/static/param_reassign.py	3	:3:13: 'x' is unbound
+module-level/excluded/static/param_redeclared.py	3	:3:4: 'x' is already declared
 module-level/excluded/static/pat_class_arity.py	3	:11:9: pattern for 'Point' expects 2 sub-patterns, got 0
 module-level/excluded/static/pat_class_bad_keyword.py	3	:12:9: pattern keywords for 'Point' must be x, y
 module-level/excluded/static/pat_class_bool_fields_unreachable.py	3	:19:9: case 5 is unreachable
@@ -89,14 +93,24 @@ module-level/excluded/static/pat_seq_in_dict_value.py	3	:4:19: tuple pattern req
 module-level/excluded/static/pat_tuple_on_seq_union.py	3	:4:13: tuple pattern requires values of tuple type, not list[int] | tuple[int, int]
 module-level/excluded/static/pat_tuple_on_sized_union.py	3	:7:13: tuple pattern requires values of tuple type, not Sized | tuple[int, int]
 module-level/excluded/static/pat_tuple_on_union_field.py	3	:12:15: tuple pattern requires values of tuple type, not list[int] | tuple[int, int]
-module-level/excluded/static/predefined_member_unknown.py	3	:3:4: module 'math' has no member 'tau'
+module-level/excluded/static/pattern_then_declared.py	3	:15:12: 'x' is already declared
+module-level/excluded/static/predefined_member_unknown.py	3	:3:11: module 'math' has no member 'tau'
 module-level/excluded/static/print_arity.py	3	:2:0: call expects 1 arguments, given 2
+module-level/excluded/static/reassign/constr_assign.py	3	:11:0: 'C' is already declared
+module-level/excluded/static/reassign/def_assign.py	3	:7:4: 'x' is already assigned
+module-level/excluded/static/reassign/def_class.py	3	:10:0: 'x' is already declared
+module-level/excluded/static/reassign/keyword_arg.py	3	:12:0: 'y' is already assigned
+module-level/excluded/static/reassign/lambda_def.py	3	:9:0: 'g' is already declared
+module-level/excluded/static/reassign/match.py	3	:7:4: 'y' is already assigned
+module-level/excluded/static/redeclaration.py	3	:3:0: 'x' is already declared
+module-level/excluded/static/redeclaration_branch.py	3	:6:8: 'y' is already declared
 module-level/excluded/static/return_type_mismatch.py	3	:3:11: expected type int, given Literal['a']
-module-level/excluded/static/self_capture.py	3	:4:4: 'x' captured by right-hand side
-module-level/excluded/static/self_capture_lambda.py	3	:2:0: 'f' captured by right-hand side
+module-level/excluded/static/self_capture.py	3	:4:4: 'x' is already assigned
+module-level/excluded/static/self_capture_def.py	3	:4:4: 'x' is already declared
+module-level/excluded/static/self_capture_lambda.py	3	:3:53: 'f' is unbound
 module-level/excluded/static/sized_int.py	3	:4:11: expected type Sized, given Literal[5]
 module-level/excluded/static/unreachable.py	3	:4:4: unreachable statement
-module-level/excluded/static/unsupported_builtin.py	3	:2:4: 'abs' is not defined
+module-level/excluded/static/unsupported_builtin.py	3	:2:9: 'abs' is not defined
 module-level/excluded/syntactic/async_def.py	1	:1:0: async prohibited
 module-level/excluded/syntactic/attribute_assign.py	1	:6:0: attribute assignment prohibited
 module-level/excluded/syntactic/augmented_assign.py	1	:2:0: augmented assignment (+=, etc.) prohibited
@@ -146,24 +160,24 @@ module-level/python-error/static/annotation_unknown_class.py	3	:2:0: 'Nonexisten
 module-level/python-error/static/assert_falsy.py	3	:2:7: expected type bool, given Literal[0]
 module-level/python-error/static/assert_msg_undefined.py	3	:3:15: 'undefined_msg' is not defined
 module-level/python-error/static/attr_missing.py	3	:8:6: class 'P' has no field 'y'
-module-level/python-error/static/attr_non_object.py	3	:3:4: values of type Literal[5] have no attributes
+module-level/python-error/static/attr_non_object.py	3	:3:9: values of type int have no attributes
 module-level/python-error/static/binop_non_number.py	3	:2:6: no overload of '+' at operand types Literal[1] and Literal['a']
-module-level/python-error/static/call_non_callable.py	3	:6:4: values of type Literal[5] cannot be called
+module-level/python-error/static/call_non_callable.py	3	:6:9: values of type int cannot be called
 module-level/python-error/static/call_non_callable_typed.py	3	:3:6: values of type int cannot be called
 module-level/python-error/static/callable_not_imported.py	3	:2:0: 'Callable' is not bound as a predefined name
-module-level/python-error/static/class_redeclared_identity.py	3	:11:0: 'C' is bound to a class and cannot be rebound at top level
-module-level/python-error/static/constructor_arity.py	3	:9:4: constructor for 'Point' expects 2 arguments, got 1
-module-level/python-error/static/constructor_bad_keyword.py	3	:8:4: constructor keywords for 'Point' must be y
-module-level/python-error/static/constructor_oversaturated.py	3	:7:4: constructor for 'Point' expects 2 arguments, got 3
+module-level/python-error/static/class_redeclared_identity.py	3	:11:0: 'C' is already declared
+module-level/python-error/static/constructor_arity.py	3	:9:11: constructor for 'Point' expects 2 arguments, got 1
+module-level/python-error/static/constructor_bad_keyword.py	3	:8:11: constructor keywords for 'Point' must be y
+module-level/python-error/static/constructor_oversaturated.py	3	:7:11: constructor for 'Point' expects 2 arguments, got 3
 module-level/python-error/static/currying.py	3	:5:0: call expects 2 arguments, given 1
 module-level/python-error/static/dataclass_not_imported.py	3	:3:0: 'dataclass' is not bound as a predefined name
 module-level/python-error/static/dataclass_unknown_base.py	3	:5:0: 'Missing' is not a declared class
-module-level/python-error/static/forward_class_top.py	3	:4:4: 'Point' is not defined
+module-level/python-error/static/forward_class_top.py	3	:4:0: 'Point' is unbound
 module-level/python-error/static/iterate_non_sequence.py	3	:2:18: values of type Literal[5] cannot be iterated
 module-level/python-error/static/len_int.py	3	:2:10: expected type Sized, given Literal[5]
 module-level/python-error/static/match_catchall_unreachable.py	3	:5:9: case 2 is unreachable
 module-level/python-error/static/match_wildcard_unreachable.py	3	:6:9: case 2 is unreachable
-module-level/python-error/static/mutual_split_by_call.py	3	:5:11: 'odd' is not defined
+module-level/python-error/static/mutual_split_by_call.py	3	:5:11: 'odd' is unbound
 module-level/python-error/static/nonlinear_pattern.py	3	:10:9: repeated variable 'x' in pattern
 module-level/python-error/static/pat_class_dup_keyword.py	3	:10:13: duplicate keyword in pattern for 'P'
 module-level/python-error/static/pat_class_unknown.py	3	:3:13: 'NotAClass' is not a declared class
@@ -172,15 +186,16 @@ module-level/python-error/static/pat_dict_nonlinear.py	3	:3:9: repeated variable
 module-level/python-error/static/pat_list_on_tuple_component.py	3	:4:14: list pattern requires values of list type, not tuple[int, int]
 module-level/python-error/static/shadowed_list.py	3	:3:0: 'list' is not bound as a predefined name
 module-level/python-error/static/sized_not_imported.py	3	:2:0: 'Sized' is not bound as a predefined name
-module-level/python-error/static/subclass_arity.py	3	:11:4: constructor for 'Sub' expects 2 arguments, got 1
+module-level/python-error/static/subclass_arity.py	3	:11:9: constructor for 'Sub' expects 2 arguments, got 1
 module-level/python-error/static/subscript_bad_index.py	3	:3:9: expected type int, given Literal['a']
-module-level/python-error/static/subscript_non_list.py	3	:3:4: values of type Literal[5] cannot be subscripted
+module-level/python-error/static/subscript_non_list.py	3	:3:9: values of type int cannot be subscripted
 module-level/python-error/static/top_level_return.py	3	:1:0: top-level return not allowed (module body must not return)
 module-level/python-error/static/top_level_return_midway.py	3	:1:0: top-level return not allowed (module body must not return)
 module-level/python-error/static/tuple_index_range.py	3	:3:8: index 2 out of range for tuple of length 2
 module-level/python-error/static/unary_non_number.py	3	:2:6: no overload of '-' at operand type Literal['a']
-module-level/python-error/static/unbound_local.py	3	:5:8: 'y' is not definitely assigned
+module-level/python-error/static/unbound_local.py	3	:5:13: 'y' is unbound
 module-level/python-error/static/unknown_module.py	3	:1:0: unknown module 'zzq_missing'
+module-level/python-error/static/use_before_declaration_top.py	3	:2:6: 'x' is unbound
 module-level/python-error/syntactic-only/empty_from_import.py	1	:3:0: imports must precede all other statements
 module-level/python-error/syntactic-only/helpers/__init__.py	0	: ok
 module-level/python-error/syntactic-only/helpers/harness.py	1	:5:0: imports must precede all other statements
@@ -198,6 +213,7 @@ module-level/semantically-valid/cond_float.py	0	: ok
 module-level/semantically-valid/cond_synth.py	0	: ok
 module-level/semantically-valid/cond_synth_one_branch.py	0	: ok
 module-level/semantically-valid/conditionals/both_branches.py	0	: ok
+module-level/semantically-valid/conditionals/branch_join.py	0	: ok
 module-level/semantically-valid/conditionals/branch_local.py	0	: ok
 module-level/semantically-valid/conditionals/early_return.py	0	: ok
 module-level/semantically-valid/conditionals/elif_chain.py	0	: ok
@@ -207,6 +223,8 @@ module-level/semantically-valid/dataclass_construct.py	0	: ok
 module-level/semantically-valid/dataclass_construct_base.py	0	: ok
 module-level/semantically-valid/dataclass_construct_inherit.py	0	: ok
 module-level/semantically-valid/dataclass_int_field.py	0	: ok
+module-level/semantically-valid/declare_then_assign_branches.py	0	: ok
+module-level/semantically-valid/declare_then_assign_top.py	0	: ok
 module-level/semantically-valid/dict_comp.py	0	: ok
 module-level/semantically-valid/dict_comp_dup_key.py	0	: ok
 module-level/semantically-valid/dict_comp_guard.py	0	: ok
@@ -221,8 +239,6 @@ module-level/semantically-valid/functions/assert_msg_stmt.py	0	: ok
 module-level/semantically-valid/functions/assert_stmt.py	0	: ok
 module-level/semantically-valid/functions/expr_stmt.py	0	: ok
 module-level/semantically-valid/functions/mutual.py	0	: ok
-module-level/semantically-valid/functions/mutual_def_in_branch.py	0	: ok
-module-level/semantically-valid/functions/mutual_def_in_branch_shadows.py	0	: ok
 module-level/semantically-valid/functions/self.py	0	: ok
 module-level/semantically-valid/if_exp.py	0	: ok
 module-level/semantically-valid/import_predefined.py	0	: ok
@@ -270,12 +286,8 @@ module-level/semantically-valid/membership.py	0	: ok
 module-level/semantically-valid/membership_dict.py	0	: ok
 module-level/semantically-valid/membership_string.py	0	: ok
 module-level/semantically-valid/membership_tuple.py	0	: ok
-module-level/semantically-valid/mypy-incompatible/branch_join.py	0	: ok
-module-level/semantically-valid/mypy-incompatible/class_shadows_variable.py	0	: ok
 module-level/semantically-valid/mypy-incompatible/implicit_none.py	0	: ok
 module-level/semantically-valid/mypy-incompatible/implicit_return.py	0	: ok
-module-level/semantically-valid/mypy-incompatible/mutual_after_rebind.py	0	: ok
-module-level/semantically-valid/mypy-incompatible/self_capture_def.py	0	: ok
 module-level/semantically-valid/mypy-incompatible/union_field_exhaustive.py	0	: ok
 module-level/semantically-valid/never_below.py	0	: ok
 module-level/semantically-valid/object_above.py	0	: ok
@@ -321,7 +333,6 @@ module-level/semantically-valid/return_annotation.py	0	: ok
 module-level/semantically-valid/scopes/closure_capture.py	0	: ok
 module-level/semantically-valid/scopes/lambda_capture.py	0	: ok
 module-level/semantically-valid/scopes/nested_def_local.py	0	: ok
-module-level/semantically-valid/scopes/param_reassign.py	0	: ok
 module-level/semantically-valid/simple.py	0	: ok
 module-level/semantically-valid/sized_annotation.py	0	: ok
 module-level/semantically-valid/str_ops.py	0	: ok
@@ -355,9 +366,13 @@ program-level/excluded/duplicate_member_import/pkg/__init__.py	3	:1:0: unknown m
 program-level/excluded/duplicate_member_import/pkg/sub.py	0	: ok
 program-level/excluded/import_after_statement/helper.py	0	: ok
 program-level/excluded/import_after_statement/main.py	1	:4:0: imports must precede all other statements
+program-level/excluded/import_bound_by_pattern/m.py	0	: ok
+program-level/excluded/import_bound_by_pattern/main.py	3	:2:0: unknown module 'm'
+program-level/excluded/import_redeclared/m.py	0	: ok
+program-level/excluded/import_redeclared/main.py	3	:3:0: unknown module 'm'
 program-level/excluded/import_unassigned/m.py	0	: ok
 program-level/excluded/import_unassigned/main.py	3	:1:0: unknown module 'm'
-program-level/excluded/imported_module_rejected/helper.py	3	:3:0: duplicate name 'f' in mutual region
+program-level/excluded/imported_module_rejected/helper.py	3	:3:0: 'f' is already declared
 program-level/excluded/imported_module_rejected/main.py	3	:1:0: unknown module 'helper'
 program-level/excluded/parents_cycle/main.py	3	:1:0: unknown module 'x'
 program-level/excluded/parents_cycle/x/__init__.py	3	:1:0: unknown module 'y.a'
@@ -401,14 +416,14 @@ program-level/python-error/dynamic/import_failing_containing/pkg/sub.py	0	: ok
 program-level/python-error/from_import_arity/main.py	3	:1:0: unknown module 'mod'
 program-level/python-error/from_import_arity/mod.py	0	: ok
 program-level/python-error/from_import_bad_containing/main.py	3	:1:0: unknown module 'pkg.sub'
-program-level/python-error/from_import_bad_containing/pkg/__init__.py	3	:1:4: 'z' is not defined
+program-level/python-error/from_import_bad_containing/pkg/__init__.py	3	:1:9: 'z' is not defined
 program-level/python-error/from_import_bad_containing/pkg/sub.py	0	: ok
 program-level/python-error/from_import_unassigned/lib.py	0	: ok
 program-level/python-error/from_import_unassigned/main.py	3	:1:0: unknown module 'lib'
 program-level/python-error/from_import_unknown_member/main.py	3	:1:0: unknown module 'mod'
 program-level/python-error/from_import_unknown_member/mod.py	0	: ok
 program-level/python-error/import_bad_containing/main.py	3	:1:0: unknown module 'pkg.sub'
-program-level/python-error/import_bad_containing/pkg/__init__.py	3	:1:4: 'z' is not defined
+program-level/python-error/import_bad_containing/pkg/__init__.py	3	:1:9: 'z' is not defined
 program-level/python-error/import_bad_containing/pkg/sub.py	0	: ok
 program-level/python-error/member_builtin/lib.py	0	: ok
 program-level/python-error/member_builtin/main.py	3	:1:0: unknown module 'lib'
@@ -515,6 +530,6 @@ program-level/semantically-valid/unused_contained_import/main.py	0	: ok
 program-level/semantically-valid/unused_contained_import/u/__init__.py	3	:1:0: unknown module 'u.sub'
 program-level/semantically-valid/unused_contained_import/u/sub.py	0	: ok
 program-level/semantically-valid/unused_module_not_checked/main.py	0	: ok
-program-level/semantically-valid/unused_module_not_checked/unused.py	3	:1:4: 'x' is not defined
+program-level/semantically-valid/unused_module_not_checked/unused.py	3	:1:9: 'x' is not defined
 program-level/semantically-valid/unused_module_not_parsed/main.py	0	: ok
 program-level/semantically-valid/unused_module_not_parsed/unused.py	1	:1:0: while loops prohibited

@@ -660,3 +660,109 @@ pub extend Statement with Eq::{not_equal, equal}
 #deprecated(skip_current_package=true)
 #doc(hidden)
 pub extend Statement with Debug::{to_repr}
+
+// ---------------------------------------------------------------------------
+// Declarations (v0.17)
+
+///|
+/// The names a statement DECLARES, or an import binds, each with its
+/// statement, in textual order and with repeats: an annotated assignment, a
+/// `def`, a class, an import -- and whatever the branches of an `if` or the
+/// cases of a `match` declare. Not descending into a `def`'s body.
+pub fn declares(s : @ast.Stmt) -> Array[(String, @ast.Stmt)] {
+  match s {
+    AnnAssign(target=Name(id~, ..), ..) => [(id, s)]
+    If(body~, or_else~, ..) => [..declares_body(body), ..declares_body(or_else)]
+    Match(cases~, ..) => {
+      let out = []
+      for c in cases {
+        out.append(declares_body(c.body))
+      }
+      out
+    }
+    FunctionDef(name~, ..) | ClassDef(name~, ..) => [(name, s)]
+    Import(names~, ..) =>
+      [
+        (
+          match names[0].name.split_once(".") {
+            Some((head, _)) => head.to_owned()
+            None => names[0].name
+          },
+          s,
+        ),
+      ]
+    ImportFrom(names~, ..) => names.map(fn(a) { (a.name, s) })
+    _ => []
+  }
+}
+
+///|
+pub fn declares_body(body : Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)] {
+  let out = []
+  for s in body {
+    out.append(declares(s))
+  }
+  out
+}
+
+///|
+/// The targets of the UNANNOTATED assignments in a body, each with its
+/// statement, in textual order, not descending into a `def`. A destructuring
+/// target, under a profile that has one, contributes each of its names.
+pub fn assign_targets(body : Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)] {
+  let out = []
+  for s in body {
+    match s {
+      Assign(targets~, ..) if targets.length() == 1 =>
+        for x in target_names(targets[0]) {
+          out.push((x, s))
+        }
+      If(body=a, or_else=b, ..) => {
+        out.append(assign_targets(a))
+        out.append(assign_targets(b))
+      }
+      Match(cases~, ..) =>
+        for c in cases {
+          out.append(assign_targets(c.body))
+        }
+      _ => ()
+    }
+  }
+  out
+}
+
+///|
+/// The variables the patterns of a body's `match` statements bind, each with
+/// the first `match` that binds it, in the order they are first met. Not
+/// descending into a `def`.
+pub fn pattern_bound(body : Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)] {
+  let out : Array[(String, @ast.Stmt)] = []
+  let add = fn(x : String, m : @ast.Stmt) {
+    if !out.iter().any(fn(p) { p.0 == x }) {
+      out.push((x, m))
+    }
+  }
+  for s in body {
+    match s {
+      If(body=a, or_else=b, ..) => {
+        for p in pattern_bound(a) {
+          add(p.0, p.1)
+        }
+        for p in pattern_bound(b) {
+          add(p.0, p.1)
+        }
+      }
+      Match(cases~, ..) =>
+        for c in cases {
+          for x in binds_seq(c.pattern) {
+            add(x, s)
+          }
+          for p in pattern_bound(c.body) {
+            add(p.0, p.1)
+          }
+        }
+      _ => ()
+    }
+  }
+  out
+}

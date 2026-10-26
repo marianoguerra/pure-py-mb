@@ -52,11 +52,15 @@ pub(all) enum Kind {
 
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
-  ClassRebound(c~ : String)
   UndefinedVariable(x~ : String)
   UnassignedVariable(x~ : String)
-  CapturedReassignment(x~ : String)
-  SelfCaptureAssignment(x~ : String)
+  PossiblyUnassigned(x~ : String)
+  UnboundName(x~ : String)
+  Redeclaration(x~ : String)
+  UndeclaredAssignment(x~ : String)
+  AssignmentBeforeDeclaration(x~ : String)
+  Reassignment(x~ : String)
+  MaybeAssigned(x~ : String)
   CapturedGeneratorVariable(x~ : String)
   UnreachableStatement
   ConstructorArityMismatch(c~ : String, expected~ : Int32, got~ : Int32)
@@ -68,7 +72,6 @@ pub(all) enum Reason {
   DuplicatePatternKeyword(c~ : String)
   DuplicateDictKey(w~ : String)
   NonlinearPattern(x~ : String)
-  DuplicateMutualName(x~ : String)
   DuplicateMember(x~ : String, q~ : String)
   SubmoduleNotImported(q~ : String)
   UnassignedMember(x~ : String, q~ : String)

@@ -1,4 +1,4 @@
-x = 5
+x: int = 5
 print(1 < x < 10)
 print(1 < x < 3)
 print(10 < x < 20)

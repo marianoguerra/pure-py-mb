@@ -1,6 +1,6 @@
-xs = [0, 1, 2, 3, 4, 5]
-s = "abcdef"
-t = (0, 1, 2, 3)
+xs: list[int] = [0, 1, 2, 3, 4, 5]
+s: str = "abcdef"
+t: tuple[int, int, int, int] = (0, 1, 2, 3)
 print([xs[1:3], xs[:2], xs[3:], xs[:], xs[1:5:2]])
 print([xs[-2:], xs[:-2], xs[-4:-1], xs[::-1], xs[::2], xs[4:1:-1]])
 print([xs[10:], xs[:100], xs[5:2], xs[-100:100]])

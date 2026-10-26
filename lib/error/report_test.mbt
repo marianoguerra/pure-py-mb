@@ -19,26 +19,26 @@ fn span(from : Int32, to : Int32, line : Int32, col : Int32) -> @basic.Span {
 
 ///|
 test "a rejection with a second place to look" {
-  let source = "x = 5\nf = lambda: x\nx = 6\n"
+  let source = "x: int = 5\ny = 1\nx = 6\n"
   let d = @err.Diagnostic::new(
-    IllFormed(CapturedReassignment(x="x")),
-    span=span(20, 25, 3, 0),
-  ).with_related(span(6, 19, 2, 0), "'x' captured here")
+    IllFormed(Reassignment(x="x")),
+    span=span(17, 22, 3, 0),
+  ).with_related(span(0, 10, 1, 0), "'x' assigned here")
   inspect(
     render(source, "a.py", d),
     content=(
-      #|error[purepy::captured-reassignment]: 'x' captured by previous statement, reassigned here
+      #|error[purepy::reassignment]: 'x' is already assigned
       #|  ╭─[ a.py:3:1 ]
       #|  │
-      #|1 │ x = 5
-      #|2 │ f = lambda: x
-      #|  │ ──────┬──────
-      #|  │       ╰─ 'x' captured here
+      #|1 │ x: int = 5
+      #|  │ ────┬─────
+      #|  │     ╰─ 'x' assigned here
+      #|2 │ y = 1
       #|3 │ x = 6
       #|  │ ──┬──
-      #|  │   ╰─ reassigned here
+      #|  │   ╰─ assigned again here
       #|  │
-      #|  ├─ help: a closure captured this name, and PurePy has no cell for it to see a later value; bind a new name instead
+      #|  ├─ help: a PurePy variable is assigned once; bind a new name instead
       #|  ╰─
       #|
     ),
@@ -61,9 +61,10 @@ test "a rejection with no position renders as a message alone" {
 test "every reason that earns a help line has one" {
   let with_help : Array[@err.Reason] = [
     UnassignedVariable(x="x"),
+    PossiblyUnassigned(x="x"),
+    UndeclaredAssignment(x="x"),
+    Reassignment(x="x"),
     UnassignedMember(x="x", q="lib"),
-    CapturedReassignment(x="x"),
-    SelfCaptureAssignment(x="f"),
     CapturedGeneratorVariable(x="i"),
     ModuleAsValue(q="sys"),
     ClassAsValue(q="P"),

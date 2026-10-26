@@ -301,14 +301,15 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     AugAssign(..) =>
       raise prohibited("augmented assignment (+=, etc.) prohibited", span)
     AnnAssign(target~, annotation~, value~, ..) => {
-      guard value is Some(v) else {
-        raise prohibited("annotation without assignment prohibited", span)
-      }
       if !(target is Name(..)) {
         raise prohibited("assignment target must be a simple name", span)
       }
       check_annotation(Some(annotation))
-      self.check_expr(v)
+      // A declaration with no value is PurePy since v0.17.
+      match value {
+        Some(v) => self.check_expr(v)
+        None => ()
+      }
     }
     Delete(..) => raise prohibited("del prohibited", span)
     For(is_async=false, ..) => raise prohibited("for loops prohibited", span)

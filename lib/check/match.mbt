@@ -39,7 +39,13 @@ fn match_as(
   p : @ast.Pattern,
   ctx : ModCtx,
 ) -> MatchResult? raise {
-  guard p is MatchAs(pattern~, name~, ..) else { abort("an as-pattern") }
+  guard p is MatchAs(pattern~, name~, span~) else { abort("an as-pattern") }
+  // A pattern variable is bound once in its scope, where it starts unbound.
+  match name {
+    Some(x) if !(ctx.gamma.get(x) is Some(Unbound)) =>
+      raise ill(Redeclaration(x~), span)
+    _ => ()
+  }
   match pattern {
     None => {
       let delta = match name {

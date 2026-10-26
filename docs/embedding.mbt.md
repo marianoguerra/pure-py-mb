@@ -694,7 +694,10 @@ test "a guest that is refused" {
   }
   // PurePy, but not well formed: a name that is not definitely assigned.
   let unassigned = Map([
-    ("__main__", @purepy.parse("c = True\nif c:\n    x = 1\nprint(x)\n")),
+    (
+      "__main__",
+      @purepy.parse("c: bool = True\nx: int\nif c:\n    x = 1\nprint(x)\n"),
+    ),
   ])
   match @purepy.check_program(@purepy.source_tree(unassigned)) {
     Some(d) =>

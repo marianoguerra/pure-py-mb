@@ -11,11 +11,15 @@
 /// knows nothing of types but how they read.
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
-  ClassRebound(c~ : String)
   UndefinedVariable(x~ : String)
   UnassignedVariable(x~ : String)
-  CapturedReassignment(x~ : String)
-  SelfCaptureAssignment(x~ : String)
+  PossiblyUnassigned(x~ : String)
+  UnboundName(x~ : String)
+  Redeclaration(x~ : String)
+  UndeclaredAssignment(x~ : String)
+  AssignmentBeforeDeclaration(x~ : String)
+  Reassignment(x~ : String)
+  MaybeAssigned(x~ : String)
   CapturedGeneratorVariable(x~ : String)
   UnreachableStatement
   ConstructorArityMismatch(c~ : String, expected~ : Int32, got~ : Int32)
@@ -27,7 +31,6 @@ pub(all) enum Reason {
   DuplicatePatternKeyword(c~ : String)
   DuplicateDictKey(w~ : String)
   NonlinearPattern(x~ : String)
-  DuplicateMutualName(x~ : String)
   DuplicateMember(x~ : String, q~ : String)
   SubmoduleNotImported(q~ : String)
   UnassignedMember(x~ : String, q~ : String)
@@ -63,13 +66,16 @@ pub(all) enum Reason {
 pub fn Reason::message(self : Reason) -> String {
   match self {
     DuplicateField(x~, c~) => "duplicate field '\{x}' in class '\{c}'"
-    ClassRebound(c~) =>
-      "'\{c}' is bound to a class and cannot be rebound at top level"
     UndefinedVariable(x~) => "'\{x}' is not defined"
-    UnassignedVariable(x~) => "'\{x}' is not definitely assigned"
-    CapturedReassignment(x~) =>
-      "'\{x}' captured by previous statement, reassigned here"
-    SelfCaptureAssignment(x~) => "'\{x}' captured by right-hand side"
+    UnassignedVariable(x~) => "'\{x}' is declared but not yet assigned"
+    PossiblyUnassigned(x~) => "'\{x}' is not definitely assigned"
+    UnboundName(x~) => "'\{x}' is unbound"
+    Redeclaration(x~) => "'\{x}' is already declared"
+    UndeclaredAssignment(x~) => "'\{x}' is assigned but never declared"
+    AssignmentBeforeDeclaration(x~) =>
+      "'\{x}' is assigned before its declaration"
+    Reassignment(x~) => "'\{x}' is already assigned"
+    MaybeAssigned(x~) => "'\{x}' may already be assigned"
     CapturedGeneratorVariable(x~) =>
       "'\{x}' bound by generator, captured by lambda"
     UnreachableStatement => "unreachable statement"
@@ -86,7 +92,6 @@ pub fn Reason::message(self : Reason) -> String {
     DuplicatePatternKeyword(c~) => "duplicate keyword in pattern for '\{c}'"
     DuplicateDictKey(w~) => "duplicate key '\{w}' in dict pattern"
     NonlinearPattern(x~) => "repeated variable '\{x}' in pattern"
-    DuplicateMutualName(x~) => "duplicate name '\{x}' in mutual region"
     DuplicateMember(x~, q~) =>
       "duplicate member of module '\{q}': it defines '\{x}' and also has submodule '\{q}.\{x}'"
     SubmoduleNotImported(q~) => "submodule '\{q}' is not imported"
@@ -129,8 +134,7 @@ pub fn Reason::message(self : Reason) -> String {
       "\{kind} pattern requires values of \{kind} type, not \{tau}"
     NotIterable(tau~) => "values of type \{tau} cannot be iterated"
     UnknownField(c~, x~) => "class '\{c}' has no field '\{x}'"
-    NotSynthesised =>
-      "cannot infer type of this expression; annotate the assignment"
+    NotSynthesised => "cannot infer type of this expression"
     NoAttributes(tau~) => "values of type \{tau} have no attributes"
     MissingReturn(x~, tau~) =>
       "'\{x}' declares result type \{tau} but does not always return"
@@ -144,11 +148,15 @@ pub fn Reason::message(self : Reason) -> String {
 pub fn Reason::code(self : Reason) -> String {
   let name = match self {
     DuplicateField(..) => "duplicate-field"
-    ClassRebound(..) => "class-rebound"
     UndefinedVariable(..) => "undefined-variable"
     UnassignedVariable(..) => "unassigned-variable"
-    CapturedReassignment(..) => "captured-reassignment"
-    SelfCaptureAssignment(..) => "self-capture-assignment"
+    PossiblyUnassigned(..) => "possibly-unassigned"
+    UnboundName(..) => "unbound-name"
+    Redeclaration(..) => "redeclaration"
+    UndeclaredAssignment(..) => "undeclared-assignment"
+    AssignmentBeforeDeclaration(..) => "assignment-before-declaration"
+    Reassignment(..) => "reassignment"
+    MaybeAssigned(..) => "maybe-assigned"
     CapturedGeneratorVariable(..) => "captured-generator-variable"
     UnreachableStatement => "unreachable-statement"
     ConstructorArityMismatch(..) => "constructor-arity-mismatch"
@@ -160,7 +168,6 @@ pub fn Reason::code(self : Reason) -> String {
     DuplicatePatternKeyword(..) => "duplicate-pattern-keyword"
     DuplicateDictKey(..) => "duplicate-dict-key"
     NonlinearPattern(..) => "nonlinear-pattern"
-    DuplicateMutualName(..) => "duplicate-mutual-name"
     DuplicateMember(..) => "duplicate-member"
     SubmoduleNotImported(..) => "submodule-not-imported"
     UnassignedMember(..) => "unassigned-member"

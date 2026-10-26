@@ -1,4 +1,4 @@
-xs = [3, 1, 2]
+xs: list[int] = [3, 1, 2]
 print(sorted(xs))
 print(sorted(["b", "a"]))
 print(list("abc"))

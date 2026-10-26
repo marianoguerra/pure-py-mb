@@ -1214,6 +1214,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | release | what it changed | where it went |
 |---|---|---|
 | v0.16.0 | static types: annotations required, bidirectional checking, subtyping, operator overloads, a class table, `match` exhaustiveness over shapes; imports placed by the sieve; programs loaded lazily | `lib/types` (new), `lib/check` (rewritten), `lib/sieve`, `lib/analysis`, `lib/program` (lazy `SourceTree`), `lib/error` (the new reasons), typed host modules, typed profiles |
+| v0.17.0 | declarations: a variable is declared with its type and assigned once; the capture rules and class rebinding fold into redeclaration and reassignment; branches merge by equality; `__name__` is in every signature | `lib/check` (`scope`, `check_assignments_declared`, the new entries `Unbound`/`DU`/`PU`), `lib/analysis` (`declares`, `assign_targets`, `pattern_bound`), `lib/sieve` (a bare declaration), `lib/eval` |
 
 Decisions made on the way, recorded as §9's are:
 

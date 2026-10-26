@@ -1,7 +1,7 @@
-x = 42
-name = "world"
-xs = [1, 2, 3]
-d = {"k": "v"}
+x: int = 42
+name: str = "world"
+xs: list[int] = [1, 2, 3]
+d: dict[str, str] = {"k": "v"}
 
 print(f"the answer is {x}")
 print(f"hello {name}!")

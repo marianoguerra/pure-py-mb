@@ -6,6 +6,28 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.17.0: declared once, assigned once
+
+A variable is DECLARED with its type -- `x: int = 1`, or `x: int` with the
+value to come -- and assigned at most once on any path. An assignment to a
+name nothing declared is refused (`'x' is assigned but never declared`), so
+is a second one (`'x' is already assigned`), and so is one on a path where
+the name may already hold a value (`'x' may already be assigned`). A use
+before any assignment says which of the three it is: unbound, declared but
+not yet assigned, or not definitely assigned.
+
+The capture rules go with it: a name nobody can reassign cannot be captured
+and then reassigned, so `CapturedReassignment`, `SelfCaptureAssignment` and
+`ClassRebound` are gone from `Reason`, a class is simply a declaration and
+cannot be declared twice, and so is a function, which replaces
+`DuplicateMutualName`. A pattern variable is bound once in its scope. Two
+branches merge by equality: a variable that ends them at different entries
+is possibly unassigned rather than joined.
+
+`__name__` is no longer an assignment prepended to every module: every
+module's signature has it, as a `str`. `Stmt::declaration` builds `x: T`
+with no value; the evaluator binds nothing for one, as Python does.
+
 ### Specification v0.16.0: PurePy is typed
 
 The release that changes what PurePy IS. Every parameter and every result

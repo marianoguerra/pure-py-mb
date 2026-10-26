@@ -13,8 +13,13 @@ pub type Context = @sorted_map.SortedMap[String, Entry]
 pub(all) enum Entry {
   /// A variable that is definitely assigned, with its type.
   Var(@types.Type)
-  /// A variable that is not definitely assigned: the spec's `ff`.
-  Unassigned
+  /// A name the scope will bind, not yet declared: what every name a body
+  /// assigns starts as (v0.17).
+  Unbound
+  /// Declared at a type and not yet assigned: `x: int` with no value.
+  DU(@types.Type)
+  /// Possibly unassigned: assigned on some paths and not others.
+  PU(@types.Type)
   /// A module named but not loaded.
   ModuleStub(String)
   /// A module whose members are known.
@@ -133,37 +138,47 @@ fn assigns_nothing() -> Outcome {
 }
 
 ///|
-/// Assigned in both branches gives the join of the two types; assigned in one
-/// alone is not definitely assigned.
-fn merge_entry(sigma : @types.ClassTable, a : Entry, b : Entry) -> Entry {
-  match (a, b) {
-    (Var(s), Var(t)) => Var(@types.join_seq(sigma, [s, t]))
-    _ => Unassigned
+/// Two branches agree on an entry or it is possibly unassigned, at the type it
+/// was declared at: v0.17 merges by equality and no longer joins.
+fn merge_entry(a : Entry, b : Entry) -> Entry {
+  if a == b {
+    a
+  } else {
+    PU(declared_type_of(a))
   }
 }
 
 ///|
-fn merge_context(
-  sigma : @types.ClassTable,
-  g : Context,
-  h : Context,
-) -> Context {
+fn merge_context(g : Context, h : Context) -> Context {
   let mut out = empty_context()
   g.each(fn(x, a) {
     out = out.add(
       x,
       match h.get(x) {
-        Some(b) => merge_entry(sigma, a, b)
-        None => Unassigned
+        Some(b) => merge_entry(a, b)
+        None => PU(declared_type_of(a))
       },
     )
   })
-  h.each(fn(x, _) { if !g.contains(x) { out = out.add(x, Unassigned) } })
+  h.each(fn(x, b) {
+    if !g.contains(x) {
+      out = out.add(x, PU(declared_type_of(b)))
+    }
+  })
   out
 }
 
 ///|
-fn merge_outcomes(sigma : @types.ClassTable, rs : Array[Outcome]) -> Outcome {
+/// The type a variable entry was declared or assigned at.
+fn declared_type_of(e : Entry) -> @types.Type {
+  match e {
+    Var(t) | DU(t) | PU(t) => t
+    _ => abort("merged entries are assigned or declared variables")
+  }
+}
+
+///|
+fn merge_outcomes(rs : Array[Outcome]) -> Outcome {
   let branches : Array[Context] = []
   for r in rs {
     if r is Assigns(d) {
@@ -175,7 +190,7 @@ fn merge_outcomes(sigma : @types.ClassTable, rs : Array[Outcome]) -> Outcome {
   }
   let mut acc = branches[0]
   for i in 1..<branches.length() {
-    acc = merge_context(sigma, acc, branches[i])
+    acc = merge_context(acc, branches[i])
   }
   Assigns(acc)
 }

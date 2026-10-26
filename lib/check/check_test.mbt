@@ -25,48 +25,74 @@ fn program_verdict(modules : Array[(String, String)]) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Definite assignment and scope
+// Declarations and definite assignment
 
 ///|
-test "a name must be defined and definitely assigned before it is used" {
-  assert_eq(verdict("x = 1\nprint(x)\n"), "ok")
+test "a variable is declared once, with its type, and assigned once" {
+  assert_eq(verdict("x: int = 1\nprint(x)\n"), "ok")
+  assert_eq(verdict("x: int\nx = 1\nprint(x)\n"), "ok")
+  assert_eq(verdict("x = 1\n"), "'x' is assigned but never declared")
+  assert_eq(verdict("x: int = 1\nx = 2\n"), "'x' is already assigned")
+  assert_eq(verdict("x: int = 1\nx: int = 2\n"), "'x' is already declared")
+  assert_eq(
+    verdict("x = 1\nx: int\n"),
+    "'x' is assigned before its declaration",
+  )
+  assert_eq(
+    verdict("x: int\nprint(x)\n"),
+    "'x' is declared but not yet assigned",
+  )
+  assert_eq(verdict("print(x)\nx: int = 1\n"), "'x' is unbound")
   assert_eq(verdict("print(x)\n"), "'x' is not defined")
+  // A declaration is checked against what it is assigned.
+  assert_eq(
+    verdict("x: int\nx = 'a'\n"),
+    "expected type int, given Literal['a']",
+  )
+}
+
+///|
+test "a variable assigned on some paths is not definitely assigned" {
   let c = "def c() -> bool:\n    return True\n"
   assert_eq(
-    verdict(c + "if c():\n    x = 1\nprint(x)\n"),
+    verdict(c + "x: int\nif c():\n    x = 1\nprint(x)\n"),
     "'x' is not definitely assigned",
   )
-  // Assigned in both branches, at the join of the two types.
   assert_eq(
-    verdict(c + "if c():\n    x = 1\nelse:\n    x = 'a'\ny: int | str = x\n"),
+    verdict(c + "x: int\nif c():\n    x = 1\nx = 2\n"),
+    "'x' may already be assigned",
+  )
+  // Assigned in both branches.
+  assert_eq(
+    verdict(c + "x: int\nif c():\n    x = 1\nelse:\n    x = 2\nprint(x)\n"),
     "ok",
   )
   // A branch that returns does not have to assign.
   assert_eq(
     verdict(
-      "def f(c: bool) -> int:\n    if c:\n        x = 1\n    else:\n        return 0\n    return x\n",
+      "def f(c: bool) -> int:\n    x: int\n    if c:\n        x = 1\n    else:\n        return 0\n    return x\n",
     ),
     "ok",
   )
 }
 
 ///|
-test "the capture rules" {
-  let callable = "from typing import Callable\n"
-  assert_eq(
-    verdict(callable + "x = 1\nf: Callable[[], int] = lambda: x\nx = 2\n"),
-    "'x' captured by previous statement, reassigned here",
-  )
-  // The target is checked before the value in a plain assignment; in an
-  // annotated one the value comes first, as the reference has it.
-  assert_eq(verdict("f = lambda: f()\n"), "'f' captured by right-hand side")
-  assert_eq(
-    verdict(callable + "f: Callable[[], int] = lambda: f()\n"),
-    "'f' is not defined",
-  )
+test "a pattern variable is bound once" {
+  let m = "def f(x: int) -> int:\n    match x:\n        case y:\n            return y\n"
+  assert_eq(verdict(m), "ok")
   assert_eq(
     verdict(
-      callable + "fs: list[Callable[[], int]] = [lambda: i for i in [1, 2]]\n",
+      "def f(y: int) -> int:\n    match y:\n        case y:\n            return y\n",
+    ),
+    "'y' is already declared",
+  )
+}
+
+///|
+test "a comprehension variable may not be captured by a lambda in it" {
+  assert_eq(
+    verdict(
+      "from typing import Callable\nfs: list[Callable[[], int]] = [lambda: i for i in [1, 2]]\n",
     ),
     "'i' bound by generator, captured by lambda",
   )
@@ -87,7 +113,7 @@ test "an annotation must name types in scope" {
   assert_eq(verdict("from typing import Literal\nx: Literal[1] = 1\n"), "ok")
   // A predefined name is not a value.
   assert_eq(
-    verdict("x = int\n"),
+    verdict("x: int = int\n"),
     "'int' is usable only in annotations or as a decorator",
   )
 }
@@ -97,16 +123,16 @@ test "operators resolve to an overload or are refused" {
   assert_eq(verdict("x: float = 1 + 2.5\n"), "ok")
   assert_eq(verdict("x: str = 'a' * 3\n"), "ok")
   assert_eq(
-    verdict("x = 1 + 'a'\n"),
+    verdict("print(1 + 'a')\n"),
     "no overload of '+' at operand types Literal[1] and Literal['a']",
   )
   // A bool is not a number in PurePy.
   assert_eq(
-    verdict("x = True + 1\n"),
+    verdict("print(True + 1)\n"),
     "no overload of '+' at operand types Literal[True] and Literal[1]",
   )
   assert_eq(
-    verdict("x = not 1\n"),
+    verdict("print(not 1)\n"),
     "no overload of 'not' at operand type Literal[1]",
   )
   // `int ** int` is an int only for a non-negative literal exponent.
@@ -121,8 +147,8 @@ test "a call is checked against the callee's type" {
   assert_eq(verdict(f + "f('a')\n"), "expected type int, given Literal['a']")
   assert_eq(verdict(f + "f(1, 2)\n"), "call expects 1 arguments, given 2")
   assert_eq(
-    verdict("x = 1\nx(2)\n"),
-    "values of type Literal[1] cannot be called",
+    verdict("x: int = 1\nx(2)\n"),
+    "values of type int cannot be called",
   )
   // A function that may fall off its end must allow None.
   assert_eq(
@@ -134,12 +160,14 @@ test "a call is checked against the callee's type" {
 ///|
 test "an expression with no type of its own needs one to be checked against" {
   assert_eq(
-    verdict("f = lambda x: x\n"),
-    "cannot infer type of this expression; annotate the assignment",
+    verdict("print(len([lambda x: x]))\n"),
+    "cannot infer type of this expression",
   )
+  assert_eq(verdict("print(len([]))\n"), "cannot infer type of this expression")
+  // Checked against a type, a lambda takes it -- or says why it cannot.
   assert_eq(
-    verdict("xs = []\n"),
-    "cannot infer type of this expression; annotate the assignment",
+    verdict("print(lambda x: x)\n"),
+    "expected type object, given a lambda",
   )
   assert_eq(verdict("xs: list[int] = []\n"), "ok")
   assert_eq(
@@ -152,15 +180,15 @@ test "an expression with no type of its own needs one to be checked against" {
 
 ///|
 test "subscripts by container type" {
-  assert_eq(verdict("t = (1, 'a')\nx: str = t[1]\n"), "ok")
+  assert_eq(verdict("t: tuple[int, str] = (1, 'a')\nx: str = t[1]\n"), "ok")
   assert_eq(
-    verdict("t = (1, 'a')\nx = t[2]\n"),
+    verdict("t: tuple[int, str] = (1, 'a')\nprint(t[2])\n"),
     "index 2 out of range for tuple of length 2",
   )
-  assert_eq(verdict("d = {'k': 1}\nx: int = d['k']\n"), "ok")
+  assert_eq(verdict("d: dict[str, int] = {'k': 1}\nx: int = d['k']\n"), "ok")
   assert_eq(
-    verdict("x = 1\ny = x[0]\n"),
-    "values of type Literal[1] cannot be subscripted",
+    verdict("x: int = 1\nprint(x[0])\n"),
+    "values of type int cannot be subscripted",
   )
 }
 
@@ -172,24 +200,21 @@ let point : String = "from dataclasses import dataclass\n@dataclass\nclass P:\n 
 
 ///|
 test "a constructor is checked against the fields" {
-  assert_eq(verdict(point + "p = P(1, y=2)\nz: int = p.x\n"), "ok")
+  assert_eq(verdict(point + "p: P = P(1, y=2)\nz: int = p.x\n"), "ok")
   assert_eq(
-    verdict(point + "p = P(1)\n"),
+    verdict(point + "print(P(1))\n"),
     "constructor for 'P' expects 2 arguments, got 1",
   )
   assert_eq(
-    verdict(point + "p = P(1, 'a')\n"),
+    verdict(point + "print(P(1, 'a'))\n"),
     "expected type int, given Literal['a']",
   )
   assert_eq(
-    verdict(point + "p = P(1, 2)\nz = p.w\n"),
+    verdict(point + "p: P = P(1, 2)\nprint(p.w)\n"),
     "class 'P' has no field 'w'",
   )
-  // A class name is bound once.
-  assert_eq(
-    verdict(point + "P = 1\n"),
-    "'P' is bound to a class and cannot be rebound at top level",
-  )
+  // A class is a declaration, and a name is declared once.
+  assert_eq(verdict(point + "P = 1\n"), "'P' is already declared")
 }
 
 ///|
@@ -220,8 +245,10 @@ test "a case no value can reach is refused" {
   )
   // A list pattern against a tuple type is a kind error.
   assert_eq(
-    verdict("t = (1, 2)\nmatch t:\n    case [a, b]:\n        pass\n"),
-    "list pattern requires values of list type, not tuple[Literal[1], Literal[2]]",
+    verdict(
+      "t: tuple[int, int] = (1, 2)\nmatch t:\n    case [a, b]:\n        pass\n",
+    ),
+    "list pattern requires values of list type, not tuple[int, int]",
   )
 }
 
@@ -239,10 +266,15 @@ test "a program's modules are typed across imports" {
   )
   assert_eq(
     program_verdict([
-      ("lib", "x = 1\n"),
+      ("lib", "x: int = 1\n"),
       ("__main__", "import lib\ny: str = lib.x\n"),
     ]),
-    "__main__: expected type str, given Literal[1]",
+    "__main__: expected type str, given int",
+  )
+  // A member declared and never assigned is not one an import can use.
+  assert_eq(
+    program_verdict([("lib", "x: int\n"), ("__main__", "from lib import x\n")]),
+    "__main__: member 'x' of module 'lib' is not definitely assigned",
   )
   assert_eq(
     program_verdict([("__main__", "import nope\n")]),

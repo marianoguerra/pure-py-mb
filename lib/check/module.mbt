@@ -75,17 +75,6 @@ fn add_bodiless(tree : @program.SourceTree, q : String) -> Unit {
 }
 
 ///|
-/// `__name__ = '<q>'`, prepended to every module body before it is checked --
-/// which is why `__name__` is a member of every module's signature.
-fn name_assign(q : String) -> @ast.Stmt {
-  Assign(
-    targets=[Name(id="__name__", ctx=Store, span=@basic.nowhere)],
-    value=Constant(value=Str(q), span=@basic.nowhere),
-    span=@basic.nowhere,
-  )
-}
-
-///|
 fn prefix_of(p : String, q : String) -> Bool {
   p == q || q.has_prefix(p + ".")
 }
@@ -204,13 +193,14 @@ fn check_module_body(
     Some(ms) => return predefined_context(ms)
     None => ()
   }
-  let (prefix, rest) = @analysis.split_imports(m.body)
+  let (prefix, body) = @analysis.split_imports(m.body)
   let empty_ctx : ModCtx = { gamma: empty_context(), program, q, }
   let gamma = check_imports_prefix(prefix[:], empty_ctx)
-  let body = [name_assign(q), ..rest]
+  let bound = scope(@analysis.declares_body(prefix).map(fn(d) { d.0 }), body)
+  check_assignments_declared(body, [])
   let builtins = builtins_context(program.profile)
   let final_ctx = check_top_seq(@analysis.statements(body)[:], {
-    gamma: override_context(builtins, gamma),
+    gamma: override_context(override_context(builtins, gamma), bound),
     program,
     q,
   })
@@ -310,7 +300,7 @@ fn imported_entry(
     None => raise ill(UnknownMember(x~, q~), span)
     // A submodule named in the signature is loaded by the from-import.
     Some(ModuleStub(sub)) => ModuleLoaded(sub, check_module(ctx.program, sub))
-    Some(Unassigned) => raise ill(UnassignedMember(x~, q~), span)
+    Some(Unbound | DU(_) | PU(_)) => raise ill(UnassignedMember(x~, q~), span)
     Some(entry) => entry
   }
 }
@@ -394,7 +384,8 @@ fn module_signature(
       None => ()
     }
   }
-  override_context(submods(program, q), own)
+  // Every module has a `__name__`, a `str`.
+  override_context(submods(program, q), own.add("__name__", Var(@types.t_str)))
 }
 
 // ---------------------------------------------------------------------------

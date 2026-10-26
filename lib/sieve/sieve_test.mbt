@@ -31,7 +31,6 @@ test "prohibited forms" {
       "def f() -> list[int, int]:\n    return 1\n", "1: unsupported type annotation",
     ),
     ("x += 1\n", "1: augmented assignment (+=, etc.) prohibited"),
-    ("x: int\n", "1: annotation without assignment prohibited"),
     ("a.b: int = 1\n", "1: assignment target must be a simple name"),
     ("x: dict[int, int] = {}\n", "1: unsupported type annotation"),
     ("x = {**a}\n", "1: dict unpacking prohibited"),

@@ -869,6 +869,8 @@ fn step_stmt(s : @ast.Stmt, env : Env, stack : Array[Frame]) -> Ctl {
       stack.push(StAssign(target~))
       Ev(value, env)
     }
+    // A declaration with no value binds nothing at run time, as in Python.
+    AnnAssign(value=None, ..) => Delta(@value.empty_env())
     // eval-expr-stmt
     ExprStmt(value~, ..) => {
       stack.push(StExpr)

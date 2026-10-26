@@ -6,17 +6,18 @@
 test "the reason catalogue" {
   let cases : Array[(@err.Reason, String)] = [
     (DuplicateField(x="x", c="P"), "duplicate field 'x' in class 'P'"),
-    (
-      ClassRebound(c="P"),
-      "'P' is bound to a class and cannot be rebound at top level",
-    ),
     (UndefinedVariable(x="x"), "'x' is not defined"),
-    (UnassignedVariable(x="x"), "'x' is not definitely assigned"),
+    (UnassignedVariable(x="x"), "'x' is declared but not yet assigned"),
+    (PossiblyUnassigned(x="x"), "'x' is not definitely assigned"),
+    (UnboundName(x="x"), "'x' is unbound"),
+    (Redeclaration(x="x"), "'x' is already declared"),
+    (UndeclaredAssignment(x="x"), "'x' is assigned but never declared"),
     (
-      CapturedReassignment(x="x"),
-      "'x' captured by previous statement, reassigned here",
+      AssignmentBeforeDeclaration(x="x"),
+      "'x' is assigned before its declaration",
     ),
-    (SelfCaptureAssignment(x="f"), "'f' captured by right-hand side"),
+    (Reassignment(x="x"), "'x' is already assigned"),
+    (MaybeAssigned(x="x"), "'x' may already be assigned"),
     (
       CapturedGeneratorVariable(x="i"),
       "'i' bound by generator, captured by lambda",
@@ -43,7 +44,6 @@ test "the reason catalogue" {
     (DuplicatePatternKeyword(c="P"), "duplicate keyword in pattern for 'P'"),
     (DuplicateDictKey(w="k"), "duplicate key 'k' in dict pattern"),
     (NonlinearPattern(x="x"), "repeated variable 'x' in pattern"),
-    (DuplicateMutualName(x="f"), "duplicate name 'f' in mutual region"),
     (
       DuplicateMember(x="sub", q="pkg"),
       "duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'",
@@ -113,10 +113,7 @@ test "the reason catalogue" {
     ),
     (NotIterable(tau="int"), "values of type int cannot be iterated"),
     (UnknownField(c="P", x="z"), "class 'P' has no field 'z'"),
-    (
-      NotSynthesised,
-      "cannot infer type of this expression; annotate the assignment",
-    ),
+    (NotSynthesised, "cannot infer type of this expression"),
     (NoAttributes(tau="int"), "values of type int have no attributes"),
     (
       MissingReturn(x="f", tau="int"),
@@ -127,7 +124,7 @@ test "the reason catalogue" {
       "values of type list[int] have no method 'append'",
     ),
   ]
-  assert_eq(cases.length(), 45)
+  assert_eq(cases.length(), 48)
   for c in cases {
     assert_eq(c.0.message(), c.1)
   }
@@ -135,7 +132,7 @@ test "the reason catalogue" {
 
 ///|
 test "a rejection's exit code and short form" {
-  let d = @err.Diagnostic::new(IllFormed(UnassignedVariable(x="x")), span={
+  let d = @err.Diagnostic::new(IllFormed(PossiblyUnassigned(x="x")), span={
     start: { line: 3, col: 4, offset: 20, },
     end: { line: 3, col: 5, offset: 21, },
   })
@@ -146,7 +143,7 @@ test "a rejection's exit code and short form" {
   assert_eq(e.short("a.py"), "a.py: del prohibited")
   assert_eq(e.exit_code(), 1)
   assert_eq(
-    @err.Reason::UnassignedVariable(x="x").code(),
-    "purepy::unassigned-variable",
+    @err.Reason::PossiblyUnassigned(x="x").code(),
+    "purepy::possibly-unassigned",
   )
 }
