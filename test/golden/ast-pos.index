@@ -823,7 +823,7 @@ test/conformance/program-level/semantically-valid/two_modules/helper.py	e3367c9c
 test/conformance/program-level/semantically-valid/two_modules/main.py	56ae76d2946c7ff45fb208154a9203629261576c
 test/conformance/program-level/semantically-valid/unused_module_not_parsed/main.py	fa86761c67213e2acce27644f942cee26963ac6c
 test/conformance/program-level/semantically-valid/unused_module_not_parsed/unused.py	35a7442e302e1a68056398af00cd19102581d612
-test/conformance/run-all.py	6ba90f23007c0d8d6f695e9daeb3114edd756738
+test/conformance/run-all.py	26ff22ce72a8e03f01283e43577fb9a8e34a052f
 test/corpus/python/class_forms.py	9ffa25f6840b45b584ffea05321bec0eb697b894
 test/corpus/python/def_forms.py	6c33feef8816ff56156fdbe797d39df91a23d21b
 test/corpus/python/expr_boolop.py	ef2a22e34ad6672e83e2a6e98ecd4256fe3ecf29
