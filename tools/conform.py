@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """The conformance harness: our CLI against the PurePy reference.
 
-The suite under `test/conformance/` is the reference's own, copied verbatim.
-`test/conformance/run-all.py` drives the reference's Python scripts; this
-script drives OUR command-line tool the same way, so the two can be compared
-directly.
+The suite under `test/conformance/` is the reference's own, copied verbatim
+from its package (`src/purepy/conformance-suite/`). The reference's
+`purepy.conformance` drives its own checker over it; this script drives OUR
+command-line tool the same way, so the two can be compared directly.
 
 Four oracles, three of them golden-file comparisons and one verdict-driven:
 
@@ -127,7 +127,7 @@ def module_tests() -> list[str]:
 
 def verdict_parts(rel: str) -> tuple[str, ...]:
     """The directories between `module-level/` and the file: the test's
-    specification, exactly as run-all.py reads it."""
+    specification, exactly as the reference's runner reads it."""
     return pathlib.PurePosixPath(rel).parent.parts[1:]
 
 

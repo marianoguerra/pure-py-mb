@@ -7,7 +7,7 @@
 # -- and is never a build or CI input.
 #
 #   tools/fetch-reference.sh            clone or update, then verify
-#   tools/fetch-reference.sh --sync     also re-copy test/ into test/conformance/
+#   tools/fetch-reference.sh --sync     also re-copy the suite into test/conformance/
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -39,9 +39,13 @@ echo "reference at $commit ($(field ref))"
 if [ "${1-}" = "--sync" ]; then
   rm -rf "$root/test/conformance"
   mkdir -p "$root/test/conformance"
-  (cd "$ref/test" && tar --exclude=__pycache__ -cf - .) | (cd "$root/test/conformance" && tar -xf -)
+  # The suite is a part of the reference's package from v0.22.2, and was
+  # its test/ directory before.
+  suite="$ref/src/purepy/conformance-suite"
+  [ -d "$suite" ] || suite="$ref/test"
+  (cd "$suite" && tar --exclude=__pycache__ -cf - .) | (cd "$root/test/conformance" && tar -xf -)
   # A directory the reference's runs left holding nothing but bytecode is
   # not a test: git does not track it, and the copy above leaves it empty.
   find "$root/test/conformance" -type d -empty -delete
-  echo "test/conformance synced from reference/test"
+  echo "test/conformance synced from ${suite#"$ref"/}"
 fi

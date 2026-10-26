@@ -6,6 +6,13 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.22.2
+
+Nothing a program sees: the suite moved into the reference's package, as
+`src/purepy/conformance-suite/`. `tools/fetch-reference.sh --sync` copies it
+from there, and `test/conformance/` holds the suite alone, without the
+reference's runner.
+
 ### Specification v0.22.1
 
 Nothing a program sees: the specification gives the rule that a return ends

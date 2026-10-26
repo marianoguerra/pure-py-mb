@@ -867,7 +867,6 @@ test/conformance/program-level/no-exception/type-checker/transitive_containing_c
 test/conformance/program-level/no-exception/type-checker/transitive_containing_cycle/y.py	24b3988ea21e6641ccf02344b71adaf3f000c5ab
 test/conformance/program-level/syntax-error/parser/parse_error/lib.py	e1df2e9430b0c259a3ad91ff5d084f3e007151b9
 test/conformance/program-level/syntax-error/parser/parse_error/main.py	d93abdd1617df95291b3f523e361c4007ddd0154
-test/conformance/run-all.py	b25d465c1409a5cd1913f731c9555f4c9a5d8f96
 test/corpus/python/class_forms.py	9ffa25f6840b45b584ffea05321bec0eb697b894
 test/corpus/python/def_forms.py	6c33feef8816ff56156fdbe797d39df91a23d21b
 test/corpus/python/expr_boolop.py	ef2a22e34ad6672e83e2a6e98ecd4256fe3ecf29
