@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -141,32 +142,34 @@ class Impl:
         self.reference = reference
         self.path = path
         if reference:
-            for script in ("syntax.py", "check_module.py", "check_program.py"):
-                if not (REFERENCE / "src" / script).exists():
-                    sys.exit(
-                        f"reference/src/{script} is missing; run tools/fetch-reference.sh"
-                    )
+            if not (REFERENCE / "src" / "purepy" / "__main__.py").exists():
+                sys.exit("reference/src/purepy is missing; run tools/fetch-reference.sh")
         elif path is None or not path.exists():
             sys.exit(f"{path}: not built; run `moon build --target native`")
 
+    def reference_run(self, args: list[str], cwd: pathlib.Path) -> Result:
+        """The reference's package, `python -m purepy ...`, from the checkout."""
+        env = {**os.environ, "PYTHONPATH": str(REFERENCE / "src")}
+        p = subprocess.run(
+            ["python3", *args], cwd=cwd, env=env, capture_output=True, text=True,
+            check=False,
+        )
+        return Result(p.returncode, p.stdout, p.stderr)
+
     def parse(self, rel: str) -> Result:
         if self.reference:
-            return run(["python3", str(REFERENCE / "src" / "syntax.py"), rel], cwd=SUITE)
+            return self.reference_run([str(ROOT / "tools" / "ref_parse.py"), rel], SUITE)
         return run([str(self.path), "parse", rel], cwd=SUITE)
 
     def check(self, rel: str) -> Result:
         if self.reference:
-            return run(
-                ["python3", str(REFERENCE / "src" / "check_module.py"), rel], cwd=SUITE
-            )
+            return self.reference_run(["-m", "purepy", "--check", "--module", rel], SUITE)
         return run([str(self.path), "check", rel], cwd=SUITE)
 
     def check_program(self, d: str) -> Result:
         cwd = SUITE / d
         if self.reference:
-            return run(
-                ["python3", str(REFERENCE / "src" / "check_program.py"), MAIN], cwd=cwd
-            )
+            return self.reference_run(["-m", "purepy", "--check", MAIN], cwd)
         return run([str(self.path), "check-program", MAIN], cwd=cwd)
 
     def run_module(self, rel: str) -> Result:
@@ -213,27 +216,17 @@ def golden_rows(impl: Impl, name: str) -> list[tuple[str, int, str]]:
     """The reference's answer for every file, as `pure-py` is specified to
     report it.
 
-    One adjustment, in `check`: `check_module.py` does not run the sieve, so on
-    a file with a prohibited construct it walks a node it has no case for and
-    raises. `pure-py check` runs the sieve first and reports its verdict (§2.1),
-    so the golden for such a file is the SIEVE's answer -- which is what the
-    reference's own runner asserts, since it never calls `check` on a file
-    `parse` rejected."""
+    `check` asks the sieve first and the checker only of a file the sieve
+    accepts, as `pure-py check` does (§2.1)."""
     rows = []
     if name == "parse":
         for rel in all_files():
             r = impl.parse(rel)
-            # From v0.18 `syntax.py` lets a Python syntax error escape as a
-            # traceback, where `check_module.py` reports it as a parse error
-            # with its position. The second is the answer, and the one
-            # `pure-py parse` gives.
-            if impl.reference and r.code != 0 and "SyntaxError" in r.output:
-                r = impl.check(rel)
             rows.append((rel, r.code, strip_prefix(one_line(r.output), rel)))
     elif name == "check":
         for rel in all_files():
             r = impl.parse(rel)
-            if r.code == OK or (impl.reference and "SyntaxError" in r.output):
+            if r.code == OK:
                 r = impl.check(rel)
             rows.append((rel, r.code, strip_prefix(one_line(r.output), rel)))
     elif name == "program":

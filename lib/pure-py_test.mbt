@@ -24,7 +24,10 @@ test "check_program answers on a module the sieve would reject" {
     ("lib", @purepy.parse("x = 1\nwhile x:\n    pass\n")),
   ])
   match @purepy.check_program(@purepy.source_tree(modules)) {
-    Some(d) => assert_eq(d.message(), "lib: while loops prohibited")
+    Some(d) => {
+      assert_eq(d.message(), "while loops prohibited")
+      assert_eq(d.file, Some("lib"))
+    }
     None => fail("a while loop is not PurePy")
   }
 }
@@ -81,11 +84,8 @@ test "a profile is opted in to, per call" {
 
   // Refused by default, with the message the reference prints.
   let refused = @purepy.sieve(m).unwrap()
-  assert_eq(refused.exit_code(), 2)
-  assert_eq(
-    refused.message(),
-    "chained boolean operator not yet supported (#82)",
-  )
+  assert_eq(refused.exit_code(), 1)
+  assert_eq(refused.message(), "chained boolean operator prohibited")
   assert_eq(@purepy.check(m).unwrap().message(), refused.message())
 
   // Accepted, checked and run under the profile that has it.

@@ -7,19 +7,24 @@ program-level/exception/result/import_chain_fails	0	main.py: ok
 program-level/exception/result/import_failing_containing	0	main.py: ok
 program-level/exception/result/import_prefix_fails	0	main.py: ok
 program-level/exception/result/import_target_fails	0	main.py: ok
-program-level/exception/type-checker/attr_unknown_member	3	main.py: module 'mod' has no member 'missing'
-program-level/exception/type-checker/cycle	4	import cycle: helper -> main -> helper
-program-level/exception/type-checker/from_import_arity	3	main.py: constructor for 'C' expects 1 arguments, got 2
-program-level/exception/type-checker/from_import_bad_containing	3	pkg/__init__.py: 'z' is not defined
-program-level/exception/type-checker/from_import_unassigned	3	main.py: member 'x' of module 'lib' is not definitely assigned
-program-level/exception/type-checker/from_import_unknown_member	3	main.py: module 'mod' has no member 'Missing'
-program-level/exception/type-checker/import_bad_containing	3	pkg/__init__.py: 'z' is not defined
-program-level/exception/type-checker/member_builtin	3	main.py: module 'lib' has no member 'print'
-program-level/exception/type-checker/missing_module	3	main.py: unknown module 'helper'
-program-level/exception/type-checker/qualified_class_unknown	3	main.py: 'mod.NotAClass' is not a declared class
-program-level/exception/type-checker/self_import	4	import cycle: main -> main
-program-level/exception/type-checker/submodule_not_imported	3	b.py: submodule 'pkg.sub' is not imported
-program-level/exception/type-checker/unassigned_member	3	main.py: member 'x' of module 'lib' is not definitely assigned
+program-level/exception/type-checker/attr_unknown_member	3	main.py:3:9: module 'mod' has no member 'missing'
+program-level/exception/type-checker/cycle	4	main.py: import cycle: helper -> main -> helper
+program-level/exception/type-checker/from_import_arity	3	main.py:3:9: constructor for 'C' expects 1 arguments, got 2
+program-level/exception/type-checker/from_import_bad_containing	3	pkg/__init__.py:1:9: 'z' is not defined
+program-level/exception/type-checker/from_import_unassigned	3	main.py:1:0: member 'x' of module 'lib' is not definitely assigned
+program-level/exception/type-checker/from_import_unknown_member	3	main.py:1:0: module 'mod' has no member 'Missing'
+program-level/exception/type-checker/import_bad_containing	3	pkg/__init__.py:1:9: 'z' is not defined
+program-level/exception/type-checker/member_builtin	3	main.py:2:9: module 'lib' has no member 'print'
+program-level/exception/type-checker/missing_module	3	main.py:1:0: unknown module 'helper'
+program-level/exception/type-checker/qualified_class_unknown	3	main.py:5:13: 'mod.NotAClass' is not a declared class
+program-level/exception/type-checker/self_import	4	main.py: import cycle: main -> main
+program-level/exception/type-checker/submodule_not_imported	3	b.py:2:9: submodule 'pkg.sub' is not imported
+program-level/exception/type-checker/unassigned_member	3	main.py:2:6: member 'x' of module 'lib' is not definitely assigned
+program-level/no-exception/parser/from_import_as	1	main.py:1:0: from-import-as prohibited
+program-level/no-exception/parser/import_as	1	main.py:1:0: import-as prohibited
+program-level/no-exception/parser/import_multi	1	main.py:1:0: multi-target import (import a, b) prohibited
+program-level/no-exception/parser/import_relative	1	pkg/sub.py:1:0: relative imports prohibited
+program-level/no-exception/parser/import_star	1	main.py:1:0: from M import * prohibited
 program-level/no-exception/result/attr_access	0	main.py: ok
 program-level/no-exception/result/child_after_parent	0	main.py: ok
 program-level/no-exception/result/child_imports_parent	0	main.py: ok
@@ -49,11 +54,6 @@ program-level/no-exception/result/name_var	0	main.py: ok
 program-level/no-exception/result/namespace_deep	0	main.py: ok
 program-level/no-exception/result/namespace_import	0	main.py: ok
 program-level/no-exception/result/parent_after_child	0	main.py: ok
-program-level/no-exception/result/pending/from_import_as	2	main.py: from-import-as not yet supported (#135)
-program-level/no-exception/result/pending/import_as	2	main.py: import-as not yet supported (#135)
-program-level/no-exception/result/pending/import_multi	2	main.py: multi-target import (import a, b) not yet supported (#135)
-program-level/no-exception/result/pending/import_relative	2	pkg/sub.py: relative imports not yet supported (#126)
-program-level/no-exception/result/pending/import_star	2	main.py: from M import * not yet supported (#105)
 program-level/no-exception/result/predefined_imports	0	main.py: ok
 program-level/no-exception/result/qualified_alias_annotation	0	main.py: ok
 program-level/no-exception/result/qualified_class_annotation	0	main.py: ok
@@ -64,25 +64,25 @@ program-level/no-exception/result/sibling_submodules	0	main.py: ok
 program-level/no-exception/result/sibling_submodules_swapped	0	main.py: ok
 program-level/no-exception/result/two_modules	0	main.py: ok
 program-level/no-exception/result/unused_module_not_parsed	0	main.py: ok
-program-level/no-exception/type-checker/attr_type_mismatch	3	main.py: expected type str, given int
-program-level/no-exception/type-checker/contained_module_import	3	pkg/__init__.py: 'pkg.sub' is contained in importing module 'pkg'; plain import not allowed, write 'from pkg.sub import <name>'
-program-level/no-exception/type-checker/duplicate_member	3	pkg/__init__.py: duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'
-program-level/no-exception/type-checker/duplicate_member_import	3	pkg/__init__.py: duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'
-program-level/no-exception/type-checker/from_import_own_submodule	4	import cycle: pkg -> pkg
-program-level/no-exception/type-checker/from_import_repeated	3	main.py: name 'x' imported twice
-program-level/no-exception/type-checker/import_bound_by_pattern	3	main.py: 'x' is already declared
-program-level/no-exception/type-checker/import_redeclared	3	main.py: 'C' is already declared
-program-level/no-exception/type-checker/import_unassigned	3	main.py: member 'x' of module 'm' is not definitely assigned
-program-level/no-exception/type-checker/imported_module_rejected	3	helper.py: 'f' is already declared
-program-level/no-exception/type-checker/name_import	3	main.py: '__name__' is already declared
-program-level/no-exception/type-checker/parents_cycle	4	import cycle: x -> y -> x
-program-level/no-exception/type-checker/qualified_alias_as_value	3	main.py: 'mod.Num' is a type alias, usable only in annotations
-program-level/no-exception/type-checker/qualified_class_as_value	3	main.py: 'mod.C' refers to a class; classes are not first-class values
-program-level/no-exception/type-checker/reexport_from_import	3	main.py: module 'mid' has no member 'y'
-program-level/no-exception/type-checker/reexport_import_alias	3	main.py: module 'helper' has no member 'sys'
-program-level/no-exception/type-checker/same_name_distinct_classes	3	main.py: expected type a.C, given b.C
-program-level/no-exception/type-checker/submodule_as_value	3	main.py: 'pkg.sub' refers to a module; modules are not first-class values
-program-level/no-exception/type-checker/submodule_self_import	4	import cycle: a.b -> a.b
-program-level/no-exception/type-checker/submodule_transitive_import	3	main.py: submodule 'pkg.sub' is not imported
-program-level/no-exception/type-checker/transitive_containing_cycle	4	import cycle: x -> y -> x
-program-level/syntax-error/parser/parse_error	1	lib.py: parse error: invalid syntax
+program-level/no-exception/type-checker/attr_type_mismatch	3	main.py:2:9: expected type str, given int
+program-level/no-exception/type-checker/contained_module_import	3	pkg/__init__.py:1:0: 'pkg.sub' is contained in importing module 'pkg'; plain import not allowed, write 'from pkg.sub import <name>'
+program-level/no-exception/type-checker/duplicate_member	3	pkg/__init__.py:1:0: duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'
+program-level/no-exception/type-checker/duplicate_member_import	3	pkg/__init__.py:1:0: duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'
+program-level/no-exception/type-checker/from_import_own_submodule	4	main.py: import cycle: pkg -> pkg
+program-level/no-exception/type-checker/from_import_repeated	3	main.py:2:0: name 'x' imported twice
+program-level/no-exception/type-checker/import_bound_by_pattern	3	main.py:4:0: 'x' is already declared
+program-level/no-exception/type-checker/import_redeclared	3	main.py:7:0: 'C' is already declared
+program-level/no-exception/type-checker/import_unassigned	3	main.py:1:0: member 'x' of module 'm' is not definitely assigned
+program-level/no-exception/type-checker/imported_module_rejected	3	helper.py:3:0: 'f' is already declared
+program-level/no-exception/type-checker/name_import	3	main.py:1:0: '__name__' is already declared
+program-level/no-exception/type-checker/parents_cycle	4	main.py: import cycle: x -> y -> x
+program-level/no-exception/type-checker/qualified_alias_as_value	3	main.py:2:9: 'mod.Num' is a type alias, usable only in annotations
+program-level/no-exception/type-checker/qualified_class_as_value	3	main.py:2:9: 'mod.C' refers to a class; classes are not first-class values
+program-level/no-exception/type-checker/reexport_from_import	3	main.py:1:0: module 'mid' has no member 'y'
+program-level/no-exception/type-checker/reexport_import_alias	3	main.py:1:0: module 'helper' has no member 'sys'
+program-level/no-exception/type-checker/same_name_distinct_classes	3	main.py:8:8: expected type a.C, given b.C
+program-level/no-exception/type-checker/submodule_as_value	3	main.py:2:9: 'pkg.sub' refers to a module; modules are not first-class values
+program-level/no-exception/type-checker/submodule_self_import	4	main.py: import cycle: a.b -> a.b
+program-level/no-exception/type-checker/submodule_transitive_import	3	main.py:3:6: submodule 'pkg.sub' is not imported
+program-level/no-exception/type-checker/transitive_containing_cycle	4	main.py: import cycle: x -> y -> x
+program-level/syntax-error/parser/parse_error	1	lib.py:1:5: parse error: invalid syntax

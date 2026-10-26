@@ -1,1 +1,1 @@
-3: strings.py: values of type str have no attributes
+3: strings.py:2:7: values of type str have no attributes

@@ -1226,6 +1226,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.19.1 | `round` a builtin, `math` removed; inherited-field reason; unbound base class | `lib/types` (predefined table), `lib/value` and `lib/eval` (primitives), `lib/check`, `lib/error`, `lib/context` and the builtins profile |
 | v0.20.0 | `assert False` returns, at top level refused; mypy-only fall-throughs carried by the outcome; floats are not literal types, float patterns; `|` parsed and refused by the checker; tuples and sequence patterns without brackets allowed again; `round` aborts at an infinity or a nan; the suite's new taxonomy | `lib/check`, `lib/types`, `lib/sieve`, `lib/value` and `lib/eval` (`OverflowError`, `ValueError`), `tools/conform.py` |
 | v0.21.0 | tests only: `round` at an infinity or a nan is undefined again | `lib/eval` (`round` stuck there) |
+| v0.22.0 | the reference becomes the `purepy` package, `python -m purepy --check [--module]`; "not yet supported" gone, every such form prohibited (exit 1); a rejection in a program printed against its module's file with its position | `tools/conform.py` and `tools/ref_parse.py`, `lib/sieve`, `lib/error` (`Diagnostic::file`), the CLI, the profile corpus |
 
 Decisions made on the way, recorded as §9's are:
 

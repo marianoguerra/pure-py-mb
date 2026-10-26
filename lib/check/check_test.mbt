@@ -20,7 +20,11 @@ fn program_verdict(modules : Array[(String, String)]) -> String {
   }
   match @check.check_program(@program.SourceTree::of(parsed)) {
     None => "ok"
-    Some(d) => d.message()
+    Some(d) =>
+      match d.file {
+        Some(f) => f + ": " + d.message()
+        None => d.message()
+      }
   }
 }
 

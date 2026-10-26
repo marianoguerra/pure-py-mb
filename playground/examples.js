@@ -6,7 +6,7 @@
 // `# module: NAME`. The first chunk is `__main__` unless it says otherwise.
 //
 // `expect` is what the example DOES -- one of `finished`, `exited`,
-// `terminated`, `undefined`, `refused` or `not-yet`. `tools/check_examples.mjs
+// `terminated`, `undefined` or `refused`. `tools/check_examples.mjs
 // --expect` runs every example through the playground's own wasm module and
 // fails if one has drifted from what its note claims, which is the only thing
 // that keeps a page full of prose honest.
@@ -365,19 +365,6 @@ print(double("two"))
         expect: 'refused',
         src: `xs: list[int] = [1, 2]
 xs.append(3)
-`,
-      },
-      {
-        name: 'Planned, not yet here',
-        note:
-          "Some Python the specification means to allow and has not defined " +
-          "yet. These are refused with the issue that tracks them, which is " +
-          "a different answer from “never”.",
-        expect: 'not-yet',
-        src: `a: int = 1
-b: int = 2
-c: int = 3
-print(a < b < c)
 `,
       },
     ],

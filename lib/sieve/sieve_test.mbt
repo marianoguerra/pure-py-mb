@@ -148,55 +148,41 @@ test "prohibited forms" {
 ///|
 test "forms that are planned and not yet supported" {
   let cases = [
-    ("x, y = 1, 2\n", "2: destructuring assignment not yet supported (#54)"),
-    ("@deco\ndef f():\n    pass\n", "2: decorators not yet supported (#58)"),
+    ("x, y = 1, 2\n", "1: destructuring assignment prohibited"),
+    ("@deco\ndef f():\n    pass\n", "1: decorators prohibited"),
+    ("import a, b\n", "1: multi-target import (import a, b) prohibited"),
+    ("import a as b\n", "1: import-as prohibited"),
+    ("from . import a\n", "1: relative imports prohibited"),
+    ("from .m import a\n", "1: relative imports prohibited"),
+    ("from m import *\n", "1: from M import * prohibited"),
+    ("from m import a as b\n", "1: from-import-as prohibited"),
+    ("match v:\n    case a if a:\n        pass\n", "1: case guards prohibited"),
+    ("@dataclass\nclass C(Enum):\n    pass\n", "1: enum classes prohibited"),
     (
-      "import a, b\n", "2: multi-target import (import a, b) not yet supported (#135)",
-    ),
-    ("import a as b\n", "2: import-as not yet supported (#135)"),
-    ("from . import a\n", "2: relative imports not yet supported (#126)"),
-    ("from .m import a\n", "2: relative imports not yet supported (#126)"),
-    ("from m import *\n", "2: from M import * not yet supported (#105)"),
-    ("from m import a as b\n", "2: from-import-as not yet supported (#135)"),
-    (
-      "match v:\n    case a if a:\n        pass\n", "2: case guards not yet supported (#190)",
-    ),
-    (
-      "@dataclass\nclass C(Enum):\n    pass\n", "2: enum classes not yet supported (#86)",
+      "match v:\n    case a.b:\n        pass\n", "1: attribute value patterns prohibited",
     ),
     (
-      "match v:\n    case a.b:\n        pass\n", "2: attribute value patterns not yet supported (#86)",
+      "match v:\n    case [*rest]:\n        pass\n", "1: star patterns prohibited",
     ),
     (
-      "match v:\n    case [*rest]:\n        pass\n", "2: star patterns not yet supported (#84)",
+      "match v:\n    case {**rest}:\n        pass\n", "1: rest capture in dict patterns prohibited",
     ),
-    (
-      "match v:\n    case {**rest}:\n        pass\n", "2: rest capture in dict patterns not yet supported (#84)",
-    ),
-    (
-      "match v:\n    case 1 | 2:\n        pass\n", "2: or-patterns not yet supported (#85)",
-    ),
-    (
-      "x = a and b and c\n", "2: chained boolean operator not yet supported (#82)",
-    ),
-    ("x = a < b < c\n", "2: chained comparison not yet supported (#82)"),
-    ("x = a is b\n", "2: identity operator (is/is not) not yet supported (#81)"),
-    (
-      "x = a is not b\n", "2: identity operator (is/is not) not yet supported (#81)",
-    ),
-    ("x = {1, 2}\n", "2: set literals not yet supported (#147)"),
-    ("x = {i for i in y}\n", "2: set comprehensions not yet supported (#147)"),
-    ("x = a[1:2]\n", "2: slicing not yet supported (#59)"),
-    ("x = f\"{y}\"\n", "2: f-strings not yet supported (#55)"),
-    (
-      "x = [a for a, b in y]\n", "2: destructuring in comprehensions not yet supported (#54)",
-    ),
-    ("def f(*args):\n    pass\n", "2: *args not yet supported (#57)"),
-    ("def f(**kw):\n    pass\n", "2: **kwargs not yet supported (#57)"),
-    ("def f(x=1):\n    pass\n", "2: default arguments not yet supported (#56)"),
-    ("f = lambda x=1: x\n", "2: default arguments not yet supported (#56)"),
-    ("x = f\"{a}\"\n", "2: f-strings not yet supported (#55)"),
-    ("x = f\"plain\"\n", "2: f-strings not yet supported (#55)"),
+    ("match v:\n    case 1 | 2:\n        pass\n", "1: or-patterns prohibited"),
+    ("x = a and b and c\n", "1: chained boolean operator prohibited"),
+    ("x = a < b < c\n", "1: chained comparison prohibited"),
+    ("x = a is b\n", "1: identity operator (is/is not) prohibited"),
+    ("x = a is not b\n", "1: identity operator (is/is not) prohibited"),
+    ("x = {1, 2}\n", "1: set literals prohibited"),
+    ("x = {i for i in y}\n", "1: set comprehensions prohibited"),
+    ("x = a[1:2]\n", "1: slicing prohibited"),
+    ("x = f\"{y}\"\n", "1: f-strings prohibited"),
+    ("x = [a for a, b in y]\n", "1: destructuring in comprehensions prohibited"),
+    ("def f(*args):\n    pass\n", "1: *args prohibited"),
+    ("def f(**kw):\n    pass\n", "1: **kwargs prohibited"),
+    ("def f(x=1):\n    pass\n", "1: default arguments prohibited"),
+    ("f = lambda x=1: x\n", "1: default arguments prohibited"),
+    ("x = f\"{a}\"\n", "1: f-strings prohibited"),
+    ("x = f\"plain\"\n", "1: f-strings prohibited"),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)
@@ -257,10 +243,7 @@ test "chained boolean operators are gated, not removed" {
     "a = b and c and d\n", "a = b or c or d\n", "a = b and c and d and e\n",
   ]
   for source in cases {
-    assert_eq(
-      verdict(source),
-      "2: chained boolean operator not yet supported (#82)",
-    )
+    assert_eq(verdict(source), "1: chained boolean operator prohibited")
     assert_eq(verdict_under(source, @profile.core), verdict(source))
     assert_eq(verdict_under(source, @profile.pending()), "ok")
   }
@@ -285,14 +268,8 @@ test "a profile keeps walking past the gate it opened" {
   // stops asking anything. `*args` is the durable choice now that f-strings
   // have landed: it needs an arity model this evaluator does not have.
   let source = "a = b and c and d\ndef f(*g):\n    return 1\n"
-  assert_eq(
-    verdict(source),
-    "2: chained boolean operator not yet supported (#82)",
-  )
-  assert_eq(
-    verdict_under(source, @profile.pending()),
-    "2: *args not yet supported (#57)",
-  )
+  assert_eq(verdict(source), "1: chained boolean operator prohibited")
+  assert_eq(verdict_under(source, @profile.pending()), "1: *args prohibited")
 }
 
 ///|
@@ -304,26 +281,18 @@ test "a profile keeps walking past the gate it opened" {
 /// are `test/profile/`, driven by `tools/profile-conform.py`.
 test "every pending feature is gated, not removed" {
   let cases = [
+    ("a = b and c and d\n", "1: chained boolean operator prohibited"),
+    ("a = 1 < b < 3\n", "1: chained comparison prohibited"),
+    ("a = b is None\n", "1: identity operator (is/is not) prohibited"),
+    ("a = b is not None\n", "1: identity operator (is/is not) prohibited"),
+    ("a = xs[1:2]\n", "1: slicing prohibited"),
+    ("a = xs[::-1]\n", "1: slicing prohibited"),
+    ("a, b = (1, 2)\n", "1: destructuring assignment prohibited"),
+    ("a, (b, c) = (1, (2, 3))\n", "1: destructuring assignment prohibited"),
     (
-      "a = b and c and d\n", "2: chained boolean operator not yet supported (#82)",
+      "def f(x: int = 1) -> int:\n    return x\n", "1: default arguments prohibited",
     ),
-    ("a = 1 < b < 3\n", "2: chained comparison not yet supported (#82)"),
-    (
-      "a = b is None\n", "2: identity operator (is/is not) not yet supported (#81)",
-    ),
-    (
-      "a = b is not None\n", "2: identity operator (is/is not) not yet supported (#81)",
-    ),
-    ("a = xs[1:2]\n", "2: slicing not yet supported (#59)"),
-    ("a = xs[::-1]\n", "2: slicing not yet supported (#59)"),
-    ("a, b = (1, 2)\n", "2: destructuring assignment not yet supported (#54)"),
-    (
-      "a, (b, c) = (1, (2, 3))\n", "2: destructuring assignment not yet supported (#54)",
-    ),
-    (
-      "def f(x: int = 1) -> int:\n    return x\n", "2: default arguments not yet supported (#56)",
-    ),
-    ("f = lambda x=1: x\n", "2: default arguments not yet supported (#56)"),
+    ("f = lambda x=1: x\n", "1: default arguments prohibited"),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)
@@ -363,14 +332,14 @@ test "a destructuring target may not assign an item or an attribute" {
 /// show up here as a changed message rather than as a silence.
 test "the rest of the pending table is still closed" {
   let cases = [
-    ("def f(*a):\n    return 1\n", "2: *args not yet supported (#57)"),
-    ("def f(**a):\n    return 1\n", "2: **kwargs not yet supported (#57)"),
-    ("@deco\ndef f():\n    pass\n", "2: decorators not yet supported (#58)"),
-    ("s = {1, 2}\n", "2: set literals not yet supported (#147)"),
-    ("s = {x for x in y}\n", "2: set comprehensions not yet supported (#147)"),
-    ("import a as b\n", "2: import-as not yet supported (#135)"),
+    ("def f(*a):\n    return 1\n", "1: *args prohibited"),
+    ("def f(**a):\n    return 1\n", "1: **kwargs prohibited"),
+    ("@deco\ndef f():\n    pass\n", "1: decorators prohibited"),
+    ("s = {1, 2}\n", "1: set literals prohibited"),
+    ("s = {x for x in y}\n", "1: set comprehensions prohibited"),
+    ("import a as b\n", "1: import-as prohibited"),
     (
-      "xs = [a for a, b in items]\n", "2: destructuring in comprehensions not yet supported (#54)",
+      "xs = [a for a, b in items]\n", "1: destructuring in comprehensions prohibited",
     ),
   ]
   for c in cases {
@@ -399,15 +368,15 @@ test "an f-string takes expressions and not a format language" {
   // half was missing.
   assert_eq(
     verdict_under("x = f\"{a:>10}\"\n", p),
-    "2: an f-string format spec not yet supported (#55)",
+    "1: an f-string format spec prohibited",
   )
   assert_eq(
     verdict_under("x = f\"{a=}\"\n", p),
-    "2: the f-string debug form (f\"{x=}\") not yet supported (#55)",
+    "1: the f-string debug form (f\"{x=}\") prohibited",
   )
   assert_eq(
     verdict_under("x = f\"{a!a}\"\n", p),
-    "2: an f-string conversion not yet supported (#55)",
+    "1: an f-string conversion prohibited",
   )
   // A hole is walked, so what is prohibited in an expression is prohibited in
   // one -- with the message it has anywhere else.
@@ -455,7 +424,7 @@ test "a default argument must be a literal" {
     ] {
     assert_eq(
       verdict_under(source, p),
-      "2: a default argument that is not a literal not yet supported (#56)",
+      "1: a default argument that is not a literal prohibited",
       msg=source,
     )
   }
@@ -476,7 +445,7 @@ test "identity against a literal is refused, not deferred" {
   // the reference's, unchanged.
   assert_eq(
     verdict("x = 1 is 1\n"),
-    "2: identity operator (is/is not) not yet supported (#81)",
+    "1: identity operator (is/is not) prohibited",
   )
   for name in @profile.names {
     let p = @profile.by_name(name).unwrap()

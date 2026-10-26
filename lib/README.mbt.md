@@ -25,7 +25,7 @@ describes.
 
 ## Status
 
-The conformance suite of specification v0.21.0 passes in full: 2112
+The conformance suite of specification v0.22.0 passes in full: 2112
 assertions across four oracles, compared against the reference's own answers
 for every one of its sources.
 Two more oracles compare the token stream and the parse tree against CPython's
@@ -134,7 +134,7 @@ test "a profile widens what the sieve accepts" {
   // PurePy has no chained boolean operator yet, and says which issue it is.
   inspect(
     @purepy.check(m).unwrap().message(),
-    content="chained boolean operator not yet supported (#82)",
+    content="chained boolean operator prohibited",
   )
   // A caller who asked for the profile that has it gets it.
   inspect(@purepy.check(m, profile=@profile.pending()) is None, content="true")
@@ -316,8 +316,7 @@ pure-py run MAIN [ARGS...]    evaluate a program
 ```
 
 Exit codes follow the reference's: `0` accepted, `1` a prohibited form or an
-abort, `2` a form that is planned and not yet supported, `3` an ill-formed
-module, `4` an ill-formed program, and `5` -- this port's own -- an operation
+abort, `3` an ill-formed module, `4` an ill-formed program, and `5` -- this port's own -- an operation
 the semantics leaves undefined.
 
 `check --error-format human` renders a rejection with the source around it:

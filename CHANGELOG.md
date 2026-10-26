@@ -6,6 +6,23 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.22.0: one package, nothing "not yet"
+
+The reference is a Python package now, run as `python -m purepy --check`
+(`--module` for one module); `tools/conform.py` calls it so, and
+`tools/ref_parse.py` asks its sieve alone for the `parse` golden.
+
+The specification no longer has forms that are "not yet supported": every
+one of them is prohibited, with the message `<form> prohibited` and exit 1,
+and the `pending` tests are `parser` tests. A profile still opens exactly
+those gates and never one of the forms PurePy excludes on purpose; only what
+`core` prints for them changed. The playground's "not yet" example is gone.
+
+A rejection in a program is printed against the file of the module at fault,
+with its position: `helper.py:3:4: <message>`, and a rejection of the program
+as a whole against the entry, `main.py: import cycle: ...`. A `Diagnostic`
+carries that file in `file`, and `message()` is the message alone.
+
 ### Specification v0.21.0
 
 Only the suite changed. It files `round` of an infinity or a nan as

@@ -1,1 +1,1 @@
-3: dicts.py: values of type dict[str, int] have no attributes
+3: dicts.py:2:7: values of type dict[str, int] have no attributes

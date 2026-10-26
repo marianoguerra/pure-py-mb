@@ -116,19 +116,25 @@ fn prohibited_nowhere(msg : String) -> @err.PurePyError {
 }
 
 ///|
+/// A form the reference once planned and now prohibits.
+///
+/// Since v0.22 the reference has no "not yet supported": what it once marked
+/// as planned is prohibited, exit 1, like the rest. A profile still opens only
+/// these gates, the ones upstream once planned; `issue` is the upstream issue
+/// that planned it.
 fn not_yet(
   feature : String,
   issue : Int32,
   span : @basic.Span,
 ) -> @err.PurePyError {
-  @err.PurePyError(
-    @err.Diagnostic::new(NotYetSupported(feature~, issue~), span~),
-  )
+  ignore(issue)
+  prohibited("\{feature} prohibited", span)
 }
 
 ///|
 fn not_yet_nowhere(feature : String, issue : Int32) -> @err.PurePyError {
-  @err.PurePyError(@err.Diagnostic::new(NotYetSupported(feature~, issue~)))
+  ignore(issue)
+  prohibited_nowhere("\{feature} prohibited")
 }
 
 // ---------------------------------------------------------------------------

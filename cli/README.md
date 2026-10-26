@@ -20,8 +20,7 @@ pure-py run MAIN [ARGS...]    evaluate a program
 
 Exit codes follow the reference implementation's, because the conformance
 suite compares this binary against it: `0` accepted, `1` a prohibited form or
-an abort, `2` a form that is planned and not yet supported, `3` an ill-formed
-module, `4` an ill-formed program, and `5` — this port's own — an operation
+an abort, `3` an ill-formed module, `4` an ill-formed program, and `5` — this port's own — an operation
 the semantics leaves undefined.
 
 `check --error-format human` renders a rejection with the source around it:

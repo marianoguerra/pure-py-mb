@@ -1,1 +1,1 @@
-3: sequences.py: values of type list[int] have no attributes
+3: sequences.py:2:7: values of type list[int] have no attributes

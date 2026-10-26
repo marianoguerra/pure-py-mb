@@ -88,6 +88,9 @@ module-level/no-exception/parser/augmented_assign.py	1	:2:0: augmented assignmen
 module-level/no-exception/parser/bitwise_not.py	1	:1:9: unary operator '~' prohibited
 module-level/no-exception/parser/bytes_literal.py	1	:1:4: bytes literal prohibited
 module-level/no-exception/parser/call_dict_unpacking.py	1	:8:8: dict unpacking in argument list prohibited
+module-level/no-exception/parser/case_guard.py	1	: case guards prohibited
+module-level/no-exception/parser/chained_bool.py	1	:4:6: chained boolean operator prohibited
+module-level/no-exception/parser/chained_compare.py	1	:2:6: chained comparison prohibited
 module-level/no-exception/parser/class_bad_decorator.py	1	:5:0: class decorator other than @dataclass prohibited
 module-level/no-exception/parser/class_base_subscript.py	1	:13:14: base class other than a name, optionally applied to type arguments prohibited
 module-level/no-exception/parser/class_def.py	1	:1:0: undecorated class prohibited
@@ -97,19 +100,29 @@ module-level/no-exception/parser/complex_literal.py	1	:1:8: complex literal proh
 module-level/no-exception/parser/dataclass_field_default.py	1	:5:4: field default values prohibited
 module-level/no-exception/parser/dataclass_method.py	1	:4:4: dataclass member other than a field declaration prohibited
 module-level/no-exception/parser/dataclass_two_bases.py	1	:12:0: multiple inheritance prohibited
+module-level/no-exception/parser/decorator.py	1	:9:0: decorators prohibited
+module-level/no-exception/parser/default_args.py	1	: default arguments prohibited
 module-level/no-exception/parser/delete.py	1	:2:0: del prohibited
+module-level/no-exception/parser/destructuring_assign.py	1	:3:0: destructuring assignment prohibited
+module-level/no-exception/parser/destructuring_comp.py	1	: destructuring in comprehensions prohibited
 module-level/no-exception/parser/dict_unpacking.py	1	:2:4: dict unpacking prohibited
 module-level/no-exception/parser/ellipsis_literal.py	1	:1:4: ellipsis literal prohibited
 module-level/no-exception/parser/field_target_not_name.py	1	:6:4: field target other than a simple name prohibited
 module-level/no-exception/parser/for_loop.py	1	:2:0: for loops prohibited
+module-level/no-exception/parser/fstring.py	1	:2:6: f-strings prohibited
 module-level/no-exception/parser/generator_expr.py	1	:1:7: generator expressions prohibited
 module-level/no-exception/parser/global_stmt.py	1	:4:4: global prohibited
+module-level/no-exception/parser/identity.py	1	:2:6: identity operator (is/is not) prohibited
 module-level/no-exception/parser/import_in_def.py	1	:2:4: import outside the module top level prohibited
 module-level/no-exception/parser/item_assign.py	1	:2:0: item assignment prohibited
 module-level/no-exception/parser/keyword_only_args.py	1	: keyword-only arguments prohibited
 module-level/no-exception/parser/literal_bytes_annotation.py	1	:3:3: annotation that is not a type expression prohibited
 module-level/no-exception/parser/literal_float_annotation.py	1	:4:3: annotation that is not a type expression prohibited
+module-level/no-exception/parser/match_attr_value.py	1	:13:9: attribute value patterns prohibited
 module-level/no-exception/parser/match_complex_value.py	1	:3:9: complex and bytes literal patterns prohibited
+module-level/no-exception/parser/match_enum.py	1	:3:0: enum classes prohibited
+module-level/no-exception/parser/match_or.py	1	:3:9: or-patterns prohibited
+module-level/no-exception/parser/match_star.py	1	:3:13: star patterns prohibited
 module-level/no-exception/parser/missing_param_annotation.py	1	:1:0: unannotated parameter prohibited
 module-level/no-exception/parser/missing_return_annotation.py	1	:1:0: unannotated return type prohibited
 module-level/no-exception/parser/multiple_assign.py	1	:1:0: multiple assignment targets prohibited
@@ -117,8 +130,14 @@ module-level/no-exception/parser/nested_class.py	1	:5:4: class definition outsid
 module-level/no-exception/parser/nonlocal_stmt.py	1	:4:8: nonlocal prohibited
 module-level/no-exception/parser/param_spec.py	1	:1:9: ParamSpec type parameter **P prohibited
 module-level/no-exception/parser/pat_dict_int_key.py	1	:3:10: dict pattern key other than a string literal prohibited
+module-level/no-exception/parser/pat_dict_rest.py	1	:3:9: rest capture in dict patterns prohibited
 module-level/no-exception/parser/positional_only_args.py	1	: positional-only arguments prohibited
 module-level/no-exception/parser/raise_stmt.py	1	:2:4: raise prohibited
+module-level/no-exception/parser/set_comp.py	1	:2:14: set comprehensions prohibited
+module-level/no-exception/parser/set_literal.py	1	:1:14: set literals prohibited
+module-level/no-exception/parser/slicing.py	1	:2:9: slicing prohibited
+module-level/no-exception/parser/star_args.py	1	: *args prohibited
+module-level/no-exception/parser/star_kwargs.py	1	: **kwargs prohibited
 module-level/no-exception/parser/starred_list.py	1	:1:6: starred expressions prohibited
 module-level/no-exception/parser/stmt_before_import.py	1	:2:0: import after another statement prohibited
 module-level/no-exception/parser/try_except.py	1	:1:0: try/except prohibited
@@ -304,25 +323,6 @@ module-level/no-exception/result/pat_dict_in_tuple.py	0	: ok
 module-level/no-exception/result/pat_tuple_component_narrowing.py	0	: ok
 module-level/no-exception/result/pat_tuple_optional_field.py	0	: ok
 module-level/no-exception/result/pattern_shadows_outer.py	0	: ok
-module-level/no-exception/result/pending/case_guard.py	2	: case guards not yet supported (#190)
-module-level/no-exception/result/pending/chained_bool.py	2	:4:6: chained boolean operator not yet supported (#82)
-module-level/no-exception/result/pending/chained_compare.py	2	:2:6: chained comparison not yet supported (#82)
-module-level/no-exception/result/pending/decorator.py	2	:9:0: decorators not yet supported (#58)
-module-level/no-exception/result/pending/default_args.py	2	: default arguments not yet supported (#56)
-module-level/no-exception/result/pending/destructuring_assign.py	2	:3:0: destructuring assignment not yet supported (#54)
-module-level/no-exception/result/pending/destructuring_comp.py	2	: destructuring in comprehensions not yet supported (#54)
-module-level/no-exception/result/pending/fstring.py	2	:2:6: f-strings not yet supported (#55)
-module-level/no-exception/result/pending/identity.py	2	:2:6: identity operator (is/is not) not yet supported (#81)
-module-level/no-exception/result/pending/match_attr_value.py	2	:13:9: attribute value patterns not yet supported (#86)
-module-level/no-exception/result/pending/match_enum.py	2	:3:0: enum classes not yet supported (#86)
-module-level/no-exception/result/pending/match_or.py	2	:3:9: or-patterns not yet supported (#85)
-module-level/no-exception/result/pending/match_star.py	2	:3:13: star patterns not yet supported (#84)
-module-level/no-exception/result/pending/pat_dict_rest.py	2	:3:9: rest capture in dict patterns not yet supported (#84)
-module-level/no-exception/result/pending/set_comp.py	2	:2:14: set comprehensions not yet supported (#147)
-module-level/no-exception/result/pending/set_literal.py	2	:1:14: set literals not yet supported (#147)
-module-level/no-exception/result/pending/slicing.py	2	:2:9: slicing not yet supported (#59)
-module-level/no-exception/result/pending/star_args.py	2	: *args not yet supported (#57)
-module-level/no-exception/result/pending/star_kwargs.py	2	: **kwargs not yet supported (#57)
 module-level/no-exception/result/power.py	0	: ok
 module-level/no-exception/result/power_int_exponent.py	0	: ok
 module-level/no-exception/result/precedence.py	0	: ok
@@ -690,6 +690,18 @@ program-level/exception/type-checker/submodule_not_imported/pkg/__init__.py	0	: 
 program-level/exception/type-checker/submodule_not_imported/pkg/sub.py	0	: ok
 program-level/exception/type-checker/unassigned_member/lib.py	0	: ok
 program-level/exception/type-checker/unassigned_member/main.py	0	: ok
+program-level/no-exception/parser/from_import_as/m.py	0	: ok
+program-level/no-exception/parser/from_import_as/main.py	1	:1:0: from-import-as prohibited
+program-level/no-exception/parser/import_as/m.py	0	: ok
+program-level/no-exception/parser/import_as/main.py	1	:1:0: import-as prohibited
+program-level/no-exception/parser/import_multi/a.py	0	: ok
+program-level/no-exception/parser/import_multi/b.py	0	: ok
+program-level/no-exception/parser/import_multi/main.py	1	:1:0: multi-target import (import a, b) prohibited
+program-level/no-exception/parser/import_relative/main.py	0	: ok
+program-level/no-exception/parser/import_relative/pkg/__init__.py	0	: ok
+program-level/no-exception/parser/import_relative/pkg/sub.py	1	:1:0: relative imports prohibited
+program-level/no-exception/parser/import_star/m.py	0	: ok
+program-level/no-exception/parser/import_star/main.py	1	:1:0: from M import * prohibited
 program-level/no-exception/result/attr_access/helper.py	0	: ok
 program-level/no-exception/result/attr_access/main.py	0	: ok
 program-level/no-exception/result/child_after_parent/main.py	0	: ok
@@ -768,18 +780,6 @@ program-level/no-exception/result/namespace_import/x/a.py	0	: ok
 program-level/no-exception/result/parent_after_child/main.py	0	: ok
 program-level/no-exception/result/parent_after_child/pkg/__init__.py	0	: ok
 program-level/no-exception/result/parent_after_child/pkg/sub.py	0	: ok
-program-level/no-exception/result/pending/from_import_as/m.py	0	: ok
-program-level/no-exception/result/pending/from_import_as/main.py	2	:1:0: from-import-as not yet supported (#135)
-program-level/no-exception/result/pending/import_as/m.py	0	: ok
-program-level/no-exception/result/pending/import_as/main.py	2	:1:0: import-as not yet supported (#135)
-program-level/no-exception/result/pending/import_multi/a.py	0	: ok
-program-level/no-exception/result/pending/import_multi/b.py	0	: ok
-program-level/no-exception/result/pending/import_multi/main.py	2	:1:0: multi-target import (import a, b) not yet supported (#135)
-program-level/no-exception/result/pending/import_relative/main.py	0	: ok
-program-level/no-exception/result/pending/import_relative/pkg/__init__.py	0	: ok
-program-level/no-exception/result/pending/import_relative/pkg/sub.py	2	:1:0: relative imports not yet supported (#126)
-program-level/no-exception/result/pending/import_star/m.py	0	: ok
-program-level/no-exception/result/pending/import_star/main.py	2	:1:0: from M import * not yet supported (#105)
 program-level/no-exception/result/predefined_imports/main.py	0	: ok
 program-level/no-exception/result/qualified_alias_annotation/helper.py	0	: ok
 program-level/no-exception/result/qualified_alias_annotation/main.py	0	: ok

@@ -376,9 +376,9 @@ fn parse_error_options(
 /// `check-program MAIN`: discover the program from its entry file and decide
 /// whether the whole of it is well formed.
 ///
-/// The format is `check_program.py`'s: `MAIN: ok`, or the message alone --
-/// which for a module-level rejection carries the offending file's path and
-/// no line, because that is what the reference prints.
+/// The format is the reference's: `MAIN: ok`, or `FILE:LINE:COL: message`
+/// against the module at fault, or `MAIN: message` for a rejection of the
+/// program as a whole.
 fn cmd_check_program(
   path : String,
   profile~ : @profile.Profile = @profile.core,
@@ -390,13 +390,28 @@ fn cmd_check_program(
       0
     }
     Some(d) => {
-      println(d.message())
+      println(program_message(d, path))
       match profile_note(d, asked) {
         Some(note) => println(note)
         None => ()
       }
       d.exit_code()
     }
+  }
+}
+
+///|
+/// A rejection in a program, against its file: the one it names, or the
+/// entry. The column counts bytes in that file's text, as CPython's does.
+fn program_message(d : @err.Diagnostic, entry : String) -> String {
+  let file = match d.file {
+    Some(f) => f
+    None => entry
+  }
+  try @fs.read_file_to_string(file) catch {
+    _ => d.short(file)
+  } noraise {
+    text => d.short(file, source=@basic.Source::new(text, name=file))
   }
 }
 
@@ -425,7 +440,7 @@ fn cmd_run(
     profile~,
   ) catch {
     @err.PurePyError(d) => {
-      println(d.message())
+      println(program_message(d, path))
       match profile_note(d, asked) {
         Some(note) => println(note)
         None => ()
@@ -442,7 +457,7 @@ fn cmd_run(
   // well-formed programs only.
   match @check.check_program(tree, profile~) {
     Some(d) => {
-      println(d.message())
+      println(program_message(d, path))
       return d.exit_code()
     }
     None => ()
