@@ -68,6 +68,7 @@ pub(all) enum Reason {
   PatternArityMismatch(c~ : String, expected~ : Int32, got~ : Int32)
   NotPredefinedName(x~ : String)
   RangePattern
+  CyclicTypeAlias(x~ : String)
   NotClass(q~ : String)
   ClassArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)
   TypeAliasArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)

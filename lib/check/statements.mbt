@@ -81,13 +81,104 @@ fn type_vars(alphas : Array[String]) -> Context {
 }
 
 ///|
+/// An alias at type arguments `sigmas`: its body, resolved in the context
+/// of its definition.
+fn ty_alias(
+  theta : TypeDefinition,
+  q : String,
+  sigmas : Array[@types.Type],
+  span : @basic.Span,
+  ctx : ModCtx,
+  resolving : Array[String],
+) -> @types.Type raise {
+  guard theta.chis[theta.i]
+    is TypeAlias(name=Name(id~, ..), type_params=tps, value~, ..) else {
+    abort("a type alias")
+  }
+  let alphas = type_params(tps)
+  if sigmas.length() != alphas.length() {
+    raise ill(
+      TypeAliasArityMismatch(
+        q~,
+        expected=alphas.length(),
+        given=sigmas.length(),
+      ),
+      span,
+    )
+  }
+  let key = theta.q + "." + id
+  if resolving.contains(key) {
+    raise ill(CyclicTypeAlias(x=id), span)
+  }
+  let ctx_ = {
+    gamma: type_context(theta.gamma, theta.q, theta.chis, theta.i),
+    program: ctx.program,
+    q: theta.q,
+  }
+  let tau = resolve_type(
+    type_expr(Some(value)),
+    span,
+    ctx_,
+    resolving=[..resolving, key],
+  )
+  @types.substitute(sigmas[:], alphas[:], tau)
+}
+
+///|
+/// What a definition of a mutual type region declares.
+fn type_entry(
+  gamma : Context,
+  q : String,
+  chis : Array[@ast.Stmt],
+  i : Int32,
+) -> Entry {
+  match chis[i] {
+    ClassDef(name~, ..) => Class(q + "." + name)
+    _ => Alias({ gamma, q, chis, i, })
+  }
+}
+
+///|
+/// The context a definition of a mutual type region is resolved in: a class
+/// sees the definitions before it, as Python evaluates its annotations when
+/// it is defined; an alias, lazily evaluated, sees all of them.
+fn type_context(
+  gamma : Context,
+  q : String,
+  chis : Array[@ast.Stmt],
+  i : Int32,
+) -> Context {
+  let chi = chis[i]
+  let earlier = if chi is ClassDef(..) { i } else { chis.length() }
+  let mut g = gamma
+  for j in 0..<earlier {
+    for d in @analysis.declares(chis[j]) {
+      g = g.add(d.0, type_entry(gamma, q, chis, j))
+    }
+  }
+  let tps = match chi {
+    ClassDef(type_params~, ..) | TypeAlias(type_params~, ..) => type_params
+    _ => abort("a type definition")
+  }
+  override_context(g, type_vars(type_params(tps)))
+}
+
+///|
 /// What an annotation means here: every name it uses must be in scope as what
 /// it says it is.
+///
+/// `resolving`: the aliases whose bodies are being resolved, to refuse a
+/// cyclic alias.
 fn resolve_type(
   psi : @types.TypeExpr,
   span : @basic.Span,
   ctx : ModCtx,
+  resolving~ : Array[String] = [],
 ) -> @types.Type raise {
+  fn resolve(p) raise {
+    resolve_type(p, span, ctx, resolving~)
+  }
+
   match psi {
     PrimE(p) => {
       check_in_scope(p.name(), span, ctx)
@@ -102,22 +193,10 @@ fn resolve_type(
       match resolve_name(q, ctx) {
         Some(Unbound) => raise ill(UnboundName(x=name), span)
         Some(TypeParam) if args.is_empty() => TypeVar(name)
-        Some(Alias(alphas, tau)) => {
-          let sigmas = args.map(fn(a) raise { resolve_type(a, span, ctx) })
-          if sigmas.length() != alphas.length() {
-            raise ill(
-              TypeAliasArityMismatch(
-                q=name,
-                expected=alphas.length(),
-                given=sigmas.length(),
-              ),
-              span,
-            )
-          }
-          @types.substitute(sigmas[:], alphas[:], tau)
-        }
+        Some(Alias(theta)) =>
+          ty_alias(theta, name, args.map(resolve), span, ctx, resolving)
         Some(Class(c)) => {
-          let taus = args.map(fn(a) raise { resolve_type(a, span, ctx) })
+          let taus = args.map(resolve)
           let expected = @types.type_params_of(ctx.sigma(), c).length()
           if taus.length() != expected {
             raise ill(
@@ -132,26 +211,22 @@ fn resolve_type(
     }
     ListE(p) => {
       check_in_scope("list", span, ctx)
-      List(resolve_type(p, span, ctx))
+      List(resolve(p))
     }
     DictE(p) => {
       check_in_scope("dict", span, ctx)
       check_in_scope("str", span, ctx)
-      Dict(resolve_type(p, span, ctx))
+      Dict(resolve(p))
     }
     TupleE(ps) => {
       check_in_scope("tuple", span, ctx)
-      Tuple(ps.map(fn(c) raise { resolve_type(c, span, ctx) }))
+      Tuple(ps.map(resolve))
     }
     CallableE(ps, r) => {
       check_in_scope("Callable", span, ctx)
-      Callable(
-        ps.map(fn(p) raise { resolve_type(p, span, ctx) }),
-        resolve_type(r, span, ctx),
-      )
+      Callable(ps.map(fn(p) raise { resolve(p) }), resolve(r))
     }
-    UnionE(l, r) =>
-      Union(resolve_type(l, span, ctx), resolve_type(r, span, ctx))
+    UnionE(l, r) => Union(resolve(l), resolve(r))
   }
 }
 
@@ -239,20 +314,56 @@ fn check_top_seq(
   if ts.is_empty() {
     return ctx
   }
-  let delta = match check_top_statement(ts[0], ctx) {
+  // A run of consecutive class definitions and type aliases is one mutual
+  // type region.
+  let chis : Array[@ast.Stmt] = []
+  for t in ts {
+    match t {
+      Single(ClassDef(..) | TypeAlias(..) as chi) => chis.push(chi)
+      _ => break
+    }
+  }
+  let (r, rest) = if chis.is_empty() {
+    (check_statement(ts[0], ctx, None), ts[1:])
+  } else {
+    (types(chis, ctx), ts[chis.length():])
+  }
+  let delta = match r {
     Assigns(d) => d
     Returns => abort("a top-level return is rejected by check_stmt")
   }
-  check_top_seq(ts[1:], ctx.override_gamma(delta))
+  check_top_seq(rest, ctx.override_gamma(delta))
 }
 
 ///|
-fn check_top_statement(t : @analysis.Statement, ctx : ModCtx) -> Outcome raise {
-  match t {
-    Single(ClassDef(..) as node) => dataclass(node, ctx)
-    Single(TypeAlias(..) as node) => type_alias(node, ctx)
-    _ => check_statement(t, ctx, None)
+/// A mutual type region: every class enters the class table, then each
+/// definition is checked in the context it sees.
+fn types(chis : Array[@ast.Stmt], ctx : ModCtx) -> Outcome raise {
+  let entries = []
+  for i, chi in chis {
+    for d in @analysis.declares(chi) {
+      entries.push((d.0, type_entry(ctx.gamma, ctx.q, chis, i)))
+    }
+    if chi is ClassDef(name~, type_params=tps, ..) {
+      ctx.program.sigma = ctx.program.sigma.add(ctx.q + "." + name, {
+        type_params: type_params(tps),
+        own_fields: [],
+        base: None,
+      })
+    }
   }
+  for i, chi in chis {
+    let ctx_ = {
+      gamma: type_context(ctx.gamma, ctx.q, chis, i),
+      program: ctx.program,
+      q: ctx.q,
+    }
+    match chi {
+      ClassDef(..) => dataclass(chi, ctx_)
+      _ => type_alias(chi, ctx_)
+    }
+  }
+  Assigns(context_of(entries))
 }
 
 ///|
@@ -425,7 +536,7 @@ fn assign_name(
       | ModuleLoaded(_, _)
       | Predefined
       | TypeParam
-      | Alias(_, _)
+      | Alias(_)
     ) => raise ill(Redeclaration(x~), span)
     _ => raise ill(Reassignment(x~), span)
   }
@@ -645,7 +756,7 @@ fn synth_expr(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
           Some(Class(_)) => raise ill(ClassAsValue(q=id), span)
           Some(Predefined) => raise ill(PredefinedNameAsValue(q=id), span)
           Some(TypeParam) => raise ill(TypeParameterAsValue(x=id), span)
-          Some(Alias(_, _)) => raise ill(TypeAliasAsValue(q=id), span)
+          Some(Alias(_)) => raise ill(TypeAliasAsValue(q=id), span)
           Some(Scheme(_, _)) => raise ill(TypeSchemeAsValue(q=id), span)
           Some(Unbound) => raise ill(UnboundName(x=id), span)
           Some(DU(_)) => raise ill(UnassignedVariable(x=id), span)
@@ -814,7 +925,7 @@ fn attr_module(
     Some(ModuleLoaded(_, _)) => raise ill(ModuleAsValue(q=name), span)
     Some(Class(_)) => raise ill(ClassAsValue(q=name), span)
     Some(Predefined) => raise ill(PredefinedNameAsValue(q=name), span)
-    Some(Alias(_, _)) => raise ill(TypeAliasAsValue(q=name), span)
+    Some(Alias(_)) => raise ill(TypeAliasAsValue(q=name), span)
     Some(Scheme(_, _)) => raise ill(TypeSchemeAsValue(q=name), span)
     Some(TypeParam) => abort("a module's members have no type parameters")
     Some(Unbound | DU(_) | PU(_, ..)) =>
@@ -1010,7 +1121,7 @@ fn constr(c : String, e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
       ts.push(synth_expr(p.1, ctx))
     }
   }
-  let gamma = @types.type_args_seq(sigma, ss, ts)
+  let gamma = @types.type_args_seq(sigma, pi.type_params, ss, ts)
   let taus = type_arguments(gamma, pi.type_params, e.span())
   for p in args {
     check_expr(p.1, @types.declared_type(sigma, c, taus, p.0), ctx)
@@ -1120,7 +1231,7 @@ fn callee(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
           ts.push(synth_expr(a, ctx))
         }
       }
-      let gamma = @types.type_args_seq(ctx.sigma(), ss, ts)
+      let gamma = @types.type_args_seq(ctx.sigma(), alphas, ss, ts)
       @types.substitute(type_arguments(gamma, alphas, span)[:], alphas[:], tau)
     }
     _ => synth_expr(func, ctx)
@@ -1152,7 +1263,7 @@ fn var_scheme(
   expected : @types.Type,
   ctx : ModCtx,
 ) -> Unit raise {
-  let gamma = @types.type_args_seq(ctx.sigma(), [tau], [expected])
+  let gamma = @types.type_args_seq(ctx.sigma(), alphas, [tau], [expected])
   let actual = @types.substitute(
     type_arguments(gamma, alphas, e.span())[:],
     alphas[:],
@@ -1480,9 +1591,9 @@ fn iterated_type(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
 // Classes and type aliases
 
 ///|
-/// Declare a class: resolve its fields' types and its base under its type
-/// parameters, and add it to the program's class table.
-fn dataclass(node : @ast.Stmt, ctx : ModCtx) -> Outcome raise {
+/// Check a class: resolve its fields' types and its base, and record them in
+/// the program's class table.
+fn dataclass(node : @ast.Stmt, ctx : ModCtx) -> Unit raise {
   guard node is ClassDef(name~, bases~, body~, type_params=tps, span~, ..) else {
     abort("a class")
   }
@@ -1490,19 +1601,18 @@ fn dataclass(node : @ast.Stmt, ctx : ModCtx) -> Outcome raise {
     raise ill(NotPredefinedName(x="dataclass"), span)
   }
   let alphas = type_params(tps)
-  let ctx_ = ctx.override_gamma(type_vars(alphas))
   let own : Array[(String, @types.Type)] = []
   for s in body {
     match s {
       AnnAssign(target=Name(id~, ..), annotation~, ..) =>
-        own.push((id, resolve_type(type_expr(Some(annotation)), span, ctx_)))
+        own.push((id, resolve_type(type_expr(Some(annotation)), span, ctx)))
       _ => ()
     }
   }
   let base = if bases.is_empty() {
     None
   } else {
-    Some(base_class(bases[0], span, ctx_))
+    Some(base_class(bases[0], span, ctx))
   }
   let inherited = match base {
     None => []
@@ -1520,7 +1630,6 @@ fn dataclass(node : @ast.Stmt, ctx : ModCtx) -> Outcome raise {
     own_fields: own,
     base,
   })
-  Assigns(context_of([(name, Class(c))]))
 }
 
 ///|
@@ -1532,7 +1641,7 @@ fn base_class(
   guard @types.parse_annotation(base) is Some(TypeName(q, _) as psi) else {
     abort("rejected by the sieve")
   }
-  if resolve_name(q, ctx) is Some(Alias(_, _)) {
+  if resolve_name(q, ctx) is Some(Alias(_)) {
     raise ill(NotClass(q=q.join(".")), span)
   }
   match resolve_type(psi, span, ctx) {
@@ -1542,15 +1651,7 @@ fn base_class(
 }
 
 ///|
-fn type_alias(node : @ast.Stmt, ctx : ModCtx) -> Outcome raise {
-  guard node is TypeAlias(name=Name(id~, ..), type_params=tps, value~, span~) else {
-    abort("a type alias")
-  }
-  let alphas = type_params(tps)
-  let tau = resolve_type(
-    type_expr(Some(value)),
-    span,
-    ctx.override_gamma(type_vars(alphas)),
-  )
-  Assigns(context_of([(id, Alias(alphas, tau))]))
+fn type_alias(node : @ast.Stmt, ctx : ModCtx) -> Unit raise {
+  guard node is TypeAlias(value~, span~, ..) else { abort("a type alias") }
+  resolve_type(type_expr(Some(value)), span, ctx) |> ignore
 }

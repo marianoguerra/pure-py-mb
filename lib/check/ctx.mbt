@@ -25,8 +25,9 @@ pub(all) enum Entry {
   Scheme(Array[String], @types.Type)
   /// A type parameter in scope: usable only in an annotation.
   TypeParam
-  /// A type alias (`type X[T] = ...`), with its parameters.
-  Alias(Array[String], @types.Type)
+  /// A type alias (`type X[T] = ...`): its definition, resolved where it is
+  /// used, since the aliases of a mutual type region may name one another.
+  Alias(TypeDefinition)
   /// A module named but not loaded.
   ModuleStub(String)
   /// A module whose members are known.
@@ -39,6 +40,14 @@ pub(all) enum Entry {
 } derive(Eq, Debug)
 
 ///|
+/// The `i`th definition of a mutual type region, and the context and module
+/// the region was checked in.
+pub(all) struct TypeDefinition {
+  gamma : Context
+  q : String
+  chis : Array[@ast.Stmt]
+  i : Int32
+} derive(Eq, Debug)
 
 ///|
 /// What a variable entry was declared at: a type, or a generic signature.

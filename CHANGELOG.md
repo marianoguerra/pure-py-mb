@@ -6,6 +6,17 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.19.0: mutual types
+
+A run of consecutive class definitions and type aliases at the top of a
+module is one mutual type region, so recursive and mutually recursive data
+types can be written: `type Tree = Leaf | Node` before the classes it names.
+A type alias sees every definition of its region, and is resolved where it is
+used; a class sees the definitions before it, because Python evaluates a
+class's annotations when it is defined. An alias that unfolds to itself is
+refused: `type alias 'A' is cyclic`. Inferring a generic call's type
+arguments solves only for the callee's own type parameters.
+
 ### Specification v0.18.2: `range(start, stop)`
 
 `range` has two fields, `start` and `stop`, both required: `range(1, 3)` is

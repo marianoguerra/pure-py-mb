@@ -289,3 +289,18 @@ test "a program's modules are typed across imports" {
     "import cycle: a -> b -> a",
   )
 }
+
+///|
+test "a mutual type region: aliases see every definition, classes the earlier ones" {
+  let dc = "from dataclasses import dataclass\n"
+  let tree = dc +
+    "type Tree = Leaf | Node\n@dataclass\nclass Leaf:\n    pass\n@dataclass\nclass Node:\n    kids: list[Tree]\n"
+  assert_eq(verdict(tree + "t: Tree = Node([Leaf()])\n"), "ok")
+  // A class's annotations are evaluated when it is defined.
+  assert_eq(
+    verdict(dc + "@dataclass\nclass Node:\n    next: Node | None\n"),
+    "'Node' is unbound",
+  )
+  assert_eq(verdict("type A = list[A]\n"), "type alias 'A' is cyclic")
+  assert_eq(verdict("type A = B\ntype B = A\n"), "type alias 'B' is cyclic")
+}

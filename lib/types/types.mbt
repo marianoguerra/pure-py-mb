@@ -141,6 +141,36 @@ pub let t_str : Type = Prim(Str)
 pub let t_sized : Type = Prim(Sized)
 
 ///|
+/// The type variables a type mentions.
+pub fn fv(tau : Type) -> Array[String] {
+  let out : Array[String] = []
+  fn go(t : Type) -> Unit {
+    match t {
+      TypeVar(a) => if !out.contains(a) { out.push(a) }
+      List(s) | Dict(s) => go(s)
+      Tuple(ss) | Class(_, ss) =>
+        for s in ss {
+          go(s)
+        }
+      Callable(ps, r) | Defaulted(ps, _, r) => {
+        go(r)
+        for p in ps {
+          go(p)
+        }
+      }
+      Union(a, b) => {
+        go(a)
+        go(b)
+      }
+      _ => ()
+    }
+  }
+
+  go(tau)
+  out
+}
+
+///|
 /// A type as a message prints it.
 pub fn render(tau : Type) -> String {
   match tau {

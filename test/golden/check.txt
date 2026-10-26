@@ -1,6 +1,7 @@
 # check: exit code and message from the reference, one line per test; regenerate with tools/conform.py --reference --regen
 module-level/excluded/dynamic/eq_bool_number.py	0	: ok
 module-level/excluded/dynamic/eq_nan_container.py	0	: ok
+module-level/excluded/static/alias_later_class_arity.py	3	:4:0: class 'Box' expects 1 type arguments, given 2
 module-level/excluded/static/and_non_bool.py	3	:2:6: expected type bool, given Literal[1]
 module-level/excluded/static/and_right_non_bool.py	3	:2:15: expected type bool, given Literal[1]
 module-level/excluded/static/annotation_bare_generic.py	3	:12:0: class 'Box' expects 1 type arguments, given 0
@@ -204,10 +205,10 @@ module-level/excluded/static/tuple_subtype_component.py	3	:3:21: expected type t
 module-level/excluded/static/tuple_subtype_length.py	3	:3:26: expected type tuple[int, str, int], given tuple[int, str]
 module-level/excluded/static/tuple_synth_elem_no_type.py	3	:2:7: cannot infer type of this expression
 module-level/excluded/static/type_alias_as_value.py	3	:4:9: 'Num' is a type alias, usable only in annotations
-module-level/excluded/static/type_alias_forward.py	3	:4:0: 'Point' is unbound
+module-level/excluded/static/type_alias_cycle.py	3	:1:0: type alias 'Right' is cyclic
 module-level/excluded/static/type_alias_missing_args.py	3	:4:0: type alias 'Pair' expects 1 type arguments, given 0
 module-level/excluded/static/type_alias_redeclared.py	3	:3:0: 'Num' is already declared
-module-level/excluded/static/type_alias_self.py	3	:2:0: 'Nested' is unbound
+module-level/excluded/static/type_alias_self.py	3	:2:0: type alias 'Nested' is cyclic
 module-level/excluded/static/type_alias_two_params_swapped.py	3	:4:21: expected type str, given Literal[1]
 module-level/excluded/static/union_call_arity.py	3	:11:11: call expects 2 arguments, given 1
 module-level/excluded/static/union_call_not_callable.py	3	:8:11: values of type int cannot be called
@@ -257,7 +258,7 @@ module-level/excluded/syntactic/match_open_sequence.py	1	:3:9: sequence pattern 
 module-level/excluded/syntactic/missing_param_annotation.py	1	:1:0: unannotated parameter prohibited
 module-level/excluded/syntactic/missing_return_annotation.py	1	:1:0: unannotated return type prohibited
 module-level/excluded/syntactic/multiple_assign.py	1	:1:0: multiple assignment targets prohibited
-module-level/excluded/syntactic/nested_class.py	1	:5:4: class declaration outside the module top level prohibited
+module-level/excluded/syntactic/nested_class.py	1	:5:4: class definition outside the module top level prohibited
 module-level/excluded/syntactic/nonlocal_stmt.py	1	:4:8: nonlocal prohibited
 module-level/excluded/syntactic/param_spec.py	1	:1:9: ParamSpec type parameter **P prohibited
 module-level/excluded/syntactic/pat_dict_int_key.py	1	:3:10: dict pattern key other than a string literal prohibited
@@ -292,12 +293,16 @@ module-level/python-error/static/assert_falsy.py	3	:2:7: expected type bool, giv
 module-level/python-error/static/assert_msg_undefined.py	3	:3:15: 'undefined_msg' is not defined
 module-level/python-error/static/attr_missing.py	3	:8:6: class 'P' has no field 'y'
 module-level/python-error/static/attr_non_object.py	3	:3:9: values of type int have no attributes
+module-level/python-error/static/base_class_later.py	3	:4:0: 'Base' is unbound
 module-level/python-error/static/base_type_arg_unbound.py	3	:9:0: 'U' is not a declared class
 module-level/python-error/static/binop_non_number.py	3	:2:6: no overload of '+' at operand types Literal[1] and Literal['a']
 module-level/python-error/static/call_keyword_arg.py	3	:5:6: keyword arguments in a call other than a constructor call
 module-level/python-error/static/call_non_callable_typed.py	3	:3:6: values of type int cannot be called
 module-level/python-error/static/call_too_few_args.py	3	:5:0: call expects 2 arguments, given 1
 module-level/python-error/static/callable_not_imported.py	3	:2:0: 'Callable' is not bound as a predefined name
+module-level/python-error/static/class_before_alias.py	3	:9:0: 'Expr' is unbound
+module-level/python-error/static/class_field_names_itself.py	3	:4:0: 'Node' is unbound
+module-level/python-error/static/class_field_names_later_class.py	3	:4:0: 'Item' is unbound
 module-level/python-error/static/class_redeclared_identity.py	3	:11:0: 'C' is already declared
 module-level/python-error/static/comprehension_guard_before_generator.py	3	:2:25: 'y' is not defined
 module-level/python-error/static/constructor_arity.py	3	:9:11: constructor for 'Point' expects 2 arguments, got 1
@@ -364,6 +369,7 @@ module-level/python-error/syntactic-only/helpers/harness.py	1	:3:0: import after
 module-level/python-error/syntactic/break_outside_loop.py	1	:1:0: break prohibited
 module-level/python-error/syntactic/duplicate_type_param.py	1	:1:0: duplicate type parameter T prohibited
 module-level/python-error/syntactic/parse_error.py	1	:1:5: parse error: invalid syntax
+module-level/semantically-valid/alias_later_class_args.py	0	: ok
 module-level/semantically-valid/annotated_assign.py	0	: ok
 module-level/semantically-valid/attr_field_type.py	0	: ok
 module-level/semantically-valid/bool_op.py	0	: ok
@@ -447,6 +453,7 @@ module-level/semantically-valid/generic_pattern.py	0	: ok
 module-level/semantically-valid/generic_pattern_union_base.py	0	: ok
 module-level/semantically-valid/generic_pattern_union_base_disjunct.py	0	: ok
 module-level/semantically-valid/generic_recursion.py	0	: ok
+module-level/semantically-valid/generic_recursion_union.py	0	: ok
 module-level/semantically-valid/generic_tree_match.py	0	: ok
 module-level/semantically-valid/if_exp.py	0	: ok
 module-level/semantically-valid/implicit_none.py	0	: ok
@@ -556,6 +563,10 @@ module-level/semantically-valid/range_eq.py	0	: ok
 module-level/semantically-valid/range_fields.py	0	: ok
 module-level/semantically-valid/range_len.py	0	: ok
 module-level/semantically-valid/range_nested.py	0	: ok
+module-level/semantically-valid/recursive_datatype.py	0	: ok
+module-level/semantically-valid/recursive_datatype_generic.py	0	: ok
+module-level/semantically-valid/recursive_datatype_uninhabited.py	0	: ok
+module-level/semantically-valid/recursive_datatypes_mutual.py	0	: ok
 module-level/semantically-valid/return_annotation.py	0	: ok
 module-level/semantically-valid/scopes/closure_capture.py	0	: ok
 module-level/semantically-valid/scopes/lambda_capture.py	0	: ok
@@ -581,6 +592,8 @@ module-level/semantically-valid/type_alias.py	0	: ok
 module-level/semantically-valid/type_alias_field.py	0	: ok
 module-level/semantically-valid/type_alias_generic.py	0	: ok
 module-level/semantically-valid/type_alias_generic_class.py	0	: ok
+module-level/semantically-valid/type_alias_names_later_alias.py	0	: ok
+module-level/semantically-valid/type_alias_names_later_class.py	0	: ok
 module-level/semantically-valid/type_alias_nested_args.py	0	: ok
 module-level/semantically-valid/type_alias_of_alias.py	0	: ok
 module-level/semantically-valid/type_alias_optional.py	0	: ok

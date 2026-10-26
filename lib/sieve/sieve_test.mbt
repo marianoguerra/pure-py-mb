@@ -91,7 +91,7 @@ test "prohibited forms" {
     ("def f() -> None:\n    global x\n", "1: global prohibited"),
     ("def f() -> None:\n    nonlocal x\n", "1: nonlocal prohibited"),
     (
-      "def f() -> None:\n    class C:\n        pass\n", "1: class declaration outside the module top level prohibited",
+      "def f() -> None:\n    class C:\n        pass\n", "1: class definition outside the module top level prohibited",
     ),
     ("def f() -> None:\n    break\n", "1: break prohibited"),
     ("def f() -> None:\n    continue\n", "1: continue prohibited"),

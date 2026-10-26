@@ -385,7 +385,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     Nonlocal(..) => raise prohibited("nonlocal prohibited", span)
     ClassDef(..) =>
       raise prohibited(
-        "class declaration outside the module top level prohibited", span,
+        "class definition outside the module top level prohibited", span,
       )
     TypeAlias(..) =>
       raise prohibited(

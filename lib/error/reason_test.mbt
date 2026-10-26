@@ -17,6 +17,7 @@ test "the reason catalogue" {
       "'x' is not definitely assigned: declared in a branch",
     ),
     (RangePattern, "'range' not permitted in a constructor pattern"),
+    (CyclicTypeAlias(x="T"), "type alias 'T' is cyclic"),
     (
       ClassArityMismatch(q="Box", expected=1, given=2),
       "class 'Box' expects 1 type arguments, given 2",
@@ -174,7 +175,7 @@ test "the reason catalogue" {
       "values of type list[int] have no method 'append'",
     ),
   ]
-  assert_eq(cases.length(), 65)
+  assert_eq(cases.length(), 66)
   for c in cases {
     assert_eq(c.0.message(), c.1)
   }

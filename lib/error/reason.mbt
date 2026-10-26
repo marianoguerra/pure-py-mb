@@ -27,6 +27,7 @@ pub(all) enum Reason {
   PatternArityMismatch(c~ : String, expected~ : Int32, got~ : Int32)
   NotPredefinedName(x~ : String)
   RangePattern
+  CyclicTypeAlias(x~ : String)
   NotClass(q~ : String)
   ClassArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)
   TypeAliasArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)
@@ -106,6 +107,7 @@ pub fn Reason::message(self : Reason) -> String {
       "pattern for '\{c}' expects \{expected} sub-patterns, got \{got}"
     NotPredefinedName(x~) => "'\{x}' is not bound as a predefined name"
     RangePattern => "'range' not permitted in a constructor pattern"
+    CyclicTypeAlias(x~) => "type alias '\{x}' is cyclic"
     NotClass(q~) => "'\{q}' is not a declared class"
     ClassArityMismatch(q~, expected~, given~) =>
       "class '\{q}' expects \{expected} type arguments, given \{given}"
@@ -212,6 +214,7 @@ pub fn Reason::code(self : Reason) -> String {
     PatternArityMismatch(..) => "pattern-arity-mismatch"
     NotPredefinedName(..) => "not-predefined-name"
     RangePattern => "range-pattern"
+    CyclicTypeAlias(..) => "cyclic-type-alias"
     ClassArityMismatch(..) => "class-arity-mismatch"
     TypeAliasArityMismatch(..) => "type-alias-arity-mismatch"
     DuplicateImportedName(..) => "duplicate-imported-name"

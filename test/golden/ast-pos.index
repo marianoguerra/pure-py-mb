@@ -2,6 +2,7 @@
 # tools/pyast_dump.py prints; regenerate with tools/astdiff.py --regen
 test/conformance/module-level/excluded/dynamic/eq_bool_number.py	945c5a6b58ec2c188f1975076aa32948667d5f13
 test/conformance/module-level/excluded/dynamic/eq_nan_container.py	0044986110dd6f7d4496048b55ccb15f57bf4393
+test/conformance/module-level/excluded/static/alias_later_class_arity.py	45c7e85a80364ea2930df2aa2fdc6f62f554a0c3
 test/conformance/module-level/excluded/static/and_non_bool.py	3dfd766a3ed5abb318973c48b4f65705fb2554b8
 test/conformance/module-level/excluded/static/and_right_non_bool.py	2362f485dda4baf3817daebac6b1a61d8fec07af
 test/conformance/module-level/excluded/static/annotation_bare_generic.py	76914e8353d31e695043110c9e4c1e73363097bf
@@ -205,7 +206,7 @@ test/conformance/module-level/excluded/static/tuple_subtype_component.py	54021fa
 test/conformance/module-level/excluded/static/tuple_subtype_length.py	d5cdb95e3709c8ae116380e6cb677cb1f773aaf8
 test/conformance/module-level/excluded/static/tuple_synth_elem_no_type.py	9c47cff8bff9743fd4302bb799fa995fc1a0470f
 test/conformance/module-level/excluded/static/type_alias_as_value.py	f55309c64ceb30c264f7971287a891e33b7674e5
-test/conformance/module-level/excluded/static/type_alias_forward.py	f2a954086e7c339c4371463ea99f651e062be040
+test/conformance/module-level/excluded/static/type_alias_cycle.py	247f9d9fe6de5db2a3f4187d8ca567c20a0cfed8
 test/conformance/module-level/excluded/static/type_alias_missing_args.py	4820ef3af6e238e122f28488fdf7235c5e97d351
 test/conformance/module-level/excluded/static/type_alias_redeclared.py	bc7ffb3d320ac7c3c87784c0159e52b60d1f7d0f
 test/conformance/module-level/excluded/static/type_alias_self.py	8d03ea12318c0a88dd9984cbf518d477cfa1be37
@@ -293,12 +294,16 @@ test/conformance/module-level/python-error/static/assert_falsy.py	2c36303c1071de
 test/conformance/module-level/python-error/static/assert_msg_undefined.py	74ee18d0831a0f80de3652fe414687fc4e15b29d
 test/conformance/module-level/python-error/static/attr_missing.py	a7024a8aa4b8f65d33a36b60a5cdeca351240f11
 test/conformance/module-level/python-error/static/attr_non_object.py	bb33f054896d1d72e1f96811eeedd7929b2682c4
+test/conformance/module-level/python-error/static/base_class_later.py	46bb18103fc9774a5faaef3324d3efc78fadcd56
 test/conformance/module-level/python-error/static/base_type_arg_unbound.py	4b46fefb1083c97d5cebbd6a3996a5db86e5c9eb
 test/conformance/module-level/python-error/static/binop_non_number.py	4698a017f6bbfa68d02794d5988b9847c3f1935c
 test/conformance/module-level/python-error/static/call_keyword_arg.py	884f6348643100db615541404fc671a1be657062
 test/conformance/module-level/python-error/static/call_non_callable_typed.py	aa6ea817a7ce1b55dd2013c43dbc77bcc9a42609
 test/conformance/module-level/python-error/static/call_too_few_args.py	bba23f0b04c04f8338dee662a1477a9006a945ee
 test/conformance/module-level/python-error/static/callable_not_imported.py	07be9e69d89646506f5636a5cdf1a11be05e258a
+test/conformance/module-level/python-error/static/class_before_alias.py	627ec58322297aee04a285cb69cb71be78e93708
+test/conformance/module-level/python-error/static/class_field_names_itself.py	544df76936774dd7da82f872fbbe2e8995dff5a8
+test/conformance/module-level/python-error/static/class_field_names_later_class.py	5ca0533cb7a5e83baf8090602075a8784c46b0a5
 test/conformance/module-level/python-error/static/class_redeclared_identity.py	71958c1b442b9437ddbaac2cebd9043b681c3cdb
 test/conformance/module-level/python-error/static/comprehension_guard_before_generator.py	d432b85bae623f53571d82a14c2f507afdfc412b
 test/conformance/module-level/python-error/static/constructor_arity.py	bf031e7b247dc94df2ad55cf6032f8d0f5fd297e
@@ -365,6 +370,7 @@ test/conformance/module-level/python-error/syntactic/parse_error.py	e1df2e9430b0
 test/conformance/module-level/python-error/syntactic-only/empty_from_import.py	fc8a03ee652b09df33bbe829a8c9088938057af6
 test/conformance/module-level/python-error/syntactic-only/helpers/__init__.py	3e648ad8c5795b0a415b71b496b11c67bcd2c3c9
 test/conformance/module-level/python-error/syntactic-only/helpers/harness.py	d8ab0dd36f6c162c1995ff7dce80b9994b7a38b1
+test/conformance/module-level/semantically-valid/alias_later_class_args.py	ab85ccc5a0ccc175c3cae14be433bca660ce729a
 test/conformance/module-level/semantically-valid/annotated_assign.py	834253446a5a6c8e8f7f9107ddb8ae9156184096
 test/conformance/module-level/semantically-valid/attr_field_type.py	3cedae9982af231580c0931c9c2763eb3b59f1ea
 test/conformance/module-level/semantically-valid/bool_op.py	cc3568db6aaec3b220026678fa076d0c3765af45
@@ -448,6 +454,7 @@ test/conformance/module-level/semantically-valid/generic_pattern.py	633fb761cfc6
 test/conformance/module-level/semantically-valid/generic_pattern_union_base.py	7c565bbc4ebb783b863263bdd8514ba9de90eb88
 test/conformance/module-level/semantically-valid/generic_pattern_union_base_disjunct.py	e83cc7ada1cf2bd0f179b592c74d0d18e759804d
 test/conformance/module-level/semantically-valid/generic_recursion.py	812c5bc544a9ae4467e60e90bbbc7daebd7d9400
+test/conformance/module-level/semantically-valid/generic_recursion_union.py	d760d74d2fc4a92d5c29ebc0b59f4249a0276259
 test/conformance/module-level/semantically-valid/generic_tree_match.py	739e212115c9faf37907c7f02b3f83df083748d5
 test/conformance/module-level/semantically-valid/if_exp.py	8369b0af5ad9cf48c8788ef479a76e7783ac29a3
 test/conformance/module-level/semantically-valid/implicit_none.py	a0ba09dd04a8730277c967ea21e45517538fd0ff
@@ -557,6 +564,10 @@ test/conformance/module-level/semantically-valid/range_eq.py	1e5a21d1afb5e0a7115
 test/conformance/module-level/semantically-valid/range_fields.py	4c2b39f7706a264f462c7be018f2ba0a9b2ac124
 test/conformance/module-level/semantically-valid/range_len.py	6280b0b2ab462692f7c94ed5bedc13eda8ece767
 test/conformance/module-level/semantically-valid/range_nested.py	e8731b90c8011a4d26ed0e4c15738e8ea3df21aa
+test/conformance/module-level/semantically-valid/recursive_datatype.py	982c4801a66fb80c66df9845cb84b551a921f11e
+test/conformance/module-level/semantically-valid/recursive_datatype_generic.py	7e2eb89495fe08cef3daa9d0e5b1edab69481e06
+test/conformance/module-level/semantically-valid/recursive_datatype_uninhabited.py	5462fdfe9a8e077e9e5e55645d566a6e4df7ad80
+test/conformance/module-level/semantically-valid/recursive_datatypes_mutual.py	03d5f24c1fefbf249d93243f7efdbd3acf10abb6
 test/conformance/module-level/semantically-valid/return_annotation.py	021cc5a40c4ff7d33ed0ea6a9b1a056e74294beb
 test/conformance/module-level/semantically-valid/scopes/closure_capture.py	31b9a0a540a3b38093973320fd22320494fbdc35
 test/conformance/module-level/semantically-valid/scopes/lambda_capture.py	49b695eaf19020a97b38156f79724c6ff0157b2b
@@ -582,6 +593,8 @@ test/conformance/module-level/semantically-valid/type_alias.py	7116b396a53650046
 test/conformance/module-level/semantically-valid/type_alias_field.py	6c2152d3e443f3e760c0ae4ed0972307218aa913
 test/conformance/module-level/semantically-valid/type_alias_generic.py	1297c0e74fd4d307e31500f2217bc78966b5fb54
 test/conformance/module-level/semantically-valid/type_alias_generic_class.py	5619e3d1deb021c7673bd05bb1600fca1f86c5db
+test/conformance/module-level/semantically-valid/type_alias_names_later_alias.py	11e96fd32ec95ab42733c72b494da037f46a2751
+test/conformance/module-level/semantically-valid/type_alias_names_later_class.py	f2a954086e7c339c4371463ea99f651e062be040
 test/conformance/module-level/semantically-valid/type_alias_nested_args.py	028ef1071cc9fe604e856d95951f5a0b42d5c047
 test/conformance/module-level/semantically-valid/type_alias_of_alias.py	ee1e107b8647d108f7a0e2953330cde123375127
 test/conformance/module-level/semantically-valid/type_alias_optional.py	e87c1f6eb27ce8fbec227171d8ce54c164b81ee2

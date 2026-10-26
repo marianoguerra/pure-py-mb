@@ -43,6 +43,8 @@ pub fn field_type(@sorted_map.SortedMap[String, ClassTableEntry], String, Array[
 
 pub fn fields(@sorted_map.SortedMap[String, ClassTableEntry], String) -> FieldScheme
 
+pub fn fv(Type) -> Array[String]
+
 pub fn head_typed(@sorted_map.SortedMap[String, ClassTableEntry], Head, Type) -> Bool
 
 pub fn heads_add(Array[Head], Head) -> Array[Head]
@@ -125,9 +127,9 @@ pub let t_sized : Type
 
 pub let t_str : Type
 
-pub fn type_args(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) -> Array[(String, Type)]
+pub fn type_args(@sorted_map.SortedMap[String, ClassTableEntry], Array[String], Type, Type) -> Array[(String, Type)]
 
-pub fn type_args_seq(@sorted_map.SortedMap[String, ClassTableEntry], Array[Type], Array[Type]) -> Array[(String, Type)]
+pub fn type_args_seq(@sorted_map.SortedMap[String, ClassTableEntry], Array[String], Array[Type], Array[Type]) -> Array[(String, Type)]
 
 pub fn type_params_of(@sorted_map.SortedMap[String, ClassTableEntry], String) -> Array[String]
 

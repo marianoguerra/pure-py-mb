@@ -47,7 +47,7 @@ pub(all) enum Entry {
   PU(Declared, declared_in_branch~ : Bool)
   Scheme(Array[String], @types.Type)
   TypeParam
-  Alias(Array[String], @types.Type)
+  Alias(TypeDefinition)
   ModuleStub(String)
   ModuleLoaded(String, @sorted_map.SortedMap[String, Entry])
   Class(String)
@@ -63,6 +63,13 @@ pub struct Program {
   loading : Array[String]
 }
 pub fn Program::new(@program.SourceTree, host_members? : Map[String, Array[(String, @types.Type)]], profile? : @profile.Profile) -> Self
+
+pub(all) struct TypeDefinition {
+  gamma : @sorted_map.SortedMap[String, Entry]
+  q : String
+  chis : Array[@ast.Stmt]
+  i : Int32
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 pub type Context = @sorted_map.SortedMap[String, Entry]

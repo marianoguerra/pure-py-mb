@@ -1218,6 +1218,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.18.0 | polymorphism: generic functions (type schemes), generic classes, type aliases, PEP 695 syntax; `range` a predefined class; `match` typed by the remaining type; mypy-compatibility rejections; sieve messages reworded; cross-form equality is `False` | `lib/ast`, `lib/parser`, `lib/write` (type parameters, `type`), `lib/types` (substitution, instances), `lib/check` (rewritten `match`), `lib/sieve`, `lib/value` and `lib/eval` (`range`, equality), `tools/conform.py` (one layout for both tiers) |
 | v0.18.1 | the reference's test runner only | `test/conformance/run-all.py` |
 | v0.18.2 | `range` has `start` and `stop` | `lib/types` (the predefined class), `lib/value` and `lib/eval` |
+| v0.19.0 | mutual type regions: recursive data types, lazily resolved aliases, cyclic aliases refused; type-argument inference only for the callee's parameters | `lib/check` (regions, alias entries), `lib/types` (`fv`, `type_args`), `lib/error` |
 
 Decisions made on the way, recorded as §9's are:
 

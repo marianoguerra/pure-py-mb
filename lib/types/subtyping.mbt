@@ -319,31 +319,47 @@ fn subterms(tau : Type) -> Array[Type] {
 }
 
 ///|
-/// The type arguments a generic `s` takes when a value of type `t` is given
-/// for it: a map from type parameter to type.
+/// The type arguments for `alphas` a generic `s` takes when a value of type
+/// `t` is given for it: a map from type parameter to type. A type variable
+/// not among `alphas` is a type, not a parameter to solve for.
 pub fn type_args(
   sigma : ClassTable,
+  alphas : Array[String],
   s : Type,
   t : Type,
 ) -> Array[(String, Type)] {
   match (s, t) {
-    (TypeVar(a), _) => [(a, base_type(t))]
+    (TypeVar(a), _) if alphas.contains(a) => [(a, base_type(t))]
     (_, Union(t1, t2)) =>
-      join_args(sigma, type_args(sigma, s, t1), type_args(sigma, s, t2))
-    (List(s1), List(t1)) | (Dict(s1), Dict(t1)) => type_args(sigma, s1, t1)
-    (Tuple(ss), Tuple(ts)) => type_args_seq(sigma, ss, ts)
+      join_args(
+        sigma,
+        type_args(sigma, alphas, s, t1),
+        type_args(sigma, alphas, s, t2),
+      )
+    (List(s1), List(t1)) | (Dict(s1), Dict(t1)) =>
+      type_args(sigma, alphas, s1, t1)
+    (Tuple(ss), Tuple(ts)) => type_args_seq(sigma, alphas, ss, ts)
     (Callable(ss, s1), Callable(ts, t1)) =>
-      type_args_seq(sigma, [s1, ..ss], [t1, ..ts])
+      type_args_seq(sigma, alphas, [s1, ..ss], [t1, ..ts])
     (Class(c, ss), _) =>
       match instance(sigma, c, t) {
-        Found(_, ts) => type_args_seq(sigma, ss, ts)
+        Found(_, ts) => type_args_seq(sigma, alphas, ss, ts)
         _ => []
       }
     (Union(s1, s2), _) =>
-      if subtype(sigma, t, s1) || subtype(sigma, t, s2) {
+      if [s1, s2]
+        .iter()
+        .any(fn(d) {
+          !fv(d).iter().any(fn(a) { alphas.contains(a) }) &&
+          subtype(sigma, t, d)
+        }) {
         []
       } else {
-        join_args(sigma, type_args(sigma, s1, t), type_args(sigma, s2, t))
+        join_args(
+          sigma,
+          type_args(sigma, alphas, s1, t),
+          type_args(sigma, alphas, s2, t),
+        )
       }
     _ => []
   }
@@ -352,13 +368,14 @@ pub fn type_args(
 ///|
 pub fn type_args_seq(
   sigma : ClassTable,
+  alphas : Array[String],
   ss : Array[Type],
   ts : Array[Type],
 ) -> Array[(String, Type)] {
   let mut result : Array[(String, Type)] = []
   for
     i in 0..<(if ss.length() < ts.length() { ss.length() } else { ts.length() }) {
-    result = join_args(sigma, result, type_args(sigma, ss[i], ts[i]))
+    result = join_args(sigma, result, type_args(sigma, alphas, ss[i], ts[i]))
   }
   result
 }
