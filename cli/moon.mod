@@ -22,7 +22,7 @@ keywords = [ "python", "parser", "interpreter", "purepy", "cli" ]
 import {
   "marianoguerra/error-report@0.1.1",
   "marianoguerra/pure-py@0.10.1",
-  "moonbitlang/x@0.5.5",
+  "moonbitlang/x@0.5.6",
 }
 
 description = "The pure-py command: tokenize, parse, check and run PurePy"

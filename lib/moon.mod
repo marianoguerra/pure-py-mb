@@ -43,7 +43,7 @@ keywords = [ "python", "parser", "interpreter", "purepy" ]
 
 import {
   "marianoguerra/error-report@0.1.1",
-  "moonbitlang/x@0.5.5",
+  "moonbitlang/x@0.5.6",
 }
 
 preferred_target = "wasm"
