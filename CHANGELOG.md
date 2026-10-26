@@ -6,6 +6,11 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.22.1
+
+Nothing a program sees: the specification gives the rule that a return ends
+a sequence (`eval-seq-return`), which the evaluator already followed.
+
 ### Specification v0.22.0: one package, nothing "not yet"
 
 The reference is a Python package now, run as `python -m purepy --check`

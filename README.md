@@ -41,7 +41,7 @@ moon add marianoguerra/pure-py-cli   # the command
 ## Conformance
 
 Eight oracles, every one compared against something outside this port, over
-the conformance suite of specification v0.22.0.
+the conformance suite of specification v0.22.1.
 
 | oracle | compared with | result |
 |---|---|---|
