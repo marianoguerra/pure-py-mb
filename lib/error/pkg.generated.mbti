@@ -53,6 +53,7 @@ pub(all) enum Kind {
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
   InheritedField(x~ : String, c~ : String, d~ : String)
+  NotTypeExpression(e~ : String)
   UndefinedVariable(x~ : String)
   UnassignedVariable(x~ : String)
   PossiblyUnassigned(x~ : String, declared_in_branch~ : Bool)
@@ -81,6 +82,7 @@ pub(all) enum Reason {
   SubmoduleNotImported(q~ : String)
   UnassignedMember(x~ : String, q~ : String)
   TopLevelReturn
+  TopLevelAssertFalse
   UnknownModule(q~ : String)
   DuplicateImportedName(x~ : String)
   UnknownMember(x~ : String, q~ : String)
@@ -112,6 +114,7 @@ pub(all) enum Reason {
   NoAttributes(tau~ : String)
   BareReturn(tau~ : String)
   MissingReturn(x~ : String, tau~ : String)
+  MissingReturnAssertion
   MissingReturnMatchPartial(remaining~ : String)
   MypyCompatibility(Reason)
   UnknownMethod(tau~ : String, x~ : String)

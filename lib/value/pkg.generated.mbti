@@ -157,6 +157,8 @@ pub(all) enum Termination {
   IndexError
   KeyError
   ZeroDivisionError
+  OverflowError
+  ValueError
   AttributeError
   AssertionError(String?)
   SystemExit(@bigint.BigInt)

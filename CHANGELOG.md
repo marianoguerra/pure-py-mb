@@ -6,6 +6,26 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.20.0: `assert False`
+
+`assert False` is a return for the purposes of definite return: a function
+may end in one, and a module body that definitely reaches one is refused.
+An assertion of something else of type `Literal[False]` falls through only
+for mypy's sake, as does a match that leaves a remaining type no case covers;
+the outcome of a statement carries that, and the function is refused for
+mypy compatibility only if the fall-through ends its body. Floats are not
+literal types: `1.5` is a `float`, `Literal[1.5]` is not an annotation, and a
+float pattern matches at `float` without covering anything. `a | b` is
+parsed and then refused by the checker, which has no overload for it.
+Tuples and sequence patterns without brackets are allowed again. An explicit
+constructor call whose type argument is not a type expression is refused
+with `'1' is not a type expression`. `round` of an infinity aborts with
+`OverflowError` and of a nan with `ValueError`, as Python's does.
+
+The suite is laid out by Python's outcome and PurePy's:
+`no-exception/result/`, `exception/type-checker/` and so on;
+`tools/conform.py` reads the run expectations from that.
+
 ### Specification v0.19.1: `round`, and `math` removed
 
 `round` is a builtin, `float -> int`: the nearest integer, ties to even, and

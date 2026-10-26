@@ -95,12 +95,16 @@ Two facts about the spec drive the design:
    CPython's tree is that it re-tags `MatchSequence` as `PatList` or `PatTuple`
    from the source text, because the spec distinguishes list and tuple
    patterns and CPython does not.
-2. **Verdicts are three-valued and staged.** A test is *semantically valid*,
-   *excluded* (Python accepts, PurePy rejects: syntactically at parse, statically
-   at check, or dynamically at run), or a *python-error* (both reject). The
-   runner derives every assertion from the test's path, and the reference
-   scripts signal the stage with exit codes: `1` prohibited form, `2` planned
-   but not yet supported, `3` ill-formed module, `4` ill-formed program.
+2. **A test's path is its verdict.** Since v0.20 a test lives under
+   `<Python outcome>/<PurePy outcome>[/<subset>]/`: Python's outcome is
+   `syntax-error`, `exception` or `no-exception`; PurePy's is `parser`
+   (refused by the sieve), `type-checker` (refused by the checker),
+   `undefined` (accepted, then the semantics has no rule) or `result` (accepted,
+   and the run does what Python's does); the `pending` subset is refused as not
+   yet supported. The runner derives every assertion from the path, and the
+   reference scripts signal the stage with exit codes: `1` prohibited form, `2`
+   planned but not yet supported, `3` ill-formed module, `4` ill-formed
+   program.
 
 ### 1.1 What the reference checker is, in one paragraph each
 
@@ -1220,6 +1224,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.18.2 | `range` has `start` and `stop` | `lib/types` (the predefined class), `lib/value` and `lib/eval` |
 | v0.19.0 | mutual type regions: recursive data types, lazily resolved aliases, cyclic aliases refused; type-argument inference only for the callee's parameters | `lib/check` (regions, alias entries), `lib/types` (`fv`, `type_args`), `lib/error` |
 | v0.19.1 | `round` a builtin, `math` removed; inherited-field reason; unbound base class | `lib/types` (predefined table), `lib/value` and `lib/eval` (primitives), `lib/check`, `lib/error`, `lib/context` and the builtins profile |
+| v0.20.0 | `assert False` returns, at top level refused; mypy-only fall-throughs carried by the outcome; floats are not literal types, float patterns; `|` parsed and refused by the checker; tuples and sequence patterns without brackets allowed again; `round` aborts at an infinity or a nan; the suite's new taxonomy | `lib/check`, `lib/types`, `lib/sieve`, `lib/value` and `lib/eval` (`OverflowError`, `ValueError`), `tools/conform.py` |
 
 Decisions made on the way, recorded as §9's are:
 

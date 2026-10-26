@@ -293,15 +293,12 @@ fn parameter_names(
 // Sequences
 
 ///|
-/// `tail`: the body ends a function body, so a fall-through is a missing
-/// return.
 fn check_body(
   body : Array[@ast.Stmt],
   ctx : ModCtx,
   returns : @types.Type?,
-  tail~ : Bool = false,
 ) -> Outcome raise {
-  check_seq(@analysis.statements(body)[:], ctx, returns, tail)
+  check_seq(@analysis.statements(body)[:], ctx, returns)
 }
 
 ///|
@@ -329,8 +326,10 @@ fn check_top_seq(
     (types(chis, ctx), ts[chis.length():])
   }
   let delta = match r {
-    Assigns(d) => d
-    Returns => abort("a top-level return is rejected by check_stmt")
+    Assigns(d, _) => d
+    // A top-level return is refused by the statement's own rule, so this is
+    // a module body that definitely reaches `assert False`.
+    Returns => raise ill(TopLevelAssertFalse, first_node(ts[0]).span())
   }
   check_top_seq(rest, ctx.override_gamma(delta))
 }
@@ -363,7 +362,7 @@ fn types(chis : Array[@ast.Stmt], ctx : ModCtx) -> Outcome raise {
       _ => type_alias(chi, ctx_)
     }
   }
-  Assigns(context_of(entries))
+  Assigns(context_of(entries), None)
 }
 
 ///|
@@ -371,21 +370,20 @@ fn check_seq(
   ss : ArrayView[@analysis.Statement],
   ctx : ModCtx,
   returns : @types.Type?,
-  tail : Bool,
 ) -> Outcome raise {
   if ss.is_empty() {
     return assigns_nothing()
   }
   let s = ss[0]
   let rest = ss[1:]
-  let r = check_statement(s, ctx, returns, tail=tail && rest.is_empty())
+  let r = check_statement(s, ctx, returns)
   if rest.is_empty() {
     return r
   }
-  guard r is Assigns(delta) else {
+  guard r is Assigns(delta, _) else {
     raise ill(UnreachableStatement, first_node(rest[0]).span())
   }
-  let r_ = check_seq(rest, ctx.override_gamma(delta), returns, tail)
+  let r_ = check_seq(rest, ctx.override_gamma(delta), returns)
   override_outcomes(r, r_)
 }
 
@@ -394,11 +392,10 @@ fn check_statement(
   s : @analysis.Statement,
   ctx : ModCtx,
   returns : @types.Type?,
-  tail~ : Bool = false,
 ) -> Outcome raise {
   match s {
     Region(defs) => check_defs(defs, ctx)
-    Single(st) => check_stmt(st, ctx, returns, tail)
+    Single(st) => check_stmt(st, ctx, returns)
   }
 }
 
@@ -414,7 +411,7 @@ fn check_defs(defs : Array[@ast.Stmt], ctx : ModCtx) -> Outcome raise {
   for i, d in defs {
     def_body(d, pis[i].1, ctx.override_gamma(delta))
   }
-  Assigns(delta)
+  Assigns(delta, None)
 }
 
 ///|
@@ -437,9 +434,12 @@ fn def_body(d : @ast.Stmt, pi : Entry, ctx : ModCtx) -> Unit raise {
     delta = delta.add(x, Var(params[i]))
   }
   delta = override_context(delta, scope(xs, body))
-  let r = check_body(body, ctx.override_gamma(delta), Some(result), tail=true)
+  let r = check_body(body, ctx.override_gamma(delta), Some(result))
   let sigma = ctx.sigma()
   if !(r is Returns) && !@types.equivalent(sigma, result, @types.t_none) {
+    if r is Assigns(_, Some((reason, span))) {
+      raise ill(MypyCompatibility(reason), span)
+    }
     raise ill_mypy_only_if(
       @types.subtype(sigma, @types.t_none, result),
       MissingReturn(x=name, tau=render(result)),
@@ -552,7 +552,6 @@ fn check_stmt(
   s : @ast.Stmt,
   ctx : ModCtx,
   returns : @types.Type?,
-  tail : Bool,
 ) -> Outcome raise {
   match s {
     Pass(..) => assigns_nothing()
@@ -562,19 +561,19 @@ fn check_stmt(
           let tau = assign_name(id, span, ctx, fn(t) raise {
             check_expr(value, t, ctx)
           })
-          Assigns(context_of([(id, Var(tau))]))
+          Assigns(context_of([(id, Var(tau))]), None)
         }
         target =>
-          Assigns(destructure(target, synth_expr(value, ctx), span, ctx))
+          Assigns(destructure(target, synth_expr(value, ctx), span, ctx), None)
       }
     AnnAssign(target~, annotation~, value~, span~, ..) => {
       guard target is Name(id~, ..) else { abort("rejected by the sieve") }
       let tau = resolve_type(type_expr(Some(annotation)), span, ctx)
       match value {
-        None => Assigns(context_of([(id, DU(tau))]))
+        None => Assigns(context_of([(id, DU(tau))]), None)
         Some(v) => {
           check_expr(v, tau, ctx)
-          Assigns(context_of([(id, Var(tau))]))
+          Assigns(context_of([(id, Var(tau))]), None)
         }
       }
     }
@@ -606,27 +605,46 @@ fn check_stmt(
     }
     If(cond~, body~, or_else~, ..) => {
       check_expr(cond, @types.t_bool, ctx)
-      let branches = [check_body(body, ctx, returns, tail~)]
+      let branches = [check_body(body, ctx, returns)]
       branches.push(
         if or_else.is_empty() {
           assigns_nothing()
         } else {
-          check_body(or_else, ctx, returns, tail~)
+          check_body(or_else, ctx, returns)
         },
       )
       merge_outcomes(branches, declared_names(s))
     }
-    Assert(cond~, msg~, ..) => {
-      check_expr(cond, @types.t_bool, ctx)
+    Assert(cond~, msg~, span~) => {
+      let assert_false = cond is Constant(value=Bool(false), ..)
+      if !assert_false {
+        check_expr(cond, @types.t_bool, ctx)
+      }
       match msg {
         Some(m) => check_expr(m, @types.t_str, ctx)
         None => ()
       }
-      assigns_nothing()
+      if assert_false {
+        return Returns
+      }
+      // An assertion of an expression of type `Literal[False]` other than
+      // `False` itself falls through only for mypy, which treats it as
+      // reachable.
+      let false_typed = returns is Some(_) &&
+        synthesises(cond) &&
+        synth_expr(cond, ctx) == Literal(Bool(false))
+      Assigns(
+        empty_context(),
+        if false_typed {
+          Some((MissingReturnAssertion, span))
+        } else {
+          None
+        },
+      )
     }
     Match(subject~, ..) => {
       let tau = synth_expr(subject, ctx)
-      check_match_cases(s, tau, ctx, returns, tail)
+      check_match_cases(s, tau, ctx, returns)
     }
     _ => abort("unreachable after the sieve: " + s.kind_name())
   }
@@ -683,7 +701,6 @@ fn check_match_cases(
   tau : @types.Type,
   ctx : ModCtx,
   returns : @types.Type?,
-  tail : Bool,
 ) -> Outcome raise {
   guard m is Match(cases~, ..) else { abort("a match") }
   let (deltas, rest, residual) = match_cases(cases, tau, ctx)
@@ -691,26 +708,23 @@ fn check_match_cases(
   for i, c in cases {
     branches.push(
       override_outcomes(
-        Assigns(deltas[i]),
-        check_body(c.body, ctx.override_gamma(deltas[i]), returns, tail~),
+        Assigns(deltas[i], None),
+        check_body(c.body, ctx.override_gamma(deltas[i]), returns),
       ),
     )
   }
-  let partial = rest != @types.t_never
-  let sigma = ctx.sigma()
-  if partial &&
-    tail &&
-    returns is Some(r) &&
-    !@types.equivalent(sigma, r, @types.t_none) &&
-    residual.is_empty() &&
-    branches.iter().all(fn(b) { b is Returns }) {
-    raise ill(
-      MypyCompatibility(MissingReturnMatchPartial(remaining=render(rest))),
-      m.span(),
+  // With an empty residual, the unmatched path falls through only for mypy.
+  if rest != @types.t_never {
+    branches.push(
+      Assigns(
+        empty_context(),
+        if residual.is_empty() {
+          Some((MissingReturnMatchPartial(remaining=render(rest)), m.span()))
+        } else {
+          None
+        },
+      ),
     )
-  }
-  if partial {
-    branches.push(assigns_nothing())
   }
   merge_outcomes(branches, declared_names(m))
 }
@@ -772,6 +786,8 @@ fn synth_expr(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
     }
     Constant(value~, ..) =>
       match @types.lit_of_constant(value) {
+        // A float is not a literal type.
+        Some(Float(_)) => @types.t_float
         Some(v) => Literal(v)
         None => abort("rejected by the sieve")
       }
@@ -789,6 +805,7 @@ fn synth_expr(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
       // A negative number is a literal: the reference folds `-1` into one
       // before it checks anything.
       match @types.literal_type(e) {
+        Some(Float(_)) => return @types.t_float
         Some(v) => return Literal(v)
         None => ()
       }
@@ -881,6 +898,7 @@ fn binary_name(op : @ast.Operator) -> String {
     FloorDiv => "//"
     Mod => "%"
     Pow => "**"
+    BitOr => "|"
     _ => abort("rejected by the sieve")
   }
 }
@@ -1132,8 +1150,20 @@ fn constr(c : String, e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
 ///|
 /// `Box[int](1)`: a constructor at type arguments given explicitly.
 fn constr_explicit(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
-  guard e is Call(func~, span~, ..) else { abort("a call") }
-  let tau = resolve_type(type_expr(Some(func)), span, ctx)
+  guard e is Call(func=Subscript(slice~, ..) as func, span~, ..) else {
+    abort("an explicit constructor call")
+  }
+  let psi = match @types.parse_annotation(func) {
+    Some(psi) => psi
+    None => {
+      let arg = @types.subscript_args(slice)
+        .iter()
+        .find_first(fn(a) { @types.parse_annotation(a) is None })
+        .unwrap()
+      raise ill(NotTypeExpression(e=@write.unparse_expr(arg)), arg.span())
+    }
+  }
+  let tau = resolve_type(psi, span, ctx)
   guard tau is Class(c, taus) else { abort("a class type") }
   for p in constructor_args(c, e, ctx) {
     check_expr(p.1, @types.declared_type(ctx.sigma(), c, taus, p.0), ctx)

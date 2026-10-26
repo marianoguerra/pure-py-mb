@@ -247,19 +247,6 @@ fn check_type_params(
 }
 
 ///|
-/// Whether a tuple is written without its parentheses. The reference reads it
-/// off the source: a parenthesised tuple starts at its `(`, before its first
-/// element; one written bare starts where its first element does.
-///
-/// A tree built rather than parsed has no positions and no parentheses to
-/// read; the printer writes every tuple with them, so it is taken to have them.
-fn unparenthesised(span : @basic.Span, elts : Array[@ast.Expr]) -> Bool {
-  span != @basic.nowhere &&
-  !elts.is_empty() &&
-  elts[0].span().start == span.start
-}
-
-///|
 /// A destructuring target: a nest of names, and nothing else (#54).
 ///
 /// The messages are the ones a bare target gets, because the rule is the same
@@ -512,12 +499,6 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
         Some(p) => self.check_pattern(p)
         None => ()
       }
-    MatchSequence(kind=Tuple, patterns~, ..) if span != @basic.nowhere &&
-      !patterns.is_empty() &&
-      patterns[0].span().start == span.start =>
-      raise prohibited(
-        "sequence pattern without brackets or parentheses prohibited", span,
-      )
     MatchSequence(patterns~, ..) =>
       for p in patterns {
         self.check_pattern(p)
@@ -564,7 +545,7 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
     Name(..) => ()
     BinOp(left~, op~, right~, ..) => {
       match op {
-        Add | Sub | Mult | Div | FloorDiv | Mod | Pow => ()
+        Add | Sub | Mult | Div | FloorDiv | Mod | Pow | BitOr => ()
         _ =>
           raise prohibited("binary operator '\{op.symbol()}' prohibited", span)
       }
@@ -616,12 +597,7 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       }
     }
     Call(func~, args~, keywords~, ..) => {
-      match func {
-        // `Box[int](1)`: a class applied to type arguments, then called.
-        Subscript(value~, ..) if @types.parse_annotation(func)
-          is Some(TypeName(_, _)) => self.check_expr(value)
-        _ => self.check_expr(func)
-      }
+      self.check_expr(func)
       for a in args {
         self.check_expr(a)
       }
@@ -641,8 +617,6 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       self.check_arguments(args)
       self.check_expr(body)
     }
-    Tuple(elts~, ..) if unparenthesised(span, elts) =>
-      raise prohibited("tuple without parentheses prohibited", span)
     List(elts~, ..) | Tuple(elts~, ..) =>
       for e in elts {
         self.check_expr(e)

@@ -3,7 +3,7 @@
 /// message and the exit code the reference prints for it.
 ///
 /// The messages are `syntax.py`'s, verbatim: the conformance suite compares
-/// them as the `.error.expected` of its `excluded/syntactic` bucket, so a
+/// them as the `.error.expected` of its `parser` buckets, so a
 /// change of wording here is a conformance failure and not a matter of taste.
 fn verdict(source : String) -> String {
   let m = try @parser.parse_string(source) catch {
@@ -22,10 +22,6 @@ fn verdict(source : String) -> String {
 test "prohibited forms" {
   let cases = [
     ("x = y = 1\n", "1: multiple assignment targets prohibited"),
-    ("x = 1, 2\n", "1: tuple without parentheses prohibited"),
-    (
-      "match v:\n    case a, b:\n        pass\n", "1: sequence pattern without brackets or parentheses prohibited",
-    ),
     ("f(**d)\n", "1: dict unpacking in argument list prohibited"),
     (
       "def f() -> None:\n    type X = int\n", "1: type statement outside the module top level prohibited",
@@ -129,7 +125,6 @@ test "prohibited forms" {
     ("x = b\"b\"\n", "1: bytes literal prohibited"),
     ("x = 1j\n", "1: complex literal prohibited"),
     ("x = ...\n", "1: ellipsis literal prohibited"),
-    ("x = a | b\n", "1: binary operator '|' prohibited"),
     ("x = a & b\n", "1: binary operator '&' prohibited"),
     ("x = a ^ b\n", "1: binary operator '^' prohibited"),
     ("x = a << b\n", "1: binary operator '<<' prohibited"),
@@ -417,8 +412,8 @@ test "an f-string takes expressions and not a format language" {
   // A hole is walked, so what is prohibited in an expression is prohibited in
   // one -- with the message it has anywhere else.
   assert_eq(
-    verdict_under("x = f\"{a | b}\"\n", p),
-    "1: binary operator '|' prohibited",
+    verdict_under("x = f\"{a & b}\"\n", p),
+    "1: binary operator '&' prohibited",
   )
   assert_eq(
     verdict_under("x = f\"{1 is 1}\"\n", p),

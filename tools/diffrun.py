@@ -12,7 +12,7 @@ Three gates decide whether a program counts, in this order:
     variety, and the validator is what turns variety into a usable sample.
   * **`stuck`.** Exit 5 means the semantics has no rule for what the program
     did. That is an ANSWER, not a failure: PurePy is a subset, and every
-    `excluded/` test in the conformance suite ends this way. Skipped.
+    `undefined/` test in the conformance suite ends this way. Skipped.
   * **the allow list**, which is empty. Every divergence it once held was a
     defect: a `TypeError` this port raised where Python raises none. See
     `ALLOWED` below before adding one back.

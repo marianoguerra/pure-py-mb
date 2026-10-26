@@ -152,14 +152,18 @@ fn class_of_name(e : @ast.Expr, ctx : ModCtx) -> String? {
 
 ///|
 /// What a statement sequence leaves behind: it returns, or it assigns.
+///
+/// `Assigns`'s second component: the sequence falls through only for mypy's
+/// sake, and if it ends a function body it is refused for that reason, at
+/// that place.
 priv enum Outcome {
   Returns
-  Assigns(Context)
+  Assigns(Context, (@err.Reason, @basic.Span)?)
 }
 
 ///|
 fn assigns_nothing() -> Outcome {
-  Assigns(empty_context())
+  Assigns(empty_context(), None)
 }
 
 ///|
@@ -202,9 +206,11 @@ fn declared_type_of(e : Entry) -> Declared {
 ///|
 fn merge_outcomes(rs : Array[Outcome], declared : Array[String]) -> Outcome {
   let branches : Array[Context] = []
+  let mypy_only = []
   for r in rs {
-    if r is Assigns(d) {
+    if r is Assigns(d, m) {
       branches.push(d)
+      mypy_only.push(m)
     }
   }
   if branches.is_empty() {
@@ -214,7 +220,15 @@ fn merge_outcomes(rs : Array[Outcome], declared : Array[String]) -> Outcome {
   for i in 1..<branches.length() {
     acc = merge_context(acc, branches[i], declared)
   }
-  Assigns(acc)
+  // Mypy-only when every branch that falls through does so only for mypy.
+  Assigns(
+    acc,
+    if mypy_only.iter().all(fn(m) { m is Some(_) }) {
+      mypy_only[0]
+    } else {
+      None
+    },
+  )
 }
 
 ///|
@@ -222,7 +236,9 @@ fn override_outcomes(r : Outcome, s : Outcome) -> Outcome {
   match (r, s) {
     (Returns, _) => Returns
     (_, Returns) => Returns
-    (Assigns(a), Assigns(b)) => Assigns(override_context(a, b))
+    // A statement after a mypy-only fall-through is reachable only for mypy.
+    (Assigns(a, m), Assigns(b, n)) =>
+      Assigns(override_context(a, b), if m is None { n } else { None })
   }
 }
 

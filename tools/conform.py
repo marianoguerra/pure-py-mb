@@ -54,16 +54,6 @@ MAIN = "main.py"
 # Exit codes, ours and the reference's (implementation-plan.md 2.1).
 OK, PROHIBITED, NOT_YET, ILL_FORMED, ILL_FORMED_PROGRAM, STUCK = 0, 1, 2, 3, 4, 5
 
-# The module-level tests that Python rejects dynamically but PurePy leaves
-# undefined rather than aborting: `assert 0` (the condition is not a bool), an
-# attribute reference on a number, and `round` of an infinity or a nan. They
-# exit 5, not 1.
-STUCK_PYTHON_ERRORS = {
-    "module-level/python-error/dynamic/round_infinite.py",
-    "module-level/python-error/dynamic/round_nan.py",
-    "module-level/python-error/dynamic/assert_falsy.py",
-    "module-level/python-error/dynamic/attr_non_object.py",
-}
 
 
 # --------------------------------------------------------------------------
@@ -360,21 +350,20 @@ def expect_stuck(r: Result) -> str | None:
 def run_expectation(parts: tuple[str, ...]) -> str | None:
     """What a test's path says its run must do: `output`, `stuck` or `abort`,
     or None when nothing is run. Module-level and program-level tests read the
-    same way since v0.18: <verdict>[/<stage>]/..."""
-    verdict = parts[0]
-    stage = parts[1] if len(parts) > 1 else None
-    pending = "pending" in parts
-    if verdict == "semantically-valid":
-        return None if pending else "output"
-    if verdict == "excluded":
-        if stage in ("syntactic", "static") and not pending:
-            return None  # rejected before evaluation
-        # static/pending and dynamic: accepted, then the semantics has no
-        # rule for what happens next.
+    same way: <Python outcome>/<PurePy outcome>[/<subset>]/..., or
+    syntactic-only/..., a script that builds a tree Python source cannot
+    express, which only Python runs."""
+    if parts[0] == "syntactic-only" or len(parts) < 2:
+        return None
+    python, purepy = parts[0], parts[1]
+    subset = parts[2] if len(parts) > 2 else None
+    if subset == "pending":
+        return None  # refused as not yet supported
+    if purepy == "undefined":
         return "stuck"
-    if verdict == "python-error":
-        return "abort" if stage == "dynamic" else None
-    return None
+    if purepy == "result":
+        return "output" if python == "no-exception" else "abort"
+    return None  # refused by the parser or the type checker
 
 
 def oracle_run(impl: Impl) -> Report:
@@ -388,7 +377,7 @@ def oracle_run(impl: Impl) -> Report:
         r = impl.run_module(rel)
         if want == "output":
             rep.add(rel, expect_run_output(r, sibling(rel, ".expected")))
-        elif want == "stuck" or rel in STUCK_PYTHON_ERRORS:
+        elif want == "stuck":
             rep.add(rel, expect_stuck(r))
         else:
             rep.add(rel, expect_abort(r, rel, sibling(rel, ".exception.expected")))

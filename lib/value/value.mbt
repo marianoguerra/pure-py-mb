@@ -172,6 +172,8 @@ pub(all) enum Termination {
   IndexError
   KeyError
   ZeroDivisionError
+  OverflowError
+  ValueError
   AttributeError
   AssertionError(String?)
   SystemExit(BigInt)
@@ -185,6 +187,8 @@ pub fn Termination::name(self : Termination) -> String {
     IndexError => "IndexError"
     KeyError => "KeyError"
     ZeroDivisionError => "ZeroDivisionError"
+    OverflowError => "OverflowError"
+    ValueError => "ValueError"
     AttributeError => "AttributeError"
     AssertionError(_) => "AssertionError"
     SystemExit(_) => "SystemExit"

@@ -12,6 +12,7 @@
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
   InheritedField(x~ : String, c~ : String, d~ : String)
+  NotTypeExpression(e~ : String)
   UndefinedVariable(x~ : String)
   UnassignedVariable(x~ : String)
   PossiblyUnassigned(x~ : String, declared_in_branch~ : Bool)
@@ -40,6 +41,7 @@ pub(all) enum Reason {
   SubmoduleNotImported(q~ : String)
   UnassignedMember(x~ : String, q~ : String)
   TopLevelReturn
+  TopLevelAssertFalse
   UnknownModule(q~ : String)
   DuplicateImportedName(x~ : String)
   UnknownMember(x~ : String, q~ : String)
@@ -71,6 +73,7 @@ pub(all) enum Reason {
   NoAttributes(tau~ : String)
   BareReturn(tau~ : String)
   MissingReturn(x~ : String, tau~ : String)
+  MissingReturnAssertion
   MissingReturnMatchPartial(remaining~ : String)
   /// A rejection the reference makes only for compatibility with mypy: the
   /// program is otherwise well formed. Its message says so.
@@ -85,6 +88,7 @@ pub(all) enum Reason {
 pub fn Reason::message(self : Reason) -> String {
   match self {
     DuplicateField(x~, c~) => "duplicate field '\{x}' in class '\{c}'"
+    NotTypeExpression(e~) => "'\{e}' is not a type expression"
     InheritedField(x~, c~, d~) =>
       "field '\{x}' of class '\{c}' is also a field of base class '\{d}'"
     UndefinedVariable(x~) => "'\{x}' is not defined"
@@ -126,6 +130,7 @@ pub fn Reason::message(self : Reason) -> String {
     SubmoduleNotImported(q~) => "submodule '\{q}' is not imported"
     UnassignedMember(x~, q~) =>
       "member '\{x}' of module '\{q}' is not definitely assigned"
+    TopLevelAssertFalse => "module body definitely reaches 'assert False'"
     TopLevelReturn =>
       "top-level return not allowed (module body must not return)"
     UnknownModule(q~) => "unknown module '\{q}'"
@@ -188,6 +193,8 @@ pub fn Reason::message(self : Reason) -> String {
     BareReturn(tau~) => "bare return in function with result type \{tau}"
     MissingReturn(x~, tau~) =>
       "'\{x}' declares result type \{tau} but does not always return"
+    MissingReturnAssertion =>
+      "assertion of expression of type Literal[False] other than False, so the function does not always return"
     MissingReturnMatchPartial(remaining~) =>
       "cases leave remaining type \{remaining}, so the function does not always return"
     MypyCompatibility(r) => r.message() + " (mypy compatibility)"
@@ -202,6 +209,7 @@ pub fn Reason::code(self : Reason) -> String {
   let name = match self {
     DuplicateField(..) => "duplicate-field"
     InheritedField(..) => "inherited-field"
+    NotTypeExpression(..) => "not-type-expression"
     UndefinedVariable(..) => "undefined-variable"
     UnassignedVariable(..) => "unassigned-variable"
     PossiblyUnassigned(..) => "possibly-unassigned"
@@ -232,6 +240,7 @@ pub fn Reason::code(self : Reason) -> String {
     NoneResult => "none-result"
     BareReturn(..) => "bare-return"
     MissingReturnMatchPartial(..) => "missing-return-match-partial"
+    MissingReturnAssertion => "missing-return-assertion"
     MypyCompatibility(r) => return r.code()
     NotClass(..) => "not-class"
     UnknownFieldInPattern(..) => "unknown-field-in-pattern"
@@ -242,6 +251,7 @@ pub fn Reason::code(self : Reason) -> String {
     SubmoduleNotImported(..) => "submodule-not-imported"
     UnassignedMember(..) => "unassigned-member"
     TopLevelReturn => "top-level-return"
+    TopLevelAssertFalse => "top-level-assert-false"
     UnknownModule(..) => "unknown-module"
     UnknownMember(..) => "unknown-member"
     ModuleAsValue(..) => "module-as-value"

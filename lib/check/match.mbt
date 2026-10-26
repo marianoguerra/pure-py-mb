@@ -22,6 +22,8 @@ fn shape_match(
   let result = match p {
     MatchAs(pattern=None, ..) => return Some({ matched: [k], residual: [], })
     MatchAs(pattern=Some(q), ..) => return shape_match(k, q, ctx)
+    MatchValue(..) if literal_of(p) is Float(_) =>
+      return match_literal_float(ctx.sigma(), k, literal_of(p))
     MatchValue(..) | MatchSingleton(..) => match_literal(k, literal_of(p))
     MatchSequence(kind=Tuple, ..) => match_tuple(k, p, ctx)
     MatchSequence(kind=List, ..) => match_list(k, p, ctx)
@@ -49,6 +51,25 @@ fn match_split(
         Some((matched, residual_)) =>
           Some({ matched, residual: [..residual, ..residual_], })
       }
+  }
+}
+
+///|
+/// A float pattern matches at a type `float` is below, and never covers a
+/// shape: its head is recorded so that a repeat of it is unreachable.
+fn match_literal_float(
+  sigma : @types.ClassTable,
+  k : @types.Shape,
+  n : @types.Lit,
+) -> MatchResult? {
+  match k {
+    Rest(tau, hs) if !hs.contains(HLit(n)) &&
+      @types.subtype(sigma, @types.t_float, tau) =>
+      Some({
+        matched: [k],
+        residual: [Rest(tau, @types.heads_add(hs, HLit(n)))],
+      })
+    _ => None
   }
 }
 
@@ -608,6 +629,8 @@ fn matched_as(
       @types.join(sigma, matched_as(s, p, ctx), matched_as(t, p, ctx))
     (_, MatchAs(pattern=None, ..)) => tau
     (_, MatchAs(pattern=Some(q), ..)) => matched_as(tau, q, ctx)
+    (_, MatchValue(..)) if literal_of(p) is Float(_) =>
+      @types.meet(sigma, @types.t_float, tau)
     (_, MatchValue(..) | MatchSingleton(..)) =>
       @types.meet(sigma, Literal(literal_of(p)), tau)
     (Tuple(taus), MatchSequence(kind=Tuple, patterns~, ..)) if taus.length() ==

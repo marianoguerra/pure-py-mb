@@ -485,18 +485,11 @@ test "subscripting fails three different ways" {
 
 ///|
 /// The arities the primitives reject, and the numbers `round` has no integer
-/// for: Python raises OverflowError and ValueError, which are not termination
-/// kinds, so PurePy has no rule rather than an abort.
+/// for, which abort as Python's do.
 test "the primitives reject what they cannot answer" {
   assert_eq(run("print(len(1))\n"), "!TypeError")
-  assert_eq(
-    run("print(round(1e400))\n"),
-    "!stuck: round of a value with no integer",
-  )
-  assert_eq(
-    run("x: float = 1e400 - 1e400\nprint(round(x))\n"),
-    "!stuck: round of a value with no integer",
-  )
+  assert_eq(run("print(round(1e400))\n"), "!OverflowError")
+  assert_eq(run("x: float = 1e400 - 1e400\nprint(round(x))\n"), "!ValueError")
 }
 
 ///|

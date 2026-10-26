@@ -107,6 +107,8 @@ pub fn shapes_seq(@sorted_map.SortedMap[String, ClassTableEntry], Array[Type]) -
 
 pub fn short_name(String) -> String
 
+pub fn subscript_args(@ast.Expr) -> Array[@ast.Expr]
+
 pub fn substitute(ArrayView[Type], ArrayView[String], Type) -> Type
 
 pub fn subtype(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) -> Bool

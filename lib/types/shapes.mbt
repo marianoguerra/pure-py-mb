@@ -103,6 +103,8 @@ pub fn shapes(sigma : ClassTable, tau : Type, hs : Array[Head]) -> Array[Shape] 
 pub fn head_typed(sigma : ClassTable, h : Head, tau : Type) -> Bool {
   match h {
     HClass(c) => !(instance_below(sigma, c, tau) is NoInstance)
+    // A float is not a literal type: a float pattern types at `float`.
+    HLit(Float(_)) => subtype(sigma, t_float, tau)
     HLit(v) => subtype(sigma, Literal(v), tau)
     HLen(_) => tau is List(_)
   }

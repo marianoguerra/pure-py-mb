@@ -51,7 +51,7 @@ pub fn equality_type(sigma : ClassTable, t : Type) -> Bool {
       .iter()
       .all(fn(f) { equality_type(sigma, f.1) })
     Prim(_) | Literal(_) => true
-    TypeVar(_) => abort("a type parameter is not a value's type")
+    TypeVar(_) => false
   }
 }
 
@@ -185,6 +185,7 @@ type BinaryOverload = (ClassTable, Type, Type) -> Resolved?
 pub fn binary_overloads(op : String) -> Array[BinaryOverload] {
   match op {
     "==" | "!=" => [equality]
+    "|" => []
     "in" | "not in" =>
       [membership_list, membership_tuple, membership_str, membership_dict]
     "<" | "<=" | ">" | ">=" => [ordering_number, ordering_str]

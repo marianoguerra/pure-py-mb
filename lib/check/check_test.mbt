@@ -304,3 +304,29 @@ test "a mutual type region: aliases see every definition, classes the earlier on
   assert_eq(verdict("type A = list[A]\n"), "type alias 'A' is cyclic")
   assert_eq(verdict("type A = B\ntype B = A\n"), "type alias 'B' is cyclic")
 }
+
+///|
+test "assert False returns, and a float is not a literal type" {
+  assert_eq(verdict("def f(x: int) -> int:\n    assert False\n"), "ok")
+  assert_eq(
+    verdict("assert False\n"),
+    "module body definitely reaches 'assert False'",
+  )
+  assert_eq(
+    verdict(
+      "def f(x: int) -> int:\n    if x > 0:\n        return 1\n    assert (False,)[0]\n",
+    ),
+    "assertion of expression of type Literal[False] other than False, so the function does not always return (mypy compatibility)",
+  )
+  assert_eq(verdict("x: float = 1.5\ny: float = x\n"), "ok")
+  assert_eq(
+    verdict(
+      "def f(x: float) -> int:\n    match x:\n        case 1.5:\n            return 1\n        case 1.5:\n            return 2\n        case _:\n            return 3\n",
+    ),
+    "case 1.5 is unreachable",
+  )
+  assert_eq(
+    verdict("x: int = 1 | 2\n"),
+    "no overload of '|' at operand types Literal[1] and Literal[2]",
+  )
+}

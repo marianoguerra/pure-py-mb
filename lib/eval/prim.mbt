@@ -72,15 +72,16 @@ async fn Interp::call_primitive(
       } else {
         Stuck("sys.exit with \{args.length()} arguments")
       }
-    // `round` is defined at a number with a nearest integer, ties to even:
-    // not at an infinity or a nan.
+    // `round` is to the nearest integer, ties to even. An infinity and a nan
+    // have none, and abort as Python's do.
     Round =>
       match args {
         [Int(_) as v] => Val(v)
+        [Float(d)] if d != d => Aborts(ValueError)
         [Float(d)] =>
           match @value.exact_integer(round_half_even(d)) {
             Some(n) => Val(Int(n))
-            None => Stuck("round of a value with no integer")
+            None => Aborts(OverflowError)
           }
         _ => Stuck("round of something other than a number")
       }

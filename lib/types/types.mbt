@@ -287,9 +287,11 @@ fn parse_subscript(value : @ast.Expr, slice : @ast.Expr) -> TypeExpr? {
     _ => None
   }
   if head == Some("Literal") {
-    return match literal_type(slice) {
-      Some(v) => Some(LitE(v))
-      None => None
+    let indices = subscript_args(slice)
+    return match (indices, literal_type(slice)) {
+      ([_], Some(Float(_))) => None
+      ([_], Some(v)) => Some(LitE(v))
+      _ => None
     }
   }
   if head == Some("Callable") {
@@ -340,7 +342,7 @@ fn parse_callable(args : Array[@ast.Expr]) -> TypeExpr? {
 }
 
 ///|
-fn subscript_args(s : @ast.Expr) -> Array[@ast.Expr] {
+pub fn subscript_args(s : @ast.Expr) -> Array[@ast.Expr] {
   match s {
     Tuple(elts~, ..) => elts
     _ => [s]

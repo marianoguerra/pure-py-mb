@@ -27,7 +27,7 @@ test rather than a Python test:
      was an undefined operation only when it ran).
 
      (The REFERENCE's answer for the pending forms is pinned separately, by
-     `conform.py` over the vendored `semantically-valid/pending/` files; this
+     `conform.py` over the vendored `pending/` files; this
      pins that our own corpus is still opt-in.)
   2. **Accepted under the profile.** `pure-py --profile P check FILE` exits 0,
      so the sieve gate and the checker agree.
