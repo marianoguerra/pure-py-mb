@@ -19,11 +19,19 @@
 pub struct SourceTree {
   /// The directory the entry file is in, as `pathlib` would print it.
   base_dir : String
-  /// Module name to parsed module. The entry is `__main__`.
+  /// Module name to parsed module, for every module loaded so far. The entry
+  /// is `__main__`.
   modules : Map[String, @ast.Module]
   /// Module name to the path a message should print for it. A predefined
   /// module's path is `<name>`.
   paths : Map[String, String]
+  /// Every module the program HAS, loaded or not. A checked program knows its
+  /// modules by name from the start and parses each one only when something
+  /// imports it, as the reference does since v0.16: an unused module that
+  /// would not parse is no business of the program's.
+  names : Array[String]
+  /// How to load a module that is named but not loaded yet.
+  loader : ((String) -> (@ast.Module, String) raise)?
 }
 
 ///|
@@ -36,12 +44,37 @@ pub fn SourceTree::of(
   for name in modules.keys() {
     paths[name] = name
   }
-  { base_dir, modules, paths, }
+  { base_dir, modules, paths, names: modules.keys().collect(), loader: None, }
 }
 
 ///|
 pub fn SourceTree::module_names(self : SourceTree) -> Array[String] {
-  self.modules.keys().collect()
+  self.names
+}
+
+///|
+/// Whether the program has a module of this name, loaded or not.
+pub fn SourceTree::contains(self : SourceTree, q : String) -> Bool {
+  self.modules.contains(q) || self.names.contains(q)
+}
+
+///|
+/// A module's tree, loading it first if it has not been. Loading is where a
+/// file that will not parse, or that the sieve refuses, is found out.
+pub fn SourceTree::load(self : SourceTree, q : String) -> @ast.Module raise {
+  match self.modules.get(q) {
+    Some(m) => m
+    None =>
+      match self.loader {
+        Some(f) if self.names.contains(q) => {
+          let (m, path) = f(q)
+          self.modules[q] = m
+          self.paths[q] = path
+          m
+        }
+        _ => raise @err.ill_formed_program("module '\{q}' not found")
+      }
+  }
 }
 
 ///|
@@ -101,6 +134,12 @@ fn load(
         "module " + @basic.py_repr(name) + " not found under " + base_dir,
       )
   }
+  load_path(path, profile)
+}
+
+///|
+/// Read, parse and sieve the module at a path.
+fn load_path(path : String, profile : @profile.Profile) -> @ast.Module raise {
   let is_dir = @fs.is_dir(path) catch { _ => false }
   if is_dir {
     // A namespace package: named, with nothing in it.
@@ -116,7 +155,9 @@ fn load(
     e => raise @err.ill_formed_program("\{path}: parse error: \{e}")
   }
   match @sieve.result(tree, profile~) {
-    Some(d) => raise @err.ill_formed_program("\{path}: " + d.message())
+    // The sieve's verdict keeps its exit code; the reference puts the path
+    // in front of the message and drops the position.
+    Some(d) => raise d.at_path(path).raise_()
     None => ()
   }
   tree
@@ -216,23 +257,6 @@ fn module_name(base_dir : String, path : String) -> String {
 }
 
 ///|
-/// Every module under the entry's directory except the entry itself, and every
-/// proper prefix of each -- so an unused module is still discovered.
-fn source_tree_names(base_dir : String, entry_path : String) -> Array[String] {
-  let names : Array[String] = []
-  for p in walk_py_files(base_dir) {
-    if p == entry_path {
-      continue
-    }
-    let n = module_name(base_dir, p)
-    if n != "" && !names.contains(n) {
-      names.push(n)
-    }
-  }
-  with_proper_prefixes(names)
-}
-
-///|
 /// Every `.py` file under a directory, `__pycache__` excluded.
 fn walk_py_files(dir : String) -> Array[String] {
   let out : Array[String] = []
@@ -279,6 +303,9 @@ pub fn SourceTree::from_entry(
   profile~ : @profile.Profile = @profile.core,
 ) -> SourceTree raise {
   let base_dir = parent(entry_path)
+  if sweep {
+    return lazy_tree(entry_path, base_dir, predefined, profile)
+  }
   let entry_tree = load(stem(entry_path), base_dir, profile)
   let modules : Map[String, @ast.Module] = Map([])
   let paths : Map[String, String] = Map([])
@@ -289,11 +316,6 @@ pub fn SourceTree::from_entry(
     queue.push(p)
   }
   @basic.sort_names(queue)
-  if sweep {
-    for n in source_tree_names(base_dir, entry_path) {
-      queue.push(n)
-    }
-  }
   for n in with_proper_prefixes(import_targets(entry_tree, base_dir)) {
     queue.push(n)
   }
@@ -320,5 +342,48 @@ pub fn SourceTree::from_entry(
       queue.push(q)
     }
   }
-  { base_dir, modules, paths, }
+  { base_dir, modules, names: modules.keys().collect(), paths, loader: None, }
+}
+
+///|
+/// The program a checker sees: every module under the entry's directory by
+/// name -- the entry's own name among them, so `import main` from `main.py`
+/// is a module like any other -- plus the predefined ones and `__main__`,
+/// each parsed the first time it is loaded.
+fn lazy_tree(
+  entry_path : String,
+  base_dir : String,
+  predefined : Array[String],
+  profile : @profile.Profile,
+) -> SourceTree {
+  let modules : Map[String, @ast.Module] = Map([])
+  let paths : Map[String, String] = Map([])
+  for p in predefined {
+    modules[p] = { body: [], span: @basic.nowhere, }
+    paths[p] = "<\{p}>"
+  }
+  paths["__main__"] = entry_path
+  let names : Array[String] = ["__main__", ..predefined]
+  let found : Array[String] = []
+  for p in walk_py_files(base_dir) {
+    let n = module_name(base_dir, p)
+    if n != "" && !found.contains(n) {
+      found.push(n)
+    }
+  }
+  for n in with_proper_prefixes(found) {
+    if !names.contains(n) {
+      names.push(n)
+    }
+  }
+  let loader = fn(q : String) -> (@ast.Module, String) raise {
+    if q == "__main__" {
+      return (load_path(entry_path, profile), entry_path)
+    }
+    match is_module(q, base_dir) {
+      Some(path) => (load(q, base_dir, profile), path)
+      None => raise @err.ill_formed_program("module '\{q}' not found")
+    }
+  }
+  { base_dir, modules, paths, names, loader: Some(loader), }
 }

@@ -164,6 +164,6 @@ test "the predefined modules and their members" {
   assert_eq(@context.predefined_members("os"), None)
   // Every member is definitely assigned, and so is `__name__`.
   assert_eq(@context.predefined_context("typing").keys_as_iter().to_array(), [
-    "Any", "__name__",
+    "Never", "Sized", "Literal", "Callable", "__name__",
   ])
 }

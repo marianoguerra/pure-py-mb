@@ -72,15 +72,21 @@ pub fn Gen::stmt(self : Gen, top_level~ : Bool = false) -> @ast.Stmt {
         or_else=if self.below(2) == 0 { [] } else { [self.stmt()] },
       )
     4 =>
-      @ast.Stmt::def_(self.pick(names), [self.pick(names)], [
-        @ast.Stmt::return_(value=self.expr()),
-      ])
+      @ast.Stmt::def_(
+        self.pick(names),
+        [(self.pick(names), self.annotation())],
+        [@ast.Stmt::return_(value=self.expr())],
+        returns=self.annotation(),
+      )
     5 =>
       @ast.Stmt::match_(self.expr(), [
         @ast.case_(self.pattern(), [self.stmt()]),
         @ast.case_(@ast.Pattern::wildcard(), [@ast.Stmt::pass()]),
       ])
-    _ => @ast.Stmt::dataclass(self.pick(names), [self.pick(names)])
+    _ =>
+      @ast.Stmt::dataclass(self.pick(names), [
+        (self.pick(names), self.annotation()),
+      ])
   }
 }
 
@@ -147,5 +153,18 @@ pub fn Gen::pattern(self : Gen) -> @ast.Pattern {
     3 => @ast.Pattern::literal(Str(self.pick(["a", "b"])))
     4 => @ast.Pattern::sequence(List, [self.pattern()])
     _ => @ast.Pattern::sequence(Tuple, [self.pattern(), self.pattern()])
+  }
+}
+
+///|
+/// An annotation: a type PurePy can spell.
+pub fn Gen::annotation(self : Gen) -> @ast.Expr {
+  match self.below(5) {
+    0 => @ast.Expr::name("int")
+    1 => @ast.Expr::name("str")
+    2 => @ast.Expr::subscript(@ast.Expr::name("list"), @ast.Expr::name("int"))
+    3 => @ast.Expr::none()
+    _ =>
+      @ast.Expr::binop(@ast.Expr::name("int"), BitOr, @ast.Expr::name("float"))
   }
 }

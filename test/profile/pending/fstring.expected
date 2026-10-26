@@ -10,7 +10,7 @@ nested inner 42
 
 no holes at all
 424242
-#1 >2
+['#1', '>2']
 ab42
 single 42 quotes
 triple 42 quoted

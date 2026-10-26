@@ -122,9 +122,10 @@ pub fn extend_value(a : Value, b : Value) -> Value {
 ///|
 /// The predefined functions of Figure 2.7.
 ///
-/// `Opaque` is for the three members that are values only so that importing
-/// them binds something: `typing.Any`, `typing.Callable` and
-/// `dataclasses.dataclass` are never called.
+/// `Opaque` is for the members that are values only so that importing them
+/// binds something -- `int`, `list`, `typing.Callable`,
+/// `dataclasses.dataclass` and the rest of the names usable only in an
+/// annotation or as a decorator. None of them is ever called.
 pub(all) enum Primitive {
   Print
   Len

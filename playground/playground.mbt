@@ -197,6 +197,12 @@ fn playground_host(printed : StringBuilder, log : Array[String]) -> @eval.Host {
           ("count", @value.host_fn("host.count")),
           ("fail", @value.host_fn("host.fail")),
         ],
+        types: [
+          ("log", Callable([@types.t_object], @types.t_none)),
+          ("now", Callable([], @types.t_int)),
+          ("count", Callable([@types.t_str], @types.t_int)),
+          ("fail", Callable([], @types.t_never)),
+        ],
       },
     ],
     call=fn(name, args) {

@@ -6,5 +6,6 @@ import {
   "marianoguerra/pure-py/basic",
   "marianoguerra/pure-py/eval",
   "marianoguerra/pure-py/profile",
+  "marianoguerra/pure-py/types",
   "marianoguerra/pure-py/value",
 } for "test"

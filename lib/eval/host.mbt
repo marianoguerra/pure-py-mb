@@ -61,6 +61,8 @@ pub struct Host {
   write : (String) -> Unit
   argv : Array[String]
   modules : Map[String, @value.Env]
+  /// Each host module's members with the type the checker gives them.
+  member_types : Map[String, Array[(String, @types.Type)]]
   call : async (String, Array[@value.Value]) -> @value.Outcome noraise
   /// Members of the predefined modules the host has replaced, by the dotted
   /// name the guest reaches them under.
@@ -72,9 +74,48 @@ pub struct Host {
 ///
 /// A member is any `Value`. `@value.host_fn("name")` makes one the guest can
 /// call and the host answers by name.
+///
+/// `types` gives a member the type the checker sees it at. PurePy is typed:
+/// a guest can only call a host function whose signature the checker knows,
+/// so a function needs one here -- `("get", Callable([t_str], t_int))`. A
+/// member with no entry gets the type of its value where a value has one --
+/// an int, a string, a list of them -- and `object`, which can be neither
+/// called nor inspected, where it does not.
 pub(all) struct HostModule {
   name : String
   members : Array[(String, @value.Value)]
+  types : Array[(String, @types.Type)]
+}
+
+///|
+/// A host module, with no declared types unless some are given.
+pub fn HostModule::new(
+  name : String,
+  members : Array[(String, @value.Value)],
+  types~ : Array[(String, @types.Type)] = [],
+) -> HostModule {
+  { name, members, types, }
+}
+
+///|
+/// The type a value has on its face, for a host member with no declared type.
+fn value_type(v : @value.Value) -> @types.Type {
+  fn join(vs : Array[@value.Value]) -> @types.Type {
+    let ts = vs.map(value_type)
+    @types.join_seq(@types.empty_class_table(), ts)
+  }
+
+  match v {
+    None => @types.t_none
+    Bool(_) => @types.t_bool
+    Int(_) => @types.t_int
+    Float(_) => @types.t_float
+    Str(_) => @types.t_str
+    List(vs) => List(join(vs))
+    Tuple(vs) => Tuple(vs.map(value_type))
+    Dict(kvs) => Dict(join(kvs.map(fn(kv) { kv.1 })))
+    _ => @types.t_object
+  }
 }
 
 ///|
@@ -107,23 +148,48 @@ pub fn Host::new(
   redefined~ : Array[(String, @value.Value)] = [],
 ) -> Host {
   let table : Map[String, @value.Env] = Map([])
+  let member_types : Map[String, Array[(String, @types.Type)]] = Map([])
   for m in modules {
     // Every module has a `__name__`, as the predefined ones do.
     let entries : Array[(String, @value.Value)] = [("__name__", Str(m.name))]
+    let typed : Array[(String, @types.Type)] = []
     for e in m.members {
       entries.push(e)
+      let declared = m.types.search_by(fn(t) { t.0 == e.0 })
+      typed.push(
+        (
+          e.0,
+          match declared {
+            Some(i) => m.types[i].1
+            None => value_type(e.1)
+          },
+        ),
+      )
     }
     table[m.name] = @value.env_of(entries)
+    member_types[m.name] = typed
   }
-  { write, argv, modules: table, call, redefined: Map::from_array(redefined), }
+  {
+    write,
+    argv,
+    modules: table,
+    member_types,
+    call,
+    redefined: Map::from_array(redefined),
+  }
 }
 
 ///|
-/// The names of each host module's members.
-///
-/// The CHECKER needs these and not the values: a `from hostmod import f` has
-/// to type-check before it can run, and the checker has no business knowing
-/// what `f` is. This is the one place the two sides of a host module meet.
+/// Each host module's members with their types: what the checker is given.
+pub fn Host::member_types(
+  self : Host,
+) -> Map[String, Array[(String, @types.Type)]] {
+  self.member_types
+}
+
+///|
+/// The names of each host module's members, for a caller that wants to list
+/// them. The checker reads `member_types`.
 pub fn Host::member_names(self : Host) -> Map[String, Array[String]] {
   let out : Map[String, Array[String]] = Map([])
   for name, env in self.modules {

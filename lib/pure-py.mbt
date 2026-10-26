@@ -64,7 +64,7 @@ pub fn check(
       @check.check_single(
         m,
         host_members=match host {
-          Some(h) => h.member_names()
+          Some(h) => h.member_types()
           None => Map([])
         },
         profile~,
@@ -97,7 +97,7 @@ pub fn check_program(
   @check.check_program(
     tree,
     host_members=match host {
-      Some(h) => h.member_names()
+      Some(h) => h.member_types()
       None => Map([])
     },
     profile~,

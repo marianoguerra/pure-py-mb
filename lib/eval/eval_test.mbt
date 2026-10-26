@@ -187,10 +187,14 @@ test "a pattern and a value that are not comparable" {
   )
   // A tuple pattern against an integer: an honest no-match.
   assert_eq(run("v = 1\nmatch v:\n    case (a,):\n        print(a)\n"), "")
-  // A literal pattern against a list: `eq` between unrelated kinds.
+  // A literal pattern against a list: no match, as in Python. A subject can
+  // be a union since v0.16, so this is reachable in a well-typed program.
+  assert_eq(run("v = [1]\nmatch v:\n    case 1:\n        print(1)\n"), "")
+  // A literal against a bool or a number of the other kind is still
+  // undefined: Python's answer there is coercion.
   assert_eq(
-    run("v = [1]\nmatch v:\n    case 1:\n        print(1)\n"),
-    "!stuck: a literal pattern against list",
+    run("v = True\nmatch v:\n    case 1:\n        print(1)\n"),
+    "!stuck: a literal pattern against bool",
   )
 }
 
@@ -263,9 +267,9 @@ test "the builtins" {
     "2 3 1\n",
   )
   assert_eq(run("print(len(1))\n"), "!TypeError")
-  assert_eq(run("print(range(3))\n"), "[0, 1, 2]\n")
-  assert_eq(run("print(range(0))\n"), "[]\n")
-  assert_eq(run("print(range(-1))\n"), "[]\n")
+  // `range` is not in `builtins` from v0.16: the typed specification took it
+  // out until it had polymorphism to give it a type.
+  assert_eq(run("print(range(3))\n"), "!stuck: the unbound name 'range'")
 }
 
 ///|
@@ -427,7 +431,7 @@ test "string formatting is undefined, not an error" {
 test "equality over objects, floats and mixed kinds" {
   let p =
     #|from dataclasses import dataclass
-    #|from typing import Any
+    #|from typing import Never
     #|
     #|
     #|@dataclass
@@ -486,8 +490,6 @@ test "the primitives reject what they cannot answer" {
     program([("__main__", "import math\nprint(math.log(0.0))\n")]),
     "!stuck: the logarithm of a number that is not positive",
   )
-  assert_eq(run("print(range(1, 3))\n"), "!stuck: range with 2 arguments")
-  assert_eq(run("print(range(\"a\"))\n"), "!stuck: range of str")
   assert_eq(run("print(len(1))\n"), "!TypeError")
 }
 
@@ -800,16 +802,14 @@ test "an abort twenty thousand calls down is reported, not crashed into" {
 /// `max_depth` never saw any of these: none of them calls anything. PurePy has
 /// no loops, so for a long time recursion was the only way to run forever and
 /// bounding it was enough -- but a comprehension loops without recursing, and
-/// `range` and `*` build a whole sequence in a single move. On a browser tab
+/// `*` builds a whole sequence in a single move. On a browser tab
 /// each of the three is a page that stops answering with nothing to interrupt
 /// and nothing to read.
 test "a run that does not recurse is bounded too" {
   let cases = [
     // Loops without recursing: one step per element, caught by the driver.
-    "xs = [x for x in range(200)]\nys = [y for y in xs for z in xs]\n",
-    // Builds from a NUMBER in one move: caught before it builds.
-     "xs = range(1000000000)\n",
-    // Builds by repetition in one move: same.
+    "xs = [0] * 200\nys = [y for y in xs for z in xs]\n",
+    // Builds by repetition in one move: caught before it builds.
      "xs = [0] * 1000000000\n",
   ]
   for source in cases {
@@ -833,7 +833,7 @@ test "a run that does not recurse is bounded too" {
 /// limit an embedder cannot reason about, and the whole language is built on
 /// two runs agreeing.
 test "the step bound stops in the same place every time" {
-  let source = "xs = [x for x in range(5000)]\nprint(len(xs))\n"
+  let source = "xs = [x for x in [0] * 5000]\nprint(len(xs))\n"
   let tree = @program.SourceTree::of(
     Map([("__main__", @parser.parse_string(source))]),
   )

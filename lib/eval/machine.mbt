@@ -864,6 +864,11 @@ fn step_stmt(s : @ast.Stmt, env : Env, stack : Array[Frame]) -> Ctl {
       stack.push(StAssign(target=targets[0]))
       Ev(value, env)
     }
+    // eval-ann-assign: the annotation is the checker's; the evaluator assigns.
+    AnnAssign(target~, value=Some(value), ..) => {
+      stack.push(StAssign(target~))
+      Ev(value, env)
+    }
     // eval-expr-stmt
     ExprStmt(value~, ..) => {
       stack.push(StExpr)

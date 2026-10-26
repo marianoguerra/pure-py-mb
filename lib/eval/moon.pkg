@@ -5,6 +5,7 @@ import {
   "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
+  "marianoguerra/pure-py/types",
   "marianoguerra/pure-py/value",
   "moonbitlang/core/math",
   "moonbitlang/core/string",
@@ -16,4 +17,5 @@ import {
   "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
   "marianoguerra/pure-py/value",
+  "marianoguerra/pure-py/types",
 } for "test"

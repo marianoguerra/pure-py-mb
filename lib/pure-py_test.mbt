@@ -53,7 +53,7 @@ test "an in-memory program can import math, sys and the rest" {
       "__main__",
       @purepy.parse(
         "import math\nimport sys\nfrom dataclasses import dataclass\n" +
-        "from typing import Any\nprint(math.floor(2.7), len(sys.argv))\n",
+        "from typing import Callable\nprint([math.floor(2.7), len(sys.argv)])\n",
       ),
     ),
   ])
@@ -61,7 +61,7 @@ test "an in-memory program can import math, sys and the rest" {
   assert_eq(@purepy.check_program(tree), None)
   let (output, result) = @purepy.run(tree, argv=["main.py"])
   assert_true(result is Finished)
-  assert_eq(output, "2 1\n")
+  assert_eq(output, "[2, 1]\n")
 }
 
 // ---------------------------------------------------------------------------
@@ -113,14 +113,15 @@ test "core is the default, spelled out" {
 
 ///|
 /// A profile relaxes what the sieve refuses with an issue number and nothing
-/// else. `print(5 and 6)` was never a syntax question -- it type-checks and is
-/// undefined at run time -- and it stays that way.
-test "a profile does not make an undefined operation defined" {
+/// else. `print(5 and 6)` was never a syntax question, and since PurePy is
+/// typed it is not a run-time one either: the operands are not bools, and the
+/// checker says so before anything runs, under every profile.
+test "a profile does not make an ill-typed program well typed" {
   let m = @purepy.parse("print(1 and 2 and 3)\n")
-  assert_eq(@purepy.check(m, profile=@profile.pending()), None)
-  let tree = @purepy.source_tree(Map([("__main__", m)]))
-  let (_, result) = @purepy.run(tree)
-  assert_true(result is Undefined(_))
+  assert_eq(
+    @purepy.check(m, profile=@profile.pending()).unwrap().message(),
+    "expected type bool, given Literal[1]",
+  )
 }
 
 ///|
@@ -155,10 +156,9 @@ test "a pending feature is undefined where PurePy has no rule" {
   let p = @profile.pending()
   // `is` between two things that are not `None` has no answer. Where an
   // operand is a LITERAL it is visible in the source, and the sieve refuses it
-  // before the run rather than stopping halfway through one -- see
-  // "identity against a literal is refused, not deferred". Where it is not,
-  // there is nothing to see, so it stops when it runs. Still a stop, and never
-  // an invented answer.
+  // before the run -- see "identity against a literal is refused, not
+  // deferred". Where it is not, it stops when it runs. Still a stop, and
+  // never an invented answer.
   assert_true(
     outcome_under("x = 1\ny = 1\nprint(x is y)\n", p).has_prefix("undefined: "),
   )
@@ -168,27 +168,33 @@ test "a pending feature is undefined where PurePy has no rule" {
     outcome_under("print([1, 2][::0])\n", p),
     "undefined: a slice with a step of zero",
   )
-  // An arity mismatch is a ValueError too.
-  assert_eq(
-    outcome_under("a, b = 1, 2, 3\n", p),
-    "undefined: unpacking 3 values into 2 targets",
-  )
-  // A chain is only as defined as its links: PurePy's `<` between an int and
-  // a str has no rule, and neither does the chain that contains one.
-  assert_true(
-    outcome_under("print(1 < 2 < \"a\")\n", p).has_prefix("undefined: "),
-  )
 }
 
 ///|
-/// Where a profile's features ABORT, which is a different thing.
-test "a pending feature aborts where Python raises" {
+/// What a profile's features refuse before anything runs, now that the
+/// language is typed: what used to be undefined at run time, or a
+/// `TypeError` there, is a type error here.
+test "a pending feature is typed" {
   let p = @profile.pending()
-  assert_eq(outcome_under("print(1[1:2])\n", p), "aborts: TypeError")
-  assert_eq(outcome_under("a, b = 1\n", p), "undefined: unpacking int")
-  // A chain short-circuits: the third comparison is never made, so its
-  // undefined operand never matters.
-  assert_eq(outcome_under("print(2 < 1 < \"a\")\n", p), "ok: False\n")
+  // An arity mismatch in a destructuring is the shape of a tuple type.
+  assert_eq(
+    outcome_under("a, b = 1, 2, 3\n", p),
+    "refused: expected type tuple of 2 components, given tuple[Literal[1], Literal[2], Literal[3]]",
+  )
+  assert_eq(
+    outcome_under("a, b = 1\n", p),
+    "refused: expected type tuple of 2 components, given Literal[1]",
+  )
+  // A chain is only as typed as its links.
+  assert_eq(
+    outcome_under("print(1 < 2 < \"a\")\n", p),
+    "refused: no overload of '<' at operand types Literal[2] and Literal['a']",
+  )
+  // An int has no slices, as it has no items.
+  assert_eq(
+    outcome_under("print(1[1:2])\n", p),
+    "refused: values of type Literal[1] cannot be subscripted",
+  )
 }
 
 ///|
@@ -197,35 +203,35 @@ test "a pending feature aborts where Python raises" {
 /// Every line here is something Python answers and this declines to. That is
 /// the whole difference between adding a LIBRARY to PurePy and adding Python
 /// to it: `sum([True])` is 1 in Python only because a bool is an int there,
-/// and `any([1])` is True only because 1 is truthy. PurePy says neither, so a
-/// builtin that said them would be smuggling in a rule the language refused.
+/// and `any([1])` is True only because 1 is truthy. PurePy says neither, and
+/// since it is typed it says so before the program runs.
 test "an added builtin declines where Python coerces" {
   let p = @profile.builtins()
-  let undefined = [
+  let refused = [
     // No truthiness: `any` and `all` want the real bools `if` wants.
-    "print(any([1, 2]))\n", "print(all([1]))\n", "print(any(['']))\n",
-    // A bool is not a number, so `+` over one has no rule.
-     "print(sum([True, False]))\n",
+    ("print(any([1, 2]))\n", "expected type bool, given int"),
+    ("print(all([1]))\n", "expected type bool, given int"),
+    // A bool is not a number.
+    ("print(sum([True, False]))\n", "expected type float, given bool"),
+    ("print(abs(True))\n", "expected type float, given Literal[True]"),
+    ("print(int(True))\n", "expected type float | str, given Literal[True]"),
     // A partial order stays partial: no total order over these, so no sort.
-     "print(sorted([1, 'a']))\n", "print(min(1, 'a'))\n",
-    // Python raises ValueError, which PurePy does not model.
-     "print(int('twelve'))\n", "print(min([]))\n",
+    (
+      "print(sorted([1, 'a']))\n", "no overload of '<' at operand types int | str and int | str",
+    ),
+    (
+      "print(min(1, 'a'))\n", "no overload of '<' at operand types int | str and int | str",
+    ),
   ]
-  for source in undefined {
-    let got = outcome_under(source, p)
-    assert_true(got.has_prefix("undefined: "), msg=source + " -> " + got)
-    // Not undefined because the NAME was missing -- that would make this test
-    // pass under any profile at all, including one with no builtins in it.
-    assert_false(got.has_prefix("undefined: the unbound name"), msg=source)
+  for c in refused {
+    assert_eq(outcome_under(c.0, p), "refused: " + c.1, msg=c.0)
   }
-  // A bool handed to a builtin that says what it takes is a TypeError and not
-  // undefined, which is the better answer of the two: `TypeError` is a
-  // termination the semantics HAS, and Python raises one here too. Undefined
-  // is for where PurePy has no rule at all, not for where it has one and the
-  // argument fails it.
-  for source in ["print(abs(True))\n", "print(int(True))\n"] {
-    assert_eq(outcome_under(source, p), "aborts: TypeError", msg=source)
-  }
+  // Python raises ValueError, which PurePy does not model: a well-typed call
+  // with no answer.
+  assert_eq(
+    outcome_under("print(int('twelve'))\n", p),
+    "undefined: int of a string that is not a number",
+  )
 }
 
 ///|
@@ -234,13 +240,10 @@ test "an added builtin declines where Python coerces" {
 test "an added builtin is not in scope without the profile" {
   let m = @purepy.parse("print(sorted([2, 1]))\n")
   assert_eq(@purepy.sieve(m), None)
-  assert_eq(
-    @purepy.check(m).unwrap().message(),
-    "'sorted' is not definitely assigned",
-  )
+  assert_eq(@purepy.check(m).unwrap().message(), "'sorted' is not defined")
   assert_eq(
     @purepy.check(m, profile=@profile.pending()).unwrap().message(),
-    "'sorted' is not definitely assigned",
+    "'sorted' is not defined",
   )
   assert_eq(@purepy.check(m, profile=@profile.builtins()), None)
 }
@@ -281,7 +284,8 @@ test "no method a profile adds can mutate" {
   ]
   for source in mutators {
     let got = outcome_under(source, p)
-    assert_true(got.has_prefix("undefined: an attribute of"), msg=source)
+    assert_true(got.has_prefix("refused: values of type "), msg=source)
+    assert_true(got.contains(" have no method '"), msg=source)
   }
 }
 
@@ -298,16 +302,16 @@ test "a method is a call and not a value" {
   assert_eq(outcome_under("print(\"a\".upper())\n", p), "ok: A\n")
   assert_eq(
     outcome_under("f = \"a\".upper\n", p),
-    "undefined: an attribute of str",
+    "refused: values of type Literal['a'] have no attributes",
   )
-  // A name no table has reads the way a typo has always read.
+  // A name no table has is refused by name.
   assert_eq(
     outcome_under("print(\"a\".uper())\n", p),
-    "undefined: an attribute of str",
+    "refused: values of type Literal['a'] have no method 'uper'",
   )
   assert_eq(
     outcome_under("print((1).bit_length())\n", p),
-    "undefined: an attribute of int",
+    "refused: values of type Literal[1] have no attributes",
   )
 }
 
@@ -325,8 +329,8 @@ test "a module member and a field still resolve as they did" {
     )
     assert_eq(
       outcome_under(
-        "from dataclasses import dataclass\nfrom typing import Any\n" +
-        "@dataclass\nclass P:\n    x: Any\n\np = P(1)\nprint(p.x)\n",
+        "from dataclasses import dataclass\n" +
+        "@dataclass\nclass P:\n    x: int\n\np = P(1)\nprint(p.x)\n",
         p,
       ),
       "ok: 1\n",
@@ -338,13 +342,14 @@ test "a module member and a field still resolve as they did" {
       outcome_under("import math\nprint(math.nope())\n", p),
       "refused: module 'math' has no member 'nope'",
     )
+    // So is a field that is not there, now that a value has a type.
     assert_eq(
       outcome_under(
-        "from dataclasses import dataclass\nfrom typing import Any\n" +
-        "@dataclass\nclass P:\n    x: Any\n\np = P(1)\nprint(p.y())\n",
+        "from dataclasses import dataclass\n" +
+        "@dataclass\nclass P:\n    x: int\n\np = P(1)\nprint(p.y())\n",
         p,
       ),
-      "aborts: AttributeError",
+      "refused: class 'P' has no field 'y'",
     )
   }
 }
@@ -356,21 +361,38 @@ test "a module member and a field still resolve as they did" {
 /// one to a range, and outside that range it is the `TypeError` Python raises.
 test "a default argument fills a missing parameter" {
   let p = @profile.pending()
-  let f = "def f(a, b=2, c=3):\n    return [a, b, c]\n"
+  let f = "def f(a: int, b: int = 2, c: int = 3) -> list[int]:\n    return [a, b, c]\n"
   assert_eq(outcome_under(f + "print(f(1))\n", p), "ok: [1, 2, 3]\n")
   assert_eq(outcome_under(f + "print(f(1, 9))\n", p), "ok: [1, 9, 3]\n")
   assert_eq(outcome_under(f + "print(f(1, 9, 8))\n", p), "ok: [1, 9, 8]\n")
-  // Too few for the required parameters, and too many for the whole list.
-  assert_eq(outcome_under(f + "print(f())\n", p), "aborts: TypeError")
-  assert_eq(outcome_under(f + "print(f(1, 2, 3, 4))\n", p), "aborts: TypeError")
-  // A lambda takes the same rule, through the same code.
+  // Too few for the required parameters, and too many for the whole list:
+  // the arity is part of the type, so the checker refuses both.
   assert_eq(
-    outcome_under("g = lambda x, y=10: x + y\nprint(g(1), g(1, 2))\n", p),
-    "ok: 11 3\n",
+    outcome_under(f + "print(f())\n", p),
+    "refused: call expects 3 arguments, given 0",
   )
   assert_eq(
-    outcome_under("g = lambda x, y=10: x\nprint(g())\n", p),
-    "aborts: TypeError",
+    outcome_under(f + "print(f(1, 2, 3, 4))\n", p),
+    "refused: call expects 3 arguments, given 4",
+  )
+  // A default must have its parameter's type.
+  assert_eq(
+    outcome_under("def g(a: int = 'x') -> int:\n    return a\n", p),
+    "refused: expected type int, given Literal['x']",
+  )
+  // A lambda takes the same rule, applied on the spot or given a type with
+  // fewer parameters than it has.
+  assert_eq(outcome_under("print((lambda x, y=10: x + y)(1))\n", p), "ok: 11\n")
+  assert_eq(
+    outcome_under(
+      "from typing import Callable\ng: Callable[[int], int] = lambda x, y=10: x + y\nprint(g(1))\n",
+      p,
+    ),
+    "ok: 11\n",
+  )
+  assert_eq(
+    outcome_under("print((lambda x, y=10: x)())\n", p),
+    "refused: call expects 2 arguments, given 0",
   )
 }
 
@@ -385,21 +407,21 @@ test "a default argument fills a missing parameter" {
 test "a default argument cannot be evaluated at an observable time" {
   let p = @profile.pending()
   let source =
-    #|def even(n, step=1):
+    #|def even(n: int, step: int = 1) -> bool:
     #|    if n == 0:
     #|        return True
     #|    return odd(n - step)
     #|
-    #|def odd(n, step=1):
+    #|def odd(n: int, step: int = 1) -> bool:
     #|    if n == 0:
     #|        return False
     #|    return even(n - step)
     #|
-    #|print(even(4), odd(4), even(3, 3))
+    #|print([even(4), odd(4), even(3, 3)])
     #|
   // Sixteen calls through a mutual region, each rebuilding both closures and
   // each re-reading the same two defaults. Nothing observes the difference.
-  assert_eq(outcome_under(source, p), "ok: True False False\n")
+  assert_eq(outcome_under(source, p), "ok: [True, False, False]\n")
 }
 
 ///|
@@ -414,13 +436,15 @@ test "an f-string is checked like the expressions it holds" {
   // Not definitely assigned, reported at the name inside the hole.
   let m = @purepy.parse("a = 1\nprint(f\"x is {nope} here\")\n")
   let d = @purepy.check(m, profile=p).unwrap()
-  assert_eq(d.message(), "'nope' is not definitely assigned")
+  assert_eq(d.message(), "'nope' is not defined")
   assert_eq(d.span.unwrap().start.line, 2)
   assert_eq(d.span.unwrap().start.col, 14)
   // The capture rule reaches inside one too.
   assert_eq(
     @purepy.check(
-      @purepy.parse("x = 1\nf = lambda: f\"{x}\"\nx = 2\n"),
+      @purepy.parse(
+        "from typing import Callable\nx = 1\nf: Callable[[], str] = lambda: f\"{x}\"\nx = 2\n",
+      ),
       profile=p,
     )
     .unwrap()
@@ -446,7 +470,10 @@ test "an f-string formats with the printing rules PurePy already had" {
   // A closure has no printable form, and an f-string is a print by another
   // name -- the same undefined operation `print` gives.
   assert_eq(
-    outcome_under("f = lambda: 1\nprint(f\"{f}\")\n", p),
+    outcome_under(
+      "from typing import Callable\nf: Callable[[], int] = lambda: 1\nprint(f\"{f}\")\n",
+      p,
+    ),
     "undefined: formatting function",
   )
 }

@@ -2,69 +2,59 @@
 package "marianoguerra/pure-py/check"
 
 import {
-  "marianoguerra/pure-py/analysis",
   "marianoguerra/pure-py/ast",
-  "marianoguerra/pure-py/basic",
-  "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/error",
   "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
-  "moonbitlang/core/bigint",
+  "marianoguerra/pure-py/types",
+  "moonbitlang/core/debug",
   "moonbitlang/core/immut/sorted_map",
 }
 
 // Values
-pub fn check_body(Array[@ast.Stmt], @context.ModuleContext[Program]) -> @context.ModuleContext[Program] raise
-
 pub fn check_entry(String, profile? : @profile.Profile) -> @error.Diagnostic?
 
-pub fn check_module(Program, String) -> @sorted_map.SortedMap[String, @context.Entry] raise
+pub fn check_module(Program, String) -> @sorted_map.SortedMap[String, Entry] raise
 
-pub fn check_mutual_region(Array[@ast.Stmt], @context.ModuleContext[Program]) -> Unit raise
+pub fn check_program(@program.SourceTree, host_members? : Map[String, Array[(String, @types.Type)]], profile? : @profile.Profile) -> @error.Diagnostic?
 
-pub fn check_pattern(@ast.Pattern, @context.ModuleContext[Program]) -> Unit raise
+pub fn check_single(@ast.Module, host_members? : Map[String, Array[(String, @types.Type)]], profile? : @profile.Profile) -> @error.Diagnostic?
 
-pub fn check_pattern_list(Array[@ast.Pattern], @basic.Span, @context.ModuleContext[Program]) -> Unit raise
+pub fn context_of(Array[(String, Entry)]) -> @sorted_map.SortedMap[String, Entry]
 
-pub fn check_program(@program.SourceTree, host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> @error.Diagnostic?
+pub fn empty_context() -> @sorted_map.SortedMap[String, Entry]
 
-pub fn check_seq(ArrayView[@analysis.Statement], @context.ModuleContext[Program]) -> @context.ModuleContext[Program] raise
+pub fn override_context(@sorted_map.SortedMap[String, Entry], @sorted_map.SortedMap[String, Entry]) -> @sorted_map.SortedMap[String, Entry]
 
-pub fn check_single(@ast.Module, host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> @error.Diagnostic?
-
-pub fn check_statement(@analysis.Statement, @context.ModuleContext[Program]) -> Unit raise
-
-pub fn class_entry_for(@ast.Stmt, String, @sorted_map.SortedMap[String, @context.Entry]) -> @context.Entry
-
-pub fn exact_integer(Double) -> @bigint.BigInt?
-
-pub fn is_catch_all(@ast.Pattern) -> Bool
-
-pub fn next_ctx_after(@analysis.Statement, @context.ModuleContext[Program]) -> @context.ModuleContext[Program]
+pub fn predefined_members(String) -> Array[(String, Entry)]?
 
 pub fn predefined_module_names() -> Array[String]
 
-pub fn result_type(@ast.Stmt) -> @context.ResultType
-
-pub fn result_type_body(ArrayView[@ast.Stmt]) -> @context.ResultType
-
-pub fn result_type_statement(@analysis.Statement) -> @context.ResultType
-
-pub fn subsumes(@ast.Pattern, @ast.Pattern, @context.ModuleContext[Program]) -> Bool
+pub let predefined_modules : Array[String]
 
 // Errors
 
 // Types and methods
+pub(all) enum Entry {
+  Var(@types.Type)
+  Unassigned
+  ModuleStub(String)
+  ModuleLoaded(String, @sorted_map.SortedMap[String, Entry])
+  Class(String)
+  Predefined
+} derive(Eq, @debug.Debug)
+
 pub struct Program {
-  modules : Map[String, @ast.Module]
-  host_members : Map[String, Array[String]]
+  tree : @program.SourceTree
+  host_members : Map[String, Array[(String, @types.Type)]]
   profile : @profile.Profile
-  signatures : Map[String, @sorted_map.SortedMap[String, @context.Entry]]
+  mut sigma : @sorted_map.SortedMap[String, @types.ClassTableEntry]
+  signatures : Map[String, @sorted_map.SortedMap[String, Entry]]
   loading : Array[String]
 }
-pub fn Program::new(Map[String, @ast.Module], host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> Self
-pub fn Program::single(@ast.Module, host_members? : Map[String, Array[String]], profile? : @profile.Profile) -> Self
+pub fn Program::new(@program.SourceTree, host_members? : Map[String, Array[(String, @types.Type)]], profile? : @profile.Profile) -> Self
 
 // Type aliases
+pub type Context = @sorted_map.SortedMap[String, Entry]
 
 // Traits

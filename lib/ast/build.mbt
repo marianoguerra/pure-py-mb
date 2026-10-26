@@ -121,6 +121,23 @@ pub fn Expr::dict(entries : Array[(Expr, Expr)]) -> Expr {
 }
 
 ///|
+/// `[elt for target in iter if ifs...]`, one clause.
+pub fn Expr::list_comp(
+  elt : Expr,
+  target : String,
+  iter : Expr,
+  ifs~ : Array[Expr] = [],
+) -> Expr {
+  ListComp(
+    elt~,
+    generators=[
+      { target: Expr::name(target, ctx=Store), iter, ifs, is_async: false, },
+    ],
+    span=@basic.nowhere,
+  )
+}
+
+///|
 pub fn Expr::lambda(params : Array[String], body : Expr) -> Expr {
   Lambda(args=arguments(params), body~, span=@basic.nowhere)
 }
@@ -171,29 +188,57 @@ pub fn Stmt::if_(
 }
 
 ///|
+/// `def name(x: T, ...) -> R:` -- every parameter with its annotation, and the
+/// result's, since PurePy requires both. `returns` defaults to `None`.
 pub fn Stmt::def_(
   name : String,
-  params : Array[String],
+  params : Array[(String, Expr)],
   body : Array[Stmt],
+  returns? : Expr,
 ) -> Stmt {
+  let args = arguments(params.map(fn(p) { p.0 }))
   FunctionDef(
     name~,
-    args=arguments(params),
+    args={
+      ..args,
+      args: args.args.mapi(fn(i, a) { { ..a, annotation: Some(params[i].1), } }),
+    },
     body~,
     decorators=[],
-    returns=None,
+    returns=Some(
+      match returns {
+        Some(r) => r
+        None => Expr::none()
+      },
+    ),
     is_async=false,
     span=@basic.nowhere,
   )
 }
 
 ///|
-/// A PurePy dataclass: `@dataclass` on a class whose body is `x: Any` for
-/// each field, with an optional base class. That is the only class form
+/// `x: T = value`, an annotated assignment.
+pub fn Stmt::ann_assign(
+  target : String,
+  annotation : Expr,
+  value : Expr,
+) -> Stmt {
+  AnnAssign(
+    target=Expr::name(target, ctx=Store),
+    annotation~,
+    value=Some(value),
+    simple=true,
+    span=@basic.nowhere,
+  )
+}
+
+///|
+/// A PurePy dataclass: `@dataclass` on a class whose body declares each field
+/// with its type, and an optional base class. That is the only class form
 /// PurePy accepts, so it is the only one the builder offers.
 pub fn Stmt::dataclass(
   name : String,
-  fields : Array[String],
+  fields : Array[(String, Expr)],
   base? : String,
 ) -> Stmt {
   ClassDef(
@@ -205,8 +250,8 @@ pub fn Stmt::dataclass(
     keywords=[],
     body=fields.map(fn(f) {
       Stmt::AnnAssign(
-        target=Expr::name(f, ctx=Store),
-        annotation=Expr::name("Any"),
+        target=Expr::name(f.0, ctx=Store),
+        annotation=f.1,
         value=None,
         simple=true,
         span=@basic.nowhere,

@@ -42,8 +42,8 @@ if [ -x "$embed" ] && [ -x "$impl" ]; then
     status=1
   fi
   got=$("$impl" run "$tmp/main.py")
-  if [ "$got" != "3 True" ]; then
-    echo "embed-smoke: the generated program printed '$got', expected '3 True'" >&2
+  if [ "$got" != "[3, True]" ]; then
+    echo "embed-smoke: the generated program printed '$got', expected '[3, True]'" >&2
     status=1
   fi
 fi

@@ -13,72 +13,83 @@ fn main {
 
 ///|
 /// A dataclass, a mutual region and a match -- the three shapes a generator
-/// actually produces.
+/// actually produces -- with the annotations PurePy requires.
 fn generated() -> @ast.Module {
+  let int_ = @ast.Expr::name("int")
+  let bool_ = @ast.Expr::name("bool")
   @ast.module_of([
-    @ast.Stmt::dataclass("Nil", []),
-    @ast.Stmt::dataclass("Cons", ["head", "tail"]),
-    @ast.Stmt::def_("total", ["xs"], [
-      @ast.Stmt::match_(@ast.Expr::name("xs"), [
-        @ast.case_(@ast.Pattern::constr("Nil", []), [
-          @ast.Stmt::return_(value=@ast.Expr::int(0)),
-        ]),
-        @ast.case_(
-          @ast.Pattern::constr("Cons", [
-            @ast.Pattern::capture("h"),
-            @ast.Pattern::capture("t"),
-          ]),
-          [
-            @ast.Stmt::return_(
-              value=@ast.Expr::binop(
-                @ast.Expr::name("h"),
-                Add,
-                @ast.Expr::call(@ast.Expr::name("total"), [@ast.Expr::name("t")]),
+    @ast.Stmt::from_import("dataclasses", ["dataclass"]),
+    @ast.Stmt::dataclass("Point", [("x", int_), ("y", int_)]),
+    @ast.Stmt::def_(
+      "total",
+      [("p", @ast.Expr::name("Point"))],
+      [
+        @ast.Stmt::match_(@ast.Expr::name("p"), [
+          @ast.case_(
+            @ast.Pattern::constr("Point", [
+              @ast.Pattern::capture("h"),
+              @ast.Pattern::capture("t"),
+            ]),
+            [
+              @ast.Stmt::return_(
+                value=@ast.Expr::binop(
+                  @ast.Expr::name("h"),
+                  Add,
+                  @ast.Expr::name("t"),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ]),
+      ],
+      returns=int_,
+    ),
+    @ast.Stmt::def_(
+      "even",
+      [("n", int_)],
+      [
+        @ast.Stmt::if_(
+          @ast.Expr::compare(@ast.Expr::name("n"), Eq, @ast.Expr::int(0)),
+          [@ast.Stmt::return_(value=@ast.Expr::bool(true))],
         ),
-        @ast.case_(@ast.Pattern::wildcard(), [
-          @ast.Stmt::return_(value=@ast.Expr::int(0)),
-        ]),
-      ]),
-    ]),
-    @ast.Stmt::def_("even", ["n"], [
-      @ast.Stmt::if_(
-        @ast.Expr::compare(@ast.Expr::name("n"), Eq, @ast.Expr::int(0)),
-        [@ast.Stmt::return_(value=@ast.Expr::bool(true))],
-      ),
-      @ast.Stmt::return_(
-        value=@ast.Expr::call(@ast.Expr::name("odd"), [
-          @ast.Expr::binop(@ast.Expr::name("n"), Sub, @ast.Expr::int(1)),
-        ]),
-      ),
-    ]),
-    @ast.Stmt::def_("odd", ["n"], [
-      @ast.Stmt::if_(
-        @ast.Expr::compare(@ast.Expr::name("n"), Eq, @ast.Expr::int(0)),
-        [@ast.Stmt::return_(value=@ast.Expr::bool(false))],
-      ),
-      @ast.Stmt::return_(
-        value=@ast.Expr::call(@ast.Expr::name("even"), [
-          @ast.Expr::binop(@ast.Expr::name("n"), Sub, @ast.Expr::int(1)),
-        ]),
-      ),
-    ]),
-    @ast.Stmt::assign(
-      "xs",
-      @ast.Expr::call(@ast.Expr::name("Cons"), [
+        @ast.Stmt::return_(
+          value=@ast.Expr::call(@ast.Expr::name("odd"), [
+            @ast.Expr::binop(@ast.Expr::name("n"), Sub, @ast.Expr::int(1)),
+          ]),
+        ),
+      ],
+      returns=bool_,
+    ),
+    @ast.Stmt::def_(
+      "odd",
+      [("n", int_)],
+      [
+        @ast.Stmt::if_(
+          @ast.Expr::compare(@ast.Expr::name("n"), Eq, @ast.Expr::int(0)),
+          [@ast.Stmt::return_(value=@ast.Expr::bool(false))],
+        ),
+        @ast.Stmt::return_(
+          value=@ast.Expr::call(@ast.Expr::name("even"), [
+            @ast.Expr::binop(@ast.Expr::name("n"), Sub, @ast.Expr::int(1)),
+          ]),
+        ),
+      ],
+      returns=bool_,
+    ),
+    @ast.Stmt::ann_assign(
+      "p",
+      @ast.Expr::name("Point"),
+      @ast.Expr::call(@ast.Expr::name("Point"), [
         @ast.Expr::int(1),
-        @ast.Expr::call(@ast.Expr::name("Cons"), [
-          @ast.Expr::int(2),
-          @ast.Expr::call(@ast.Expr::name("Nil"), []),
-        ]),
+        @ast.Expr::int(2),
       ]),
     ),
     @ast.Stmt::expr_stmt(
       @ast.Expr::call(@ast.Expr::name("print"), [
-        @ast.Expr::call(@ast.Expr::name("total"), [@ast.Expr::name("xs")]),
-        @ast.Expr::call(@ast.Expr::name("even"), [@ast.Expr::int(4)]),
+        @ast.Expr::list([
+          @ast.Expr::call(@ast.Expr::name("total"), [@ast.Expr::name("p")]),
+          @ast.Expr::call(@ast.Expr::name("even"), [@ast.Expr::int(4)]),
+        ]),
       ]),
     ),
   ])

@@ -20,12 +20,11 @@ test rather than a Python test:
      into the default would pass questions 2 and 3 and fail this one.
 
      The whole pipeline and not just `check`, because where a profile bites
-     depends on what kind of feature it is, and asking the wrong half asks
-     nothing. A syntax feature is refused by the sieve (exit 2); a builtin is a
-     name the checker has never heard of (exit 3); a METHOD is neither -- the
-     checker carries no types, so `s.upper()` type-checks under `core` and is
-     an undefined operation only when it runs (exit 5). Asking `check` would
-     have recorded `ok` for every methods file and quietly asked nothing.
+     depends on what kind of feature it is. A syntax feature is refused by the
+     sieve (exit 2); a builtin is a name the checker has never heard of (exit
+     3); a METHOD is an attribute of a value whose type has none (exit 3,
+     since PurePy has been typed from v0.16 -- before that it type-checked and
+     was an undefined operation only when it ran).
 
      (The REFERENCE's answer for the pending forms is pinned separately, by
      `conform.py` over the vendored `semantically-valid/pending/` files; this

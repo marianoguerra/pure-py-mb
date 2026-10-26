@@ -174,8 +174,9 @@ async fn Interp::call_primitive(
       }
       Val(List(out))
     }
-    // `typing.Any`, `typing.Callable` and `dataclasses.dataclass` are values
-    // so that importing them binds something. They are never called.
+    // `int`, `typing.Callable`, `dataclasses.dataclass` and the rest of the
+    // names usable only in an annotation are values so that importing them
+    // binds something. The checker never lets one be called.
     Opaque(name) => Stuck("calling " + name)
     // A function the host supplies. It answers by name, and what it cannot
     // answer is an operation the semantics does not cover -- the same as any

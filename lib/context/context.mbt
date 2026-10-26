@@ -375,30 +375,20 @@ pub fn predefined_members(
   // tidiness: `check_submodule_clash` walks a module's own members and reports
   // the first clash it finds, so reordering them would reorder a diagnostic
   // the reference decides.
+  guard @types.predefined_members(q) is Some(ms) else { return None }
+  let out = ms.map(fn(m) { m.0 })
   if q == "builtins" && profile.has(ExtraBuiltins) {
-    let out = ["print", "len", "range"]
     for n in extra_builtin_names {
-      out.push(n)
+      if !out.contains(n) {
+        out.push(n)
+      }
     }
-    return Some(out)
   }
-  match q {
-    "builtins" => Some(["print", "len", "range"])
-    "math" =>
-      Some([
-        "pi", "e", "sqrt", "exp", "log", "sin", "cos", "tan", "floor", "ceil",
-      ])
-    "sys" => Some(["argv", "exit"])
-    "typing" => Some(["Any"])
-    "dataclasses" => Some(["dataclass"])
-    _ => None
-  }
+  Some(out)
 }
 
 ///|
-pub let predefined_modules : Array[String] = [
-  "builtins", "dataclasses", "math", "sys", "typing",
-]
+pub let predefined_modules : Array[String] = @types.predefined_modules
 
 ///|
 /// The names `Feature::ExtraBuiltins` adds to `builtins`, in a fixed order.

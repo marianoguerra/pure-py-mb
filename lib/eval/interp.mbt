@@ -177,48 +177,59 @@ fn Interp::write(self : Interp, text : String) -> Unit {
 ///|
 /// The environment a predefined module loads to, or `None` if `q` is not one.
 ///
-/// `typing` exposes `Any` alone. Figure 2.7 also lists `Callable`; the
-/// reference checker does not, and the signature and the environment have to
-/// agree or a from-import would type-check and then fail to run.
+/// The members are `@types.predefined_members`', the table the checker reads,
+/// so the signature and the environment cannot disagree: a from-import that
+/// type-checks has something to bind.
 ///
 /// The host's redefinitions are laid over the result and not mixed into it,
 /// for which see `Interp::redefine`.
 pub fn Interp::predefined(self : Interp, q : String) -> Env? {
   let entries : Array[(String, Value)] = [("__name__", Str(q))]
-  match q {
-    "builtins" => {
-      entries.push(("print", Prim(Print)))
-      entries.push(("len", Prim(Len)))
-      entries.push(("range", Prim(Range)))
-      // In the order of `@context.extra_builtin_names`, which the checker
-      // reads. `predefined_wbtest.mbt` is what keeps the two from drifting.
-      if self.profile.has(ExtraBuiltins) {
-        for e in extra_builtins() {
-          entries.push(e)
-        }
-      }
+  let extras = if q == "builtins" && self.profile.has(ExtraBuiltins) {
+    extra_builtins()
+  } else {
+    []
+  }
+  guard @types.predefined_members(q) is Some(members) else { return None }
+  for m in members {
+    // A name an extra builtin defines -- `int`, `str`, `list` -- is that
+    // function under the profile, and only an annotation's word without it.
+    if extras.iter().any(fn(e) { e.0 == m.0 }) {
+      continue
     }
-    "math" => {
-      entries.push(("pi", Float(3.141592653589793)))
-      entries.push(("e", Float(2.718281828459045)))
-      entries.push(("sqrt", Prim(Sqrt)))
-      entries.push(("exp", Prim(Exp)))
-      entries.push(("log", Prim(Log)))
-      entries.push(("sin", Prim(Sin)))
-      entries.push(("cos", Prim(Cos)))
-      entries.push(("tan", Prim(Tan)))
-      entries.push(("floor", Prim(MathFloor)))
-      entries.push(("ceil", Prim(MathCeil)))
-    }
-    "sys" => {
-      entries.push(("argv", List(self.host.argv.map(fn(a) { Value::Str(a) }))))
-      entries.push(("exit", Prim(Exit)))
-    }
-    "typing" => entries.push(("Any", Prim(Opaque("Any"))))
-    "dataclasses" => entries.push(("dataclass", Prim(Opaque("dataclass"))))
-    _ => return None
+    entries.push((m.0, self.predefined_value(q, m.0)))
+  }
+  // In the order of `@context.extra_builtin_names`, which the checker reads.
+  // `predefined_wbtest.mbt` is what keeps the two from drifting.
+  for e in extras {
+    entries.push(e)
   }
   Some(self.redefine(q, @value.env_of(entries)))
+}
+
+///|
+/// The value of one predefined member. A name usable only in an annotation or
+/// as a decorator -- `int`, `Callable`, `dataclass` -- is a value only so
+/// that importing it binds something; the checker never lets one be used.
+fn Interp::predefined_value(self : Interp, q : String, x : String) -> Value {
+  match (q, x) {
+    ("builtins", "print") => Prim(Print)
+    ("builtins", "len") => Prim(Len)
+    ("builtins", "range") => Prim(Range)
+    ("math", "pi") => Float(3.141592653589793)
+    ("math", "e") => Float(2.718281828459045)
+    ("math", "sqrt") => Prim(Sqrt)
+    ("math", "exp") => Prim(Exp)
+    ("math", "log") => Prim(Log)
+    ("math", "sin") => Prim(Sin)
+    ("math", "cos") => Prim(Cos)
+    ("math", "tan") => Prim(Tan)
+    ("math", "floor") => Prim(MathFloor)
+    ("math", "ceil") => Prim(MathCeil)
+    ("sys", "argv") => List(self.host.argv.map(fn(a) { Value::Str(a) }))
+    ("sys", "exit") => Prim(Exit)
+    _ => Prim(Opaque(x))
+  }
 }
 
 ///|

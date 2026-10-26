@@ -31,8 +31,15 @@ test "print(\"Hello, World!\") built and dumped" {
 /// actually produces, and the ones `test/embed` will print.
 test "a dataclass builds the only class form PurePy accepts" {
   let m = @ast.module_of([
-    @ast.Stmt::dataclass("Point", ["x", "y"]),
-    @ast.Stmt::dataclass("Point3", ["z"], base="Point"),
+    @ast.Stmt::dataclass("Point", [
+      ("x", @ast.Expr::name("int")),
+      ("y", @ast.Expr::name("int")),
+    ]),
+    @ast.Stmt::dataclass(
+      "Point3",
+      [("z", @ast.Expr::name("int"))],
+      base="Point",
+    ),
   ])
   inspect(
     @ast.dump(m),
@@ -47,13 +54,13 @@ test "a dataclass builds the only class form PurePy accepts" {
       #|          target:
       #|            Name id=x ctx=Store
       #|          annotation:
-      #|            Name id=Any ctx=Load
+      #|            Name id=int ctx=Load
       #|          value: -
       #|        AnnAssign simple=True
       #|          target:
       #|            Name id=y ctx=Store
       #|          annotation:
-      #|            Name id=Any ctx=Load
+      #|            Name id=int ctx=Load
       #|          value: -
       #|      decorator_list:
       #|        Name id=dataclass ctx=Load
@@ -66,7 +73,7 @@ test "a dataclass builds the only class form PurePy accepts" {
       #|          target:
       #|            Name id=z ctx=Store
       #|          annotation:
-      #|            Name id=Any ctx=Load
+      #|            Name id=int ctx=Load
       #|          value: -
       #|      decorator_list:
       #|        Name id=dataclass ctx=Load

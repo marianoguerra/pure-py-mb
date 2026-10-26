@@ -15,7 +15,7 @@ what `check` decides; CPython is the oracle for what `run` prints.
 ## Playground
 
 <https://marianoguerra.github.io/pure-py-mb/> — the whole library in a browser
-tab, with twenty-seven examples covering what PurePy runs, what a host can
+tab, with twenty-nine examples covering what PurePy runs, what a host can
 hand it, what is refused before it runs, and what ends without an answer.
 
 The page is a real embedder rather than a demonstration of one: the `host`
@@ -25,8 +25,9 @@ describes.
 
 ## Status
 
-The conformance suite passes in full: 983 assertions across four oracles,
-compared against the reference's own answers for every one of its sources.
+The conformance suite of specification v0.16.0 passes in full: 1282
+assertions across four oracles, compared against the reference's own answers
+for every one of its sources.
 Two more oracles compare the token stream and the parse tree against CPython's
 directly, and a third round-trips the printer.
 
@@ -106,7 +107,9 @@ test "the sieve rejects what PurePy excludes" {
 test "the checker decides definite assignment and the capture rules" {
   let good = @purepy.parse("x = 1\nprint(x)\n")
   inspect(@purepy.check(good) is None, content="true")
-  let bad = @purepy.parse("x = 1\nf = lambda: x\nx = 2\n")
+  let bad = @purepy.parse(
+    "from typing import Callable\nx = 1\nf: Callable[[], int] = lambda: x\nx = 2\n",
+  )
   match @purepy.check(bad) {
     Some(d) =>
       inspect(
@@ -202,6 +205,7 @@ test "a guest calling a function the host supplied" {
       @eval.HostModule::{
         name: "clock",
         members: [("now", @value.host_fn("clock.now"))],
+        types: [("now", Callable([], @types.t_int))],
       },
     ],
     call=fn(name, _) {
@@ -272,7 +276,10 @@ evaluator, so a code generator pays for neither.
 ///|
 test "building a tree and printing it" {
   let m = @ast.module_of([
-    @ast.Stmt::dataclass("Point", ["x", "y"]),
+    @ast.Stmt::dataclass("Point", [
+      ("x", @ast.Expr::name("int")),
+      ("y", @ast.Expr::name("int")),
+    ]),
     @ast.Stmt::expr_stmt(
       @ast.Expr::call(@ast.Expr::name("print"), [
         @ast.Expr::call(@ast.Expr::name("Point"), [
@@ -287,8 +294,8 @@ test "building a tree and printing it" {
     content=(
       #|@dataclass
       #|class Point:
-      #|    x: Any
-      #|    y: Any
+      #|    x: int
+      #|    y: int
       #|print(Point(1, 2))
       #|
     ),

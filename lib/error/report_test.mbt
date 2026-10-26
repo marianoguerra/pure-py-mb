@@ -21,7 +21,7 @@ fn span(from : Int32, to : Int32, line : Int32, col : Int32) -> @basic.Span {
 test "a rejection with a second place to look" {
   let source = "x = 5\nf = lambda: x\nx = 6\n"
   let d = @err.Diagnostic::new(
-    IllFormed(CapturedReassignment(name="x")),
+    IllFormed(CapturedReassignment(x="x")),
     span=span(20, 25, 3, 0),
   ).with_related(span(6, 19, 2, 0), "'x' captured here")
   inspect(
@@ -60,16 +60,15 @@ test "a rejection with no position renders as a message alone" {
 ///|
 test "every reason that earns a help line has one" {
   let with_help : Array[@err.Reason] = [
-    UnassignedVariable(name="x"),
+    UnassignedVariable(x="x"),
     UnassignedMember(x="x", q="lib"),
-    CapturedReassignment(name="x"),
-    SelfCaptureAssignment(name="f"),
-    CapturedGeneratorVariable(name="i"),
-    ModuleAsValue(name="sys"),
-    ClassAsValue(name="P"),
+    CapturedReassignment(x="x"),
+    SelfCaptureAssignment(x="f"),
+    CapturedGeneratorVariable(x="i"),
+    ModuleAsValue(q="sys"),
+    ClassAsValue(q="P"),
     SubmoduleNotImported(q="pkg.sub"),
     TopLevelReturn,
-    OwnDescendantImport(q="pkg.sub", q0="pkg"),
   ]
   for r in with_help {
     let d = @err.Diagnostic::new(IllFormed(r))
@@ -78,13 +77,7 @@ test "every reason that earns a help line has one" {
   }
   // A message that already says what to do gets no help line.
   assert_true(
-    @err.Diagnostic::new(IllFormed(DuplicateFieldName(name="x", cls="P"))).help()
-    is None,
-  )
-  // The `from-import` advice names the parent and the member.
-  assert_eq(
-    @err.Diagnostic::new(IllFormed(OwnDescendantImport(q="pkg.sub", q0="pkg"))).help(),
-    Some("use `from pkg import sub`"),
+    @err.Diagnostic::new(IllFormed(DuplicateField(x="x", c="P"))).help() is None,
   )
   // A not-yet-supported form points at its issue.
   assert_eq(

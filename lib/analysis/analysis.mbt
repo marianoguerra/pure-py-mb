@@ -186,7 +186,10 @@ pub fn fv_e(e : @ast.Expr) -> NameSet {
     Name(id~, ..) => @sorted_set.SortedSet::singleton(id)
     Constant(..) => empty
     Lambda(args~, body~, ..) => fv_e(body).difference(param_names(args))
-    Call(func~, args~, ..) => fv_e(func).union(fv_e_list(args))
+    Call(func~, args~, keywords~, ..) =>
+      fv_e(func)
+      .union(fv_e_list(args))
+      .union(fv_e_list(keywords.map(fn(k) { k.value })))
     BinOp(left~, right~, ..) => fv_e(left).union(fv_e(right))
     UnaryOp(operand~, ..) => fv_e(operand)
     BoolOp(values~, ..) => fv_e_list(values)
@@ -273,6 +276,11 @@ pub fn fv_stmt(s : @ast.Stmt) -> NameSet {
   match s {
     Pass(..) => empty
     Assign(value~, ..) => fv_e(value)
+    AnnAssign(value~, ..) =>
+      match value {
+        Some(v) => fv_e(v)
+        None => empty
+      }
     ExprStmt(value~, ..) => fv_e(value)
     Return(value~, ..) =>
       match value {
@@ -296,9 +304,11 @@ pub fn fv_stmt(s : @ast.Stmt) -> NameSet {
       }
       acc
     }
+    // Parameters and variables assigned in the body are local to the function.
     FunctionDef(name~, args~, body~, ..) =>
       fv_body(body)
       .difference(param_names(args))
+      .difference(assigns_body(body))
       .difference(@sorted_set.SortedSet::singleton(name))
     ClassDef(..) => empty
     _ => abort("unreachable after the sieve: " + s.kind_name())
@@ -330,6 +340,7 @@ pub fn assigns_stmt(s : @ast.Stmt) -> NameSet {
       }
       names(out)
     }
+    AnnAssign(target~, ..) => names(target_names(target))
     If(body~, or_else~, ..) => assigns_body(body).union(assigns_body(or_else))
     Match(cases~, ..) => {
       let mut acc = empty
@@ -364,7 +375,10 @@ pub fn captures_e(e : @ast.Expr) -> NameSet {
   match e {
     Lambda(args~, body~, ..) => fv_e(body).difference(param_names(args))
     Name(..) | Constant(..) => empty
-    Call(func~, args~, ..) => captures_e(func).union(captures_e_list(args))
+    Call(func~, args~, keywords~, ..) =>
+      captures_e(func)
+      .union(captures_e_list(args))
+      .union(captures_e_list(keywords.map(fn(k) { k.value })))
     BinOp(left~, right~, ..) => captures_e(left).union(captures_e(right))
     UnaryOp(operand~, ..) => captures_e(operand)
     BoolOp(values~, ..) => captures_e_list(values)
@@ -427,6 +441,11 @@ pub fn captures(s : @ast.Stmt) -> NameSet {
   match s {
     Pass(..) => empty
     Assign(value~, ..) => captures_e(value)
+    AnnAssign(value~, ..) =>
+      match value {
+        Some(v) => captures_e(v)
+        None => empty
+      }
     ExprStmt(value~, ..) => captures_e(value)
     Return(value~, ..) =>
       match value {
@@ -443,10 +462,12 @@ pub fn captures(s : @ast.Stmt) -> NameSet {
     }
     If(cond~, body~, or_else~, ..) =>
       captures_e(cond).union(captures_body(body)).union(captures_body(or_else))
+    // A pattern variable is in the function's scope, so a capture of it
+    // counts.
     Match(subject~, cases~, ..) => {
       let mut acc = captures_e(subject)
       for c in cases {
-        acc = acc.union(captures_body(c.body).difference(binds(c.pattern)))
+        acc = acc.union(captures_body(c.body))
       }
       acc
     }

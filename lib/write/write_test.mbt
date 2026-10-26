@@ -7,16 +7,24 @@ fn round(source : String) -> String {
 ///|
 test "a tree built by hand prints as Python" {
   let m = @ast.module_of([
-    @ast.Stmt::dataclass("Point", ["x", "y"]),
-    @ast.Stmt::def_("mag", ["p"], [
-      @ast.Stmt::return_(
-        value=@ast.Expr::binop(
-          @ast.Expr::attribute(@ast.Expr::name("p"), "x"),
-          Add,
-          @ast.Expr::attribute(@ast.Expr::name("p"), "y"),
-        ),
-      ),
+    @ast.Stmt::dataclass("Point", [
+      ("x", @ast.Expr::name("int")),
+      ("y", @ast.Expr::name("int")),
     ]),
+    @ast.Stmt::def_(
+      "mag",
+      [("p", @ast.Expr::name("Point"))],
+      returns=@ast.Expr::name("int"),
+      [
+        @ast.Stmt::return_(
+          value=@ast.Expr::binop(
+            @ast.Expr::attribute(@ast.Expr::name("p"), "x"),
+            Add,
+            @ast.Expr::attribute(@ast.Expr::name("p"), "y"),
+          ),
+        ),
+      ],
+    ),
     @ast.Stmt::expr_stmt(
       @ast.Expr::call(@ast.Expr::name("print"), [
         @ast.Expr::call(@ast.Expr::name("mag"), [
@@ -33,9 +41,9 @@ test "a tree built by hand prints as Python" {
     content=(
       #|@dataclass
       #|class Point:
-      #|    x: Any
-      #|    y: Any
-      #|def mag(p):
+      #|    x: int
+      #|    y: int
+      #|def mag(p: Point) -> int:
       #|    return p.x + p.y
       #|print(mag(Point(1, 2)))
       #|

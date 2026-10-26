@@ -1,5 +1,61 @@
 # Changelog
 
+## Unreleased
+
+The port follows the specification from v0.15.1 to v0.23.0 a release at a
+time; each section below is one upstream release, in the commit that reached
+it. `tools/reference.json` names the release the goldens were generated from.
+
+### Specification v0.16.0: PurePy is typed
+
+The release that changes what PurePy IS. Every parameter and every result
+is annotated, a variable has a type from its first assignment, and the
+checker is a bidirectional type checker: types and subtyping, overloaded
+operators, a class table, and an exhaustiveness and reachability analysis
+for `match` over the shapes a value of a type can have. The port follows the
+reference's new checker function for function (`lib/check`), with the type
+language in a package of its own (`lib/types`).
+
+What a program sees:
+
+- **Annotations are required and checked.** `def f(x):` is refused with
+  `parameters must be annotated`; `x: int = 1` is an assignment; a field is
+  any type, not just `Any` -- and `typing.Any` is gone. `typing` exports
+  `Callable`, `Literal`, `Never` and `Sized`; `builtins` exports `print`,
+  `len` and the names of the primitive types. `range` is not in `builtins`
+  until a later release gives it a type.
+- **`print` takes one argument**, of type `object`, as the reference types
+  it.
+- **Much of what was undefined at run time is now refused before it runs.**
+  `if 5:`, `1 + "a"`, `True + 1`, `xs.append(3)`, a list pattern against a
+  tuple: each is a type error with the reference's message.
+- **Imports are placed by the sieve** (`imports must precede all other
+  statements`, exit 1), and several issue numbers moved (`case guards` #190,
+  imports #135, relative imports #126, `from M import *` #105).
+- **A program's modules are loaded lazily.** A module nothing imports is not
+  parsed, so one that would not parse is no error; and the entry file is a
+  module like any other under its own name, so `import main` from `main.py`
+  is an import cycle.
+
+What an embedder sees:
+
+- **A host module declares its members' types.** `HostModule` has a `types`
+  field -- `("get", Callable([t_str], t_int))` -- and a member without one is
+  typed from its value, or `object`. `Host::member_types` is what the
+  checker reads; `HostModule::new` builds one with no declared types.
+- **The builders build typed code.** `Stmt::def_` takes `(name, annotation)`
+  pairs and a `returns`, `Stmt::dataclass` takes `(field, annotation)` pairs,
+  and `Stmt::ann_assign` and `Expr::list_comp` are new.
+- **The predefined table is `@types.predefined_members`**, read by the
+  checker and the evaluator alike, so the two cannot disagree.
+
+Profiles stay where they were, now typed: the extra builtins and the methods
+of the builtin types are typed by RULE (`sorted(xs)` is a list of what `xs`
+holds), a function with defaults has a type that can be called at any of its
+arities, and the profile corpus is rewritten as typed programs. The `diffrun`
+generator draws each expression at a type, so the checker discards a few of
+its programs rather than nearly all of them.
+
 ## 0.10.2 — 2026-10-26
 
 Nothing in the API moved. This release builds clean on the current toolchain

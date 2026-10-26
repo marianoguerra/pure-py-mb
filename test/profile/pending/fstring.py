@@ -16,10 +16,10 @@ print(f"")
 print(f"no holes at all")
 print(f"{x}{x}{x}")
 
-def label(n, prefix="#"):
+def label(n: int, prefix: str = "#") -> str:
     return f"{prefix}{n}"
 
-print(label(1), label(2, ">"))
+print([label(1), label(2, ">")])
 print(f"a" "b" f"{x}")
 print(f'single {x} quotes')
 print(f"""triple {x} quoted""")

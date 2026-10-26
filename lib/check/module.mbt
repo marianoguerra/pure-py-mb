@@ -1,8 +1,8 @@
 ///|
-/// Module well-formedness: Figures 3.5 to 3.7.
+/// Module and program well-formedness: a port of the reference's
+/// `check_module.py` and `check_program.py`.
 ///
-/// A port of the reference's `check_module.py`. The interesting parts are all
-/// about IMPORTS:
+/// The interesting parts are all about IMPORTS:
 ///
 ///   * A module's signature is computed once and cached, and a cycle is
 ///     detected by a stack rather than a depth limit -- so `a` importing `b`
@@ -13,56 +13,65 @@
 ///     `q` and appears in its signature as a stub -- named but not loaded.
 ///     Binding a name that clashes with one is an error.
 ///
-/// The program is a value: `Program` holds the module map and the caches, so
-/// checking two programs cannot see each other's answers. The reference keys
-/// its global cache on `id(M)` for the same reason.
+/// The program is a value: `Program` holds the module tree and the caches,
+/// so checking two programs cannot see each other's answers. The reference
+/// keys its global cache on `id(M)` for the same reason.
 pub struct Program {
-  modules : Map[String, @ast.Module]
-  /// Modules an EMBEDDING host defines, and the members each exports.
+  tree : @program.SourceTree
+  /// Modules an EMBEDDING host defines, and each member's type.
   ///
-  /// They stand exactly where the five predefined modules stand: named, with
-  /// an empty body, and with their members given by a table rather than read
-  /// off a body. The checker needs the NAMES and not the values -- what a
-  /// host function IS is the evaluator's business.
-  host_members : Map[String, Array[String]]
+  /// They stand exactly where the predefined modules stand: named, with an
+  /// empty body, and with their members given by a table rather than read off
+  /// a body. What a host function IS is the evaluator's business; what it may
+  /// be called with is the checker's, and that is the type.
+  host_members : Map[String, Array[(String, @types.Type)]]
   /// The superset of PurePy the caller opted in to.
-  ///
-  /// The checker reads it for one thing: which names `builtins` exports. A
-  /// profile that adds `sorted` has to put it in the initial context or a
-  /// program using it is ill formed before it can be run.
   profile : @profile.Profile
-  signatures : Map[String, @context.Context]
+  /// The class table: every class declared so far, program-wide.
+  ///
+  /// The reference threads Σ through every rule and returns it, but always
+  /// the newest one, and never rolls one back -- so one table per program,
+  /// updated where a class is declared, gives the same answers.
+  mut sigma : @types.ClassTable
+  signatures : Map[String, Context]
   loading : Array[String]
 }
 
 ///|
-/// A program from a map of module name to parsed module.
+/// A program from a source tree.
 pub fn Program::new(
-  modules : Map[String, @ast.Module],
-  host_members~ : Map[String, Array[String]] = Map([]),
+  tree : @program.SourceTree,
+  host_members~ : Map[String, Array[(String, @types.Type)]] = Map([]),
   profile~ : @profile.Profile = @profile.core,
 ) -> Program {
-  { modules, host_members, profile, signatures: Map([]), loading: [], }
+  for p in predefined_modules {
+    add_bodiless(tree, p)
+  }
+  for name, _ in host_members {
+    add_bodiless(tree, name)
+  }
+  {
+    tree,
+    host_members,
+    profile,
+    sigma: @types.empty_class_table(),
+    signatures: Map([]),
+    loading: [],
+  }
 }
 
 ///|
-/// The program a single file makes: the predefined modules, empty, the host's
-/// own, and the file itself as `__main__`. This is what `check_module.py`
-/// builds, plus whatever an embedder added.
-pub fn Program::single(
-  m : @ast.Module,
-  host_members~ : Map[String, Array[String]] = Map([]),
-  profile~ : @profile.Profile = @profile.core,
-) -> Program {
-  let modules : Map[String, @ast.Module] = Map([])
-  for p in @context.predefined_modules {
-    modules[p] = { body: [], span: @basic.nowhere, }
+/// A module with no source -- predefined, or the host's -- stands in the
+/// program with an empty body. Discovery puts the predefined ones in a tree
+/// read off a disk; a tree assembled in memory has never seen them.
+fn add_bodiless(tree : @program.SourceTree, q : String) -> Unit {
+  if !tree.modules.contains(q) {
+    tree.modules[q] = { body: [], span: @basic.nowhere, }
+    tree.paths[q] = "<\{q}>"
   }
-  for name, _ in host_members {
-    modules[name] = { body: [], span: @basic.nowhere, }
+  if !tree.names.contains(q) {
+    tree.names.push(q)
   }
-  modules["__main__"] = m
-  Program::new(modules, host_members~, profile~)
 }
 
 ///|
@@ -87,17 +96,6 @@ fn proper_prefix_of(p : String, q : String) -> Bool {
 }
 
 ///|
-/// `a.b.c` has proper prefixes `a` and `a.b`.
-fn proper_prefixes(q : String) -> Array[String] {
-  let parts = q.split(".").map(fn(v) { v.to_owned() }).collect()
-  let out : Array[String] = []
-  for i in 1..<parts.length() {
-    out.push(parts[:i].to_owned().join("."))
-  }
-  out
-}
-
-///|
 fn first_segment(q : String) -> String {
   match q.split_once(".") {
     Some((head, _)) => head.to_owned()
@@ -105,36 +103,84 @@ fn first_segment(q : String) -> String {
   }
 }
 
+///|
+fn parent_name(q : String) -> String? {
+  match q.rev_split_once(".") {
+    Some((head, _)) => Some(head.to_owned())
+    None => None
+  }
+}
+
+///|
+fn last_segment(q : String) -> String {
+  match q.rev_split_once(".") {
+    Some((_, tail)) => tail.to_owned()
+    None => q
+  }
+}
+
+///|
+/// The members of a module that has no source: one the specification
+/// predefines, or one an embedding host defines.
+fn members_without_source(
+  program : Program,
+  q : String,
+) -> Array[(String, Entry)]? {
+  match predefined_members(q) {
+    Some(ms) =>
+      Some(
+        if q == "builtins" {
+          let extras = extra_builtin_entries(program.profile)
+          [
+            ..ms.filter(fn(m) { !extras.iter().any(fn(e) { e.0 == m.0 }) }),
+            ..extras,
+          ]
+        } else {
+          ms
+        },
+      )
+    None =>
+      match program.host_members.get(q) {
+        Some(ms) => Some(ms.map(fn(m) { (m.0, Var(m.1)) }))
+        None => None
+      }
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 ///|
-/// The signature of a module: what a `from`-import of it can name.
+/// The signature of a module: what an import of it can name.
 ///
 /// Cached per program, and guarded by a loading stack so that a cycle is a
 /// program-level error rather than a hang.
-pub fn check_module(program : Program, q : String) -> @context.Context raise {
+pub fn check_module(program : Program, q : String) -> Context raise {
+  // The reference has the module in hand before it asks the cache, so a
+  // module that will not parse fails here, whatever else is true.
+  let m = program.tree.load(q)
   match program.signatures.get(q) {
     Some(cached) => return cached
     None => ()
   }
   match program.loading.search(q) {
     Some(i) => {
-      let cycle = program.loading[i:].to_owned()
-      cycle.push(q)
+      let cycle = [..program.loading[i:], q]
       raise @err.ill_formed_program("import cycle: " + cycle.join(" -> "))
     }
     None => ()
-  }
-  let m = match program.modules.get(q) {
-    Some(m) => m
-    None => raise @err.ill_formed_program("module '\{q}' not found")
   }
   program.loading.push(q)
   let result = try check_module_body(program, m, q) catch {
     // The innermost module that failed is the one whose path is reported.
     @err.PurePyError(d) => {
       let _ = program.loading.pop()
-      raise @err.PurePyError(d.attribute_to(q))
+      raise @err.PurePyError(
+        if d.kind is IllFormed(_) {
+          d.attribute_to(q)
+        } else {
+          d
+        },
+      )
     }
     e => {
       let _ = program.loading.pop()
@@ -153,49 +199,23 @@ fn check_module_body(
   program : Program,
   m : @ast.Module,
   q : String,
-) -> @context.Context raise {
-  // Imports are not statements: they are a prefix of the body, and one
-  // anywhere else is an error before anything is checked.
-  match @analysis.find_nested_import(m.body) {
-    Some(node) => raise @err.ill_formed(NonTopLevelImport, span=node.span())
+) -> Context raise {
+  match members_without_source(program, q) {
+    Some(ms) => return predefined_context(ms)
     None => ()
   }
   let (prefix, rest) = @analysis.split_imports(m.body)
-  match @analysis.find_import(rest) {
-    Some(node) => {
-      let mut d = @err.Diagnostic::new(
-        IllFormed(ImportAfterStatement),
-        span=node.span(),
-      )
-      // The first statement that is not an import is the one the import has
-      // to move above.
-      if !rest.is_empty() && !@analysis.is_import(rest[0]) {
-        d = d.with_related(rest[0].span(), "this statement comes before it")
-      }
-      raise d.raise_()
-    }
-    None => ()
-  }
-  let empty_ctx : Ctx = { gamma: @context.empty_context(), program, q, }
-  let gamma0 = check_imports_prefix(prefix[:], empty_ctx)
-  let body = [name_assign(q)]
-  for s in rest {
-    body.push(s)
-  }
-  let gamma1 = @context.extend_context(
-    @context.predefined_context("builtins", profile=program.profile),
-    gamma0,
-  )
-  let items = @analysis.statements(body)
-  // A module body may not return.
-  for item in items {
-    if result_type_statement(item) is Returns {
-      raise @err.ill_formed(TopLevelReturn, span=first_node(item).span())
-    }
-  }
-  let final_ctx = check_seq(items[:], { gamma: gamma1, program, q, })
-  check_submodule_clash(program, m, gamma0, body, q)
-  signature(program, body, final_ctx, q)
+  let empty_ctx : ModCtx = { gamma: empty_context(), program, q, }
+  let gamma = check_imports_prefix(prefix[:], empty_ctx)
+  let body = [name_assign(q), ..rest]
+  let builtins = builtins_context(program.profile)
+  let final_ctx = check_top_seq(@analysis.statements(body)[:], {
+    gamma: override_context(builtins, gamma),
+    program,
+    q,
+  })
+  check_submodule_names(program, m, gamma, body, q)
+  module_signature(program, body, final_ctx, q)
 }
 
 ///|
@@ -203,58 +223,54 @@ fn check_module_body(
 /// extends an earlier one rather than replacing it.
 fn check_imports_prefix(
   prefix : ArrayView[@ast.Stmt],
-  ctx : Ctx,
-) -> @context.Context raise {
+  ctx : ModCtx,
+) -> Context raise {
   if prefix.is_empty() {
-    return @context.empty_context()
+    return empty_context()
   }
-  @context.extend_context(
-    import_bindings(prefix[0], ctx),
-    check_imports_prefix(prefix[1:], ctx),
-  )
+  let gamma = check_import(prefix[0], ctx)
+  extend_context(gamma, check_imports_prefix(prefix[1:], ctx))
 }
 
 ///|
-fn import_bindings(s : @ast.Stmt, ctx : Ctx) -> @context.Context raise {
-  match s {
+fn check_import(iota : @ast.Stmt, ctx : ModCtx) -> Context raise {
+  let program = ctx.program
+  match iota {
     Import(names~, span~) => {
       let q = names[0].name
-      if !ctx.program.modules.contains(q) {
-        raise @err.ill_formed(UnknownModule(q~), span~)
+      if !program.tree.contains(q) {
+        raise ill(UnknownModule(q~), span)
       }
-      // `import a.b` inside `a` would need `a` while `a` is being checked.
       if proper_prefix_of(ctx.q, q) {
-        raise @err.ill_formed(OwnDescendantImport(q~, q0=ctx.q), span~)
+        let from_import = match parent_name(q) {
+          Some(p) => "from \{p} import \{last_segment(q)}"
+          None => q
+        }
+        raise ill(ImportOfContainedModule(q~, q_=ctx.q, from_import~), span)
       }
-      let delta = check_module(ctx.program, q)
-      @context.context_of([
-        (first_segment(q), loads_as(q, ModuleLoaded(q, delta), ctx)),
-      ])
+      let delta = check_module(program, q)
+      context_of([(first_segment(q), loads_as(q, ModuleLoaded(q, delta), ctx))])
     }
     ImportFrom(module_name~, names~, span~, ..) => {
-      if names.is_empty() {
-        raise @err.ill_formed(EmptyFromImport, span~)
+      guard module_name is Some(q) else {
+        abort("a relative import is rejected by the sieve")
       }
-      let source = match module_name {
-        Some(m) => m
-        None => abort("the sieve insists a from-import names its module")
+      if !program.tree.contains(q) {
+        raise ill(UnknownModule(q~), span)
       }
-      if !ctx.program.modules.contains(source) {
-        raise @err.ill_formed(UnknownModule(q=source), span~)
-      }
-      let delta = check_module(ctx.program, source)
+      let delta = check_module(program, q)
       // Every ancestor of the imported module is loaded too, unless it is an
       // ancestor of the importing module -- which is being checked already.
-      for p in proper_prefixes(source) {
+      for p in @program.proper_prefixes(q) {
         if !prefix_of(p, ctx.q) {
-          check_module(ctx.program, p) |> ignore
+          check_module(program, p) |> ignore
         }
       }
-      let entries : Array[(String, @context.Entry)] = []
+      let mut out = empty_context()
       for a in names {
-        entries.push((a.name, imported_entry(s, a.name, source, delta, ctx)))
+        out = out.add(a.name, imported_entry(iota, a.name, q, delta, ctx))
       }
-      @context.context_of(entries)
+      out
     }
     _ => abort("not an import")
   }
@@ -263,24 +279,16 @@ fn import_bindings(s : @ast.Stmt, ctx : Ctx) -> @context.Context raise {
 ///|
 /// `import a.b.c` binds `a`, to a module whose `b` is a module whose `c` is
 /// the module that was imported.
-fn loads_as(
-  q : String,
-  theta : @context.Entry,
-  ctx : Ctx,
-) -> @context.Entry raise {
-  match q.rev_split_once(".") {
+fn loads_as(q : String, theta : Entry, ctx : ModCtx) -> Entry raise {
+  match parent_name(q) {
     None => theta
-    Some((parent, x)) => {
-      let parent_name = parent.to_owned()
-      let parent_ctx = check_module(ctx.program, parent_name)
+    Some(p) => {
+      let gamma = check_module(ctx.program, p)
       loads_as(
-        parent_name,
+        p,
         ModuleLoaded(
-          parent_name,
-          @context.extend_context(
-            parent_ctx,
-            @context.context_of([(x.to_owned(), theta)]),
-          ),
+          p,
+          extend_context(gamma, context_of([(last_segment(q), theta)])),
         ),
         ctx,
       )
@@ -291,83 +299,54 @@ fn loads_as(
 ///|
 /// What `from q import x` binds `x` to.
 fn imported_entry(
-  s : @ast.Stmt,
+  iota : @ast.Stmt,
   x : String,
   q : String,
-  gamma_src : @context.Context,
-  ctx : Ctx,
-) -> @context.Entry raise {
-  let span = s.span()
-  match gamma_src.get(x) {
-    None => raise @err.ill_formed(UnknownMember(x~, q~), span~)
+  gamma : Context,
+  ctx : ModCtx,
+) -> Entry raise {
+  let span = iota.span()
+  match gamma.get(x) {
+    None => raise ill(UnknownMember(x~, q~), span)
     // A submodule named in the signature is loaded by the from-import.
     Some(ModuleStub(sub)) => ModuleLoaded(sub, check_module(ctx.program, sub))
-    Some(Var(FF)) => raise @err.ill_formed(UnassignedMember(x~, q~), span~)
+    Some(Unassigned) => raise ill(UnassignedMember(x~, q~), span)
     Some(entry) => entry
   }
 }
 
 ///|
 /// The modules of the program that are children of `q`, as stubs.
-fn submods(program : Program, q : String) -> @context.Context {
-  let seen : Array[String] = []
-  let entries : Array[(String, @context.Entry)] = []
-  for name in program.modules.keys() {
+fn submods(program : Program, q : String) -> Context {
+  let mut out = empty_context()
+  for name in program.tree.module_names() {
     if name.has_prefix(q + ".") {
       let child = first_segment(name[q.length() + 1:].to_owned())
-      if !seen.contains(child) {
-        seen.push(child)
-        entries.push((child, ModuleStub("\{q}.\{child}")))
-      }
+      out = out.add(child, ModuleStub("\{q}.\{child}"))
     }
   }
-  @context.context_of(entries)
-}
-
-///|
-/// What a module exports: its own members, and the fixed table for a
-/// predefined one.
-fn own_members(
-  program : Program,
-  body : Array[@ast.Stmt],
-  q : String,
-) -> Array[String] {
-  match members_without_source(program, q) {
-    Some(ms) => ms
-    None => @analysis.assigns_body(body).to_array()
-  }
-}
-
-///|
-/// The members of a module that has no body: one the specification predefines,
-/// or one an embedding host defines.
-fn members_without_source(program : Program, q : String) -> Array[String]? {
-  match @context.predefined_members(q, profile=program.profile) {
-    Some(ms) => Some(ms)
-    None => program.host_members.get(q)
-  }
+  out
 }
 
 ///|
 /// A binding that shadows a submodule would make `q.x` ambiguous.
-fn check_submodule_clash(
+fn check_submodule_names(
   program : Program,
   m : @ast.Module,
-  gamma0 : @context.Context,
+  gamma : Context,
   body : Array[@ast.Stmt],
   q : String,
 ) -> Unit raise {
   let subs = submods(program, q)
   let clash : Array[String] = []
-  for name in gamma0.keys_as_iter() {
-    if subs.contains(name) && !clash.contains(name) {
-      clash.push(name)
+  let consider = fn(x : String) {
+    if subs.contains(x) && !clash.contains(x) {
+      clash.push(x)
     }
   }
-  for name in own_members(program, body, q) {
-    if subs.contains(name) && !clash.contains(name) {
-      clash.push(name)
-    }
+  gamma.each(fn(x, _) { consider(x) })
+  for x in @analysis.assigns_body(body).to_array() {
+    consider(x)
   }
   if clash.is_empty() {
     return
@@ -375,12 +354,8 @@ fn check_submodule_clash(
   @basic.sort_names(clash)
   let x = clash[0]
   match find_binder(m.body, x) {
-    Some(node) =>
-      raise @err.ill_formed(
-        SubmoduleNameClash(name=x, submodule="\{q}.\{x}"),
-        span=node.span(),
-      )
-    None => abort("a clashing name must have a statement that binds it")
+    Some(node) => raise ill(DuplicateMember(x~, q~), node.span())
+    None => abort("a clashing name has a statement that binds it")
   }
 }
 
@@ -406,47 +381,35 @@ fn find_binder(stmts : Array[@ast.Stmt], x : String) -> @ast.Stmt? {
 
 ///|
 /// The signature: submodule stubs, overridden by the module's own members.
-fn signature(
+fn module_signature(
   program : Program,
   body : Array[@ast.Stmt],
-  final_ctx : Ctx,
+  final_ctx : ModCtx,
   q : String,
-) -> @context.Context {
-  let stubs = submods(program, q)
-  let own = match members_without_source(program, q) {
-    Some(ms) => {
-      // Every member is definitely assigned, and so is `__name__`.
-      let entries : Array[(String, @context.Entry)] = [("__name__", Var(TT))]
-      for m in ms {
-        entries.push((m, Var(TT)))
-      }
-      @context.context_of(entries)
-    }
-    None => {
-      let entries : Array[(String, @context.Entry)] = []
-      for name in own_members(program, body, q) {
-        match final_ctx.gamma.get(name) {
-          Some(e) => entries.push((name, e))
-          None => ()
-        }
-      }
-      @context.context_of(entries)
+) -> Context {
+  let mut own = empty_context()
+  for x in @analysis.assigns_body(body).to_array() {
+    match final_ctx.gamma.get(x) {
+      Some(e) => own = own.add(x, e)
+      None => ()
     }
   }
-  @context.extend_context(stubs, own)
+  override_context(submods(program, q), own)
 }
 
 // ---------------------------------------------------------------------------
+// Entry points
 
 ///|
-/// Check one module as `__main__`, with only the predefined modules
-/// importable -- what `pure-py check FILE` does.
+/// Check one module as `__main__`, with only the predefined modules and the
+/// host's importable -- what `pure-py check FILE` does.
 pub fn check_single(
   m : @ast.Module,
-  host_members~ : Map[String, Array[String]] = Map([]),
+  host_members~ : Map[String, Array[(String, @types.Type)]] = Map([]),
   profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
-  let program = Program::single(m, host_members~, profile~)
+  let tree = @program.SourceTree::of(Map([("__main__", m)]))
+  let program = Program::new(tree, host_members~, profile~)
   try check_module(program, "__main__") |> ignore catch {
     @err.PurePyError(d) => Some(d)
     _ => None
@@ -456,7 +419,56 @@ pub fn check_single(
 }
 
 ///|
+/// Program well-formedness: the entry module checked against everything the
+/// source tree contains.
+///
+/// One rule the module checker does not have: a module-level rejection is
+/// attributed to the FILE it came from, so a program whose `helper.py` is ill
+/// formed says so, and loses its position. Anything else is already a whole
+/// sentence.
+pub fn check_program(
+  tree : @program.SourceTree,
+  host_members~ : Map[String, Array[(String, @types.Type)]] = Map([]),
+  profile~ : @profile.Profile = @profile.core,
+) -> @err.Diagnostic? {
+  let program = Program::new(tree, host_members~, profile~)
+  try check_module(program, "__main__") |> ignore catch {
+    @err.PurePyError(d) =>
+      match d.kind {
+        IllFormed(_) => {
+          let q = match d.in_module {
+            Some(q) => q
+            None => "__main__"
+          }
+          Some(d.at_path(tree.path_of(q)))
+        }
+        _ => Some(d)
+      }
+    e => Some(@err.Diagnostic::new(Program(msg="\{e}")))
+  } noraise {
+    _ => None
+  }
+}
+
+///|
+/// Discover a program from its entry file and check it.
+pub fn check_entry(
+  entry_path : String,
+  profile~ : @profile.Profile = @profile.core,
+) -> @err.Diagnostic? {
+  let tree = @program.SourceTree::from_entry(
+    entry_path,
+    predefined=predefined_modules,
+    profile~,
+  ) catch {
+    @err.PurePyError(d) => return Some(d)
+    e => return Some(@err.Diagnostic::new(Program(msg="\{e}")))
+  }
+  check_program(tree, profile~)
+}
+
+///|
 /// The modules every program has, whatever its source tree.
 pub fn predefined_module_names() -> Array[String] {
-  @context.predefined_modules
+  predefined_modules
 }

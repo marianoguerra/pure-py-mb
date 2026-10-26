@@ -1201,6 +1201,37 @@ Each of these is a judgement call recorded so it can be reversed knowingly.
 
 ---
 
+## 10. Following upstream
+
+The plan above was written against v0.15.1 and executed in full. Upstream did
+not stop there: from v0.16.0 PurePy is a TYPED language, and the port follows
+it one release at a time. Each phase pins `tools/reference.json` to the
+release, re-syncs `test/conformance/`, regenerates the goldens, and ports
+until every oracle is green again; the commit is the phase. The appendices
+below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
+`lib/sieve/sieve.mbt` are the current catalogue.
+
+| release | what it changed | where it went |
+|---|---|---|
+| v0.16.0 | static types: annotations required, bidirectional checking, subtyping, operator overloads, a class table, `match` exhaustiveness over shapes; imports placed by the sieve; programs loaded lazily | `lib/types` (new), `lib/check` (rewritten), `lib/sieve`, `lib/analysis`, `lib/program` (lazy `SourceTree`), `lib/error` (the new reasons), typed host modules, typed profiles |
+
+Decisions made on the way, recorded as §9's are:
+
+1. **One class table per program, updated in place.** The reference threads
+   Σ through every rule and returns it, but always the newest, and never
+   rolls one back; a mutable table on `Program` gives the same answers with
+   none of the plumbing.
+2. **A literal pattern meeting a value of another kind does not match**, as
+   in Python. The specification's `eq` has no rule for `"a" == 1`, but a
+   union subject makes the pair reachable in a well-typed program and the
+   suite holds it to CPython. A bool against a number stays undefined.
+3. **Profiles are typed by rule.** The extra builtins and the methods of the
+   builtin types have result types computed from their arguments' types
+   (`lib/check/profile.mbt`), and a function with defaults has a `Defaulted`
+   type callable at each of its arities. Neither ever arises under `core`.
+
+---
+
 ## Appendix A — The sieve's messages (verbatim from `syntax.py`)
 
 Prohibited (exit 1): `multiple assignment targets`, `item assignment prohibited`,

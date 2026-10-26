@@ -1,1 +1,1 @@
-3: sequences.py: 'sorted' is not definitely assigned
+3: sequences.py: 'sorted' is not defined

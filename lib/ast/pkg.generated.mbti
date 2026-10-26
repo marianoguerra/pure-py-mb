@@ -132,6 +132,7 @@ pub fn Expr::int(Int32) -> Self
 pub fn Expr::kind_name(Self) -> String
 pub fn Expr::lambda(Array[String], Self) -> Self
 pub fn Expr::list(Array[Self], ctx? : ExprContext) -> Self
+pub fn Expr::list_comp(Self, String, Self, ifs? : Array[Self]) -> Self
 pub fn Expr::name(String, ctx? : ExprContext) -> Self
 pub fn Expr::neg(Self) -> Self
 pub fn Expr::none() -> Self
@@ -237,9 +238,10 @@ pub(all) enum Stmt {
   Break(span~ : @basic.Span)
   Continue(span~ : @basic.Span)
 } derive(Eq, @debug.Debug)
+pub fn Stmt::ann_assign(String, Expr, Expr) -> Self
 pub fn Stmt::assign(String, Expr) -> Self
-pub fn Stmt::dataclass(String, Array[String], base? : String) -> Self
-pub fn Stmt::def_(String, Array[String], Array[Self]) -> Self
+pub fn Stmt::dataclass(String, Array[(String, Expr)], base? : String) -> Self
+pub fn Stmt::def_(String, Array[(String, Expr)], Array[Self], returns? : Expr) -> Self
 pub fn Stmt::expr_stmt(Expr) -> Self
 pub fn Stmt::from_import(String, Array[String]) -> Self
 pub fn Stmt::if_(Expr, Array[Self], or_else? : Array[Self]) -> Self

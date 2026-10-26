@@ -1,1 +1,1 @@
-3: conversions.py: 'str' is not definitely assigned
+3: conversions.py: 'str' is usable only in annotations or as a decorator

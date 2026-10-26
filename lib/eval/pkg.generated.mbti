@@ -8,6 +8,7 @@ import {
   "marianoguerra/pure-py/context",
   "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
+  "marianoguerra/pure-py/types",
   "marianoguerra/pure-py/value",
   "moonbitlang/core/debug",
   "moonbitlang/core/immut/hashmap",
@@ -37,10 +38,12 @@ pub struct Host {
   write : (String) -> Unit
   argv : Array[String]
   modules : Map[String, @hashmap.HashMap[String, @value.Value]]
+  member_types : Map[String, Array[(String, @types.Type)]]
   call : async (String, Array[@value.Value]) -> @value.Outcome noraise
   redefined : Map[String, @value.Value]
 }
 pub fn Host::member_names(Self) -> Map[String, Array[String]]
+pub fn Host::member_types(Self) -> Map[String, Array[(String, @types.Type)]]
 pub fn Host::module_names(Self) -> Array[String]
 pub fn Host::new(write? : (String) -> Unit, argv? : Array[String], modules? : Array[HostModule], call? : async (String, Array[@value.Value]) -> @value.Outcome noraise, redefined? : Array[(String, @value.Value)]) -> Self
 pub fn Host::unknown_redefinitions(Self, profile? : @profile.Profile) -> Array[String]
@@ -48,7 +51,9 @@ pub fn Host::unknown_redefinitions(Self, profile? : @profile.Profile) -> Array[S
 pub(all) struct HostModule {
   name : String
   members : Array[(String, @value.Value)]
+  types : Array[(String, @types.Type)]
 }
+pub fn HostModule::new(String, Array[(String, @value.Value)], types? : Array[(String, @types.Type)]) -> Self
 
 pub struct Interp {
   tree : @program.SourceTree

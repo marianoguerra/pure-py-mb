@@ -25,7 +25,17 @@ pub async fn Interp::match_pattern(
       match @value.eq(literal, v) {
         Some(true) => Match(@value.empty_env())
         Some(false) => NoMatch
-        None => MatchStuck("a literal pattern against " + v.kind_name())
+        // Since v0.16 a subject can be a union, so a literal of one type
+        // meets a value of another in a well-typed program -- `case "a"`
+        // against `[1]` of a `list[int] | list[str]` -- and the suite holds
+        // it to Python's answer, which is no match. A bool against a number
+        // stays undefined: there Python says True, and PurePy has no rule.
+        None =>
+          if literal_kind_differs(literal, v) {
+            NoMatch
+          } else {
+            MatchStuck("a literal pattern against " + v.kind_name())
+          }
       }
     }
     // `None`, `True` and `False` match by identity, which for these three is
@@ -224,4 +234,21 @@ pub async fn Interp::resolve_class(
       }
     _ => None
   }
+}
+
+///|
+/// Whether a literal and a value are of kinds Python's `==` tells apart
+/// without coercion: anything but a bool against a number, and a `nan`.
+fn literal_kind_differs(literal : Value, v : Value) -> Bool {
+  fn kind(x : Value) -> Int32 {
+    match x {
+      Bool(_) => 0
+      Int(_) | Float(_) => 1
+      Str(_) => 2
+      _ => 3
+    }
+  }
+
+  let (a, b) = (kind(literal), kind(v))
+  a != b && !(a <= 1 && b <= 1)
 }

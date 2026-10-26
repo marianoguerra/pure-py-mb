@@ -18,7 +18,13 @@ fn parking_host(
 ) -> @eval.Host {
   @eval.Host::new(
     write=text => out.write_string(text),
-    modules=[{ name: "io", members: [("ask", @value.host_fn("io.ask"))], }],
+    modules=[
+      {
+        name: "io",
+        members: [("ask", @value.host_fn("io.ask"))],
+        types: [("ask", Callable([], @types.t_int))],
+      },
+    ],
     call=(_name, _args) => Val(park(k => queue.push(k))),
   )
 }
@@ -84,7 +90,13 @@ test "a host that answers on the spot is unchanged by any of this" {
   let out = StringBuilder()
   let host = @eval.Host::new(
     write=text => out.write_string(text),
-    modules=[{ name: "io", members: [("ask", @value.host_fn("io.ask"))], }],
+    modules=[
+      {
+        name: "io",
+        members: [("ask", @value.host_fn("io.ask"))],
+        types: [("ask", Callable([], @types.t_int))],
+      },
+    ],
     call=(_name, _args) => Val(Int(7N)),
   )
   let tree = tree_of("from io import ask\nprint(ask() * ask())\n")

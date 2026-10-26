@@ -1,14 +1,10 @@
 a, b = 1, 2
-print(a, b)
+print([a, b])
 c, (d, e) = 1, (2, 3)
-print(c, d, e)
+print([c, d, e])
 f, g = [10, 20]
-print(f, g)
-h, i = "xy"
-print(h, i)
+print([f, g])
 [j, k] = (7, 8)
-print(j, k)
+print([j, k])
 p, q = (1, "two")
-print(p, q)
-r, s = [[1], (2,)]
-print(r, s)
+print([p, q])

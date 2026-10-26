@@ -6,12 +6,13 @@ import {
   "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
-  "marianoguerra/pure-py/write",
+  "marianoguerra/pure-py/types",
+  "moonbitlang/core/immut/sorted_map",
 }
 
 import {
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/check",
-  "marianoguerra/pure-py/error" @err,
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/program",
 } for "test"

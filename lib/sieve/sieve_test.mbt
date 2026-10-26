@@ -24,25 +24,46 @@ test "prohibited forms" {
     ("x = y = 1\n", "1: multiple assignment targets"),
     ("a[0] = 1\n", "1: item assignment prohibited"),
     ("a.b = 1\n", "1: attribute assignment prohibited"),
-    ("def f() -> int:\n    return 1\n", "1: return type annotations prohibited"),
+    ("def f(x):\n    return 1\n", "1: parameters must be annotated"),
+    ("def f(x: int):\n    return 1\n", "1: return type must be annotated"),
+    ("def f(x: 1) -> int:\n    return 1\n", "1: unsupported type annotation"),
+    (
+      "def f() -> list[int, int]:\n    return 1\n", "1: unsupported type annotation",
+    ),
     ("x += 1\n", "1: augmented assignment (+=, etc.) prohibited"),
-    ("x: int = 1\n", "1: annotated assignment prohibited"),
+    ("x: int\n", "1: annotation without assignment prohibited"),
+    ("a.b: int = 1\n", "1: assignment target must be a simple name"),
+    ("x: dict[int, int] = {}\n", "1: unsupported type annotation"),
+    ("x = {**a}\n", "1: dict unpacking prohibited"),
+    (
+      "import a\nx = 1\nimport b\n", "1: imports must precede all other statements",
+    ),
+    (
+      "def f() -> None:\n    import a\n", "1: import only allowed at module top level",
+    ),
+    (
+      "match v:\n    case 1 + 2j:\n        pass\n", "1: complex and bytes literal patterns prohibited",
+    ),
     ("del x\n", "1: del prohibited"),
     ("for x in y:\n    pass\n", "1: for loops prohibited"),
     ("while x:\n    pass\n", "1: while loops prohibited"),
     ("with a:\n    pass\n", "1: with statements prohibited"),
     ("async def f():\n    pass\n", "1: async prohibited"),
-    ("def f():\n    async for x in y:\n        pass\n", "1: async prohibited"),
-    ("def f():\n    async with a:\n        pass\n", "1: async prohibited"),
+    (
+      "def f() -> None:\n    async for x in y:\n        pass\n", "1: async prohibited",
+    ),
+    (
+      "def f() -> None:\n    async with a:\n        pass\n", "1: async prohibited",
+    ),
     ("raise ValueError\n", "1: raise prohibited"),
     ("try:\n    pass\nexcept:\n    pass\n", "1: try/except prohibited"),
-    ("def f():\n    global x\n", "1: global prohibited"),
-    ("def f():\n    nonlocal x\n", "1: nonlocal prohibited"),
+    ("def f() -> None:\n    global x\n", "1: global prohibited"),
+    ("def f() -> None:\n    nonlocal x\n", "1: nonlocal prohibited"),
     (
-      "def f():\n    class C:\n        pass\n", "1: class declaration only at module top level",
+      "def f() -> None:\n    class C:\n        pass\n", "1: class declaration only at module top level",
     ),
-    ("def f():\n    break\n", "1: break prohibited"),
-    ("def f():\n    continue\n", "1: continue prohibited"),
+    ("def f() -> None:\n    break\n", "1: break prohibited"),
+    ("def f() -> None:\n    continue\n", "1: continue prohibited"),
     (
       "try:\n    pass\nexcept* ValueError:\n    pass\n", "1: unknown statement type: TryStar",
     ),
@@ -70,9 +91,7 @@ test "prohibited forms" {
     (
       "@dataclass\nclass C:\n    x: Any = 1\n", "1: field default values prohibited",
     ),
-    (
-      "@dataclass\nclass C:\n    x: int\n", "1: field type annotation must be Any",
-    ),
+    ("@dataclass\nclass C:\n    x: 1\n", "1: unsupported type annotation"),
     (
       "match v:\n    case {1: a}:\n        pass\n", "1: dict pattern keys must be string literals",
     ),
@@ -89,8 +108,8 @@ test "prohibited forms" {
     ("x = (i for i in y)\n", "1: generator expressions prohibited"),
     ("x = [(y := 1)]\n", "1: walrus operator (:=) prohibited"),
     ("x = [*y]\n", "1: starred expressions prohibited"),
-    ("def f():\n    yield 1\n", "1: yield prohibited"),
-    ("def f():\n    yield from y\n", "1: yield prohibited"),
+    ("def f() -> None:\n    yield 1\n", "1: yield prohibited"),
+    ("def f() -> None:\n    yield from y\n", "1: yield prohibited"),
     ("x = [i async for i in y]\n", "1: async comprehensions prohibited"),
     ("def f(*, x):\n    pass\n", "1: keyword-only arguments prohibited"),
     ("def f(x, /):\n    pass\n", "1: positional-only arguments prohibited"),
@@ -101,35 +120,26 @@ test "prohibited forms" {
 }
 
 ///|
-/// One message of `syntax.py` has no source that reaches it: "class pattern
-/// head must be a qualified name". Python's own grammar is
-/// `class_pattern: name_or_attr '(' ...`, so a head that is not a name or a
-/// dotted name is a syntax error before the sieve sees anything. The check is
-/// kept because the reference keeps it, and it is recorded here as unreachable
-/// rather than left looking untested.
 test "forms that are planned and not yet supported" {
   let cases = [
     ("x, y = 1, 2\n", "2: destructuring assignment not yet supported (#54)"),
     ("@deco\ndef f():\n    pass\n", "2: decorators not yet supported (#58)"),
     (
-      "import a, b\n", "2: multi-target import (import a, b) not yet supported (#53)",
+      "import a, b\n", "2: multi-target import (import a, b) not yet supported (#135)",
     ),
-    ("import a as b\n", "2: import-as not yet supported (#53)"),
-    ("from . import a\n", "2: relative imports not yet supported (#53)"),
-    ("from . import a\n", "2: relative imports not yet supported (#53)"),
-    ("from m import *\n", "2: from M import * not yet supported (#53)"),
-    ("from m import a as b\n", "2: from-import-as not yet supported (#53)"),
+    ("import a as b\n", "2: import-as not yet supported (#135)"),
+    ("from . import a\n", "2: relative imports not yet supported (#126)"),
+    ("from .m import a\n", "2: relative imports not yet supported (#126)"),
+    ("from m import *\n", "2: from M import * not yet supported (#105)"),
+    ("from m import a as b\n", "2: from-import-as not yet supported (#135)"),
     (
-      "match v:\n    case a if a:\n        pass\n", "2: case guards not yet supported (#83)",
+      "match v:\n    case a if a:\n        pass\n", "2: case guards not yet supported (#190)",
     ),
     (
       "@dataclass\nclass C(Enum):\n    pass\n", "2: enum classes not yet supported (#86)",
     ),
     (
       "match v:\n    case a.b:\n        pass\n", "2: attribute value patterns not yet supported (#86)",
-    ),
-    (
-      "match v:\n    case 1 + 2j:\n        pass\n", "2: complex value patterns not yet supported (#83)",
     ),
     (
       "match v:\n    case [*rest]:\n        pass\n", "2: star patterns not yet supported (#84)",
@@ -173,7 +183,9 @@ test "what PurePy accepts" {
     "pass\n", "x = 1\n", "x = a + b * c\n", "x = not a\n", "x = -a\n", "x = a < b\n",
     "x = f(1, k=2)\n", "x = a if b else c\n", "x = lambda p: p\n", "x = [1, 2]\n",
     "x = (1, 2)\n", "x = {\"a\": 1}\n", "x = a.b\n", "x = a[0]\n", "x = [i for i in y if i]\n",
-    "x = {k: v for k in y}\n", "def f(a, b):\n    return a\n", "if a:\n    x = 1\nelse:\n    x = 2\n",
+    "x = {k: v for k in y}\n", "def f(a: int, b: str) -> int:\n    return a\n", "x: int = 1\n",
+    "x: list[int | str] = []\n", "x: Callable[[int], dict[str, int]] = f\n", "x: Literal[-1] = -1\n",
+    "x: tuple[int, str] | None = None\n", "if a:\n    x = 1\nelse:\n    x = 2\n",
     "assert a, \"m\"\n", "import sys\n", "from math import pi\n", "@dataclass\nclass C:\n    x: Any\n",
     "@dataclass\nclass C:\n    pass\n", "@dataclass\nclass D(C):\n    y: Any\n",
     "match v:\n    case 1:\n        pass\n    case _:\n        pass\n", "match v:\n    case [a]:\n        pass\n",
@@ -281,7 +293,7 @@ test "every pending feature is gated, not removed" {
       "a, (b, c) = 1, (2, 3)\n", "2: destructuring assignment not yet supported (#54)",
     ),
     (
-      "def f(x=1):\n    return x\n", "2: default arguments not yet supported (#56)",
+      "def f(x: int = 1) -> int:\n    return x\n", "2: default arguments not yet supported (#56)",
     ),
     ("f = lambda x=1: x\n", "2: default arguments not yet supported (#56)"),
   ]
@@ -328,7 +340,7 @@ test "the rest of the pending table is still closed" {
     ("@deco\ndef f():\n    pass\n", "2: decorators not yet supported (#58)"),
     ("s = {1, 2}\n", "2: set literals not yet supported (#147)"),
     ("s = {x for x in y}\n", "2: set comprehensions not yet supported (#147)"),
-    ("import a as b\n", "2: import-as not yet supported (#53)"),
+    ("import a as b\n", "2: import-as not yet supported (#135)"),
     (
       "xs = [a for a, b in items]\n", "2: destructuring in comprehensions not yet supported (#54)",
     ),
@@ -394,8 +406,9 @@ test "a default argument must be a literal" {
   let p = @profile.pending()
   for
     source in [
-      "def f(x=1):\n    return x\n", "def f(x=1.5):\n    return x\n", "def f(x='a'):\n    return x\n",
-      "def f(x=True):\n    return x\n", "def f(x=None):\n    return x\n", "def f(a, b=1, c='x'):\n    return a\n",
+      "def f(x: int = 1) -> int:\n    return x\n", "def f(x: float = 1.5) -> float:\n    return x\n",
+      "def f(x: str = 'a') -> str:\n    return x\n", "def f(x: bool = True) -> bool:\n    return x\n",
+      "def f(x: None = None) -> None:\n    return x\n", "def f(a: int, b: int = 1, c: str = 'x') -> int:\n    return a\n",
       "f = lambda x=None: x\n",
     ] {
     assert_eq(verdict_under(source, p), "ok", msg=source)

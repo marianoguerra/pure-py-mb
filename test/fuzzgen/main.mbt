@@ -26,10 +26,43 @@ struct Program {
 }
 
 ///|
-/// The names a generated program may use. Small, so that the same name is
-/// bound and read often enough for scoping to be exercised, and bound in the
-/// prelude so that a reference to one is not automatically ill formed.
-let names : Array[String] = ["a", "b", "c"]
+/// The types a generated expression is drawn at. PurePy is typed, and a
+/// generator that drew any expression anywhere would have the checker discard
+/// nearly everything it made; drawing each one AT a type is what keeps the
+/// sample mostly programs that run.
+priv enum Ty {
+  TInt
+  TFloat
+  TStr
+  TBool
+  TList
+  TP
+} derive(Eq)
+
+///|
+/// The names a generated program may use, each at one type for the whole
+/// program. Small, so that the same name is bound and read often enough for
+/// scoping to be exercised, and bound in the prelude so that a reference to
+/// one is not automatically ill formed.
+let pool : Array[(String, Ty)] = [
+  ("a", TInt),
+  ("b", TStr),
+  ("c", TBool),
+  ("d", TFloat),
+]
+
+///|
+fn Ty::annotation(self : Ty) -> @ast.Expr {
+  match self {
+    TInt => @ast.Expr::name("int")
+    TFloat => @ast.Expr::name("float")
+    TStr => @ast.Expr::name("str")
+    TBool => @ast.Expr::name("bool")
+    TList =>
+      @ast.Expr::subscript(@ast.Expr::name("list"), @ast.Expr::name("int"))
+    TP => @ast.Expr::name("P")
+  }
+}
 
 ///|
 /// A seeded cursor over the random state, with a budget so recursion ends.
@@ -50,33 +83,50 @@ fn Draw::pick(self : Draw, options : Array[String]) -> String {
   options[self.below(options.length())]
 }
 
+///|
+fn Draw::ty(self : Draw) -> Ty {
+  [TInt, TFloat, TStr, TBool, TList, TP][self.below(6)]
+}
+
 // ---------------------------------------------------------------------------
 // The shape of a generated module
 
 ///|
-/// `from typing import Any`, a dataclass, a function, the name pool bound, and
-/// then the statements worth varying -- ending in the prints that make the
-/// module comparable at all.
+/// A dataclass, a function, the name pool bound, and then the statements
+/// worth varying -- ending in the prints that make the module comparable at
+/// all.
 fn Draw::program(self : Draw) -> Program {
+  let int_ = @ast.Expr::name("int")
   let body : Array[@ast.Stmt] = [
     @ast.Stmt::from_import("dataclasses", ["dataclass"]),
-    @ast.Stmt::from_import("typing", ["Any"]),
-    @ast.Stmt::dataclass("P", ["x", "y"]),
+    @ast.Stmt::dataclass("P", [("x", int_), ("y", int_)]),
     // A function whose body cannot call anything, so a generated program
     // always terminates.
-    @ast.Stmt::def_("f", ["n"], [@ast.Stmt::return_(value=self.simple_expr())]),
+    @ast.Stmt::def_(
+      "f",
+      [("n", int_)],
+      [@ast.Stmt::return_(value=self.simple_expr())],
+      returns=int_,
+    ),
   ]
   // The pool, bound to literals, so a later reference is well formed.
-  for name in names {
-    body.push(@ast.Stmt::assign(name, self.atom(pool=false)))
+  for v in pool {
+    body.push(self.bind(v.0, v.1, self.literal(v.1)))
   }
   for _ in 0..<(1 + self.below(3)) {
     body.push(self.stmt())
   }
   for _ in 0..<(1 + self.below(2)) {
-    body.push(@ast.Stmt::expr_stmt(self.print_of(self.expr())))
+    body.push(@ast.Stmt::expr_stmt(self.print_of(self.expr(self.ty()))))
   }
   { tree: @ast.module_of(body), }
+}
+
+///|
+/// `x: T = e`, which keeps a pool name at its one type.
+fn Draw::bind(self : Draw, x : String, t : Ty, e : @ast.Expr) -> @ast.Stmt {
+  ignore(self)
+  @ast.Stmt::ann_assign(x, t.annotation(), e)
 }
 
 ///|
@@ -86,101 +136,190 @@ fn Draw::print_of(self : Draw, e : @ast.Expr) -> @ast.Expr {
 }
 
 ///|
+fn Draw::assign_pool(self : Draw) -> @ast.Stmt {
+  let v = pool[self.below(pool.length())]
+  self.bind(v.0, v.1, self.expr(v.1))
+}
+
+///|
 fn Draw::stmt(self : Draw) -> @ast.Stmt {
   if self.budget <= 0 {
-    return @ast.Stmt::assign(self.pick(names), self.atom())
+    let v = pool[self.below(pool.length())]
+    return self.bind(v.0, v.1, self.literal(v.1))
   }
   self.budget -= 1
   match self.below(6) {
-    0 | 1 => @ast.Stmt::assign(self.pick(names), self.expr())
-    2 =>
-      @ast.Stmt::if_(
-        self.condition(),
-        [@ast.Stmt::assign(self.pick(names), self.expr())],
-        or_else=[@ast.Stmt::assign(self.pick(names), self.expr())],
-      )
-    3 =>
-      @ast.Stmt::match_(self.expr(), [
-        @ast.case_(self.pattern(), [
+    0 | 1 => self.assign_pool()
+    2 => {
+      // Both branches assign the same name, so it stays definitely assigned.
+      let v = pool[self.below(pool.length())]
+      @ast.Stmt::if_(self.expr(TBool), [self.bind(v.0, v.1, self.expr(v.1))], or_else=[
+        self.bind(v.0, v.1, self.expr(v.1)),
+      ])
+    }
+    3 => {
+      let t = [TInt, TStr, TP][self.below(3)]
+      @ast.Stmt::match_(self.expr(t), [
+        @ast.case_(self.pattern(t), [
           @ast.Stmt::expr_stmt(self.print_of(@ast.Expr::str("m"))),
         ]),
         @ast.case_(@ast.Pattern::wildcard(), [@ast.Stmt::pass()]),
       ])
-    4 => @ast.Stmt::expr_stmt(self.print_of(self.expr()))
+    }
+    4 => @ast.Stmt::expr_stmt(self.print_of(self.expr(self.ty())))
     _ => @ast.Stmt::pass()
   }
 }
 
 ///|
-/// An expression over the name pool, `f`, `P` and the literals.
-fn Draw::expr(self : Draw) -> @ast.Expr {
-  if self.budget <= 0 {
-    return self.atom()
-  }
-  self.budget -= 1
-  match self.below(12) {
-    0 | 1 | 2 => self.atom()
-    3 =>
-      @ast.Expr::binop(
-        self.expr(),
-        [@ast.Operator::Add, Sub, Mult, FloorDiv, Mod, Pow][self.below(6)],
-        self.expr(),
-      )
-    4 =>
-      @ast.Expr::compare(
-        self.expr(),
-        [@ast.CmpOp::Eq, NotEq, Lt, LtE, Gt, GtE, In, NotIn][self.below(8)],
-        self.expr(),
-      )
-    5 =>
-      @ast.Expr::bool_op(if self.below(2) == 0 { And } else { Or }, [
-        self.expr(),
-        self.expr(),
+/// A literal of a type.
+fn Draw::literal(self : Draw, t : Ty) -> @ast.Expr {
+  match t {
+    // Never a negative literal: Python has none, so `-1` is a negation.
+    TInt => @ast.Expr::int(self.below(100))
+    TFloat => @ast.Expr::float(self.below(200).to_double() / 8.0)
+    TStr => @ast.Expr::str(self.pick(["", "a", "it's", "line\nbreak"]))
+    TBool => @ast.Expr::bool(self.below(2) == 0)
+    TList =>
+      @ast.Expr::list([
+        @ast.Expr::int(self.below(10)),
+        @ast.Expr::int(self.below(10)),
       ])
-    6 => @ast.Expr::not_(self.expr())
-    7 => @ast.Expr::neg(self.expr())
-    8 => @ast.Expr::if_exp(self.condition(), self.expr(), self.expr())
-    9 => @ast.Expr::list([self.expr(), self.expr()])
-    10 =>
-      // A constructor call and a field read: the object cases the operators
-      // and the printer both have to handle.
-      if self.below(2) == 0 {
-        @ast.Expr::call(@ast.Expr::name("P"), [self.expr(), self.expr()])
-      } else {
-        @ast.Expr::attribute(
-          @ast.Expr::call(@ast.Expr::name("P"), [self.expr(), self.expr()]),
-          self.pick(["x", "y"]),
-        )
-      }
-    _ => @ast.Expr::call(@ast.Expr::name("f"), [self.expr()])
+    TP =>
+      @ast.Expr::call(@ast.Expr::name("P"), [
+        @ast.Expr::int(self.below(10)),
+        @ast.Expr::int(self.below(10)),
+      ])
   }
 }
 
 ///|
-/// A condition that has a good chance of being a `bool`.
-///
-/// PurePy has no truthiness: `if 1:` is not false, it is undefined, and a
-/// generator that reaches for any expression spends most of its output there.
-/// Biasing towards comparisons is what makes the sample mostly programs that
-/// RUN -- and `expr` is still reachable, so the undefined case stays covered.
-fn Draw::condition(self : Draw) -> @ast.Expr {
-  match self.below(5) {
-    0 => @ast.Expr::bool(self.below(2) == 0)
-    1 | 2 =>
-      @ast.Expr::compare(
-        self.expr(),
-        [@ast.CmpOp::Eq, NotEq, Lt, LtE, Gt, GtE][self.below(6)],
-        self.expr(),
-      )
-    3 => @ast.Expr::not_(self.condition())
-    _ => self.expr()
+/// A leaf of a type: a literal, or the pool name that has it.
+fn Draw::atom(self : Draw, t : Ty) -> @ast.Expr {
+  if self.below(2) == 0 {
+    for v in pool {
+      if v.1 == t {
+        return @ast.Expr::name(v.0)
+      }
+    }
+  }
+  self.literal(t)
+}
+
+///|
+/// An expression of a type, over the pool, `f`, `P` and the literals.
+fn Draw::expr(self : Draw, t : Ty) -> @ast.Expr {
+  if self.budget <= 0 {
+    return self.atom(t)
+  }
+  self.budget -= 1
+  // A conditional expression is at every type.
+  if self.below(10) == 0 {
+    return @ast.Expr::if_exp(self.expr(TBool), self.expr(t), self.expr(t))
+  }
+  match t {
+    TInt =>
+      match self.below(9) {
+        0 | 1 => self.atom(TInt)
+        2 =>
+          @ast.Expr::binop(
+            self.expr(TInt),
+            [@ast.Operator::Add, Sub, Mult, FloorDiv, Mod][self.below(5)],
+            self.expr(TInt),
+          )
+        // `int ** int` is an int only at a literal exponent.
+        3 =>
+          @ast.Expr::binop(self.expr(TInt), Pow, @ast.Expr::int(self.below(4)))
+        4 => @ast.Expr::neg(self.expr(TInt))
+        5 =>
+          @ast.Expr::call(@ast.Expr::name("len"), [
+            self.expr(if self.below(2) == 0 { TStr } else { TList }),
+          ])
+        6 => @ast.Expr::call(@ast.Expr::name("f"), [self.expr(TInt)])
+        7 => @ast.Expr::attribute(self.expr(TP), self.pick(["x", "y"]))
+        _ =>
+          @ast.Expr::subscript(self.expr(TList), @ast.Expr::int(self.below(3)))
+      }
+    TFloat =>
+      match self.below(5) {
+        0 | 1 => self.atom(TFloat)
+        2 =>
+          @ast.Expr::binop(
+            self.expr(TFloat),
+            [@ast.Operator::Add, Sub, Mult, FloorDiv, Mod][self.below(5)],
+            self.expr(if self.below(2) == 0 { TInt } else { TFloat }),
+          )
+        3 => @ast.Expr::binop(self.expr(TInt), Div, self.expr(TInt))
+        _ => @ast.Expr::neg(self.expr(TFloat))
+      }
+    TStr =>
+      match self.below(5) {
+        0 | 1 => self.atom(TStr)
+        2 => @ast.Expr::binop(self.expr(TStr), Add, self.expr(TStr))
+        3 =>
+          @ast.Expr::binop(self.expr(TStr), Mult, @ast.Expr::int(self.below(3)))
+        _ =>
+          @ast.Expr::subscript(self.expr(TStr), @ast.Expr::int(self.below(3)))
+      }
+    TBool =>
+      match self.below(8) {
+        0 | 1 => self.atom(TBool)
+        2 =>
+          @ast.Expr::compare(
+            self.expr(TInt),
+            [@ast.CmpOp::Eq, NotEq, Lt, LtE, Gt, GtE][self.below(6)],
+            self.expr(if self.below(2) == 0 { TInt } else { TFloat }),
+          )
+        3 =>
+          @ast.Expr::compare(
+            self.expr(TStr),
+            [@ast.CmpOp::Eq, NotEq, Lt, LtE, In, NotIn][self.below(6)],
+            self.expr(TStr),
+          )
+        4 =>
+          @ast.Expr::compare(
+            self.expr(TInt),
+            [@ast.CmpOp::In, NotIn][self.below(2)],
+            self.expr(TList),
+          )
+        5 => @ast.Expr::not_(self.expr(TBool))
+        6 =>
+          @ast.Expr::bool_op(if self.below(2) == 0 { And } else { Or }, [
+            self.expr(TBool),
+            self.expr(TBool),
+          ])
+        _ =>
+          @ast.Expr::compare(
+            self.expr(TP),
+            [@ast.CmpOp::Eq, NotEq][self.below(2)],
+            self.expr(TP),
+          )
+      }
+    TList =>
+      match self.below(4) {
+        0 => self.atom(TList)
+        1 => @ast.Expr::list([self.expr(TInt), self.expr(TInt)])
+        2 => @ast.Expr::binop(self.expr(TList), Add, self.expr(TList))
+        _ =>
+          @ast.Expr::list_comp(
+            @ast.Expr::binop(@ast.Expr::name("i"), Mult, self.expr(TInt)),
+            "i",
+            self.expr(TList),
+          )
+      }
+    TP =>
+      if self.below(3) == 0 {
+        self.atom(TP)
+      } else {
+        @ast.Expr::call(@ast.Expr::name("P"), [self.expr(TInt), self.expr(TInt)])
+      }
   }
 }
 
 ///|
 /// What `f`'s body may hold: no call, so no recursion and no divergence.
 fn Draw::simple_expr(self : Draw) -> @ast.Expr {
-  match self.below(4) {
+  match self.below(3) {
     0 => @ast.Expr::name("n")
     1 =>
       @ast.Expr::binop(
@@ -188,47 +327,26 @@ fn Draw::simple_expr(self : Draw) -> @ast.Expr {
         [@ast.Operator::Add, Sub, Mult][self.below(3)],
         @ast.Expr::int(1 + self.below(9)),
       )
-    2 => @ast.Expr::list([@ast.Expr::name("n")])
+    _ => @ast.Expr::neg(@ast.Expr::name("n"))
+  }
+}
+
+///|
+/// A first case for a subject of the type. Never a bare capture or a
+/// wildcard, which would leave the second case -- the wildcard -- unreachable.
+fn Draw::pattern(self : Draw, t : Ty) -> @ast.Pattern {
+  match t {
+    TInt => @ast.Pattern::literal(Int(BigInt::from_int(self.below(10))))
+    TStr => @ast.Pattern::literal(Str(self.pick(["a", "b", ""])))
     _ =>
-      @ast.Expr::compare(
-        @ast.Expr::name("n"),
-        Eq,
-        @ast.Expr::int(self.below(3)),
-      )
-  }
-}
-
-///|
-fn Draw::atom(self : Draw, pool~ : Bool = true) -> @ast.Expr {
-  let n = if pool { 9 } else { 7 }
-  match self.below(n) {
-    // Never a negative literal: Python has none, so `-1` is a negation.
-    0 => @ast.Expr::int(self.below(100))
-    1 => @ast.Expr::float(self.below(200).to_double() / 8.0)
-    2 => @ast.Expr::str(self.pick(["", "a", "it's", "line\nbreak"]))
-    3 => @ast.Expr::bool(self.below(2) == 0)
-    4 => @ast.Expr::none()
-    5 => @ast.Expr::tuple([@ast.Expr::int(self.below(10))])
-    6 =>
-      @ast.Expr::dict([(@ast.Expr::str("k"), @ast.Expr::int(self.below(10)))])
-    _ => @ast.Expr::name(self.pick(names))
-  }
-}
-
-///|
-fn Draw::pattern(self : Draw) -> @ast.Pattern {
-  if self.budget <= 0 {
-    return @ast.Pattern::capture(self.pick(names))
-  }
-  self.budget -= 1
-  match self.below(7) {
-    0 => @ast.Pattern::capture(self.pick(names))
-    1 => @ast.Pattern::wildcard()
-    2 => @ast.Pattern::literal(Int(BigInt::from_int(self.below(10))))
-    3 => @ast.Pattern::literal(Str(self.pick(["a", "b"])))
-    4 => @ast.Pattern::sequence(List, [self.pattern()])
-    5 => @ast.Pattern::constr("P", [self.pattern(), self.pattern()])
-    _ => @ast.Pattern::sequence(Tuple, [self.pattern(), self.pattern()])
+      @ast.Pattern::constr("P", [
+        if self.below(2) == 0 {
+          @ast.Pattern::literal(Int(BigInt::from_int(self.below(10))))
+        } else {
+          @ast.Pattern::capture("h")
+        },
+        @ast.Pattern::literal(Int(BigInt::from_int(self.below(10)))),
+      ])
   }
 }
 
@@ -296,6 +414,10 @@ fn stmt_shrinks(s : @ast.Stmt) -> Array[@ast.Stmt] {
           _ => ()
         }
       }
+    AnnAssign(target=Name(id~, ..), annotation~, value=Some(value), ..) =>
+      for e in expr_shrinks(value) {
+        out.push(@ast.Stmt::ann_assign(id, annotation, e))
+      }
     ExprStmt(value~, ..) =>
       // A `print(e)` shrinks by shrinking what it prints, not by losing the
       // print: a program that stops printing stops being comparable.
@@ -336,9 +458,9 @@ fn expr_shrinks(e : @ast.Expr) -> Array[@ast.Expr] {
 }
 
 ///|
-/// The imports, the dataclass and `f`: the statements every generated module
+/// The import, the dataclass and `f`: the statements every generated module
 /// opens with and no shrink may remove.
-const PRELUDE : Int32 = 4
+const PRELUDE : Int32 = 3
 
 // ---------------------------------------------------------------------------
 

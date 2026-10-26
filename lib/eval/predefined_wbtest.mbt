@@ -50,15 +50,20 @@ test "the checker's names and the evaluator's values are one table" {
 /// that reordered `builtins` would reorder a diagnostic the reference decides.
 test "a profile leaves the core names where they were" {
   let core_names = @context.predefined_members("builtins").unwrap()
-  assert_eq(core_names, ["print", "len", "range"])
+  assert_eq(core_names, [
+    "print", "len", "None", "object", "bool", "int", "float", "str", "list", "dict",
+    "tuple",
+  ])
   let with_extras = @context.predefined_members(
     "builtins",
     profile=@profile.builtins(),
   ).unwrap()
   assert_eq(with_extras[:core_names.length()].to_owned(), core_names)
+  // An extra builtin that is also an annotation's word -- `int`, `str` --
+  // keeps the core name's place; the rest follow in their own order.
   assert_eq(
     with_extras[core_names.length():].to_owned(),
-    @context.extra_builtin_names,
+    @context.extra_builtin_names.filter(fn(n) { !core_names.contains(n) }),
   )
 }
 
@@ -130,6 +135,7 @@ test "a host function is named by its host, not by its binding" {
         // Bound and registered alike, which is the ordinary case.
         ("search", @value.host_fn("search")),
       ],
+      types: [],
     },
   ])
   let members = host.modules.get("host").unwrap()
@@ -151,11 +157,12 @@ test "a host function is named by its host, not by its binding" {
 ///|
 /// A redefinition replaces a VALUE and never a name.
 ///
-/// This is what lets the checker stay out of it. `@context.predefined_members`
-/// is what a program is checked against, and the checker types every member
-/// `Var(TT)`, so as long as a host only ever moves the value behind a name the
-/// two tables above are still one table -- and a redefined `print` may take
-/// any number of arguments, because nothing ever said how many it took.
+/// This is what lets the checker stay out of it. `@types.predefined_members`
+/// is what a program is checked against, with a TYPE for every member, so as
+/// long as a host only ever moves the value behind a name the two tables
+/// above are still one table. What a host owes in return is that the value it
+/// moves in has the member's type: a redefined `print` is still handed one
+/// argument, because the checker still says `print` takes one.
 test "a redefinition moves a value and leaves the names alone" {
   let tree = @program.SourceTree::of(Map([]))
   let host = Host::new(redefined=[

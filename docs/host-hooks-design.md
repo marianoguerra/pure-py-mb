@@ -28,7 +28,9 @@ Eight facts, because several of them rule an option in or out.
    (`lib/eval/interp.mbt:170`) has exactly one call site. "Replace `print`" and
    "replace `write`" name the same surface today.
 
-2. **The checker types every predefined member as `Var(TT)`**
+2. **The checker typed every predefined member as `Var(TT)`** (until
+   v0.16 of the specification made PurePy typed: since then every member
+   has a type, and a redefinition must keep it -- see the note at the end)
    (`lib/context/context.mbt:428`) -- no arity, no type. So **redefining an
    existing name needs no checker change at all**, and a redefined `print` may
    take any number of arguments. Only *adding* a name needs the checker to
@@ -350,3 +352,13 @@ having the feature:
 * `tools/boundary-check.sh`: B1 adds no import edge; confirm it.
 * `moon info && moon fmt`, then read the `.mbti` diff -- exactly one new `Host`
   field, one new `Host::new` argument, and `print_text`.
+
+## Note, after v0.16
+
+The specification became typed at v0.16, and fact 2 no longer holds: every
+predefined member has a type (`@types.predefined_members`), `print` takes one
+argument of type `object`, and a host module's members carry types too
+(`HostModule.types`). The cheap half of the split above survives in a
+narrower form -- redefining a name still needs no checker change, PROVIDED
+the new value has the old type -- and the expensive half got cheaper, since a
+host module now says what its functions take.

@@ -39,7 +39,7 @@ test "the smallest embedding" {
     (
       "__main__",
       @purepy.parse(
-        "def sum_to(n):\n" +
+        "def sum_to(n: int) -> int:\n" +
         "    if n == 0:\n" +
         "        return 0\n" +
         "    return n + sum_to(n - 1)\n" +
@@ -147,6 +147,12 @@ test "a host module with a function in it" {
       ("get", @value.host_fn("store.get")),
       ("put", @value.host_fn("store.put")),
     ],
+    // PurePy is typed, so a function the guest calls has a signature the
+    // checker can see. The constants above are typed by their values.
+    types: [
+      ("get", Callable([@types.t_str], @types.t_str)),
+      ("put", Callable([@types.t_str, @types.t_str], @types.t_none)),
+    ],
   }
   // The host's own state, which the guest can only reach through the two
   // functions above.
@@ -179,7 +185,7 @@ test "a host module with a function in it" {
       @purepy.parse(
         "from store import get, put, VERSION\n" +
         "put(\"greeting\", \"hei\")\n" +
-        "print(VERSION, get(\"greeting\"))\n",
+        "print(VERSION + \" \" + get(\"greeting\"))\n",
       ),
     ),
   ])
@@ -228,6 +234,7 @@ test "a host function that fails" {
       @eval.HostModule::{
         name: "db",
         members: [("row", @value.host_fn("db.row"))],
+        types: [("row", Callable([@types.t_str], @types.t_str))],
       },
     ],
     call=fn(_, _) { Aborts(KeyError) },
@@ -277,20 +284,18 @@ test "a redefined print is handed the values" {
     redefined=[("builtins.print", @value.host_fn("cap.print"))],
   )
   let modules = Map([
-    ("__main__", @purepy.parse("print(1, \"a\", [2, 3])\nprint()\n")),
+    ("__main__", @purepy.parse("print([1, 2, 3])\nprint(\"a\")\n")),
   ])
   let tree = @purepy.source_tree(modules)
   // The checker needs to hear nothing about this. A redefinition moves the
   // VALUE behind a name it already knew, so `print` type-checks as it always
-  // did -- and, since the checker never knew how many arguments `print` took,
-  // a redefined one may take any number.
+  // does: one argument of any type, which is what a redefined one is handed.
   assert_true(@purepy.check_program(tree) is None)
   inspect(@purepy.run_with(tree, host) is Finished, content="true")
   // Two calls, with what the guest wrote and nothing added.
   assert_eq(captured.length(), 2)
-  assert_eq(captured[0].length(), 3)
-  assert_true(captured[0][2] is List(_))
-  assert_eq(captured[1].length(), 0)
+  assert_true(captured[0][0] is List(_))
+  assert_true(captured[1][0] is Str("a"))
 }
 ```
 
@@ -415,7 +420,12 @@ matches on `Terminated(KeyError, _)` keeps working.
 ///|
 test "where a run aborted, across two modules" {
   let modules = Map([
-    ("helper", @purepy.parse("def pick(d):\n    return d[\"missing\"]\n")),
+    (
+      "helper",
+      @purepy.parse(
+        "def pick(d: dict[str, int]) -> int:\n    return d[\"missing\"]\n",
+      ),
+    ),
     (
       "__main__",
       @purepy.parse("from helper import pick\nprint(pick({\"k\": 1}))\n"),
@@ -522,6 +532,7 @@ test "a host function that answers later" {
       @eval.HostModule::{
         name: "slow",
         members: [("fetch", @value.host_fn("slow.fetch"))],
+        types: [("fetch", Callable([], @types.t_int))],
       },
     ],
     call=(_, _) => Val(suspend(answer => waiting.push(answer))),
@@ -588,6 +599,17 @@ test "values in and out" {
           ),
           ("record", @value.host_fn("host.record")),
         ],
+        types: [
+          (
+            "record",
+            Callable(
+              [
+                @types.t_object, @types.t_object, @types.t_object, @types.t_object,
+              ],
+              @types.t_none,
+            ),
+          ),
+        ],
       },
     ],
     call=fn(_, args) {
@@ -629,7 +651,11 @@ names the one it is:
 ///|
 test "naming a value that cannot be printed" {
   let host = @eval.Host::new(modules=[
-    { name: "host", members: [("search", @value.host_fn("search"))], },
+    {
+      name: "host",
+      members: [("search", @value.host_fn("search"))],
+      types: [],
+    },
   ])
   // Whatever the host put in its own module, read back by name.
   let members = host.modules.get("host").unwrap()

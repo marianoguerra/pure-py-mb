@@ -28,9 +28,13 @@ pub struct SourceTree {
   base_dir : String
   modules : Map[String, @ast.Module]
   paths : Map[String, String]
+  names : Array[String]
+  loader : ((String) -> (@ast.Module, String) raise)?
 }
+pub fn SourceTree::contains(Self, String) -> Bool
 pub fn SourceTree::from_entry(String, predefined~ : Array[String], sweep? : Bool, profile? : @profile.Profile) -> Self raise
 pub fn SourceTree::get(Self, String) -> @ast.Module?
+pub fn SourceTree::load(Self, String) -> @ast.Module raise
 pub fn SourceTree::module_names(Self) -> Array[String]
 pub fn SourceTree::modules_map(Self) -> Map[String, @ast.Module]
 pub fn SourceTree::of(Map[String, @ast.Module], base_dir? : String) -> Self

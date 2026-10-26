@@ -28,10 +28,10 @@ export const GROUPS = [
           "the way Python prints it.",
         expect: 'finished',
         src: `print(2 ** 100)
-print(-7 // 2, -7 % 2, 7 % -2)
-print(7 / 2, 4 / 2)
+print([-7 // 2, -7 % 2, 7 % -2])
+print([7 / 2, 4 / 2])
 print(0.1 + 0.2)
-print(1e16, 1e15, 1e-5)
+print([1e16, 1e15, 1e-5])
 `,
       },
       {
@@ -39,16 +39,18 @@ print(1e16, 1e15, 1e-5)
         note:
           "A string is a sequence of code points, so `len` and indexing " +
           "count characters and not bytes. A container prints its elements " +
-          "with `repr`.",
+          "with `repr`. `print` takes one argument, so several things are " +
+          "printed as a list of them.",
         expect: 'finished',
-        src: `s = "héllo"
-print(len(s), s[0], s[-1])
+        src: `s: str = "héllo"
+print([len(s), s[0], s[-1]])
 print("bc" in "abcd")
 xs = [1, "a", (2, 3), {"k": 1.5}, None, True]
 print(xs)
-print(xs[2], len(xs))
+print(len(xs))
 d = {"one": 1, "two": 2}
-print(d["one"], "two" in d, len(d))
+print([d["one"], len(d)])
+print("two" in d)
 `,
       },
       {
@@ -56,14 +58,15 @@ print(d["one"], "two" in d, len(d))
         note:
           'Recursion is how a PurePy program loops, and a list is taken ' +
           'apart by index rather than by slicing, which is one of the ' +
-          'things the language has not defined yet.',
+          'things the language has not defined yet. Every parameter and ' +
+          'every result has a type.',
         expect: 'finished',
-        src: `def factorial(n):
+        src: `def factorial(n: int) -> int:
     if n <= 1:
         return 1
     return n * factorial(n - 1)
 
-def total(xs, i):
+def total(xs: list[int], i: int) -> int:
     if i == len(xs):
         return 0
     return xs[i] + total(xs, i + 1)
@@ -78,30 +81,34 @@ print(total([3, 1, 4, 1, 5], 0))
           "A run of consecutive `def`s is one mutual region: each may name " +
           "the others, and calling one rebinds the whole region.",
         expect: 'finished',
-        src: `def even(n):
+        src: `def even(n: int) -> bool:
     if n == 0:
         return True
     return odd(n - 1)
 
-def odd(n):
+def odd(n: int) -> bool:
     if n == 0:
         return False
     return even(n - 1)
 
-print(even(10), odd(10))
+print([even(10), odd(10)])
 `,
       },
       {
         name: 'Closures',
         note:
           "A lambda captures the environment it was made in. Because nothing " +
-          "is ever reassigned after being captured, what it sees cannot change.",
+          "is ever reassigned after being captured, what it sees cannot change. " +
+          "A lambda has no type of its own, so it takes the one it is " +
+          "checked against.",
         expect: 'finished',
-        src: `factor = 3
-triple = lambda n: n * factor
+        src: `from typing import Callable
+
+factor = 3
+triple: Callable[[int], int] = lambda n: n * factor
 print(triple(7))
 
-def adder(k):
+def adder(k: int) -> Callable[[int], int]:
     return lambda n: n + k
 
 print(adder(10)(5))
@@ -118,7 +125,8 @@ print([n * n for n in xs])
 print([n for n in xs if n % 2 == 0])
 print([a * b for a in [1, 2] for b in [10, 20]])
 print({k: len(k) for k in ["a", "bb", "ccc"]})
-print([c for c in "abc"])
+s: str = "abc"
+print([c for c in s])
 `,
       },
       {
@@ -126,21 +134,21 @@ print([c for c in "abc"])
         note:
           "The one class form PurePy has, and the pattern language that goes " +
           "with it. A constructor pattern matches a subclass and binds the " +
-          "pattern class's fields, so the Point3 case has to come first.",
+          "pattern class's fields, so the Point3 case has to come first. The " +
+          "checker knows which cases a value can reach, from its type.",
         expect: 'finished',
         src: `from dataclasses import dataclass
-from typing import Any
 
 @dataclass
 class Point:
-    x: Any
-    y: Any
+    x: int
+    y: int
 
 @dataclass
 class Point3(Point):
-    z: Any
+    z: int
 
-def describe(v):
+def describe(v: Point | dict[str, str] | list[int] | None) -> str:
     match v:
         case Point3(a, b, c):
             return "a point in space"
@@ -161,7 +169,7 @@ print(describe(Point(0, 0)))
 print(describe(Point(1, 2)))
 print(describe(Point3(1, 2, 3)))
 print(describe({"kind": "a dictionary"}))
-print(describe([1, 2]), describe(None))
+print([describe([1, 2]), describe(None)])
 `,
       },
       {
@@ -172,15 +180,14 @@ print(describe([1, 2]), describe(None))
           "name is loaded before that statement runs.",
         expect: 'finished',
         src: `# module: geometry
-from typing import Any
 from dataclasses import dataclass
 
 @dataclass
 class Point:
-    x: Any
-    y: Any
+    x: int
+    y: int
 
-def flip(p):
+def flip(p: Point) -> Point:
     return Point(p.y, p.x)
 
 # module: __main__
@@ -188,7 +195,7 @@ import math
 from geometry import Point, flip
 
 p = Point(3, 4)
-print(p, flip(p))
+print([p, flip(p)])
 print(math.sqrt(p.x * p.x + p.y * p.y))
 `,
       },
@@ -203,14 +210,15 @@ print(math.sqrt(p.x * p.x + p.y * p.y))
           "The `host` module does not exist in PurePy: this page supplies " +
           "it. `log` reaches the host's own pane, `now` is a fixed instant, " +
           "and `count` keeps state on the host's side that the guest can " +
-          "only reach through the call.",
+          "only reach through the call. The host declares each function's " +
+          "type, so the guest's calls are checked like any others.",
         expect: 'finished',
         src: `from host import VERSION, log, now, count
 
 print(VERSION)
 log("the guest is running")
-print("the host says the time is", now())
-print(count("clicks"), count("clicks"), count("other"))
+print(["the host says the time is", now()])
+print([count("clicks"), count("clicks"), count("other")])
 log("and it is done")
 `,
       },
@@ -219,9 +227,7 @@ log("and it is done")
         note:
           "A host answers with a value, with one of the semantics' own " +
           "terminations, or with nothing it can do. `fail` chooses " +
-          "`KeyError`; calling `log` with two arguments is a shape the host " +
-          "does not recognise, and that is undefined rather than an error " +
-          "the host invented.",
+          "`KeyError`, and the run ends there.",
         expect: 'terminated',
         src: `from host import log, fail
 
@@ -239,7 +245,7 @@ print("never reached")
         src: `import sys
 
 print(len(sys.argv))
-print(sys.argv[0], sys.argv[1])
+print([sys.argv[0], sys.argv[1]])
 `,
       },
     ],
@@ -291,7 +297,7 @@ print(x)
         expect: 'refused',
         src: `x = 5
 
-def show():
+def show() -> int:
     return x
 
 x = 6
@@ -319,14 +325,45 @@ match v:
           "inherited first.",
         expect: 'refused',
         src: `from dataclasses import dataclass
-from typing import Any
 
 @dataclass
 class Point:
-    x: Any
-    y: Any
+    x: int
+    y: int
 
 p = Point(1, 2, 3)
+`,
+      },
+      {
+        name: 'A type error',
+        note:
+          "PurePy is typed: every function says what it takes and what it " +
+          "gives, and a call is checked against that before anything runs.",
+        expect: 'refused',
+        src: `def double(n: int) -> int:
+    return n * 2
+
+print(double("two"))
+`,
+      },
+      {
+        name: 'No truthiness',
+        note:
+          "Python decides `if 5:` by truthiness. PurePy has no truthiness: a " +
+          "condition is a bool, and the checker says so before the run.",
+        expect: 'refused',
+        src: `if 5:
+    print("Python would print this")
+`,
+      },
+      {
+        name: 'No methods',
+        note:
+          "The attributes of a built-in value are not PurePy's, which is what " +
+          "makes list mutation unreachable rather than merely discouraged.",
+        expect: 'refused',
+        src: `xs = [1, 2]
+xs.append(3)
 `,
       },
       {
@@ -380,54 +417,36 @@ print("never reached")
 `,
       },
       {
-        name: 'Undefined: truthiness',
+        name: 'Undefined: nan inside a container',
         note:
-          "Python decides `if 5:` by truthiness. PurePy has no rule for a " +
-          "condition that is not a bool, so the run has no answer -- and " +
-          "this implementation says so rather than guessing Python's.",
+          "A well-typed program can still reach an operation with no rule. " +
+          "`nan == nan` is False, but whether a list holding nan equals " +
+          "itself is a question Python answers by identity, and PurePy " +
+          "values have none -- so the run has no answer, and this " +
+          "implementation says so rather than guessing Python's.",
         expect: 'undefined',
-        src: `if 5:
-    print("Python would print this")
+        src: `inf = 1e309
+nan = inf - inf
+print(nan == nan)
+print([nan] == [nan])
 `,
       },
       {
-        name: 'Undefined: comparing unlike things',
+        name: 'Undefined: a bool against a number',
         note:
-          "Equality is partial and short-circuits, so which pair it reaches " +
-          "first decides whether there is an answer. The second line has one; " +
-          "the third does not.",
+          "A literal pattern compares with `==`, and Python's `True == 1` is " +
+          "a coercion PurePy does not make. The first call has an answer; the " +
+          "second does not.",
         expect: 'undefined',
-        src: `print([1, "a"] == [2, 3])
-print(1 == "a")
-`,
-      },
-      {
-        name: 'Undefined: no such attribute',
-        note:
-          "The attributes of a built-in value are undefined, which is what " +
-          "makes list mutation unreachable rather than merely discouraged.",
-        expect: 'undefined',
-        src: `xs = [1, 2]
-xs.append(3)
-`,
-      },
-      {
-        name: 'Undefined: a pattern that does not apply',
-        note:
-          "The pattern rules are narrower than “anything else fails”. A tuple " +
-          "pattern against a number is an honest no-match; a LIST pattern " +
-          "against a tuple is covered by no rule at all, and there is no " +
-          "answer. Swap the two calls to see the difference.",
-        expect: 'undefined',
-        src: `def first(v):
+        src: `def kind(v: bool | int) -> str:
     match v:
-        case [a, b]:
-            return a
+        case 1:
+            return "one"
         case _:
-            return "not a list of two"
+            return "something else"
 
-print(first(7))
-print(first((1, 2)))
+print(kind(1))
+print(kind(True))
 `,
       },
       {
@@ -441,7 +460,7 @@ print(first((1, 2)))
           "keeps its continuation on the heap now, so a runaway costs an " +
           "array of frames and not the tab.",
         expect: 'undefined',
-        src: `def forever(n):
+        src: `def forever(n: int) -> int:
     return forever(n + 1)
 
 print(forever(0))

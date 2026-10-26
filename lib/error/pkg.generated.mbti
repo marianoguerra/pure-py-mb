@@ -4,6 +4,7 @@ package "marianoguerra/pure-py/error"
 import {
   "marianoguerra/error-report",
   "marianoguerra/pure-py/basic",
+  "moonbitlang/core/bigint",
   "moonbitlang/core/debug",
 }
 
@@ -50,37 +51,50 @@ pub(all) enum Kind {
 } derive(Eq, @debug.Debug)
 
 pub(all) enum Reason {
-  DuplicateFieldName(name~ : String, cls~ : String)
-  UnknownBaseClass(base~ : String)
-  InheritedFieldClash(field~ : String, base~ : String)
-  DuplicateClassName(name~ : String, in_module~ : String)
-  UnassignedVariable(name~ : String)
-  CapturedReassignment(name~ : String)
-  SelfCaptureAssignment(name~ : String)
-  CapturedGeneratorVariable(name~ : String)
+  DuplicateField(x~ : String, c~ : String)
+  ClassRebound(c~ : String)
+  UndefinedVariable(x~ : String)
+  UnassignedVariable(x~ : String)
+  CapturedReassignment(x~ : String)
+  SelfCaptureAssignment(x~ : String)
+  CapturedGeneratorVariable(x~ : String)
   UnreachableStatement
-  ConstructorArityMismatch(cls~ : String, expected~ : Int32, got~ : Int32)
-  UnknownConstructorKeyword(cls~ : String, expected_fields~ : Array[String])
-  PatternArityMismatch(cls~ : String, expected~ : Int32, got~ : Int32)
-  UnknownClassInPattern(cls~ : String)
-  UnknownFieldInPattern(cls~ : String, expected_fields~ : Array[String])
-  DuplicatePatternKeyword(cls~ : String)
-  DuplicateDictKey(key~ : String)
-  NonlinearPattern(index~ : Int32)
-  UnreachableCase(index~ : Int32, subsumed_by~ : Int32)
-  DuplicateMutualName(name~ : String)
-  NonTopLevelImport
-  ImportAfterStatement
-  SubmoduleNameClash(name~ : String, submodule~ : String)
+  ConstructorArityMismatch(c~ : String, expected~ : Int32, got~ : Int32)
+  UnknownConstructorKeyword(c~ : String, xs~ : Array[String])
+  PatternArityMismatch(c~ : String, expected~ : Int32, got~ : Int32)
+  NotPredefinedName(x~ : String)
+  NotClass(q~ : String)
+  UnknownFieldInPattern(c~ : String, xs~ : Array[String])
+  DuplicatePatternKeyword(c~ : String)
+  DuplicateDictKey(w~ : String)
+  NonlinearPattern(x~ : String)
+  DuplicateMutualName(x~ : String)
+  DuplicateMember(x~ : String, q~ : String)
   SubmoduleNotImported(q~ : String)
   UnassignedMember(x~ : String, q~ : String)
   TopLevelReturn
-  EmptyFromImport
   UnknownModule(q~ : String)
   UnknownMember(x~ : String, q~ : String)
-  ModuleAsValue(name~ : String)
-  OwnDescendantImport(q~ : String, q0~ : String)
-  ClassAsValue(name~ : String)
+  ModuleAsValue(q~ : String)
+  ImportOfContainedModule(q~ : String, q_~ : String, from_import~ : String)
+  PredefinedNameAsValue(q~ : String)
+  ClassAsValue(q~ : String)
+  NoBinaryOverload(op~ : String, sigma~ : String, sigma_~ : String)
+  NoUnaryOverload(op~ : String, sigma~ : String)
+  NotCallable(tau~ : String)
+  CallArityMismatch(expected~ : Int32, given~ : Int32)
+  TypeMismatch(expected~ : String, actual~ : String)
+  LambdaTypeMismatch(expected~ : String, arity~ : Int32?)
+  NotSubscriptable(tau~ : String)
+  TupleIndexOutOfRange(index~ : @bigint.BigInt, length~ : Int32)
+  UnreachableCase(index~ : Int32)
+  SequenceKindMismatch(kind~ : String, tau~ : String)
+  NotIterable(tau~ : String)
+  UnknownField(c~ : String, x~ : String)
+  NotSynthesised
+  NoAttributes(tau~ : String)
+  MissingReturn(x~ : String, tau~ : String)
+  UnknownMethod(tau~ : String, x~ : String)
 } derive(Eq, @debug.Debug)
 pub fn Reason::code(Self) -> String
 pub fn Reason::message(Self) -> String

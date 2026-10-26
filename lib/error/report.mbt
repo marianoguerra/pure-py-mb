@@ -65,9 +65,7 @@ fn Diagnostic::anchor_note(self : Diagnostic) -> String? {
     IllFormed(CapturedReassignment(..)) => Some("reassigned here")
     IllFormed(UnreachableStatement) => Some("never reached")
     IllFormed(UnreachableCase(..)) => Some("never reached")
-    IllFormed(SubmoduleNameClash(..)) => Some("bound here")
-    IllFormed(ImportAfterStatement) => Some("this import comes too late")
-    IllFormed(NonTopLevelImport) => Some("an import inside a body")
+    IllFormed(DuplicateMember(..)) => Some("bound here")
     _ => None
   }
 }
@@ -106,27 +104,9 @@ pub fn Diagnostic::help(self : Diagnostic) -> String? {
       Some("add `import " + q + "` or `from ... import ...` for it")
     IllFormed(TopLevelReturn) =>
       Some("a module body runs to the end; there is nothing to return to")
-    IllFormed(OwnDescendantImport(q~, ..)) =>
-      Some("use `from " + parent_of(q) + " import " + last_of(q) + "`")
     NotYetSupported(issue~, ..) =>
       Some("tracked upstream as issue #" + issue.to_string())
     _ => None
-  }
-}
-
-///|
-fn parent_of(q : String) -> String {
-  match q.rev_split_once(".") {
-    Some((head, _)) => head.to_owned()
-    None => q
-  }
-}
-
-///|
-fn last_of(q : String) -> String {
-  match q.rev_split_once(".") {
-    Some((_, tail)) => tail.to_owned()
-    None => q
   }
 }
 

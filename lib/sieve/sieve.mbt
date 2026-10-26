@@ -134,14 +134,72 @@ fn not_yet_nowhere(feature : String, issue : Int32) -> @err.PurePyError {
 // ---------------------------------------------------------------------------
 
 ///|
-/// The module body: a class declaration is allowed here and nowhere else.
+/// The module body: the import prefix, then the statements, where a class
+/// declaration is allowed and nowhere else.
+///
+/// An import past the prefix is refused here and not by the checker: placing
+/// an import is a matter of syntax since v0.16, and the reference's sieve is
+/// what says so.
 fn Sieve::check_top_level(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise {
-  for s in stmts {
+  let mut i = 0
+  while i < stmts.length() && @analysis.is_import(stmts[i]) {
+    check_import(stmts[i])
+    i += 1
+  }
+  for s in stmts[i:] {
+    if @analysis.is_import(s) {
+      raise prohibited("imports must precede all other statements", s.span())
+    }
     if s is ClassDef(..) {
       check_classdef(s)
     } else {
       self.check_stmt(s)
     }
+  }
+}
+
+///|
+/// One import of the prefix.
+fn check_import(node : @ast.Stmt) -> Unit raise {
+  let span = node.span()
+  match node {
+    Import(names~, ..) => {
+      if names.length() != 1 {
+        raise not_yet("multi-target import (import a, b)", 135, span)
+      }
+      if names[0].asname is Some(_) {
+        raise not_yet("import-as", 135, span)
+      }
+    }
+    ImportFrom(names~, level~, ..) => {
+      if names.is_empty() {
+        raise prohibited("empty name list", span)
+      }
+      if level > 0 {
+        raise not_yet("relative imports", 126, span)
+      }
+      for a in names {
+        if a.name == "*" {
+          raise not_yet("from M import *", 105, span)
+        }
+        if a.asname is Some(_) {
+          raise not_yet("from-import-as", 135, span)
+        }
+      }
+    }
+    _ => ()
+  }
+}
+
+///|
+/// An annotation must spell a type PurePy has.
+fn check_annotation(e : @ast.Expr?) -> Unit raise {
+  match e {
+    Some(a) =>
+      if @types.parse_annotation(a) is None {
+        raise prohibited("unsupported type annotation", a.span())
+      }
+    None => ()
   }
 }
 
@@ -223,9 +281,13 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
       if decorators.length() > 0 {
         raise not_yet("decorators", 58, span)
       }
-      if returns is Some(_) {
-        raise prohibited("return type annotations prohibited", span)
+      if args.args.iter().any(fn(a) { a.annotation is None }) {
+        raise prohibited("parameters must be annotated", span)
       }
+      if returns is None {
+        raise prohibited("return type must be annotated", span)
+      }
+      check_annotation(returns)
       self.check_body(body)
     }
     ExprStmt(value~, ..) => self.check_expr(value)
@@ -238,7 +300,16 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     }
     AugAssign(..) =>
       raise prohibited("augmented assignment (+=, etc.) prohibited", span)
-    AnnAssign(..) => raise prohibited("annotated assignment prohibited", span)
+    AnnAssign(target~, annotation~, value~, ..) => {
+      guard value is Some(v) else {
+        raise prohibited("annotation without assignment prohibited", span)
+      }
+      if !(target is Name(..)) {
+        raise prohibited("assignment target must be a simple name", span)
+      }
+      check_annotation(Some(annotation))
+      self.check_expr(v)
+    }
     Delete(..) => raise prohibited("del prohibited", span)
     For(is_async=false, ..) => raise prohibited("for loops prohibited", span)
     While(..) => raise prohibited("while loops prohibited", span)
@@ -249,30 +320,8 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     // `try/except*` is `TryStar` in CPython, a class of its own that the
     // reference's chain never names, so it falls through to the last line.
     Try(is_star=false, ..) => raise prohibited("try/except prohibited", span)
-    Import(names~, ..) => {
-      if names.length() != 1 {
-        raise not_yet("multi-target import (import a, b)", 53, span)
-      }
-      if names[0].asname is Some(_) {
-        raise not_yet("import-as", 53, span)
-      }
-    }
-    ImportFrom(module_name~, names~, level~, ..) => {
-      if level > 0 {
-        raise not_yet("relative imports", 53, span)
-      }
-      if module_name is None {
-        raise not_yet("from-import with no module", 53, span)
-      }
-      for a in names {
-        if a.name == "*" {
-          raise not_yet("from M import *", 53, span)
-        }
-        if a.asname is Some(_) {
-          raise not_yet("from-import-as", 53, span)
-        }
-      }
-    }
+    Import(..) | ImportFrom(..) =>
+      raise prohibited("import only allowed at module top level", span)
     Global(..) => raise prohibited("global prohibited", span)
     Nonlocal(..) => raise prohibited("nonlocal prohibited", span)
     ClassDef(..) =>
@@ -282,7 +331,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
       for c in cases {
         // A `match_case` carries no position in CPython's tree.
         if c.guard_ is Some(_) {
-          raise not_yet_nowhere("case guards", 83)
+          raise not_yet_nowhere("case guards", 190)
         }
         self.check_pattern(c.pattern)
         self.check_body(c.body)
@@ -345,9 +394,7 @@ fn check_field(stmt : @ast.Stmt) -> Unit raise {
       if value is Some(_) {
         raise prohibited("field default values prohibited", span)
       }
-      if !(annotation is Name(id="Any", ..)) {
-        raise prohibited("field type annotation must be Any", span)
-      }
+      check_annotation(Some(annotation))
     }
     _ =>
       raise prohibited(
@@ -375,14 +422,14 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
         // A bool in a pattern is a `MatchSingleton`, so `int` here never
         // means `bool` -- which in Python it otherwise would.
         Constant(value=Int(_) | Float(_) | Str(_), ..) => return
-        UnaryOp(op=UAdd | USub, operand~, ..) =>
+        UnaryOp(op=USub, operand~, ..) =>
           if operand is Constant(value=Int(_) | Float(_), ..) {
             return
           }
         Attribute(..) => raise not_yet("attribute value patterns", 86, span)
         _ => ()
       }
-      raise not_yet("complex value patterns", 83, span)
+      raise prohibited("complex and bytes literal patterns prohibited", span)
     }
     MatchSingleton(..) => ()
     MatchAs(pattern~, ..) =>
@@ -392,15 +439,9 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
       }
     MatchSequence(patterns~, ..) =>
       for p in patterns {
-        if p is MatchStar(..) {
-          raise not_yet("star patterns", 84, span)
-        }
         self.check_pattern(p)
       }
-    MatchClass(cls~, patterns~, kwd_patterns~, ..) => {
-      if !is_qualified_name(cls) {
-        raise prohibited("class pattern head must be a qualified name", span)
-      }
+    MatchClass(patterns~, kwd_patterns~, ..) => {
       for p in patterns {
         self.check_pattern(p)
       }
@@ -525,7 +566,7 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       for k in keys {
         match k {
           Some(e) => self.check_expr(e)
-          None => ()
+          None => raise prohibited("dict unpacking prohibited", span)
         }
       }
       for v in values {
@@ -658,5 +699,8 @@ fn Sieve::check_arguments(self : Sieve, node : @ast.Arguments) -> Unit raise {
   }
   if node.posonlyargs.length() > 0 {
     raise prohibited_nowhere("positional-only arguments prohibited")
+  }
+  for a in node.args {
+    check_annotation(a.annotation)
   }
 }
