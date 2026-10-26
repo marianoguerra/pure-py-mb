@@ -4,8 +4,6 @@ test/conformance/module-level/exception/result/assert_false.py	a7e788edf03cd5243
 test/conformance/module-level/exception/result/assert_msg_false.py	e4dcb28002850c21862d28693ffc0da56d23dd0c
 test/conformance/module-level/exception/result/divide_by_zero.py	394cd1e578c82133b9ea6505243a0eeab25a7295
 test/conformance/module-level/exception/result/key_error.py	759b0601a5b3b7f0c76e4930426c4108b48a17c6
-test/conformance/module-level/exception/result/round_infinite.py	2d8795818b68c302d3b0ee2036e150400248084a
-test/conformance/module-level/exception/result/round_nan.py	2dee74616fe4d4f7500c989ba63ea40c182649d7
 test/conformance/module-level/exception/result/subscript_negative_out_of_range.py	481804bf8889dca6efb0c6ac1eeac9314a976814
 test/conformance/module-level/exception/result/subscript_out_of_range.py	f9cd6d1c6075c667e13592de742e47026ba20196
 test/conformance/module-level/exception/type-checker/alias_args_on_plain_alias.py	81f216ee91b8dd01f02eab66ca24d576e4d988ba
@@ -77,6 +75,8 @@ test/conformance/module-level/exception/type-checker/unbound_local.py	7d5f85111e
 test/conformance/module-level/exception/type-checker/unknown_module.py	bda16255ca205b4fe30ea792c12a4c945ac1029d
 test/conformance/module-level/exception/type-checker/use_before_declaration_top.py	e8ef79c19c8c809ca5132eed7763d3a1a0acfdb7
 test/conformance/module-level/exception/type-checker/use_before_if_declaration.py	d3d20d2144d4e4bf19bea7209edaa2a4ae4d9c3b
+test/conformance/module-level/exception/undefined/round_infinite.py	2d8795818b68c302d3b0ee2036e150400248084a
+test/conformance/module-level/exception/undefined/round_nan.py	2dee74616fe4d4f7500c989ba63ea40c182649d7
 test/conformance/module-level/no-exception/parser/annotated_attribute_assign.py	1814acc5825e0b4486c4aadcedafb1acd8eb0b43
 test/conformance/module-level/no-exception/parser/annotation_callable_ellipsis.py	df94f3614b6d1f3b2bcf11f2ec52e124b6f49be8
 test/conformance/module-level/no-exception/parser/annotation_dict_int_key.py	72b073707a5ecfd652346a8c3bbf63ef33d98e25
@@ -290,6 +290,7 @@ test/conformance/module-level/no-exception/result/never_annotation.py	c9882a5dbd
 test/conformance/module-level/no-exception/result/never_below.py	603f12120a6381e9cd99fcbfc84c431aa11fa975
 test/conformance/module-level/no-exception/result/object_above.py	1c63f89aa8a1f0bf733e359ac742eaf239dec302
 test/conformance/module-level/no-exception/result/pat_as_narrowed.py	8b8508e2ccdac32e7243e82d9133c6201ae50f4f
+test/conformance/module-level/no-exception/result/pat_bool_literal_number.py	c9ad9d643fab054d50b5c10190536761c224a98c
 test/conformance/module-level/no-exception/result/pat_class_bool_fields.py	ae4b76c4dcde6185aeac0dc3b6c04b1f89ece4fc
 test/conformance/module-level/no-exception/result/pat_class_mixed.py	3966ee6a92f1f59c2b2725b8186113d7df2743e9
 test/conformance/module-level/no-exception/result/pat_class_nested.py	3aac3ea245a876066bd48bcc06388a01e99a13fd
@@ -617,7 +618,9 @@ test/conformance/module-level/no-exception/type-checker/unreachable.py	2f7c332e3
 test/conformance/module-level/no-exception/type-checker/unreachable_after_if_else.py	801abeb97a7a2d97a6ceede375ee00cd6f194e37
 test/conformance/module-level/no-exception/type-checker/unsupported_builtin.py	06d702936fbb57af083ca20910e7705e3ce1bb7d
 test/conformance/module-level/no-exception/undefined/eq_bool_number.py	945c5a6b58ec2c188f1975076aa32948667d5f13
+test/conformance/module-level/no-exception/undefined/eq_function_object.py	1fbe49294f8df3ad8272203a7f36ebd9341c7b16
 test/conformance/module-level/no-exception/undefined/eq_nan_container.py	0044986110dd6f7d4496048b55ccb15f57bf4393
+test/conformance/module-level/no-exception/undefined/pat_literal_bool_number.py	c40a5abae76b7abc32ec62cf0a71003486ccf2fa
 test/conformance/module-level/syntactic-only/empty_from_import.py	fc8a03ee652b09df33bbe829a8c9088938057af6
 test/conformance/module-level/syntactic-only/helpers/__init__.py	3e648ad8c5795b0a415b71b496b11c67bcd2c3c9
 test/conformance/module-level/syntactic-only/helpers/harness.py	788ba824aa3798691c34afeb5038d6b8678b14c1

@@ -25,7 +25,7 @@ describes.
 
 ## Status
 
-The conformance suite of specification v0.20.0 passes in full: 2103
+The conformance suite of specification v0.21.0 passes in full: 2112
 assertions across four oracles, compared against the reference's own answers
 for every one of its sources.
 Two more oracles compare the token stream and the parse tree against CPython's

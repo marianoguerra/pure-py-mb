@@ -6,6 +6,12 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.21.0
+
+Only the suite changed. It files `round` of an infinity or a nan as
+undefined, which is what the specification says, so the evaluator is stuck
+there again rather than aborting.
+
 ### Specification v0.20.0: `assert False`
 
 `assert False` is a return for the purposes of definite return: a function

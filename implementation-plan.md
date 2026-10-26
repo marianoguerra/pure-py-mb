@@ -1225,6 +1225,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.19.0 | mutual type regions: recursive data types, lazily resolved aliases, cyclic aliases refused; type-argument inference only for the callee's parameters | `lib/check` (regions, alias entries), `lib/types` (`fv`, `type_args`), `lib/error` |
 | v0.19.1 | `round` a builtin, `math` removed; inherited-field reason; unbound base class | `lib/types` (predefined table), `lib/value` and `lib/eval` (primitives), `lib/check`, `lib/error`, `lib/context` and the builtins profile |
 | v0.20.0 | `assert False` returns, at top level refused; mypy-only fall-throughs carried by the outcome; floats are not literal types, float patterns; `|` parsed and refused by the checker; tuples and sequence patterns without brackets allowed again; `round` aborts at an infinity or a nan; the suite's new taxonomy | `lib/check`, `lib/types`, `lib/sieve`, `lib/value` and `lib/eval` (`OverflowError`, `ValueError`), `tools/conform.py` |
+| v0.21.0 | tests only: `round` at an infinity or a nan is undefined again | `lib/eval` (`round` stuck there) |
 
 Decisions made on the way, recorded as §9's are:
 

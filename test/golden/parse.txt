@@ -3,8 +3,6 @@ module-level/exception/result/assert_false.py	0	: ok
 module-level/exception/result/assert_msg_false.py	0	: ok
 module-level/exception/result/divide_by_zero.py	0	: ok
 module-level/exception/result/key_error.py	0	: ok
-module-level/exception/result/round_infinite.py	0	: ok
-module-level/exception/result/round_nan.py	0	: ok
 module-level/exception/result/subscript_negative_out_of_range.py	0	: ok
 module-level/exception/result/subscript_out_of_range.py	0	: ok
 module-level/exception/type-checker/alias_args_on_plain_alias.py	0	: ok
@@ -76,6 +74,8 @@ module-level/exception/type-checker/unbound_local.py	0	: ok
 module-level/exception/type-checker/unknown_module.py	0	: ok
 module-level/exception/type-checker/use_before_declaration_top.py	0	: ok
 module-level/exception/type-checker/use_before_if_declaration.py	0	: ok
+module-level/exception/undefined/round_infinite.py	0	: ok
+module-level/exception/undefined/round_nan.py	0	: ok
 module-level/no-exception/parser/annotated_attribute_assign.py	1	:10:0: assignment target other than a simple name prohibited
 module-level/no-exception/parser/annotation_callable_ellipsis.py	1	:3:3: annotation that is not a type expression prohibited
 module-level/no-exception/parser/annotation_dict_int_key.py	1	:1:3: annotation that is not a type expression prohibited
@@ -289,6 +289,7 @@ module-level/no-exception/result/never_annotation.py	0	: ok
 module-level/no-exception/result/never_below.py	0	: ok
 module-level/no-exception/result/object_above.py	0	: ok
 module-level/no-exception/result/pat_as_narrowed.py	0	: ok
+module-level/no-exception/result/pat_bool_literal_number.py	0	: ok
 module-level/no-exception/result/pat_class_bool_fields.py	0	: ok
 module-level/no-exception/result/pat_class_mixed.py	0	: ok
 module-level/no-exception/result/pat_class_nested.py	0	: ok
@@ -616,7 +617,9 @@ module-level/no-exception/type-checker/unreachable.py	0	: ok
 module-level/no-exception/type-checker/unreachable_after_if_else.py	0	: ok
 module-level/no-exception/type-checker/unsupported_builtin.py	0	: ok
 module-level/no-exception/undefined/eq_bool_number.py	0	: ok
+module-level/no-exception/undefined/eq_function_object.py	0	: ok
 module-level/no-exception/undefined/eq_nan_container.py	0	: ok
+module-level/no-exception/undefined/pat_literal_bool_number.py	0	: ok
 module-level/syntactic-only/empty_from_import.py	1	:3:0: import after another statement prohibited
 module-level/syntactic-only/helpers/__init__.py	0	: ok
 module-level/syntactic-only/helpers/harness.py	1	:3:0: import after another statement prohibited
