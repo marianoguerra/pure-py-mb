@@ -11,6 +11,7 @@
 /// knows nothing of types but how they read.
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
+  InheritedField(x~ : String, c~ : String, d~ : String)
   UndefinedVariable(x~ : String)
   UnassignedVariable(x~ : String)
   PossiblyUnassigned(x~ : String, declared_in_branch~ : Bool)
@@ -84,6 +85,8 @@ pub(all) enum Reason {
 pub fn Reason::message(self : Reason) -> String {
   match self {
     DuplicateField(x~, c~) => "duplicate field '\{x}' in class '\{c}'"
+    InheritedField(x~, c~, d~) =>
+      "field '\{x}' of class '\{c}' is also a field of base class '\{d}'"
     UndefinedVariable(x~) => "'\{x}' is not defined"
     UnassignedVariable(x~) => "'\{x}' is declared but not yet assigned"
     PossiblyUnassigned(x~, declared_in_branch~) =>
@@ -198,6 +201,7 @@ pub fn Reason::message(self : Reason) -> String {
 pub fn Reason::code(self : Reason) -> String {
   let name = match self {
     DuplicateField(..) => "duplicate-field"
+    InheritedField(..) => "inherited-field"
     UndefinedVariable(..) => "undefined-variable"
     UnassignedVariable(..) => "unassigned-variable"
     PossiblyUnassigned(..) => "possibly-unassigned"

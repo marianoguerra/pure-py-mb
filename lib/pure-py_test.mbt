@@ -45,15 +45,15 @@ test "run answers on a tree the sieve would reject" {
 /// A program assembled in memory can import the predefined modules.
 ///
 /// A tree read off a disk has them because discovery put them there; one
-/// built by an embedder has never seen them, and `import math` in it used to
+/// built by an embedder has never seen them, and `import sys` in it used to
 /// be an unknown module.
-test "an in-memory program can import math, sys and the rest" {
+test "an in-memory program can import sys and the rest" {
   let modules = Map([
     (
       "__main__",
       @purepy.parse(
-        "import math\nimport sys\nfrom dataclasses import dataclass\n" +
-        "from typing import Callable\nprint([math.floor(2.7), len(sys.argv)])\n",
+        "import sys\nfrom dataclasses import dataclass\n" +
+        "from typing import Callable\nprint([round(2.7), len(sys.argv)])\n",
       ),
     ),
   ])
@@ -61,7 +61,7 @@ test "an in-memory program can import math, sys and the rest" {
   assert_eq(@purepy.check_program(tree), None)
   let (output, result) = @purepy.run(tree, argv=["main.py"])
   assert_true(result is Finished)
-  assert_eq(output, "[2, 1]\n")
+  assert_eq(output, "[3, 1]\n")
 }
 
 // ---------------------------------------------------------------------------
@@ -327,10 +327,7 @@ test "a method is a call and not a value" {
 /// code. Both are ordinary PurePy and are what would break silently.
 test "a module member and a field still resolve as they did" {
   for p in [@profile.core, @profile.methods()] {
-    assert_eq(
-      outcome_under("import math\nprint(math.floor(2.7))\n", p),
-      "ok: 2\n",
-    )
+    assert_eq(outcome_under("import sys\nprint(len(sys.argv))\n", p), "ok: 0\n")
     assert_eq(
       outcome_under(
         "from dataclasses import dataclass\n" +
@@ -343,8 +340,8 @@ test "a module member and a field still resolve as they did" {
     // anything runs -- the one attribute PurePy can decide statically, and
     // the one the method rule must not have moved to run time.
     assert_eq(
-      outcome_under("import math\nprint(math.nope())\n", p),
-      "refused: module 'math' has no member 'nope'",
+      outcome_under("import sys\nprint(sys.nope())\n", p),
+      "refused: module 'sys' has no member 'nope'",
     )
     // So is a field that is not there, now that a value has a type.
     assert_eq(

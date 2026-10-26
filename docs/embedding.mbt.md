@@ -330,7 +330,7 @@ test "every way of naming print reaches the redefinition" {
 ```
 
 It is not only `builtins`. A key is a predefined module's name, a dot, and the
-member within it, so `sys.exit` and `math.sqrt` are the same field -- and a
+member within it, so `sys.exit` and `builtins.len` are the same field -- and a
 host that wants the transcript as well as the values asks `print_text` for the
 text `print` would have written, rather than writing the join a second time and
 drifting from CPython on the first argument that renders unusually.
@@ -670,8 +670,8 @@ test "naming a value that cannot be printed" {
 }
 ```
 
-`Primitive::name` answers the name a member is bound under -- `floor` for
-`math.floor`, and for a host function whatever the host registered it as --
+`Primitive::name` answers the name a member is bound under -- `exit` for
+`sys.exit`, and for a host function whatever the host registered it as --
 which is enough to render `<builtin search>` where Python would print an
 address. It is the same table `Interp::predefined` binds from, read back, and
 a test in the library says so, so a builtin added by a later profile does not

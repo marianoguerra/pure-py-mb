@@ -1,21 +1,21 @@
 {
   "floors": {
-    "ast": 860,
-    "ast-pos": 860,
-    "check": 836,
-    "parse": 836,
+    "ast": 864,
+    "ast-pos": 864,
+    "check": 840,
+    "parse": 840,
     "program": 87,
-    "run": 274,
-    "tokens": 860
+    "run": 276,
+    "tokens": 864
   },
   "note": "A ratchet, not a target. `tools/conform.py` fails when an oracle drops below its floor (a regression) and equally when it rises above one (an improvement nobody recorded): rerun with --regen-policy and commit the moved floor in the change that earned it.",
   "totals": {
-    "ast": 860,
-    "ast-pos": 860,
-    "check": 836,
-    "parse": 836,
+    "ast": 864,
+    "ast-pos": 864,
+    "check": 840,
+    "parse": 840,
     "program": 87,
-    "run": 274,
-    "tokens": 860
+    "run": 276,
+    "tokens": 864
   }
 }

@@ -7,9 +7,8 @@
 /// `range` does not: `range("x")` is undefined, while `len(1)` aborts. The
 /// asymmetry is the figure's, not this port's.
 ///
-/// The figure leaves `print` and the `math` functions without a definition.
-/// They are implemented as Python implements them, since CPython is the
-/// oracle for what a run prints.
+/// The figure leaves `print` without a definition. It is implemented as
+/// Python implements it, since CPython is the oracle for what a run prints.
 async fn Interp::call_primitive(
   self : Interp,
   p : @value.Primitive,
@@ -73,45 +72,18 @@ async fn Interp::call_primitive(
       } else {
         Stuck("sys.exit with \{args.length()} arguments")
       }
-    // `math.floor` and `math.ceil` return an integer in Python; the rest
-    // return a float.
-    MathFloor | MathCeil => {
-      let x = match numeric(args) {
-        Some(d) => d
-        None => return Stuck("a math function of the wrong shape")
-      }
-      let r = if p is MathFloor { x.floor() } else { @math.ceil(x) }
-      match @value.exact_integer(r) {
-        Some(n) => Val(Int(n))
-        None => Stuck("floor or ceil of a value with no integer")
-      }
-    }
-    Sqrt | Exp | Log | Sin | Cos | Tan => {
-      let x = match numeric(args) {
-        Some(d) => d
-        None => return Stuck("a math function of the wrong shape")
-      }
-      match p {
-        // `sqrt` of a negative number and `log` of a non-positive one raise
-        // ValueError in Python, which is not a termination kind.
-        Sqrt =>
-          if x < 0.0 {
-            Stuck("the square root of a negative number")
-          } else {
-            Val(Float(x.sqrt()))
+    // `round` is defined at a number with a nearest integer, ties to even:
+    // not at an infinity or a nan.
+    Round =>
+      match args {
+        [Int(_) as v] => Val(v)
+        [Float(d)] =>
+          match @value.exact_integer(round_half_even(d)) {
+            Some(n) => Val(Int(n))
+            None => Stuck("round of a value with no integer")
           }
-        Log =>
-          if x <= 0.0 {
-            Stuck("the logarithm of a number that is not positive")
-          } else {
-            Val(Float(@math.ln(x)))
-          }
-        Exp => Val(Float(@math.exp(x)))
-        Sin => Val(Float(@math.sin(x)))
-        Cos => Val(Float(@math.cos(x)))
-        _ => Val(Float(@math.tan(x)))
+        _ => Stuck("round of something other than a number")
       }
-    }
     // The builtins a profile adds. Nothing below checks the profile: a
     // primitive is only reachable by being bound in an environment, and only
     // `Interp::predefined` under a profile that asked binds these.
@@ -129,7 +101,6 @@ async fn Interp::call_primitive(
     | ToList
     | ToTuple
     | Reversed
-    | Round
     | Sorted
     | Sum
     | All
@@ -200,20 +171,6 @@ fn unprintable(args : Array[Value]) -> String {
     }
   }
   "a value with no printable form"
-}
-
-///|
-/// The single numeric argument a `math` function takes, as a double. An
-/// integer is converted, as Python converts it.
-fn numeric(args : Array[Value]) -> Double? {
-  if args.length() != 1 {
-    return None
-  }
-  match args[0] {
-    Float(d) => Some(d)
-    Int(n) => Some(@value.big_to_double(n))
-    _ => None
-  }
 }
 
 ///|
@@ -309,17 +266,6 @@ fn unary_builtin(p : @value.Primitive, v : Value) -> Outcome {
                 None => Stuck("sorting a list this order does not cover")
               }
           }
-      }
-    Round =>
-      match v {
-        Int(_) => Val(v)
-        // Python rounds halves to even, and `round(x)` answers an int.
-        Float(d) =>
-          match @value.exact_integer(round_half_even(d)) {
-            Some(n) => Val(Int(n))
-            None => Stuck("round of a value with no integer")
-          }
-        _ => Aborts(TypeError)
       }
     Sum =>
       match @value.elems(v) {

@@ -44,7 +44,7 @@ module-level/excluded/static/cond_partial_def.py	3	:10:11: 'x' is not definitely
 module-level/excluded/static/constr_field_type.py	3	:9:20: expected type int, given Literal['b']
 module-level/excluded/static/dataclass_dup_class.py	3	:9:0: 'C' is already declared
 module-level/excluded/static/dataclass_dup_field.py	3	:5:0: duplicate field 'x' in class 'C'
-module-level/excluded/static/dataclass_inherited_field_clash.py	3	:9:0: duplicate field 'x' in class 'Sub'
+module-level/excluded/static/dataclass_inherited_field_clash.py	3	:9:0: field 'x' of class 'Sub' is also a field of base class 'Base'
 module-level/excluded/static/declared_in_branch_use.py	3	:4:6: 'x' is not definitely assigned: declared in a branch
 module-level/excluded/static/dict_comp_capture.py	3	:4:60: 'k' bound by generator, captured by lambda
 module-level/excluded/static/dict_comp_check_int_keys.py	3	:2:21: expected type str, given int
@@ -82,7 +82,7 @@ module-level/excluded/static/generic_name_synthesised.py	3	:5:11: type arguments
 module-level/excluded/static/generic_no_type_argument.py	3	:8:6: type parameter 'B' has no type argument
 module-level/excluded/static/generic_none_result.py	3	:5:12: call returning None used as an expression (mypy compatibility)
 module-level/excluded/static/generic_result_mismatch.py	3	:5:9: expected type int, given str
-module-level/excluded/static/grandparent_field_clash.py	3	:13:0: duplicate field 'x' in class 'C'
+module-level/excluded/static/grandparent_field_clash.py	3	:13:0: field 'x' of class 'C' is also a field of base class 'B'
 module-level/excluded/static/if_exp_synth_branch_checked.py	3	:2:25: expected type int, given a lambda
 module-level/excluded/static/if_exp_synth_no_branch.py	3	:3:7: cannot infer type of this expression
 module-level/excluded/static/if_exp_synth_test_bool.py	3	:3:12: expected type bool, given int
@@ -186,7 +186,7 @@ module-level/excluded/static/pattern_variable_some_cases.py	3	:7:10: 'x' is not 
 module-level/excluded/static/power_bool_exponent.py	3	:2:6: no overload of '**' at operand types Literal[2] and Literal[True]
 module-level/excluded/static/power_int_exponent_not_int.py	3	:3:11: expected type int, given float
 module-level/excluded/static/predefined_attr_as_value.py	3	:4:9: 'typing.Callable' is usable only in annotations or as a decorator
-module-level/excluded/static/predefined_member_unknown.py	3	:3:11: module 'math' has no member 'tau'
+module-level/excluded/static/predefined_member_unknown.py	3	:3:9: module 'sys' has no member 'version'
 module-level/excluded/static/print_arity.py	3	:2:0: call expects 1 arguments, given 2
 module-level/excluded/static/print_keyword_arg.py	3	:2:0: keyword arguments in a call other than a constructor call
 module-level/excluded/static/pu_captured_by_def.py	3	:7:15: 'x' is not definitely assigned
@@ -196,6 +196,7 @@ module-level/excluded/static/reassign/match.py	3	:7:4: 'y' is already assigned
 module-level/excluded/static/redeclaration.py	3	:3:0: 'x' is already declared
 module-level/excluded/static/redeclaration_branch.py	3	:6:8: 'y' is already declared
 module-level/excluded/static/return_type_mismatch.py	3	:3:11: expected type int, given Literal['a']
+module-level/excluded/static/round_arity.py	3	:2:6: call expects 1 arguments, given 2
 module-level/excluded/static/self_capture_lambda.py	3	:3:53: 'f' is unbound
 module-level/excluded/static/sized_int.py	3	:4:11: expected type Sized, given Literal[5]
 module-level/excluded/static/subscript_tuple_neg_literal_mismatch.py	3	:3:9: expected type int, given str
@@ -282,6 +283,8 @@ module-level/python-error/dynamic/assert_false.py	0	: ok
 module-level/python-error/dynamic/assert_msg_false.py	0	: ok
 module-level/python-error/dynamic/divide_by_zero.py	0	: ok
 module-level/python-error/dynamic/key_error.py	0	: ok
+module-level/python-error/dynamic/round_infinite.py	0	: ok
+module-level/python-error/dynamic/round_nan.py	0	: ok
 module-level/python-error/dynamic/subscript_negative_out_of_range.py	0	: ok
 module-level/python-error/dynamic/subscript_out_of_range.py	0	: ok
 module-level/python-error/static/alias_args_on_plain_alias.py	3	:4:0: type alias 'Num' expects 0 type arguments, given 1
@@ -295,6 +298,7 @@ module-level/python-error/static/attr_missing.py	3	:8:6: class 'P' has no field 
 module-level/python-error/static/attr_non_object.py	3	:3:9: values of type int have no attributes
 module-level/python-error/static/base_class_later.py	3	:4:0: 'Base' is unbound
 module-level/python-error/static/base_type_arg_unbound.py	3	:9:0: 'U' is not a declared class
+module-level/python-error/static/base_type_param.py	3	:5:0: 'T' is not a declared class
 module-level/python-error/static/binop_non_number.py	3	:2:6: no overload of '+' at operand types Literal[1] and Literal['a']
 module-level/python-error/static/call_keyword_arg.py	3	:5:6: keyword arguments in a call other than a constructor call
 module-level/python-error/static/call_non_callable_typed.py	3	:3:6: values of type int cannot be called
@@ -508,8 +512,6 @@ module-level/semantically-valid/match_union_rest_var.py	0	: ok
 module-level/semantically-valid/match_var_after.py	0	: ok
 module-level/semantically-valid/match_var_bound_in_each_case.py	0	: ok
 module-level/semantically-valid/match_zero_field_constr.py	0	: ok
-module-level/semantically-valid/math_floor_ceil.py	0	: ok
-module-level/semantically-valid/math_sqrt.py	0	: ok
 module-level/semantically-valid/membership.py	0	: ok
 module-level/semantically-valid/membership_dict.py	0	: ok
 module-level/semantically-valid/membership_string.py	0	: ok
@@ -568,6 +570,8 @@ module-level/semantically-valid/recursive_datatype_generic.py	0	: ok
 module-level/semantically-valid/recursive_datatype_uninhabited.py	0	: ok
 module-level/semantically-valid/recursive_datatypes_mutual.py	0	: ok
 module-level/semantically-valid/return_annotation.py	0	: ok
+module-level/semantically-valid/round_int.py	0	: ok
+module-level/semantically-valid/round_ties_to_even.py	0	: ok
 module-level/semantically-valid/scopes/closure_capture.py	0	: ok
 module-level/semantically-valid/scopes/lambda_capture.py	0	: ok
 module-level/semantically-valid/scopes/nested_def_local.py	0	: ok

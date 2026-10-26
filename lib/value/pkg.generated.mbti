@@ -114,14 +114,6 @@ pub(all) enum Primitive {
   Len
   Range
   Exit
-  Sqrt
-  Exp
-  Log
-  Sin
-  Cos
-  Tan
-  MathFloor
-  MathCeil
   Abs
   All
   Any

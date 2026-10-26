@@ -191,12 +191,12 @@ def flip(p: Point) -> Point:
     return Point(p.y, p.x)
 
 # module: __main__
-import math
+import geometry
 from geometry import Point, flip
 
 p: Point = Point(3, 4)
 print([p, flip(p)])
-print(math.sqrt(p.x * p.x + p.y * p.y))
+print(round(geometry.Point(1, 2).x / 2))
 `,
       },
     ],

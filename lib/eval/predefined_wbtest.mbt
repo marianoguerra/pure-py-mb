@@ -51,8 +51,8 @@ test "the checker's names and the evaluator's values are one table" {
 test "a profile leaves the core names where they were" {
   let core_names = @context.predefined_members("builtins").unwrap()
   assert_eq(core_names, [
-    "print", "len", "range", "None", "object", "bool", "int", "float", "str", "list",
-    "dict", "tuple",
+    "print", "len", "range", "round", "None", "object", "bool", "int", "float", "str",
+    "list", "dict", "tuple",
   ])
   let with_extras = @context.predefined_members(
     "builtins",
@@ -167,7 +167,7 @@ test "a redefinition moves a value and leaves the names alone" {
   let tree = @program.SourceTree::of(Map([]))
   let host = Host::new(redefined=[
     ("builtins.print", @value.host_fn("cap.print")),
-    ("math.pi", @value.Value::Int(3N)),
+    ("sys.argv", @value.Value::Int(3N)),
   ])
   let plain = Interp::new(tree)
   let redefining = Interp::new(tree, host~)
@@ -187,7 +187,7 @@ test "a redefinition moves a value and leaves the names alone" {
     redefining.predefined("builtins").unwrap().get("print")
     is Some(Prim(Foreign("cap.print"))),
   )
-  assert_true(redefining.predefined("math").unwrap().get("pi") is Some(Int(_)))
+  assert_true(redefining.predefined("sys").unwrap().get("argv") is Some(Int(_)))
   // Everything the host did not name is what it was.
   assert_true(
     redefining.predefined("builtins").unwrap().get("len") is Some(Prim(Len)),

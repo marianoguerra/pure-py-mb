@@ -1219,6 +1219,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.18.1 | the reference's test runner only | `test/conformance/run-all.py` |
 | v0.18.2 | `range` has `start` and `stop` | `lib/types` (the predefined class), `lib/value` and `lib/eval` |
 | v0.19.0 | mutual type regions: recursive data types, lazily resolved aliases, cyclic aliases refused; type-argument inference only for the callee's parameters | `lib/check` (regions, alias entries), `lib/types` (`fv`, `type_args`), `lib/error` |
+| v0.19.1 | `round` a builtin, `math` removed; inherited-field reason; unbound base class | `lib/types` (predefined table), `lib/value` and `lib/eval` (primitives), `lib/check`, `lib/error`, `lib/context` and the builtins profile |
 
 Decisions made on the way, recorded as §9's are:
 

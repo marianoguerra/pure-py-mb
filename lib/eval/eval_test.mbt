@@ -484,23 +484,19 @@ test "subscripting fails three different ways" {
 }
 
 ///|
-/// `math`'s domain errors, and the arities the primitives reject. Python
-/// raises ValueError for a log of a non-positive, which is not a termination
-/// kind, so PurePy has no rule rather than an abort.
+/// The arities the primitives reject, and the numbers `round` has no integer
+/// for: Python raises OverflowError and ValueError, which are not termination
+/// kinds, so PurePy has no rule rather than an abort.
 test "the primitives reject what they cannot answer" {
-  assert_eq(
-    program([("__main__", "import math\nprint(math.log(1.0))\n")]),
-    "0.0\n",
-  )
-  assert_eq(
-    program([("__main__", "import math\nprint(math.exp(0.0))\n")]),
-    "1.0\n",
-  )
-  assert_eq(
-    program([("__main__", "import math\nprint(math.log(0.0))\n")]),
-    "!stuck: the logarithm of a number that is not positive",
-  )
   assert_eq(run("print(len(1))\n"), "!TypeError")
+  assert_eq(
+    run("print(round(1e400))\n"),
+    "!stuck: round of a value with no integer",
+  )
+  assert_eq(
+    run("x: float = 1e400 - 1e400\nprint(round(x))\n"),
+    "!stuck: round of a value with no integer",
+  )
 }
 
 ///|
@@ -516,24 +512,10 @@ test "sys.exit ends the run with its status and prints nothing more" {
 }
 
 ///|
-test "math is over floats, and its undefined cases are undefined" {
+test "round is to the nearest integer, ties to even" {
   assert_eq(
-    program([("__main__", "import math\nprint(math.sqrt(4))\n")]),
-    "2.0\n",
-  )
-  assert_eq(
-    program([
-      ("__main__", "import math\nprint(math.floor(1.7), math.ceil(1.2))\n"),
-    ]),
-    "1 2\n",
-  )
-  assert_eq(
-    program([("__main__", "import math\nprint(math.pi)\n")]),
-    "3.141592653589793\n",
-  )
-  assert_eq(
-    program([("__main__", "import math\nprint(math.sqrt(-1))\n")]),
-    "!stuck: the square root of a negative number",
+    run("print(round(2.5), round(3.5), round(-2.5), round(2.7), round(-7))\n"),
+    "2 4 -2 3 -7\n",
   )
 }
 

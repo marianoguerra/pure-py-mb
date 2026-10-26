@@ -125,18 +125,21 @@ test "sys.exit redefined" {
 
 ///|
 /// A redefinition replaces; it does not shadow a value that is still reachable
-/// underneath. `math.pi` is a constant, and a constant is a member too.
+/// underneath. `sys.argv` is a constant, and a constant is a member too.
 test "a redefined constant" {
   let sink = @eval.Sink::new()
   let host = @eval.Host::new(write=t => sink.write(t), redefined=[
-    ("math.pi", @value.Value::Int(3N)),
+    ("sys.argv", @value.Value::List([Str("x"), Str("y")])),
   ])
   assert_true(
-    @eval.run_with(tree_of("import math\nprint(math.pi, math.e)\n"), host)
+    @eval.run_with(
+      tree_of("import sys\nprint(sys.argv, len(range(0, 2)))\n"),
+      host,
+    )
     is Finished,
   )
-  // `pi` is the host's; `e` is untouched.
-  assert_eq(sink.text(), "3 2.718281828459045\n")
+  // `argv` is the host's; `range` is untouched.
+  assert_eq(sink.text(), "['x', 'y'] 2\n")
 }
 
 ///|

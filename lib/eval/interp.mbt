@@ -216,16 +216,7 @@ fn Interp::predefined_value(self : Interp, q : String, x : String) -> Value {
     ("builtins", "print") => Prim(Print)
     ("builtins", "len") => Prim(Len)
     ("builtins", "range") => Class(@value.range_entry())
-    ("math", "pi") => Float(3.141592653589793)
-    ("math", "e") => Float(2.718281828459045)
-    ("math", "sqrt") => Prim(Sqrt)
-    ("math", "exp") => Prim(Exp)
-    ("math", "log") => Prim(Log)
-    ("math", "sin") => Prim(Sin)
-    ("math", "cos") => Prim(Cos)
-    ("math", "tan") => Prim(Tan)
-    ("math", "floor") => Prim(MathFloor)
-    ("math", "ceil") => Prim(MathCeil)
+    ("builtins", "round") => Prim(Round)
     ("sys", "argv") => List(self.host.argv.map(fn(a) { Value::Str(a) }))
     ("sys", "exit") => Prim(Exit)
     _ => Prim(Opaque(x))
@@ -286,7 +277,6 @@ fn extra_builtins() -> Array[(String, Value)] {
     ("min", Prim(Min)),
     ("repr", Prim(Repr)),
     ("reversed", Prim(Reversed)),
-    ("round", Prim(Round)),
     ("sorted", Prim(Sorted)),
     ("str", Prim(ToStr)),
     ("sum", Prim(Sum)),

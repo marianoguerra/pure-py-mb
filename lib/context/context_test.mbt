@@ -158,7 +158,7 @@ test "matching arguments to fields" {
 ///|
 test "the predefined modules and their members" {
   assert_eq(@context.predefined_modules, [
-    "builtins", "dataclasses", "math", "sys", "typing",
+    "builtins", "dataclasses", "sys", "typing",
   ])
   assert_eq(@context.predefined_members("sys"), Some(["argv", "exit"]))
   assert_eq(@context.predefined_members("os"), None)

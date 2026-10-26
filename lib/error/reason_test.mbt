@@ -6,6 +6,10 @@
 test "the reason catalogue" {
   let cases : Array[(@err.Reason, String)] = [
     (DuplicateField(x="x", c="P"), "duplicate field 'x' in class 'P'"),
+    (
+      InheritedField(x="x", c="Q", d="P"),
+      "field 'x' of class 'Q' is also a field of base class 'P'",
+    ),
     (UndefinedVariable(x="x"), "'x' is not defined"),
     (UnassignedVariable(x="x"), "'x' is declared but not yet assigned"),
     (
@@ -175,7 +179,7 @@ test "the reason catalogue" {
       "values of type list[int] have no method 'append'",
     ),
   ]
-  assert_eq(cases.length(), 66)
+  assert_eq(cases.length(), 67)
   for c in cases {
     assert_eq(c.0.message(), c.1)
   }

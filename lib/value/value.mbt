@@ -131,14 +131,6 @@ pub(all) enum Primitive {
   Len
   Range
   Exit
-  Sqrt
-  Exp
-  Log
-  Sin
-  Cos
-  Tan
-  MathFloor
-  MathCeil
   /// The builtins a profile adds (`Feature::ExtraBuiltins`), which the
   /// specification does not have.
   ///
@@ -309,7 +301,7 @@ pub fn Value::kind_name(self : Value) -> String {
 /// knowing before you render it.**
 ///
 ///   * A primitive the SPECIFICATION defines answers with the name it is bound
-///     under. `MathFloor` is `floor` and not `math.floor`: the name is the
+///     under. `Exit` is `exit` and not `sys.exit`: the name is the
 ///     member's, and which module it came from is the environment's business.
 ///     `lib/eval/predefined_wbtest.mbt` asserts exactly that, for every
 ///     predefined module under every profile -- so this is not a fourth table,
@@ -332,14 +324,6 @@ pub fn Primitive::name(self : Primitive) -> String {
     Len => "len"
     Range => "range"
     Exit => "exit"
-    Sqrt => "sqrt"
-    Exp => "exp"
-    Log => "log"
-    Sin => "sin"
-    Cos => "cos"
-    Tan => "tan"
-    MathFloor => "floor"
-    MathCeil => "ceil"
     Abs => "abs"
     All => "all"
     Any => "any"

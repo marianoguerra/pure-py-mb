@@ -52,6 +52,7 @@ pub(all) enum Kind {
 
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
+  InheritedField(x~ : String, c~ : String, d~ : String)
   UndefinedVariable(x~ : String)
   UnassignedVariable(x~ : String)
   PossiblyUnassigned(x~ : String, declared_in_branch~ : Bool)

@@ -187,7 +187,7 @@ test/conformance/module-level/excluded/static/pattern_variable_some_cases.py	7ed
 test/conformance/module-level/excluded/static/power_bool_exponent.py	e22edec77c81b188186dd5209a69cd138bbcad4b
 test/conformance/module-level/excluded/static/power_int_exponent_not_int.py	2ea227bb0205902e12a5b835cafb73085bfad1dd
 test/conformance/module-level/excluded/static/predefined_attr_as_value.py	f1d0c80d0e933a02ca2257bd634b87da568addb1
-test/conformance/module-level/excluded/static/predefined_member_unknown.py	3f66acd15d0d259cddec43d20d1ee71b5ba1705a
+test/conformance/module-level/excluded/static/predefined_member_unknown.py	ab225df4cc31603192d5b7f5d69edb9e7932329e
 test/conformance/module-level/excluded/static/print_arity.py	a5014adb03eaf3fdd691bfd9c4f0db8a6577d3be
 test/conformance/module-level/excluded/static/print_keyword_arg.py	a238b40494af00428436847cdafe669e47838e59
 test/conformance/module-level/excluded/static/pu_captured_by_def.py	6544b94414bf29732e240fae7b416529bbf07b37
@@ -197,6 +197,7 @@ test/conformance/module-level/excluded/static/reassign/match.py	4960341566a52e40
 test/conformance/module-level/excluded/static/redeclaration.py	c6b566d632fddc9a89cd9e2b4d98ca8b58aee1e9
 test/conformance/module-level/excluded/static/redeclaration_branch.py	e10e1111c21ae874d75bed1c4487bdc847f9c3fe
 test/conformance/module-level/excluded/static/return_type_mismatch.py	2da6ab4a876b37a8455620b425d72d6a562cd4e2
+test/conformance/module-level/excluded/static/round_arity.py	2752927ed0fbdfa170859a1f40c6f8bbfff0cf68
 test/conformance/module-level/excluded/static/self_capture_lambda.py	3ad2fbf68a583dbb26b16db9c590507ce888084f
 test/conformance/module-level/excluded/static/sized_int.py	116130028d12113838daa41c55cc9ebd3842e2d7
 test/conformance/module-level/excluded/static/subscript_tuple_neg_literal_mismatch.py	499bfb5b672a3cc52db0dc9cba517d19aad88990
@@ -283,6 +284,8 @@ test/conformance/module-level/python-error/dynamic/assert_false.py	49be49770d108
 test/conformance/module-level/python-error/dynamic/assert_msg_false.py	00094c53a6f15db779080293f1e192ab0af7d8bd
 test/conformance/module-level/python-error/dynamic/divide_by_zero.py	4e3d7f815a2f953ebe822757fc57c2d64086c8f5
 test/conformance/module-level/python-error/dynamic/key_error.py	1dc668bd508983c9fcd493636d0ece6bca657235
+test/conformance/module-level/python-error/dynamic/round_infinite.py	9de7f29253ba2fb513c7c8c6574b9ce6cfa9087a
+test/conformance/module-level/python-error/dynamic/round_nan.py	6d55007bf8bdf298101862836b85fe9ea4b81f0e
 test/conformance/module-level/python-error/dynamic/subscript_negative_out_of_range.py	921be32346f30916b6b589fb88b2be32cc968b94
 test/conformance/module-level/python-error/dynamic/subscript_out_of_range.py	a740a40d1680ea303ae1103340c232d7c357af67
 test/conformance/module-level/python-error/static/alias_args_on_plain_alias.py	a9ac11c18635ed253019d6a772f30f9ad303df37
@@ -296,6 +299,7 @@ test/conformance/module-level/python-error/static/attr_missing.py	794a13fc8a4c77
 test/conformance/module-level/python-error/static/attr_non_object.py	b90f8aa134595e59b3beaf5472ad5f3548b0907a
 test/conformance/module-level/python-error/static/base_class_later.py	fce607d8da71c59dcb0d5611fe30f107a3549dda
 test/conformance/module-level/python-error/static/base_type_arg_unbound.py	d3dea131123505b700874691d581dcc4eabf3ed9
+test/conformance/module-level/python-error/static/base_type_param.py	b20ad938166a2d2570cbf85b2577be6085551d61
 test/conformance/module-level/python-error/static/binop_non_number.py	983304579ec28c461369df2841cfa62a4a1c2303
 test/conformance/module-level/python-error/static/call_keyword_arg.py	12afcdd80b5d065ea585331ddf04ec4746796022
 test/conformance/module-level/python-error/static/call_non_callable_typed.py	518b84ba83b1ba7b7780020aa7378b05f21f56ad
@@ -509,8 +513,6 @@ test/conformance/module-level/semantically-valid/match_union_rest_var.py	df6f10d
 test/conformance/module-level/semantically-valid/match_var_after.py	4b75dce61bdfedfc8ff07e26f417a9de6dd61dd6
 test/conformance/module-level/semantically-valid/match_var_bound_in_each_case.py	b4983f723f9ebb3fc27bd1ae45fa97a0e8cf4257
 test/conformance/module-level/semantically-valid/match_zero_field_constr.py	35c3147ad55b264c7b00b9d64125a809ab8feccb
-test/conformance/module-level/semantically-valid/math_floor_ceil.py	55123406e82167ea2d7b7126271d1c01d58bea6b
-test/conformance/module-level/semantically-valid/math_sqrt.py	1aa6c6f5c39a3e9a060092d421fc5fdd1fd05243
 test/conformance/module-level/semantically-valid/membership.py	c4210528b92c02bfd89da6b56431c0ca6039339b
 test/conformance/module-level/semantically-valid/membership_dict.py	a8aa8d05ce66916e97a482b42ffbd4ca18e5380b
 test/conformance/module-level/semantically-valid/membership_string.py	0b4dba68e9b36aa7bc788cc6afb526369c0144b0
@@ -557,7 +559,7 @@ test/conformance/module-level/semantically-valid/pending/star_kwargs.py	f9ca10f5
 test/conformance/module-level/semantically-valid/power.py	7a47c235e19bc46344d19ba37c4c8d7cd6e77f24
 test/conformance/module-level/semantically-valid/power_int_exponent.py	7481d5ab1a02a435182c958c719cb467ce891c4a
 test/conformance/module-level/semantically-valid/precedence.py	69e8d75b38585165622451f2ed25cf59229159f6
-test/conformance/module-level/semantically-valid/predefined_name.py	d030ad354b1dc3e278fc0924035d0aafceed5ae2
+test/conformance/module-level/semantically-valid/predefined_name.py	ff08a5defdae83c3c5a7c90f0889a21431ac1cfb
 test/conformance/module-level/semantically-valid/range_comprehension.py	dd10bbe653464e2d5486706a26e6b1b37975b9c0
 test/conformance/module-level/semantically-valid/range_empty.py	9ed14e678f1131f6990fc06ec030feb1e51ab004
 test/conformance/module-level/semantically-valid/range_eq.py	6964ccd37493f3ebaacd420ba96364843a2ee429
@@ -569,6 +571,8 @@ test/conformance/module-level/semantically-valid/recursive_datatype_generic.py	2
 test/conformance/module-level/semantically-valid/recursive_datatype_uninhabited.py	0a0aa0c411e866b88b22b9535a5be6341a8be5aa
 test/conformance/module-level/semantically-valid/recursive_datatypes_mutual.py	2a9e2ae6e90e77e78bd0d1fbac4a4f6cdb707c9c
 test/conformance/module-level/semantically-valid/return_annotation.py	7a0e485591bc5470e02d01c1509722c102efc8aa
+test/conformance/module-level/semantically-valid/round_int.py	096ca2d44bd32ad9661fe2f5205d82eb3440f62f
+test/conformance/module-level/semantically-valid/round_ties_to_even.py	2c2dd0ee70d60449d9afdd7be0e3d59fa0db3037
 test/conformance/module-level/semantically-valid/scopes/closure_capture.py	df37633cda8ea15c705b1d8e20f7232a64162a97
 test/conformance/module-level/semantically-valid/scopes/lambda_capture.py	9bd021475eb70d83779ee39544c4c153a2191700
 test/conformance/module-level/semantically-valid/scopes/nested_def_local.py	7e88f99c80f45fd9da48aa5bb5fd3ea734d6762d
@@ -810,7 +814,7 @@ test/conformance/program-level/semantically-valid/pending/import_relative/pkg/__
 test/conformance/program-level/semantically-valid/pending/import_relative/pkg/sub.py	3ad673843e22cdad6de073b36034da174f2a6176
 test/conformance/program-level/semantically-valid/pending/import_star/m.py	2d8e0d0bf03b1e1d07d479ac9b2c74cf62b592e0
 test/conformance/program-level/semantically-valid/pending/import_star/main.py	fbc2b5b5ac4a37cb6ad00c82a5034c79cd760dae
-test/conformance/program-level/semantically-valid/predefined_imports/main.py	772a45675dc460111b3f051eb4037b1a8099e81c
+test/conformance/program-level/semantically-valid/predefined_imports/main.py	de417917f4c7f087266d2a2b2ade9ba3e2c26b64
 test/conformance/program-level/semantically-valid/qualified_alias_annotation/helper.py	c182c1ca4e8b0eb30e8e8748dca7bd3d92afc040
 test/conformance/program-level/semantically-valid/qualified_alias_annotation/main.py	9fb622aa7da6bb0af1fe81a2aec9a4f479aad5d7
 test/conformance/program-level/semantically-valid/qualified_class_annotation/main.py	8877ca81aa1439f02d3d089dfa3b8f3a3b3fe840

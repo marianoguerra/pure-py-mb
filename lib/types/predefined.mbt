@@ -17,14 +17,13 @@ pub(all) enum Member {
 /// accepts and the evaluator has no value for would type-check and then fail
 /// to run.
 pub fn predefined_members(q : String) -> Array[(String, Member)]? {
-  let float_to_float = Callable([t_float], t_float)
-  let float_to_int = Callable([t_float], t_int)
   match q {
     "builtins" =>
       Some([
         ("print", Typed(Callable([t_object], t_none))),
         ("len", Typed(Callable([t_sized], t_int))),
         ("range", ClassOf(range_class)),
+        ("round", Typed(Callable([t_float], t_int))),
         ("None", AnnotationOnly),
         ("object", AnnotationOnly),
         ("bool", AnnotationOnly),
@@ -34,19 +33,6 @@ pub fn predefined_members(q : String) -> Array[(String, Member)]? {
         ("list", AnnotationOnly),
         ("dict", AnnotationOnly),
         ("tuple", AnnotationOnly),
-      ])
-    "math" =>
-      Some([
-        ("pi", Typed(t_float)),
-        ("e", Typed(t_float)),
-        ("sqrt", Typed(float_to_float)),
-        ("exp", Typed(float_to_float)),
-        ("log", Typed(float_to_float)),
-        ("sin", Typed(float_to_float)),
-        ("cos", Typed(float_to_float)),
-        ("tan", Typed(float_to_float)),
-        ("floor", Typed(float_to_int)),
-        ("ceil", Typed(float_to_int)),
       ])
     "sys" =>
       Some([
@@ -68,5 +54,5 @@ pub fn predefined_members(q : String) -> Array[(String, Member)]? {
 ///|
 /// The modules the specification predefines.
 pub let predefined_modules : Array[String] = [
-  "builtins", "dataclasses", "math", "sys", "typing",
+  "builtins", "dataclasses", "sys", "typing",
 ]

@@ -54,10 +54,13 @@ MAIN = "main.py"
 # Exit codes, ours and the reference's (implementation-plan.md 2.1).
 OK, PROHIBITED, NOT_YET, ILL_FORMED, ILL_FORMED_PROGRAM, STUCK = 0, 1, 2, 3, 4, 5
 
-# The two module-level tests that Python rejects dynamically but PurePy leaves
-# undefined rather than aborting: `assert 0` (the condition is not a bool) and
-# an attribute reference on a number. They exit 5, not 1.
+# The module-level tests that Python rejects dynamically but PurePy leaves
+# undefined rather than aborting: `assert 0` (the condition is not a bool), an
+# attribute reference on a number, and `round` of an infinity or a nan. They
+# exit 5, not 1.
 STUCK_PYTHON_ERRORS = {
+    "module-level/python-error/dynamic/round_infinite.py",
+    "module-level/python-error/dynamic/round_nan.py",
     "module-level/python-error/dynamic/assert_falsy.py",
     "module-level/python-error/dynamic/attr_non_object.py",
 }

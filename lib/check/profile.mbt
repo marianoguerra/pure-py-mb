@@ -194,16 +194,6 @@ fn builtin_call_type(
       check_orderable(t, span, ctx)
       t
     }
-    "round" => {
-      arity(args, 1, 2, span)
-      number_type(synth_expr(args[0], ctx), args[0].span(), ctx) |> ignore
-      if args.length() == 2 {
-        check_expr(args[1], @types.t_int, ctx)
-        @types.t_float
-      } else {
-        @types.t_int
-      }
-    }
     "sum" => {
       arity(args, 1, 1, span)
       number_type(iterable_arg(args[0], @types.t_int, ctx), args[0].span(), ctx)

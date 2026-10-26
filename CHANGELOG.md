@@ -6,6 +6,15 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.19.1: `round`, and `math` removed
+
+`round` is a builtin, `float -> int`: the nearest integer, ties to even, and
+undefined at an infinity or a nan, where Python raises. It was the builtins
+profile's; the profile no longer adds it. The `math` module is gone, and its
+primitives with it. A field a class repeats from its base is refused with its
+own message, `field 'x' of class 'Q' is also a field of base class 'P'`, and
+an unbound base class is an unbound name.
+
 ### Specification v0.19.0: mutual types
 
 A run of consecutive class definitions and type aliases at the top of a

@@ -1614,14 +1614,18 @@ fn dataclass(node : @ast.Stmt, ctx : ModCtx) -> Unit raise {
   } else {
     Some(base_class(bases[0], span, ctx))
   }
-  let inherited = match base {
-    None => []
-    Some((b, _)) => @types.field_names(ctx.sigma(), b)
+  let xs = own.map(fn(p) { p.0 })
+  for i, x in xs {
+    if xs[:i].contains(x) {
+      raise ill(DuplicateField(x~, c=name), span)
+    }
   }
-  let names = [..inherited, ..own.map(fn(p) { p.0 })]
-  for i, n in names {
-    if names[:i].contains(n) {
-      raise ill(DuplicateField(x=n, c=name), span)
+  if base is Some((b, _)) {
+    let inherited = @types.field_names(ctx.sigma(), b)
+    for x in xs {
+      if inherited.contains(x) {
+        raise ill(InheritedField(x~, c=name, d=@types.short_name(b)), span)
+      }
     }
   }
   let c = ctx.q + "." + name
@@ -1641,11 +1645,13 @@ fn base_class(
   guard @types.parse_annotation(base) is Some(TypeName(q, _) as psi) else {
     abort("rejected by the sieve")
   }
-  if resolve_name(q, ctx) is Some(Alias(_)) {
-    raise ill(NotClass(q=q.join(".")), span)
-  }
-  match resolve_type(psi, span, ctx) {
-    Class(c, args) => (c, args)
+  match resolve_name(q, ctx) {
+    Some(Unbound) => raise ill(UnboundName(x=q.join(".")), span)
+    Some(Class(_)) =>
+      match resolve_type(psi, span, ctx) {
+        Class(c, args) => (c, args)
+        _ => abort("a class name resolves to a class type")
+      }
     _ => raise ill(NotClass(q=q.join(".")), span)
   }
 }

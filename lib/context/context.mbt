@@ -405,7 +405,7 @@ pub let predefined_modules : Array[String] = @types.predefined_modules
 /// Python's truthiness in a function, and PurePy has no truthiness at all.
 pub let extra_builtin_names : Array[String] = [
   "abs", "all", "any", "divmod", "enumerate", "float", "int", "list", "max", "min",
-  "repr", "reversed", "round", "sorted", "str", "sum", "tuple", "zip",
+  "repr", "reversed", "sorted", "str", "sum", "tuple", "zip",
 ]
 
 ///|

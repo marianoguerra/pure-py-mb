@@ -196,6 +196,7 @@ module-level/excluded/static/reassign/match.py	0	: ok
 module-level/excluded/static/redeclaration.py	0	: ok
 module-level/excluded/static/redeclaration_branch.py	0	: ok
 module-level/excluded/static/return_type_mismatch.py	0	: ok
+module-level/excluded/static/round_arity.py	0	: ok
 module-level/excluded/static/self_capture_lambda.py	0	: ok
 module-level/excluded/static/sized_int.py	0	: ok
 module-level/excluded/static/subscript_tuple_neg_literal_mismatch.py	0	: ok
@@ -282,6 +283,8 @@ module-level/python-error/dynamic/assert_false.py	0	: ok
 module-level/python-error/dynamic/assert_msg_false.py	0	: ok
 module-level/python-error/dynamic/divide_by_zero.py	0	: ok
 module-level/python-error/dynamic/key_error.py	0	: ok
+module-level/python-error/dynamic/round_infinite.py	0	: ok
+module-level/python-error/dynamic/round_nan.py	0	: ok
 module-level/python-error/dynamic/subscript_negative_out_of_range.py	0	: ok
 module-level/python-error/dynamic/subscript_out_of_range.py	0	: ok
 module-level/python-error/static/alias_args_on_plain_alias.py	0	: ok
@@ -295,6 +298,7 @@ module-level/python-error/static/attr_missing.py	0	: ok
 module-level/python-error/static/attr_non_object.py	0	: ok
 module-level/python-error/static/base_class_later.py	0	: ok
 module-level/python-error/static/base_type_arg_unbound.py	0	: ok
+module-level/python-error/static/base_type_param.py	0	: ok
 module-level/python-error/static/binop_non_number.py	0	: ok
 module-level/python-error/static/call_keyword_arg.py	0	: ok
 module-level/python-error/static/call_non_callable_typed.py	0	: ok
@@ -508,8 +512,6 @@ module-level/semantically-valid/match_union_rest_var.py	0	: ok
 module-level/semantically-valid/match_var_after.py	0	: ok
 module-level/semantically-valid/match_var_bound_in_each_case.py	0	: ok
 module-level/semantically-valid/match_zero_field_constr.py	0	: ok
-module-level/semantically-valid/math_floor_ceil.py	0	: ok
-module-level/semantically-valid/math_sqrt.py	0	: ok
 module-level/semantically-valid/membership.py	0	: ok
 module-level/semantically-valid/membership_dict.py	0	: ok
 module-level/semantically-valid/membership_string.py	0	: ok
@@ -568,6 +570,8 @@ module-level/semantically-valid/recursive_datatype_generic.py	0	: ok
 module-level/semantically-valid/recursive_datatype_uninhabited.py	0	: ok
 module-level/semantically-valid/recursive_datatypes_mutual.py	0	: ok
 module-level/semantically-valid/return_annotation.py	0	: ok
+module-level/semantically-valid/round_int.py	0	: ok
+module-level/semantically-valid/round_ties_to_even.py	0	: ok
 module-level/semantically-valid/scopes/closure_capture.py	0	: ok
 module-level/semantically-valid/scopes/lambda_capture.py	0	: ok
 module-level/semantically-valid/scopes/nested_def_local.py	0	: ok
