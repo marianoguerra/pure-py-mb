@@ -1,1 +1,1 @@
-1: slicing.py:4:10: slicing prohibited
+1: slicing.py:4:10: slicing not allowed in PurePy

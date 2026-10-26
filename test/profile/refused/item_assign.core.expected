@@ -1,1 +1,1 @@
-1: item_assign.py:2:0: item assignment prohibited
+1: item_assign.py:2:0: item assignment not allowed in PurePy

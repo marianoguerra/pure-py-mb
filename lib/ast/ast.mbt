@@ -20,7 +20,7 @@
 ///   * Async is a FLAG on `FunctionDef`, `For` and `With`, not three more node
 ///     kinds. The sieve's message is `async prohibited` either way.
 ///   * `Constant` is a typed enum, not a Python object. `Complex` and `Bytes`
-///     are arms so that the sieve can say "complex literals prohibited".
+///     are arms so that the sieve can say "complex literals not allowed in PurePy".
 ///   * An f-string is `JoinedStr` with its text unparsed. The sieve rejects
 ///     f-strings as not yet supported (#55); when that changes, the parts are
 ///     parsed here and nothing else moves.

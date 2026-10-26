@@ -1,868 +1,983 @@
 # parse: exit code and message from the reference, one line per test; regenerate with tools/conform.py --reference --regen
-module-level/exception/result/assert_false.py	0	: ok
-module-level/exception/result/assert_msg_false.py	0	: ok
-module-level/exception/result/divide_by_zero.py	0	: ok
-module-level/exception/result/key_error.py	0	: ok
-module-level/exception/result/subscript_negative_out_of_range.py	0	: ok
-module-level/exception/result/subscript_out_of_range.py	0	: ok
-module-level/exception/type-checker/alias_args_on_plain_alias.py	0	: ok
-module-level/exception/type-checker/alias_as_base.py	0	: ok
-module-level/exception/type-checker/annotation_args_on_plain_class.py	0	: ok
-module-level/exception/type-checker/annotation_too_many_type_args.py	0	: ok
-module-level/exception/type-checker/annotation_unknown_class.py	0	: ok
-module-level/exception/type-checker/assert_falsy.py	0	: ok
-module-level/exception/type-checker/assert_msg_undefined.py	0	: ok
-module-level/exception/type-checker/attr_missing.py	0	: ok
-module-level/exception/type-checker/attr_non_object.py	0	: ok
-module-level/exception/type-checker/base_class_later.py	0	: ok
-module-level/exception/type-checker/base_type_arg_unbound.py	0	: ok
-module-level/exception/type-checker/base_type_param.py	0	: ok
-module-level/exception/type-checker/binop_non_number.py	0	: ok
-module-level/exception/type-checker/call_keyword_arg.py	0	: ok
-module-level/exception/type-checker/call_non_callable_typed.py	0	: ok
-module-level/exception/type-checker/call_too_few_args.py	0	: ok
-module-level/exception/type-checker/callable_not_imported.py	0	: ok
-module-level/exception/type-checker/class_before_alias.py	0	: ok
-module-level/exception/type-checker/class_field_names_itself.py	0	: ok
-module-level/exception/type-checker/class_field_names_later_class.py	0	: ok
-module-level/exception/type-checker/class_redeclared_identity.py	0	: ok
-module-level/exception/type-checker/comprehension_guard_before_generator.py	0	: ok
-module-level/exception/type-checker/constructor_arity.py	0	: ok
-module-level/exception/type-checker/constructor_bad_keyword.py	0	: ok
-module-level/exception/type-checker/constructor_oversaturated.py	0	: ok
-module-level/exception/type-checker/dataclass_not_imported.py	0	: ok
-module-level/exception/type-checker/dataclass_unknown_base.py	0	: ok
-module-level/exception/type-checker/declared_not_assigned_use.py	0	: ok
-module-level/exception/type-checker/forward_alias_top.py	0	: ok
-module-level/exception/type-checker/forward_base.py	0	: ok
-module-level/exception/type-checker/forward_class_in_signature.py	0	: ok
-module-level/exception/type-checker/forward_class_top.py	0	: ok
-module-level/exception/type-checker/generic_constr_arity.py	0	: ok
-module-level/exception/type-checker/iterate_non_sequence.py	0	: ok
-module-level/exception/type-checker/lambda_applied_arity.py	0	: ok
-module-level/exception/type-checker/len_int.py	0	: ok
-module-level/exception/type-checker/list_repeat_float.py	0	: ok
-module-level/exception/type-checker/literal_not_imported.py	0	: ok
-module-level/exception/type-checker/membership_str_int.py	0	: ok
-module-level/exception/type-checker/mutual_split_by_call.py	0	: ok
-module-level/exception/type-checker/ordering_str_int.py	0	: ok
-module-level/exception/type-checker/pat_class_keyword_positional.py	0	: ok
-module-level/exception/type-checker/pat_class_unknown.py	0	: ok
-module-level/exception/type-checker/pat_list_on_tuple_component.py	0	: ok
-module-level/exception/type-checker/pattern_var_before_match.py	0	: ok
-module-level/exception/type-checker/range_pattern.py	0	: ok
-module-level/exception/type-checker/range_str_arg.py	0	: ok
-module-level/exception/type-checker/self_referential_field.py	0	: ok
-module-level/exception/type-checker/shadowed_dict.py	0	: ok
-module-level/exception/type-checker/shadowed_list.py	0	: ok
-module-level/exception/type-checker/shadowed_tuple.py	0	: ok
-module-level/exception/type-checker/sized_not_imported.py	0	: ok
-module-level/exception/type-checker/str_repeat_float.py	0	: ok
-module-level/exception/type-checker/subclass_arity.py	0	: ok
-module-level/exception/type-checker/subscript_bad_index.py	0	: ok
-module-level/exception/type-checker/subscript_dict_bad_key.py	0	: ok
-module-level/exception/type-checker/subscript_non_list.py	0	: ok
-module-level/exception/type-checker/subscript_str_bad_index.py	0	: ok
-module-level/exception/type-checker/top_level_assert_false.py	0	: ok
-module-level/exception/type-checker/tuple_index_neg_range.py	0	: ok
-module-level/exception/type-checker/tuple_index_range.py	0	: ok
-module-level/exception/type-checker/type_alias_as_pattern.py	0	: ok
-module-level/exception/type-checker/type_alias_param_scope.py	0	: ok
-module-level/exception/type-checker/type_param_of_other_class.py	0	: ok
-module-level/exception/type-checker/unary_non_number.py	0	: ok
-module-level/exception/type-checker/unbound_local.py	0	: ok
-module-level/exception/type-checker/unknown_module.py	0	: ok
-module-level/exception/type-checker/use_before_declaration_top.py	0	: ok
-module-level/exception/type-checker/use_before_if_declaration.py	0	: ok
-module-level/exception/undefined/round_infinite.py	0	: ok
-module-level/exception/undefined/round_nan.py	0	: ok
-module-level/no-exception/parser/annotated_attribute_assign.py	1	:10:0: assignment target other than a simple name prohibited
-module-level/no-exception/parser/annotation_callable_ellipsis.py	1	:3:3: annotation that is not a type expression prohibited
-module-level/no-exception/parser/annotation_dict_int_key.py	1	:1:3: annotation that is not a type expression prohibited
-module-level/no-exception/parser/annotation_list_two_args.py	1	:1:4: annotation that is not a type expression prohibited
-module-level/no-exception/parser/annotation_literal_two_values.py	1	:3:3: annotation that is not a type expression prohibited
-module-level/no-exception/parser/annotation_tuple_variadic.py	1	:1:4: annotation that is not a type expression prohibited
-module-level/no-exception/parser/async_def.py	1	:1:0: async prohibited
-module-level/no-exception/parser/attribute_assign.py	1	:6:0: attribute assignment prohibited
-module-level/no-exception/parser/augmented_assign.py	1	:2:0: augmented assignment (+=, etc.) prohibited
-module-level/no-exception/parser/bitwise_not.py	1	:1:9: unary operator '~' prohibited
-module-level/no-exception/parser/bytes_literal.py	1	:1:4: bytes literal prohibited
-module-level/no-exception/parser/call_dict_unpacking.py	1	:8:8: dict unpacking in argument list prohibited
-module-level/no-exception/parser/case_guard.py	1	: case guards prohibited
-module-level/no-exception/parser/chained_bool.py	1	:4:6: chained boolean operator prohibited
-module-level/no-exception/parser/chained_compare.py	1	:2:6: chained comparison prohibited
-module-level/no-exception/parser/class_bad_decorator.py	1	:5:0: class decorator other than @dataclass prohibited
-module-level/no-exception/parser/class_base_subscript.py	1	:13:14: base class other than a name, optionally applied to type arguments prohibited
-module-level/no-exception/parser/class_def.py	1	:1:0: undecorated class prohibited
-module-level/no-exception/parser/class_keyword_args.py	1	:4:0: class keyword arguments prohibited
-module-level/no-exception/parser/class_two_decorators.py	1	:6:0: multiple class decorators prohibited
-module-level/no-exception/parser/complex_literal.py	1	:1:8: complex literal prohibited
-module-level/no-exception/parser/dataclass_field_default.py	1	:5:4: field default values prohibited
-module-level/no-exception/parser/dataclass_method.py	1	:4:4: dataclass member other than a field declaration prohibited
-module-level/no-exception/parser/dataclass_two_bases.py	1	:12:0: multiple inheritance prohibited
-module-level/no-exception/parser/decorator.py	1	:9:0: decorators prohibited
-module-level/no-exception/parser/default_args.py	1	: default arguments prohibited
-module-level/no-exception/parser/delete.py	1	:2:0: del prohibited
-module-level/no-exception/parser/destructuring_assign.py	1	:3:0: destructuring assignment prohibited
-module-level/no-exception/parser/destructuring_comp.py	1	: destructuring in comprehensions prohibited
-module-level/no-exception/parser/dict_unpacking.py	1	:2:4: dict unpacking prohibited
-module-level/no-exception/parser/ellipsis_literal.py	1	:1:4: ellipsis literal prohibited
-module-level/no-exception/parser/field_target_not_name.py	1	:6:4: field target other than a simple name prohibited
-module-level/no-exception/parser/for_loop.py	1	:2:0: for loops prohibited
-module-level/no-exception/parser/fstring.py	1	:2:6: f-strings prohibited
-module-level/no-exception/parser/generator_expr.py	1	:1:7: generator expressions prohibited
-module-level/no-exception/parser/global_stmt.py	1	:4:4: global prohibited
-module-level/no-exception/parser/identity.py	1	:2:6: identity operator (is/is not) prohibited
-module-level/no-exception/parser/import_in_def.py	1	:2:4: import outside the module top level prohibited
-module-level/no-exception/parser/item_assign.py	1	:2:0: item assignment prohibited
-module-level/no-exception/parser/keyword_only_args.py	1	: keyword-only arguments prohibited
-module-level/no-exception/parser/literal_bytes_annotation.py	1	:3:3: annotation that is not a type expression prohibited
-module-level/no-exception/parser/literal_float_annotation.py	1	:4:3: annotation that is not a type expression prohibited
-module-level/no-exception/parser/match_attr_value.py	1	:13:9: attribute value patterns prohibited
-module-level/no-exception/parser/match_complex_value.py	1	:3:9: complex and bytes literal patterns prohibited
-module-level/no-exception/parser/match_enum.py	1	:3:0: enum classes prohibited
-module-level/no-exception/parser/match_or.py	1	:3:9: or-patterns prohibited
-module-level/no-exception/parser/match_star.py	1	:3:13: star patterns prohibited
-module-level/no-exception/parser/missing_param_annotation.py	1	:1:0: unannotated parameter prohibited
-module-level/no-exception/parser/missing_return_annotation.py	1	:1:0: unannotated return type prohibited
-module-level/no-exception/parser/multiple_assign.py	1	:1:0: multiple assignment targets prohibited
-module-level/no-exception/parser/nested_class.py	1	:5:4: class definition outside the module top level prohibited
-module-level/no-exception/parser/nonlocal_stmt.py	1	:4:8: nonlocal prohibited
-module-level/no-exception/parser/param_spec.py	1	:1:9: ParamSpec type parameter **P prohibited
-module-level/no-exception/parser/pat_dict_int_key.py	1	:3:10: dict pattern key other than a string literal prohibited
-module-level/no-exception/parser/pat_dict_rest.py	1	:3:9: rest capture in dict patterns prohibited
-module-level/no-exception/parser/positional_only_args.py	1	: positional-only arguments prohibited
-module-level/no-exception/parser/raise_stmt.py	1	:2:4: raise prohibited
-module-level/no-exception/parser/set_comp.py	1	:2:14: set comprehensions prohibited
-module-level/no-exception/parser/set_literal.py	1	:1:14: set literals prohibited
-module-level/no-exception/parser/slicing.py	1	:2:9: slicing prohibited
-module-level/no-exception/parser/star_args.py	1	: *args prohibited
-module-level/no-exception/parser/star_kwargs.py	1	: **kwargs prohibited
-module-level/no-exception/parser/starred_list.py	1	:1:6: starred expressions prohibited
-module-level/no-exception/parser/stmt_before_import.py	1	:2:0: import after another statement prohibited
-module-level/no-exception/parser/try_except.py	1	:1:0: try/except prohibited
-module-level/no-exception/parser/try_except_star.py	1	:1:0: try/except prohibited
-module-level/no-exception/parser/type_alias_local.py	1	:2:4: type statement outside the module top level prohibited
-module-level/no-exception/parser/type_param_bound.py	1	:1:10: bound on type parameter T prohibited
-module-level/no-exception/parser/type_param_constraints.py	1	:1:10: constraints on type parameter T prohibited
-module-level/no-exception/parser/type_var_tuple.py	1	:1:9: TypeVarTuple type parameter *Ts prohibited
-module-level/no-exception/parser/unsupported_annotation.py	1	:1:3: annotation that is not a type expression prohibited
-module-level/no-exception/parser/walrus.py	1	:3:11: walrus operator (:=) prohibited
-module-level/no-exception/parser/while_loop.py	1	:2:0: while loops prohibited
-module-level/no-exception/parser/with_stmt.py	1	:1:0: with statements prohibited
-module-level/no-exception/parser/yield_expr.py	1	:2:4: yield prohibited
-module-level/no-exception/result/alias_later_class_args.py	0	: ok
-module-level/no-exception/result/annotated_assign.py	0	: ok
-module-level/no-exception/result/assert_false.py	0	: ok
-module-level/no-exception/result/assert_false_module_branch.py	0	: ok
-module-level/no-exception/result/assert_false_msg.py	0	: ok
-module-level/no-exception/result/attr_field_type.py	0	: ok
-module-level/no-exception/result/bool_op.py	0	: ok
-module-level/no-exception/result/builtin_shadow.py	0	: ok
-module-level/no-exception/result/call_stmt_callable_param.py	0	: ok
-module-level/no-exception/result/callable_param_contravariant.py	0	: ok
-module-level/no-exception/result/callable_result_covariant.py	0	: ok
-module-level/no-exception/result/class_shadowed_call.py	0	: ok
-module-level/no-exception/result/comp_over_dict.py	0	: ok
-module-level/no-exception/result/comp_over_str.py	0	: ok
-module-level/no-exception/result/comp_over_str_literal.py	0	: ok
-module-level/no-exception/result/comp_over_tuple.py	0	: ok
-module-level/no-exception/result/comprehension_capture_outer.py	0	: ok
-module-level/no-exception/result/comprehension_capture_outer_guard.py	0	: ok
-module-level/no-exception/result/comprehension_capture_parameter.py	0	: ok
-module-level/no-exception/result/comprehension_var_local.py	0	: ok
-module-level/no-exception/result/cond_check_both_empty.py	0	: ok
-module-level/no-exception/result/cond_join_sized.py	0	: ok
-module-level/no-exception/result/cond_synth_empty_branch.py	0	: ok
-module-level/no-exception/result/conditionals/branch_join.py	0	: ok
-module-level/no-exception/result/conditionals/branch_local.py	0	: ok
-module-level/no-exception/result/conditionals/early_return.py	0	: ok
-module-level/no-exception/result/conditionals/elif_chain.py	0	: ok
-module-level/no-exception/result/conditionals/elif_chain_assign.py	0	: ok
-module-level/no-exception/result/constr_keyword_order.py	0	: ok
-module-level/no-exception/result/constr_keyword_split.py	0	: ok
-module-level/no-exception/result/dataclass_construct.py	0	: ok
-module-level/no-exception/result/dataclass_construct_base.py	0	: ok
-module-level/no-exception/result/dataclass_construct_inherit.py	0	: ok
-module-level/no-exception/result/declare_then_assign_branches.py	0	: ok
-module-level/no-exception/result/declare_then_assign_top.py	0	: ok
-module-level/no-exception/result/dict_check_wider.py	0	: ok
-module-level/no-exception/result/dict_commutative.py	0	: ok
-module-level/no-exception/result/dict_comp_check_wider.py	0	: ok
-module-level/no-exception/result/dict_comp_dup_key.py	0	: ok
-module-level/no-exception/result/dict_comp_guard.py	0	: ok
-module-level/no-exception/result/dict_duplicate_key.py	0	: ok
-module-level/no-exception/result/dict_insertion_order.py	0	: ok
-module-level/no-exception/result/dict_synth.py	0	: ok
-module-level/no-exception/result/dict_value_join.py	0	: ok
-module-level/no-exception/result/empty_module.py	0	: ok
-module-level/no-exception/result/empty_tuple_type.py	0	: ok
-module-level/no-exception/result/eq_int_float.py	0	: ok
-module-level/no-exception/result/eq_object_operands.py	0	: ok
-module-level/no-exception/result/eq_subclass.py	0	: ok
-module-level/no-exception/result/eq_union.py	0	: ok
-module-level/no-exception/result/eq_union_literal.py	0	: ok
-module-level/no-exception/result/exit_status.py	0	: ok
-module-level/no-exception/result/float_floor_div_mod.py	0	: ok
-module-level/no-exception/result/floor_div_mod.py	0	: ok
-module-level/no-exception/result/from_import.py	0	: ok
-module-level/no-exception/result/functions/assert_msg_stmt.py	0	: ok
-module-level/no-exception/result/functions/assert_stmt.py	0	: ok
-module-level/no-exception/result/functions/expr_stmt.py	0	: ok
-module-level/no-exception/result/functions/mutual.py	0	: ok
-module-level/no-exception/result/functions/nested_mutual_region.py	0	: ok
-module-level/no-exception/result/functions/self.py	0	: ok
-module-level/no-exception/result/generic_annotation.py	0	: ok
-module-level/no-exception/result/generic_annotation_equivalent_args.py	0	: ok
-module-level/no-exception/result/generic_attribute.py	0	: ok
-module-level/no-exception/result/generic_base_chain.py	0	: ok
-module-level/no-exception/result/generic_base_instantiated.py	0	: ok
-module-level/no-exception/result/generic_base_nested_arg.py	0	: ok
-module-level/no-exception/result/generic_base_two_params.py	0	: ok
-module-level/no-exception/result/generic_call_inference.py	0	: ok
-module-level/no-exception/result/generic_chain_upcast.py	0	: ok
-module-level/no-exception/result/generic_class.py	0	: ok
-module-level/no-exception/result/generic_constr.py	0	: ok
-module-level/no-exception/result/generic_constr_explicit.py	0	: ok
-module-level/no-exception/result/generic_constr_explicit_pair.py	0	: ok
-module-level/no-exception/result/generic_constr_explicit_union.py	0	: ok
-module-level/no-exception/result/generic_constr_join.py	0	: ok
-module-level/no-exception/result/generic_constr_keyword.py	0	: ok
-module-level/no-exception/result/generic_constr_subclass.py	0	: ok
-module-level/no-exception/result/generic_def.py	0	: ok
-module-level/no-exception/result/generic_def_in_branch.py	0	: ok
-module-level/no-exception/result/generic_higher_order.py	0	: ok
-module-level/no-exception/result/generic_join.py	0	: ok
-module-level/no-exception/result/generic_match_subclass_then_base.py	0	: ok
-module-level/no-exception/result/generic_none_statement.py	0	: ok
-module-level/no-exception/result/generic_pattern.py	0	: ok
-module-level/no-exception/result/generic_pattern_union_base.py	0	: ok
-module-level/no-exception/result/generic_pattern_union_base_disjunct.py	0	: ok
-module-level/no-exception/result/generic_recursion.py	0	: ok
-module-level/no-exception/result/generic_recursion_union.py	0	: ok
-module-level/no-exception/result/generic_tree_match.py	0	: ok
-module-level/no-exception/result/if_exp.py	0	: ok
-module-level/no-exception/result/implicit_none.py	0	: ok
-module-level/no-exception/result/implicit_return.py	0	: ok
-module-level/no-exception/result/import_predefined.py	0	: ok
-module-level/no-exception/result/int_below_float.py	0	: ok
-module-level/no-exception/result/lambda_annotated.py	0	: ok
-module-level/no-exception/result/lambda_applied.py	0	: ok
-module-level/no-exception/result/lambda_applied_checked.py	0	: ok
-module-level/no-exception/result/lambda_applied_synth.py	0	: ok
-module-level/no-exception/result/lambda_argument.py	0	: ok
-module-level/no-exception/result/list_check_wider.py	0	: ok
-module-level/no-exception/result/list_comp_float.py	0	: ok
-module-level/no-exception/result/list_comp_generators.py	0	: ok
-module-level/no-exception/result/list_comp_synth_base_type.py	0	: ok
-module-level/no-exception/result/list_elem_checked.py	0	: ok
-module-level/no-exception/result/list_ops.py	0	: ok
-module-level/no-exception/result/list_synth_elem_checked.py	0	: ok
-module-level/no-exception/result/literal_disjunct_union.py	0	: ok
-module-level/no-exception/result/literal_negative_annotation.py	0	: ok
-module-level/no-exception/result/match_as_simple.py	0	: ok
-module-level/no-exception/result/match_as_union.py	0	: ok
-module-level/no-exception/result/match_base_transitive.py	0	: ok
-module-level/no-exception/result/match_basic.py	0	: ok
-module-level/no-exception/result/match_bool_exhaustive.py	0	: ok
-module-level/no-exception/result/match_class.py	0	: ok
-module-level/no-exception/result/match_dict.py	0	: ok
-module-level/no-exception/result/match_dict_empty.py	0	: ok
-module-level/no-exception/result/match_dict_missing.py	0	: ok
-module-level/no-exception/result/match_dict_partial.py	0	: ok
-module-level/no-exception/result/match_dict_same_key.py	0	: ok
-module-level/no-exception/result/match_float_literal.py	0	: ok
-module-level/no-exception/result/match_int_lit_at_float.py	0	: ok
-module-level/no-exception/result/match_list.py	0	: ok
-module-level/no-exception/result/match_list_rows.py	0	: ok
-module-level/no-exception/result/match_literal_exhaustive.py	0	: ok
-module-level/no-exception/result/match_neg_lit.py	0	: ok
-module-level/no-exception/result/match_nested.py	0	: ok
-module-level/no-exception/result/match_nested_class_irrefutable.py	0	: ok
-module-level/no-exception/result/match_none_exhaustive.py	0	: ok
-module-level/no-exception/result/match_partial.py	0	: ok
-module-level/no-exception/result/match_partial_for_mypy_fallthrough.py	0	: ok
-module-level/no-exception/result/match_returning_branch.py	0	: ok
-module-level/no-exception/result/match_seq_union_catch_all.py	0	: ok
-module-level/no-exception/result/match_singleton.py	0	: ok
-module-level/no-exception/result/match_singleton_no_parentheses.py	0	: ok
-module-level/no-exception/result/match_split_sharper.py	0	: ok
-module-level/no-exception/result/match_subclass_fallthrough.py	0	: ok
-module-level/no-exception/result/match_tuple_lengths.py	0	: ok
-module-level/no-exception/result/match_tuple_no_parentheses.py	0	: ok
-module-level/no-exception/result/match_tuple_one_refutable.py	0	: ok
-module-level/no-exception/result/match_union_alt.py	0	: ok
-module-level/no-exception/result/match_union_bind.py	0	: ok
-module-level/no-exception/result/match_union_rest_var.py	0	: ok
-module-level/no-exception/result/match_var_after.py	0	: ok
-module-level/no-exception/result/match_var_bound_in_each_case.py	0	: ok
-module-level/no-exception/result/match_zero_field_constr.py	0	: ok
-module-level/no-exception/result/membership.py	0	: ok
-module-level/no-exception/result/membership_dict.py	0	: ok
-module-level/no-exception/result/membership_string.py	0	: ok
-module-level/no-exception/result/membership_tuple.py	0	: ok
-module-level/no-exception/result/membership_tuple_join.py	0	: ok
-module-level/no-exception/result/mypy-bug/match_bool_literal.py	0	: ok
-module-level/no-exception/result/ne_ops.py	0	: ok
-module-level/no-exception/result/never_annotation.py	0	: ok
-module-level/no-exception/result/never_below.py	0	: ok
-module-level/no-exception/result/object_above.py	0	: ok
-module-level/no-exception/result/pat_as_narrowed.py	0	: ok
-module-level/no-exception/result/pat_bool_literal_number.py	0	: ok
-module-level/no-exception/result/pat_class_bool_fields.py	0	: ok
-module-level/no-exception/result/pat_class_mixed.py	0	: ok
-module-level/no-exception/result/pat_class_nested.py	0	: ok
-module-level/no-exception/result/pat_constr_inherited_fields.py	0	: ok
-module-level/no-exception/result/pat_constr_lower_class.py	0	: ok
-module-level/no-exception/result/pat_constr_object.py	0	: ok
-module-level/no-exception/result/pat_constr_sub_after_super.py	0	: ok
-module-level/no-exception/result/pat_constr_unrelated.py	0	: ok
-module-level/no-exception/result/pat_dict_field.py	0	: ok
-module-level/no-exception/result/pat_dict_in_list.py	0	: ok
-module-level/no-exception/result/pat_dict_in_tuple.py	0	: ok
-module-level/no-exception/result/pat_tuple_component_narrowing.py	0	: ok
-module-level/no-exception/result/pat_tuple_optional_field.py	0	: ok
-module-level/no-exception/result/pattern_shadows_outer.py	0	: ok
-module-level/no-exception/result/power.py	0	: ok
-module-level/no-exception/result/power_int_exponent.py	0	: ok
-module-level/no-exception/result/precedence.py	0	: ok
-module-level/no-exception/result/predefined_name.py	0	: ok
-module-level/no-exception/result/range_comprehension.py	0	: ok
-module-level/no-exception/result/range_empty.py	0	: ok
-module-level/no-exception/result/range_eq.py	0	: ok
-module-level/no-exception/result/range_fields.py	0	: ok
-module-level/no-exception/result/range_len.py	0	: ok
-module-level/no-exception/result/range_nested.py	0	: ok
-module-level/no-exception/result/recursive_datatype.py	0	: ok
-module-level/no-exception/result/recursive_datatype_generic.py	0	: ok
-module-level/no-exception/result/recursive_datatype_uninhabited.py	0	: ok
-module-level/no-exception/result/recursive_datatypes_mutual.py	0	: ok
-module-level/no-exception/result/return_annotation.py	0	: ok
-module-level/no-exception/result/return_tuple_no_parentheses.py	0	: ok
-module-level/no-exception/result/round_int.py	0	: ok
-module-level/no-exception/result/round_ties_to_even.py	0	: ok
-module-level/no-exception/result/scopes/closure_capture.py	0	: ok
-module-level/no-exception/result/scopes/lambda_capture.py	0	: ok
-module-level/no-exception/result/scopes/nested_def_local.py	0	: ok
-module-level/no-exception/result/short_circuit.py	0	: ok
-module-level/no-exception/result/simple.py	0	: ok
-module-level/no-exception/result/sized_annotation.py	0	: ok
-module-level/no-exception/result/sized_kinds.py	0	: ok
-module-level/no-exception/result/str_ops.py	0	: ok
-module-level/no-exception/result/str_subscript.py	0	: ok
-module-level/no-exception/result/string_literal.py	0	: ok
-module-level/no-exception/result/subclass_for_base.py	0	: ok
-module-level/no-exception/result/subscript_call.py	0	: ok
-module-level/no-exception/result/subscript_negative.py	0	: ok
-module-level/no-exception/result/subscript_str_literal.py	0	: ok
-module-level/no-exception/result/subscript_tuple_int.py	0	: ok
-module-level/no-exception/result/subscript_tuple_neg_literal.py	0	: ok
-module-level/no-exception/result/subscript_tuple_ok.py	0	: ok
-module-level/no-exception/result/true_div.py	0	: ok
-module-level/no-exception/result/tuple_check_empty_list.py	0	: ok
-module-level/no-exception/result/tuple_concat.py	0	: ok
-module-level/no-exception/result/tuple_no_parentheses.py	0	: ok
-module-level/no-exception/result/tuple_singleton_no_parentheses.py	0	: ok
-module-level/no-exception/result/tuple_subtype.py	0	: ok
-module-level/no-exception/result/type_alias.py	0	: ok
-module-level/no-exception/result/type_alias_field.py	0	: ok
-module-level/no-exception/result/type_alias_generic.py	0	: ok
-module-level/no-exception/result/type_alias_generic_class.py	0	: ok
-module-level/no-exception/result/type_alias_names_later_alias.py	0	: ok
-module-level/no-exception/result/type_alias_names_later_class.py	0	: ok
-module-level/no-exception/result/type_alias_nested_args.py	0	: ok
-module-level/no-exception/result/type_alias_of_alias.py	0	: ok
-module-level/no-exception/result/type_alias_optional.py	0	: ok
-module-level/no-exception/result/type_alias_two_params.py	0	: ok
-module-level/no-exception/result/type_alias_union_match.py	0	: ok
-module-level/no-exception/result/unary_ops.py	0	: ok
-module-level/no-exception/result/union_attr.py	0	: ok
-module-level/no-exception/result/union_below_union.py	0	: ok
-module-level/no-exception/result/union_call.py	0	: ok
-module-level/no-exception/result/union_commutative.py	0	: ok
-module-level/no-exception/result/union_disjunct.py	0	: ok
-module-level/no-exception/result/union_iter.py	0	: ok
-module-level/no-exception/result/union_subscript.py	0	: ok
-module-level/no-exception/type-checker/alias_later_class_arity.py	0	: ok
-module-level/no-exception/type-checker/and_non_bool.py	0	: ok
-module-level/no-exception/type-checker/and_right_non_bool.py	0	: ok
-module-level/no-exception/type-checker/annotation_bare_generic.py	0	: ok
-module-level/no-exception/type-checker/any_not_defined.py	0	: ok
-module-level/no-exception/type-checker/assert_false_unreachable.py	0	: ok
-module-level/no-exception/type-checker/assert_literal_false_type.py	0	: ok
-module-level/no-exception/type-checker/assert_literal_false_type_mismatch.py	0	: ok
-module-level/no-exception/type-checker/assert_literal_false_type_other_path.py	0	: ok
-module-level/no-exception/type-checker/assert_msg_type.py	0	: ok
-module-level/no-exception/type-checker/assign_before_declaration.py	0	: ok
-module-level/no-exception/type-checker/assign_type_mismatch.py	0	: ok
-module-level/no-exception/type-checker/assign_undeclared.py	0	: ok
-module-level/no-exception/type-checker/attr_builtin_method.py	0	: ok
-module-level/no-exception/type-checker/bare_return_optional.py	0	: ok
-module-level/no-exception/type-checker/bare_return_type.py	0	: ok
-module-level/no-exception/type-checker/binop_bool_int.py	0	: ok
-module-level/no-exception/type-checker/binop_union_operand.py	0	: ok
-module-level/no-exception/type-checker/bitwise_or.py	0	: ok
-module-level/no-exception/type-checker/bool_not_int.py	0	: ok
-module-level/no-exception/type-checker/branch_declared_use.py	0	: ok
-module-level/no-exception/type-checker/builtin_use_before_declaration.py	0	: ok
-module-level/no-exception/type-checker/call_arg_type.py	0	: ok
-module-level/no-exception/type-checker/call_keyword_only.py	0	: ok
-module-level/no-exception/type-checker/call_stmt_arg_type.py	0	: ok
-module-level/no-exception/type-checker/callable_arity.py	0	: ok
-module-level/no-exception/type-checker/callable_as_value.py	0	: ok
-module-level/no-exception/type-checker/callable_param_narrower.py	0	: ok
-module-level/no-exception/type-checker/callable_result_wider.py	0	: ok
-module-level/no-exception/type-checker/class_as_value.py	0	: ok
-module-level/no-exception/type-checker/class_base_not_class.py	0	: ok
-module-level/no-exception/type-checker/class_name_assigned.py	0	: ok
-module-level/no-exception/type-checker/class_name_rebound.py	0	: ok
-module-level/no-exception/type-checker/class_rebound_pattern.py	0	: ok
-module-level/no-exception/type-checker/class_shadows_variable.py	0	: ok
-module-level/no-exception/type-checker/closure_unassigned.py	0	: ok
-module-level/no-exception/type-checker/comp_guard_bool.py	0	: ok
-module-level/no-exception/type-checker/comprehension_capture.py	0	: ok
-module-level/no-exception/type-checker/comprehension_capture_guard.py	0	: ok
-module-level/no-exception/type-checker/comprehension_capture_nested.py	0	: ok
-module-level/no-exception/type-checker/comprehension_capture_qualifier.py	0	: ok
-module-level/no-exception/type-checker/cond_check_branch.py	0	: ok
-module-level/no-exception/type-checker/cond_join_missing_field.py	0	: ok
-module-level/no-exception/type-checker/cond_non_bool.py	0	: ok
-module-level/no-exception/type-checker/cond_partial_def.py	0	: ok
-module-level/no-exception/type-checker/constr_field_type.py	0	: ok
-module-level/no-exception/type-checker/constr_type_arg_not_type.py	0	: ok
-module-level/no-exception/type-checker/dataclass_dup_class.py	0	: ok
-module-level/no-exception/type-checker/dataclass_dup_field.py	0	: ok
-module-level/no-exception/type-checker/dataclass_inherited_field_clash.py	0	: ok
-module-level/no-exception/type-checker/declared_in_branch_use.py	0	: ok
-module-level/no-exception/type-checker/dict_comp_capture.py	0	: ok
-module-level/no-exception/type-checker/dict_comp_check_int_keys.py	0	: ok
-module-level/no-exception/type-checker/dict_comp_int_keys.py	0	: ok
-module-level/no-exception/type-checker/dict_comp_value_type.py	0	: ok
-module-level/no-exception/type-checker/dict_int_keys.py	0	: ok
-module-level/no-exception/type-checker/dict_invariant.py	0	: ok
-module-level/no-exception/type-checker/dict_str_shadowed.py	0	: ok
-module-level/no-exception/type-checker/dict_synth_int_key.py	0	: ok
-module-level/no-exception/type-checker/duplicate_def_in_region.py	0	: ok
-module-level/no-exception/type-checker/elif_cond_non_bool.py	0	: ok
-module-level/no-exception/type-checker/elif_no_else.py	0	: ok
-module-level/no-exception/type-checker/empty_dict_synth.py	0	: ok
-module-level/no-exception/type-checker/empty_list_synth.py	0	: ok
-module-level/no-exception/type-checker/eq_class_callable_field.py	0	: ok
-module-level/no-exception/type-checker/eq_function.py	0	: ok
-module-level/no-exception/type-checker/eq_list_tuple.py	0	: ok
-module-level/no-exception/type-checker/eq_short_circuit.py	0	: ok
-module-level/no-exception/type-checker/eq_type_variable.py	0	: ok
-module-level/no-exception/type-checker/eq_unrelated_classes.py	0	: ok
-module-level/no-exception/type-checker/eq_unrelated_types.py	0	: ok
-module-level/no-exception/type-checker/float_not_int.py	0	: ok
-module-level/no-exception/type-checker/forward_alias_in_def.py	0	: ok
-module-level/no-exception/type-checker/forward_class_in_def.py	0	: ok
-module-level/no-exception/type-checker/forward_var_in_def.py	0	: ok
-module-level/no-exception/type-checker/generic_annotation_not_subtype.py	0	: ok
-module-level/no-exception/type-checker/generic_args_invariant.py	0	: ok
-module-level/no-exception/type-checker/generic_as_value.py	0	: ok
-module-level/no-exception/type-checker/generic_attribute_of_subclass.py	0	: ok
-module-level/no-exception/type-checker/generic_chain_upcast_mismatch.py	0	: ok
-module-level/no-exception/type-checker/generic_constr_no_type_argument.py	0	: ok
-module-level/no-exception/type-checker/generic_constr_type_mismatch.py	0	: ok
-module-level/no-exception/type-checker/generic_def_after_branch.py	0	: ok
-module-level/no-exception/type-checker/generic_join_field_of_subclass.py	0	: ok
-module-level/no-exception/type-checker/generic_name_synthesised.py	0	: ok
-module-level/no-exception/type-checker/generic_no_type_argument.py	0	: ok
-module-level/no-exception/type-checker/generic_none_result.py	0	: ok
-module-level/no-exception/type-checker/generic_result_mismatch.py	0	: ok
-module-level/no-exception/type-checker/grandparent_field_clash.py	0	: ok
-module-level/no-exception/type-checker/if_exp_synth_branch_checked.py	0	: ok
-module-level/no-exception/type-checker/if_exp_synth_no_branch.py	0	: ok
-module-level/no-exception/type-checker/if_exp_synth_test_bool.py	0	: ok
-module-level/no-exception/type-checker/if_nonbool.py	0	: ok
-module-level/no-exception/type-checker/int_plus_float_not_int.py	0	: ok
-module-level/no-exception/type-checker/lambda_applied_arg_lambda.py	0	: ok
-module-level/no-exception/type-checker/lambda_applied_result.py	0	: ok
-module-level/no-exception/type-checker/lambda_arity.py	0	: ok
-module-level/no-exception/type-checker/lambda_not_callable.py	0	: ok
-module-level/no-exception/type-checker/lambda_result_type.py	0	: ok
-module-level/no-exception/type-checker/lambda_stmt.py	0	: ok
-module-level/no-exception/type-checker/list_comp_elem_type.py	0	: ok
-module-level/no-exception/type-checker/list_comp_synth_capture.py	0	: ok
-module-level/no-exception/type-checker/list_invariant.py	0	: ok
-module-level/no-exception/type-checker/list_synth_elem_check_fails.py	0	: ok
-module-level/no-exception/type-checker/literal_mismatch.py	0	: ok
-module-level/no-exception/type-checker/match_as_literal_bind.py	0	: ok
-module-level/no-exception/type-checker/match_bool_catch_all.py	0	: ok
-module-level/no-exception/type-checker/match_dead_catch_all.py	0	: ok
-module-level/no-exception/type-checker/match_dict_empty_catch_all.py	0	: ok
-module-level/no-exception/type-checker/match_dict_pat_on_union.py	0	: ok
-module-level/no-exception/type-checker/match_dup_list.py	0	: ok
-module-level/no-exception/type-checker/match_dup_literal.py	0	: ok
-module-level/no-exception/type-checker/match_empty_residual_def.py	0	: ok
-module-level/no-exception/type-checker/match_float_literal_at_int.py	0	: ok
-module-level/no-exception/type-checker/match_float_literal_repeated.py	0	: ok
-module-level/no-exception/type-checker/match_float_literal_scrutinee.py	0	: ok
-module-level/no-exception/type-checker/match_list_lengths.py	0	: ok
-module-level/no-exception/type-checker/match_list_pat_on_int.py	0	: ok
-module-level/no-exception/type-checker/match_literal_catch_all.py	0	: ok
-module-level/no-exception/type-checker/match_never_scrutinee.py	0	: ok
-module-level/no-exception/type-checker/match_partial_def.py	0	: ok
-module-level/no-exception/type-checker/match_partial_in_if_branch.py	0	: ok
-module-level/no-exception/type-checker/match_partial_other_path.py	0	: ok
-module-level/no-exception/type-checker/match_seq_kinds.py	0	: ok
-module-level/no-exception/type-checker/match_str_partial.py	0	: ok
-module-level/no-exception/type-checker/match_str_pat_on_int.py	0	: ok
-module-level/no-exception/type-checker/match_true_pat_on_int.py	0	: ok
-module-level/no-exception/type-checker/match_tuple_pat_on_int.py	0	: ok
-module-level/no-exception/type-checker/match_tuple_two_refutable.py	0	: ok
-module-level/no-exception/type-checker/match_tuple_union_bind.py	0	: ok
-module-level/no-exception/type-checker/match_union_bind_narrow.py	0	: ok
-module-level/no-exception/type-checker/match_unreachable.py	0	: ok
-module-level/no-exception/type-checker/match_var_leak.py	0	: ok
-module-level/no-exception/type-checker/maybe_assigned.py	0	: ok
-module-level/no-exception/type-checker/membership_dict_int_key.py	0	: ok
-module-level/no-exception/type-checker/membership_incomparable.py	0	: ok
-module-level/no-exception/type-checker/missing_return.py	0	: ok
-module-level/no-exception/type-checker/missing_return_optional.py	0	: ok
-module-level/no-exception/type-checker/module_as_value.py	0	: ok
-module-level/no-exception/type-checker/mutual_after_rebind.py	0	: ok
-module-level/no-exception/type-checker/mutual_def_block_local.py	0	: ok
-module-level/no-exception/type-checker/mutual_lambdas.py	0	: ok
-module-level/no-exception/type-checker/mutual_split_by_assign.py	0	: ok
-module-level/no-exception/type-checker/name_declared.py	0	: ok
-module-level/no-exception/type-checker/name_pattern.py	0	: ok
-module-level/no-exception/type-checker/name_reassigned.py	0	: ok
-module-level/no-exception/type-checker/never_above.py	0	: ok
-module-level/no-exception/type-checker/no_else.py	0	: ok
-module-level/no-exception/type-checker/none_result_assigned.py	0	: ok
-module-level/no-exception/type-checker/none_result_union_callee.py	0	: ok
-module-level/no-exception/type-checker/not_non_bool.py	0	: ok
-module-level/no-exception/type-checker/object_not_below.py	0	: ok
-module-level/no-exception/type-checker/or_non_bool.py	0	: ok
-module-level/no-exception/type-checker/ordering_list.py	0	: ok
-module-level/no-exception/type-checker/param_bound_by_pattern.py	0	: ok
-module-level/no-exception/type-checker/param_def_clash.py	0	: ok
-module-level/no-exception/type-checker/param_reassign.py	0	: ok
-module-level/no-exception/type-checker/param_redeclared.py	0	: ok
-module-level/no-exception/type-checker/pat_as_tuple_on_list.py	0	: ok
-module-level/no-exception/type-checker/pat_class_arity.py	0	: ok
-module-level/no-exception/type-checker/pat_class_bad_keyword.py	0	: ok
-module-level/no-exception/type-checker/pat_class_bool_fields_unreachable.py	0	: ok
-module-level/no-exception/type-checker/pat_class_field_narrowing.py	0	: ok
-module-level/no-exception/type-checker/pat_constr_excluded_head.py	0	: ok
-module-level/no-exception/type-checker/pat_constr_no_instance.py	0	: ok
-module-level/no-exception/type-checker/pat_constr_split_subsumed.py	0	: ok
-module-level/no-exception/type-checker/pat_constr_sub_inherited_excluded.py	0	: ok
-module-level/no-exception/type-checker/pat_constr_subclasses_partial.py	0	: ok
-module-level/no-exception/type-checker/pat_constr_subsumed.py	0	: ok
-module-level/no-exception/type-checker/pat_constr_taken_by_super.py	0	: ok
-module-level/no-exception/type-checker/pat_dict_on_object.py	0	: ok
-module-level/no-exception/type-checker/pat_dict_unreachable.py	0	: ok
-module-level/no-exception/type-checker/pat_list_on_sized_union.py	0	: ok
-module-level/no-exception/type-checker/pat_seq_in_dict_value.py	0	: ok
-module-level/no-exception/type-checker/pat_tuple_in_list_elem.py	0	: ok
-module-level/no-exception/type-checker/pat_tuple_on_seq_union.py	0	: ok
-module-level/no-exception/type-checker/pat_tuple_on_sized_union.py	0	: ok
-module-level/no-exception/type-checker/pat_tuple_on_union_field.py	0	: ok
-module-level/no-exception/type-checker/pat_tuple_wrong_length.py	0	: ok
-module-level/no-exception/type-checker/pat_var_declared.py	0	: ok
-module-level/no-exception/type-checker/pattern_class_at_never.py	0	: ok
-module-level/no-exception/type-checker/pattern_class_free_param.py	0	: ok
-module-level/no-exception/type-checker/pattern_class_free_param_never.py	0	: ok
-module-level/no-exception/type-checker/pattern_class_pair_undetermined.py	0	: ok
-module-level/no-exception/type-checker/pattern_class_undetermined.py	0	: ok
-module-level/no-exception/type-checker/pattern_in_if_clash.py	0	: ok
-module-level/no-exception/type-checker/pattern_subclass_unreachable.py	0	: ok
-module-level/no-exception/type-checker/pattern_then_declared.py	0	: ok
-module-level/no-exception/type-checker/pattern_union_base_absorbed.py	0	: ok
-module-level/no-exception/type-checker/pattern_union_base_two_params.py	0	: ok
-module-level/no-exception/type-checker/pattern_union_base_undetermined.py	0	: ok
-module-level/no-exception/type-checker/pattern_union_base_unreachable.py	0	: ok
-module-level/no-exception/type-checker/pattern_variable_some_cases.py	0	: ok
-module-level/no-exception/type-checker/power_bool_exponent.py	0	: ok
-module-level/no-exception/type-checker/power_int_exponent_not_int.py	0	: ok
-module-level/no-exception/type-checker/predefined_attr_as_value.py	0	: ok
-module-level/no-exception/type-checker/predefined_member_unknown.py	0	: ok
-module-level/no-exception/type-checker/print_arity.py	0	: ok
-module-level/no-exception/type-checker/print_keyword_arg.py	0	: ok
-module-level/no-exception/type-checker/pu_captured_by_def.py	0	: ok
-module-level/no-exception/type-checker/range_one_arg.py	0	: ok
-module-level/no-exception/type-checker/reassign/def_assign.py	0	: ok
-module-level/no-exception/type-checker/reassign/match.py	0	: ok
-module-level/no-exception/type-checker/redeclaration.py	0	: ok
-module-level/no-exception/type-checker/redeclaration_branch.py	0	: ok
-module-level/no-exception/type-checker/return_type_mismatch.py	0	: ok
-module-level/no-exception/type-checker/round_arity.py	0	: ok
-module-level/no-exception/type-checker/self_capture_lambda.py	0	: ok
-module-level/no-exception/type-checker/sized_int.py	0	: ok
-module-level/no-exception/type-checker/subscript_call_keyword.py	0	: ok
-module-level/no-exception/type-checker/subscript_tuple_key.py	0	: ok
-module-level/no-exception/type-checker/subscript_tuple_neg_literal_mismatch.py	0	: ok
-module-level/no-exception/type-checker/tuple_check_component.py	0	: ok
-module-level/no-exception/type-checker/tuple_check_length.py	0	: ok
-module-level/no-exception/type-checker/tuple_subtype_component.py	0	: ok
-module-level/no-exception/type-checker/tuple_subtype_length.py	0	: ok
-module-level/no-exception/type-checker/tuple_synth_elem_no_type.py	0	: ok
-module-level/no-exception/type-checker/type_alias_as_value.py	0	: ok
-module-level/no-exception/type-checker/type_alias_cycle.py	0	: ok
-module-level/no-exception/type-checker/type_alias_missing_args.py	0	: ok
-module-level/no-exception/type-checker/type_alias_redeclared.py	0	: ok
-module-level/no-exception/type-checker/type_alias_self.py	0	: ok
-module-level/no-exception/type-checker/type_alias_two_params_swapped.py	0	: ok
-module-level/no-exception/type-checker/union_call_arity.py	0	: ok
-module-level/no-exception/type-checker/union_call_not_callable.py	0	: ok
-module-level/no-exception/type-checker/union_field_exhaustive.py	0	: ok
-module-level/no-exception/type-checker/union_iter_not_iterable.py	0	: ok
-module-level/no-exception/type-checker/union_not_below_disjunct.py	0	: ok
-module-level/no-exception/type-checker/union_subscript_index_type.py	0	: ok
-module-level/no-exception/type-checker/union_subscript_not_subscriptable.py	0	: ok
-module-level/no-exception/type-checker/unreachable.py	0	: ok
-module-level/no-exception/type-checker/unreachable_after_if_else.py	0	: ok
-module-level/no-exception/type-checker/unsupported_builtin.py	0	: ok
-module-level/no-exception/undefined/eq_bool_number.py	0	: ok
-module-level/no-exception/undefined/eq_function_object.py	0	: ok
-module-level/no-exception/undefined/eq_nan_container.py	0	: ok
-module-level/no-exception/undefined/pat_literal_bool_number.py	0	: ok
-module-level/syntactic-only/empty_from_import.py	1	:3:0: import after another statement prohibited
-module-level/syntactic-only/helpers/__init__.py	0	: ok
-module-level/syntactic-only/helpers/harness.py	1	:3:0: import after another statement prohibited
-module-level/syntax-error/parser/break_outside_loop.py	1	:1:0: break prohibited
-module-level/syntax-error/parser/duplicate_type_param.py	1	:1:0: duplicate type parameter T prohibited
-module-level/syntax-error/parser/parse_error.py	1	:1:5: parse error: invalid syntax
-module-level/syntax-error/type-checker/constructor_dup_keyword.py	0	: ok
-module-level/syntax-error/type-checker/duplicate_param.py	0	: ok
-module-level/syntax-error/type-checker/lambda_applied_duplicate_param.py	0	: ok
-module-level/syntax-error/type-checker/lambda_duplicate_param.py	0	: ok
-module-level/syntax-error/type-checker/match_catchall_unreachable.py	0	: ok
-module-level/syntax-error/type-checker/match_wildcard_unreachable.py	0	: ok
-module-level/syntax-error/type-checker/nonlinear_pattern.py	0	: ok
-module-level/syntax-error/type-checker/pat_as_nonlinear.py	0	: ok
-module-level/syntax-error/type-checker/pat_class_dup_keyword.py	0	: ok
-module-level/syntax-error/type-checker/pat_dict_dup_key.py	0	: ok
-module-level/syntax-error/type-checker/pat_dict_nonlinear.py	0	: ok
-module-level/syntax-error/type-checker/top_level_return.py	0	: ok
-program-level/exception/result/from_import_both_fail/main.py	0	: ok
-program-level/exception/result/from_import_both_fail/pkg/__init__.py	0	: ok
-program-level/exception/result/from_import_both_fail/pkg/sub.py	0	: ok
-program-level/exception/result/from_import_failing_containing/main.py	0	: ok
-program-level/exception/result/from_import_failing_containing/pkg/__init__.py	0	: ok
-program-level/exception/result/from_import_failing_containing/pkg/sub.py	0	: ok
-program-level/exception/result/from_import_submodule_fails/main.py	0	: ok
-program-level/exception/result/from_import_submodule_fails/x/__init__.py	0	: ok
-program-level/exception/result/from_import_submodule_fails/x/a.py	0	: ok
-program-level/exception/result/import_both_fail/main.py	0	: ok
-program-level/exception/result/import_both_fail/pkg/__init__.py	0	: ok
-program-level/exception/result/import_both_fail/pkg/sub.py	0	: ok
-program-level/exception/result/import_chain_fails/main.py	0	: ok
-program-level/exception/result/import_chain_fails/pkg/__init__.py	0	: ok
-program-level/exception/result/import_chain_fails/pkg/sub.py	0	: ok
-program-level/exception/result/import_failing_containing/main.py	0	: ok
-program-level/exception/result/import_failing_containing/pkg/__init__.py	0	: ok
-program-level/exception/result/import_failing_containing/pkg/sub.py	0	: ok
-program-level/exception/result/import_prefix_fails/a.py	0	: ok
-program-level/exception/result/import_prefix_fails/b.py	0	: ok
-program-level/exception/result/import_prefix_fails/main.py	0	: ok
-program-level/exception/result/import_target_fails/helper.py	0	: ok
-program-level/exception/result/import_target_fails/main.py	0	: ok
-program-level/exception/type-checker/attr_unknown_member/main.py	0	: ok
-program-level/exception/type-checker/attr_unknown_member/mod.py	0	: ok
-program-level/exception/type-checker/cycle/helper.py	0	: ok
-program-level/exception/type-checker/cycle/main.py	0	: ok
-program-level/exception/type-checker/from_import_arity/main.py	0	: ok
-program-level/exception/type-checker/from_import_arity/mod.py	0	: ok
-program-level/exception/type-checker/from_import_bad_containing/main.py	0	: ok
-program-level/exception/type-checker/from_import_bad_containing/pkg/__init__.py	0	: ok
-program-level/exception/type-checker/from_import_bad_containing/pkg/sub.py	0	: ok
-program-level/exception/type-checker/from_import_unassigned/lib.py	0	: ok
-program-level/exception/type-checker/from_import_unassigned/main.py	0	: ok
-program-level/exception/type-checker/from_import_unknown_member/main.py	0	: ok
-program-level/exception/type-checker/from_import_unknown_member/mod.py	0	: ok
-program-level/exception/type-checker/import_bad_containing/main.py	0	: ok
-program-level/exception/type-checker/import_bad_containing/pkg/__init__.py	0	: ok
-program-level/exception/type-checker/import_bad_containing/pkg/sub.py	0	: ok
-program-level/exception/type-checker/member_builtin/lib.py	0	: ok
-program-level/exception/type-checker/member_builtin/main.py	0	: ok
-program-level/exception/type-checker/missing_module/main.py	0	: ok
-program-level/exception/type-checker/qualified_class_unknown/main.py	0	: ok
-program-level/exception/type-checker/qualified_class_unknown/mod.py	0	: ok
-program-level/exception/type-checker/self_import/main.py	0	: ok
-program-level/exception/type-checker/submodule_not_imported/a.py	0	: ok
-program-level/exception/type-checker/submodule_not_imported/b.py	0	: ok
-program-level/exception/type-checker/submodule_not_imported/main.py	0	: ok
-program-level/exception/type-checker/submodule_not_imported/pkg/__init__.py	0	: ok
-program-level/exception/type-checker/submodule_not_imported/pkg/sub.py	0	: ok
-program-level/exception/type-checker/unassigned_member/lib.py	0	: ok
-program-level/exception/type-checker/unassigned_member/main.py	0	: ok
-program-level/no-exception/parser/from_import_as/m.py	0	: ok
-program-level/no-exception/parser/from_import_as/main.py	1	:1:0: from-import-as prohibited
-program-level/no-exception/parser/import_as/m.py	0	: ok
-program-level/no-exception/parser/import_as/main.py	1	:1:0: import-as prohibited
-program-level/no-exception/parser/import_multi/a.py	0	: ok
-program-level/no-exception/parser/import_multi/b.py	0	: ok
-program-level/no-exception/parser/import_multi/main.py	1	:1:0: multi-target import (import a, b) prohibited
-program-level/no-exception/parser/import_relative/main.py	0	: ok
-program-level/no-exception/parser/import_relative/pkg/__init__.py	0	: ok
-program-level/no-exception/parser/import_relative/pkg/sub.py	1	:1:0: relative imports prohibited
-program-level/no-exception/parser/import_star/m.py	0	: ok
-program-level/no-exception/parser/import_star/main.py	1	:1:0: from M import * prohibited
-program-level/no-exception/result/attr_access/helper.py	0	: ok
-program-level/no-exception/result/attr_access/main.py	0	: ok
-program-level/no-exception/result/child_after_parent/main.py	0	: ok
-program-level/no-exception/result/child_after_parent/pkg/__init__.py	0	: ok
-program-level/no-exception/result/child_after_parent/pkg/sub.py	0	: ok
-program-level/no-exception/result/child_imports_parent/main.py	0	: ok
-program-level/no-exception/result/child_imports_parent/pkg/__init__.py	0	: ok
-program-level/no-exception/result/child_imports_parent/pkg/sub.py	0	: ok
-program-level/no-exception/result/class_type_across_modules/m.py	0	: ok
-program-level/no-exception/result/class_type_across_modules/main.py	0	: ok
-program-level/no-exception/result/deep_qualified_class/main.py	0	: ok
-program-level/no-exception/result/deep_qualified_class/pkg/__init__.py	0	: ok
-program-level/no-exception/result/deep_qualified_class/pkg/sub.py	0	: ok
-program-level/no-exception/result/deep_sibling_submodules/main.py	0	: ok
-program-level/no-exception/result/deep_sibling_submodules/pkg/__init__.py	0	: ok
-program-level/no-exception/result/deep_sibling_submodules/pkg/sub/__init__.py	0	: ok
-program-level/no-exception/result/deep_sibling_submodules/pkg/sub/x.py	0	: ok
-program-level/no-exception/result/deep_sibling_submodules/pkg/sub/y.py	0	: ok
-program-level/no-exception/result/diamond/b.py	0	: ok
-program-level/no-exception/result/diamond/c.py	0	: ok
-program-level/no-exception/result/diamond/d.py	0	: ok
-program-level/no-exception/result/diamond/main.py	0	: ok
-program-level/no-exception/result/diamond_class/b.py	0	: ok
-program-level/no-exception/result/diamond_class/c.py	0	: ok
-program-level/no-exception/result/diamond_class/d.py	0	: ok
-program-level/no-exception/result/diamond_class/main.py	0	: ok
-program-level/no-exception/result/dotted_import/main.py	0	: ok
-program-level/no-exception/result/dotted_import/x/__init__.py	0	: ok
-program-level/no-exception/result/dotted_import/x/a.py	0	: ok
-program-level/no-exception/result/empty/main.py	0	: ok
-program-level/no-exception/result/exempt_containing_of_importer/main.py	0	: ok
-program-level/no-exception/result/exempt_containing_of_importer/pkg/__init__.py	0	: ok
-program-level/no-exception/result/exempt_containing_of_importer/pkg/x.py	0	: ok
-program-level/no-exception/result/exempt_containing_of_importer/pkg/y.py	0	: ok
-program-level/no-exception/result/extend_imported_class/base.py	0	: ok
-program-level/no-exception/result/extend_imported_class/main.py	0	: ok
-program-level/no-exception/result/extend_qualified_class/base.py	0	: ok
-program-level/no-exception/result/extend_qualified_class/main.py	0	: ok
-program-level/no-exception/result/from_import_alias/main.py	0	: ok
-program-level/no-exception/result/from_import_alias/shapes.py	0	: ok
-program-level/no-exception/result/from_import_class/main.py	0	: ok
-program-level/no-exception/result/from_import_class/shapes.py	0	: ok
-program-level/no-exception/result/from_import_multi/helper.py	0	: ok
-program-level/no-exception/result/from_import_multi/main.py	0	: ok
-program-level/no-exception/result/from_import_subclass/main.py	0	: ok
-program-level/no-exception/result/from_import_subclass/shapes.py	0	: ok
-program-level/no-exception/result/from_import_submodule/main.py	0	: ok
-program-level/no-exception/result/from_import_submodule/x/__init__.py	0	: ok
-program-level/no-exception/result/from_import_submodule/x/a.py	0	: ok
-program-level/no-exception/result/generic_import/lib.py	0	: ok
-program-level/no-exception/result/generic_import/main.py	0	: ok
-program-level/no-exception/result/import_absolute_shadow/main.py	0	: ok
-program-level/no-exception/result/import_absolute_shadow/x/__init__.py	0	: ok
-program-level/no-exception/result/import_absolute_shadow/x/y.py	0	: ok
-program-level/no-exception/result/import_absolute_shadow/y/__init__.py	0	: ok
-program-level/no-exception/result/import_absolute_shadow/y/z.py	0	: ok
-program-level/no-exception/result/import_submodule_attr/main.py	0	: ok
-program-level/no-exception/result/import_submodule_attr/pkg/__init__.py	0	: ok
-program-level/no-exception/result/import_submodule_attr/pkg/sub.py	0	: ok
-program-level/no-exception/result/import_twice/main.py	0	: ok
-program-level/no-exception/result/import_twice/pkg/__init__.py	0	: ok
-program-level/no-exception/result/import_twice/pkg/sub.py	0	: ok
-program-level/no-exception/result/name_member/lib.py	0	: ok
-program-level/no-exception/result/name_member/main.py	0	: ok
-program-level/no-exception/result/name_namespace/main.py	0	: ok
-program-level/no-exception/result/name_namespace/x/a.py	0	: ok
-program-level/no-exception/result/name_qualified/main.py	0	: ok
-program-level/no-exception/result/name_qualified/pkg/__init__.py	0	: ok
-program-level/no-exception/result/name_qualified/pkg/sub.py	0	: ok
-program-level/no-exception/result/name_var/helper.py	0	: ok
-program-level/no-exception/result/name_var/main.py	0	: ok
-program-level/no-exception/result/namespace_deep/main.py	0	: ok
-program-level/no-exception/result/namespace_deep/x/y/a.py	0	: ok
-program-level/no-exception/result/namespace_import/main.py	0	: ok
-program-level/no-exception/result/namespace_import/x/a.py	0	: ok
-program-level/no-exception/result/parent_after_child/main.py	0	: ok
-program-level/no-exception/result/parent_after_child/pkg/__init__.py	0	: ok
-program-level/no-exception/result/parent_after_child/pkg/sub.py	0	: ok
-program-level/no-exception/result/predefined_imports/main.py	0	: ok
-program-level/no-exception/result/qualified_alias_annotation/helper.py	0	: ok
-program-level/no-exception/result/qualified_alias_annotation/main.py	0	: ok
-program-level/no-exception/result/qualified_class_annotation/main.py	0	: ok
-program-level/no-exception/result/qualified_class_annotation/shapes.py	0	: ok
-program-level/no-exception/result/qualified_class_pattern/main.py	0	: ok
-program-level/no-exception/result/qualified_class_pattern/shapes.py	0	: ok
-program-level/no-exception/result/self_from_import/main.py	0	: ok
-program-level/no-exception/result/self_from_import/pkg/__init__.py	0	: ok
-program-level/no-exception/result/self_from_import/pkg/sub.py	0	: ok
-program-level/no-exception/result/self_from_import_deep/main.py	0	: ok
-program-level/no-exception/result/self_from_import_deep/pkg/__init__.py	0	: ok
-program-level/no-exception/result/self_from_import_deep/pkg/a/__init__.py	0	: ok
-program-level/no-exception/result/self_from_import_deep/pkg/a/b.py	0	: ok
-program-level/no-exception/result/sibling_submodules/main.py	0	: ok
-program-level/no-exception/result/sibling_submodules/pkg/__init__.py	0	: ok
-program-level/no-exception/result/sibling_submodules/pkg/a.py	0	: ok
-program-level/no-exception/result/sibling_submodules/pkg/b.py	0	: ok
-program-level/no-exception/result/sibling_submodules_swapped/main.py	0	: ok
-program-level/no-exception/result/sibling_submodules_swapped/pkg/__init__.py	0	: ok
-program-level/no-exception/result/sibling_submodules_swapped/pkg/a.py	0	: ok
-program-level/no-exception/result/sibling_submodules_swapped/pkg/b.py	0	: ok
-program-level/no-exception/result/two_modules/helper.py	0	: ok
-program-level/no-exception/result/two_modules/main.py	0	: ok
-program-level/no-exception/result/unused_module_not_parsed/main.py	0	: ok
-program-level/no-exception/result/unused_module_not_parsed/unused.py	1	:1:0: while loops prohibited
-program-level/no-exception/type-checker/attr_type_mismatch/helper.py	0	: ok
-program-level/no-exception/type-checker/attr_type_mismatch/main.py	0	: ok
-program-level/no-exception/type-checker/contained_module_import/main.py	0	: ok
-program-level/no-exception/type-checker/contained_module_import/pkg/__init__.py	0	: ok
-program-level/no-exception/type-checker/contained_module_import/pkg/sub.py	0	: ok
-program-level/no-exception/type-checker/duplicate_member/main.py	0	: ok
-program-level/no-exception/type-checker/duplicate_member/pkg/__init__.py	0	: ok
-program-level/no-exception/type-checker/duplicate_member/pkg/sub.py	0	: ok
-program-level/no-exception/type-checker/duplicate_member_import/helper.py	0	: ok
-program-level/no-exception/type-checker/duplicate_member_import/main.py	0	: ok
-program-level/no-exception/type-checker/duplicate_member_import/pkg/__init__.py	0	: ok
-program-level/no-exception/type-checker/duplicate_member_import/pkg/sub.py	0	: ok
-program-level/no-exception/type-checker/from_import_own_submodule/main.py	0	: ok
-program-level/no-exception/type-checker/from_import_own_submodule/pkg/__init__.py	0	: ok
-program-level/no-exception/type-checker/from_import_own_submodule/pkg/sub.py	0	: ok
-program-level/no-exception/type-checker/from_import_repeated/m.py	0	: ok
-program-level/no-exception/type-checker/from_import_repeated/main.py	0	: ok
-program-level/no-exception/type-checker/import_bound_by_pattern/m.py	0	: ok
-program-level/no-exception/type-checker/import_bound_by_pattern/main.py	0	: ok
-program-level/no-exception/type-checker/import_redeclared/m.py	0	: ok
-program-level/no-exception/type-checker/import_redeclared/main.py	0	: ok
-program-level/no-exception/type-checker/import_unassigned/m.py	0	: ok
-program-level/no-exception/type-checker/import_unassigned/main.py	0	: ok
-program-level/no-exception/type-checker/imported_module_rejected/helper.py	0	: ok
-program-level/no-exception/type-checker/imported_module_rejected/main.py	0	: ok
-program-level/no-exception/type-checker/name_import/lib.py	0	: ok
-program-level/no-exception/type-checker/name_import/main.py	0	: ok
-program-level/no-exception/type-checker/parents_cycle/main.py	0	: ok
-program-level/no-exception/type-checker/parents_cycle/x/__init__.py	0	: ok
-program-level/no-exception/type-checker/parents_cycle/x/a.py	0	: ok
-program-level/no-exception/type-checker/parents_cycle/y/__init__.py	0	: ok
-program-level/no-exception/type-checker/parents_cycle/y/a.py	0	: ok
-program-level/no-exception/type-checker/qualified_alias_as_value/main.py	0	: ok
-program-level/no-exception/type-checker/qualified_alias_as_value/mod.py	0	: ok
-program-level/no-exception/type-checker/qualified_class_as_value/main.py	0	: ok
-program-level/no-exception/type-checker/qualified_class_as_value/mod.py	0	: ok
-program-level/no-exception/type-checker/reexport_from_import/defs.py	0	: ok
-program-level/no-exception/type-checker/reexport_from_import/main.py	0	: ok
-program-level/no-exception/type-checker/reexport_from_import/mid.py	0	: ok
-program-level/no-exception/type-checker/reexport_import_alias/helper.py	0	: ok
-program-level/no-exception/type-checker/reexport_import_alias/main.py	0	: ok
-program-level/no-exception/type-checker/same_name_distinct_classes/a.py	0	: ok
-program-level/no-exception/type-checker/same_name_distinct_classes/b.py	0	: ok
-program-level/no-exception/type-checker/same_name_distinct_classes/main.py	0	: ok
-program-level/no-exception/type-checker/submodule_as_value/main.py	0	: ok
-program-level/no-exception/type-checker/submodule_as_value/pkg/__init__.py	0	: ok
-program-level/no-exception/type-checker/submodule_as_value/pkg/sub.py	0	: ok
-program-level/no-exception/type-checker/submodule_self_import/a/__init__.py	0	: ok
-program-level/no-exception/type-checker/submodule_self_import/a/b.py	0	: ok
-program-level/no-exception/type-checker/submodule_self_import/main.py	0	: ok
-program-level/no-exception/type-checker/submodule_transitive_import/a.py	0	: ok
-program-level/no-exception/type-checker/submodule_transitive_import/main.py	0	: ok
-program-level/no-exception/type-checker/submodule_transitive_import/pkg/__init__.py	0	: ok
-program-level/no-exception/type-checker/submodule_transitive_import/pkg/sub.py	0	: ok
-program-level/no-exception/type-checker/transitive_containing_cycle/main.py	0	: ok
-program-level/no-exception/type-checker/transitive_containing_cycle/x/__init__.py	0	: ok
-program-level/no-exception/type-checker/transitive_containing_cycle/x/z.py	0	: ok
-program-level/no-exception/type-checker/transitive_containing_cycle/y.py	0	: ok
-program-level/syntax-error/parser/parse_error/lib.py	1	:1:5: parse error: invalid syntax
-program-level/syntax-error/parser/parse_error/main.py	0	: ok
+python-raises/agrees/assert_false.py	0	: ok
+python-raises/agrees/assert_literal_false_module.py	0	: ok
+python-raises/agrees/assert_msg_false.py	0	: ok
+python-raises/agrees/divide_by_zero.py	0	: ok
+python-raises/agrees/eval_order_args.py	0	: ok
+python-raises/agrees/eval_order_binop.py	0	: ok
+python-raises/agrees/eval_order_callee.py	0	: ok
+python-raises/agrees/eval_order_dict_key.py	0	: ok
+python-raises/agrees/from_import_both_fail/main.py	0	: ok
+python-raises/agrees/from_import_both_fail/pkg/__init__.py	0	: ok
+python-raises/agrees/from_import_both_fail/pkg/sub.py	0	: ok
+python-raises/agrees/from_import_failing_containing/main.py	0	: ok
+python-raises/agrees/from_import_failing_containing/pkg/__init__.py	0	: ok
+python-raises/agrees/from_import_failing_containing/pkg/sub.py	0	: ok
+python-raises/agrees/from_import_submodule_fails/main.py	0	: ok
+python-raises/agrees/from_import_submodule_fails/x/__init__.py	0	: ok
+python-raises/agrees/from_import_submodule_fails/x/a.py	0	: ok
+python-raises/agrees/from_import_target_fails/helper.py	0	: ok
+python-raises/agrees/from_import_target_fails/main.py	0	: ok
+python-raises/agrees/import_both_fail/main.py	0	: ok
+python-raises/agrees/import_both_fail/pkg/__init__.py	0	: ok
+python-raises/agrees/import_both_fail/pkg/sub.py	0	: ok
+python-raises/agrees/import_chain_fails/main.py	0	: ok
+python-raises/agrees/import_chain_fails/pkg/__init__.py	0	: ok
+python-raises/agrees/import_chain_fails/pkg/sub.py	0	: ok
+python-raises/agrees/import_failing_containing/main.py	0	: ok
+python-raises/agrees/import_failing_containing/pkg/__init__.py	0	: ok
+python-raises/agrees/import_failing_containing/pkg/sub.py	0	: ok
+python-raises/agrees/import_prefix_fails/a.py	0	: ok
+python-raises/agrees/import_prefix_fails/b.py	0	: ok
+python-raises/agrees/import_prefix_fails/main.py	0	: ok
+python-raises/agrees/import_target_fails/helper.py	0	: ok
+python-raises/agrees/import_target_fails/main.py	0	: ok
+python-raises/agrees/key_error.py	0	: ok
+python-raises/agrees/overflow_int_to_float.py	0	: ok
+python-raises/agrees/round_infinite.py	0	: ok
+python-raises/agrees/round_nan.py	0	: ok
+python-raises/agrees/subscript_negative_out_of_range.py	0	: ok
+python-raises/agrees/subscript_out_of_range.py	0	: ok
+python-raises/typing-rejects/alias_args_on_plain_alias.py	0	: ok
+python-raises/typing-rejects/alias_as_base.py	0	: ok
+python-raises/typing-rejects/annotation_args_on_plain_class.py	0	: ok
+python-raises/typing-rejects/annotation_too_many_type_args.py	0	: ok
+python-raises/typing-rejects/annotation_unknown_class.py	0	: ok
+python-raises/typing-rejects/assert_false_msg_type.py	0	: ok
+python-raises/typing-rejects/assert_falsy.py	0	: ok
+python-raises/typing-rejects/assert_msg_falsy.py	0	: ok
+python-raises/typing-rejects/assert_msg_nonstr_fails.py	0	: ok
+python-raises/typing-rejects/assert_msg_undefined.py	0	: ok
+python-raises/typing-rejects/attr_missing.py	0	: ok
+python-raises/typing-rejects/attr_non_object.py	0	: ok
+python-raises/typing-rejects/attr_unknown_member/main.py	0	: ok
+python-raises/typing-rejects/attr_unknown_member/mod.py	0	: ok
+python-raises/typing-rejects/base_class_later.py	0	: ok
+python-raises/typing-rejects/base_type_arg_unbound.py	0	: ok
+python-raises/typing-rejects/base_type_param.py	0	: ok
+python-raises/typing-rejects/binop_non_number.py	0	: ok
+python-raises/typing-rejects/call_keyword_arg.py	0	: ok
+python-raises/typing-rejects/call_non_callable_typed.py	0	: ok
+python-raises/typing-rejects/call_too_few_args.py	0	: ok
+python-raises/typing-rejects/call_too_many_args.py	0	: ok
+python-raises/typing-rejects/callable_not_imported.py	0	: ok
+python-raises/typing-rejects/class_before_alias.py	0	: ok
+python-raises/typing-rejects/class_extend_arity.py	0	: ok
+python-raises/typing-rejects/class_field_names_later_class.py	0	: ok
+python-raises/typing-rejects/class_redeclared_identity.py	0	: ok
+python-raises/typing-rejects/comprehension_guard_before_generator.py	0	: ok
+python-raises/typing-rejects/constr_explicit_arity.py	0	: ok
+python-raises/typing-rejects/constructor_arity.py	0	: ok
+python-raises/typing-rejects/constructor_bad_keyword.py	0	: ok
+python-raises/typing-rejects/constructor_keyword_positional.py	0	: ok
+python-raises/typing-rejects/constructor_oversaturated.py	0	: ok
+python-raises/typing-rejects/cycle/helper.py	0	: ok
+python-raises/typing-rejects/cycle/main.py	0	: ok
+python-raises/typing-rejects/dataclass_not_imported.py	0	: ok
+python-raises/typing-rejects/dataclass_unknown_base.py	0	: ok
+python-raises/typing-rejects/declared_not_assigned_use.py	0	: ok
+python-raises/typing-rejects/dict_list_key.py	0	: ok
+python-raises/typing-rejects/forward_alias_top.py	0	: ok
+python-raises/typing-rejects/forward_base.py	0	: ok
+python-raises/typing-rejects/forward_class_in_signature.py	0	: ok
+python-raises/typing-rejects/forward_class_top.py	0	: ok
+python-raises/typing-rejects/from_import_arity/main.py	0	: ok
+python-raises/typing-rejects/from_import_arity/mod.py	0	: ok
+python-raises/typing-rejects/from_import_bad_containing/main.py	0	: ok
+python-raises/typing-rejects/from_import_bad_containing/pkg/__init__.py	0	: ok
+python-raises/typing-rejects/from_import_bad_containing/pkg/sub.py	0	: ok
+python-raises/typing-rejects/from_import_unassigned/lib.py	0	: ok
+python-raises/typing-rejects/from_import_unassigned/main.py	0	: ok
+python-raises/typing-rejects/from_import_unknown_member/main.py	0	: ok
+python-raises/typing-rejects/from_import_unknown_member/mod.py	0	: ok
+python-raises/typing-rejects/generic_constr_arity.py	0	: ok
+python-raises/typing-rejects/import_bad_containing/main.py	0	: ok
+python-raises/typing-rejects/import_bad_containing/pkg/__init__.py	0	: ok
+python-raises/typing-rejects/import_bad_containing/pkg/sub.py	0	: ok
+python-raises/typing-rejects/iterate_non_sequence.py	0	: ok
+python-raises/typing-rejects/lambda_applied_arity.py	0	: ok
+python-raises/typing-rejects/len_int.py	0	: ok
+python-raises/typing-rejects/list_repeat_float.py	0	: ok
+python-raises/typing-rejects/literal_not_imported.py	0	: ok
+python-raises/typing-rejects/member_builtin/lib.py	0	: ok
+python-raises/typing-rejects/member_builtin/main.py	0	: ok
+python-raises/typing-rejects/membership_str_int.py	0	: ok
+python-raises/typing-rejects/missing_module/main.py	0	: ok
+python-raises/typing-rejects/mutual_split_by_call.py	0	: ok
+python-raises/typing-rejects/ordering_str_int.py	0	: ok
+python-raises/typing-rejects/pat_constr_excess_subpatterns.py	0	: ok
+python-raises/typing-rejects/pat_constr_keyword_positional.py	0	: ok
+python-raises/typing-rejects/pat_constr_unknown.py	0	: ok
+python-raises/typing-rejects/pat_head_closure.py	0	: ok
+python-raises/typing-rejects/pat_head_int_two_positional.py	0	: ok
+python-raises/typing-rejects/pat_head_module.py	0	: ok
+python-raises/typing-rejects/pat_head_sized.py	0	: ok
+python-raises/typing-rejects/pat_head_variable.py	0	: ok
+python-raises/typing-rejects/pat_list_on_tuple_component.py	0	: ok
+python-raises/typing-rejects/pattern_var_before_match.py	0	: ok
+python-raises/typing-rejects/qualified_class_unknown/main.py	0	: ok
+python-raises/typing-rejects/qualified_class_unknown/mod.py	0	: ok
+python-raises/typing-rejects/range_pattern.py	0	: ok
+python-raises/typing-rejects/range_str_arg.py	0	: ok
+python-raises/typing-rejects/round_str.py	0	: ok
+python-raises/typing-rejects/self_import/main.py	0	: ok
+python-raises/typing-rejects/self_referential_field.py	0	: ok
+python-raises/typing-rejects/shadowed_dict.py	0	: ok
+python-raises/typing-rejects/shadowed_list.py	0	: ok
+python-raises/typing-rejects/shadowed_tuple.py	0	: ok
+python-raises/typing-rejects/sized_not_imported.py	0	: ok
+python-raises/typing-rejects/str_repeat_float.py	0	: ok
+python-raises/typing-rejects/subclass_arity.py	0	: ok
+python-raises/typing-rejects/submodule_not_imported/a.py	0	: ok
+python-raises/typing-rejects/submodule_not_imported/b.py	0	: ok
+python-raises/typing-rejects/submodule_not_imported/main.py	0	: ok
+python-raises/typing-rejects/submodule_not_imported/pkg/__init__.py	0	: ok
+python-raises/typing-rejects/submodule_not_imported/pkg/sub.py	0	: ok
+python-raises/typing-rejects/subscript_bad_index.py	0	: ok
+python-raises/typing-rejects/subscript_dict_bad_key.py	0	: ok
+python-raises/typing-rejects/subscript_non_list.py	0	: ok
+python-raises/typing-rejects/subscript_str_bad_index.py	0	: ok
+python-raises/typing-rejects/subscript_tuple_str_index.py	0	: ok
+python-raises/typing-rejects/top_level_assert_false.py	0	: ok
+python-raises/typing-rejects/tuple_index_neg_range.py	0	: ok
+python-raises/typing-rejects/tuple_index_range.py	0	: ok
+python-raises/typing-rejects/type_alias_as_pattern.py	0	: ok
+python-raises/typing-rejects/type_alias_param_scope.py	0	: ok
+python-raises/typing-rejects/type_param_of_other_class.py	0	: ok
+python-raises/typing-rejects/unary_non_number.py	0	: ok
+python-raises/typing-rejects/unassigned_member/lib.py	0	: ok
+python-raises/typing-rejects/unassigned_member/main.py	0	: ok
+python-raises/typing-rejects/unbound_local.py	0	: ok
+python-raises/typing-rejects/unknown_module.py	0	: ok
+python-raises/typing-rejects/unknown_submodule/main.py	0	: ok
+python-raises/typing-rejects/unknown_submodule/pkg/__init__.py	0	: ok
+python-raises/typing-rejects/use_before_declaration_top.py	0	: ok
+python-raises/typing-rejects/use_before_if_declaration.py	0	: ok
+python-rejects/parser-rejects/break_outside_loop.py	1	:1:0: break not allowed in PurePy
+python-rejects/parser-rejects/call_dup_keyword.py	1	:5:6: duplicate keyword argument x not allowed in PurePy
+python-rejects/parser-rejects/constructor_dup_keyword.py	1	:9:6: duplicate keyword argument x not allowed in PurePy
+python-rejects/parser-rejects/continue_outside_loop.py	1	:1:0: continue not allowed in PurePy
+python-rejects/parser-rejects/duplicate_param.py	1	: duplicate parameter x not allowed in PurePy
+python-rejects/parser-rejects/duplicate_type_param.py	1	:1:0: duplicate type parameter T not allowed in PurePy
+python-rejects/parser-rejects/lambda_applied_duplicate_param.py	1	: duplicate parameter x not allowed in PurePy
+python-rejects/parser-rejects/lambda_duplicate_param.py	1	: duplicate parameter x not allowed in PurePy
+python-rejects/parser-rejects/nonlinear_pattern.py	1	:10:9: duplicate variable x in pattern not allowed in PurePy
+python-rejects/parser-rejects/pat_as_nonlinear.py	1	:3:9: duplicate variable x in pattern not allowed in PurePy
+python-rejects/parser-rejects/pat_constr_dup_keyword.py	1	:10:13: duplicate keyword x in constructor pattern not allowed in PurePy
+python-rejects/parser-rejects/pat_dict_dup_key.py	1	:3:9: duplicate key 'a' in dictionary pattern not allowed in PurePy
+python-rejects/parser-rejects/pat_dict_nonlinear.py	1	:3:9: duplicate variable x in pattern not allowed in PurePy
+python-rejects/parser-rejects/return_in_top_level_if.py	1	:2:4: return outside a function not allowed in PurePy
+python-rejects/parser-rejects/top_level_return.py	1	:1:0: return outside a function not allowed in PurePy
+python-rejects/typing-rejects/match_catchall_unreachable.py	0	: ok
+python-rejects/typing-rejects/match_wildcard_unreachable.py	0	: ok
+python-succeeds/agrees/alias_later_class_args.py	0	: ok
+python-succeeds/agrees/annotated_assign.py	0	: ok
+python-succeeds/agrees/assert_false.py	0	: ok
+python-succeeds/agrees/assert_false_function_branch.py	0	: ok
+python-succeeds/agrees/assert_false_module_branch.py	0	: ok
+python-succeeds/agrees/assert_false_msg.py	0	: ok
+python-succeeds/agrees/attr_access/helper.py	0	: ok
+python-succeeds/agrees/attr_access/main.py	0	: ok
+python-succeeds/agrees/attr_field_type.py	0	: ok
+python-succeeds/agrees/binop_union_below_float.py	0	: ok
+python-succeeds/agrees/bool_op.py	0	: ok
+python-succeeds/agrees/builtin_shadow.py	0	: ok
+python-succeeds/agrees/call_stmt_callable_param.py	0	: ok
+python-succeeds/agrees/call_stmt_union_mixed.py	0	: ok
+python-succeeds/agrees/call_stmt_union_none.py	0	: ok
+python-succeeds/agrees/callable_param_contravariant.py	0	: ok
+python-succeeds/agrees/callable_result_covariant.py	0	: ok
+python-succeeds/agrees/child_after_parent/main.py	0	: ok
+python-succeeds/agrees/child_after_parent/pkg/__init__.py	0	: ok
+python-succeeds/agrees/child_after_parent/pkg/sub.py	0	: ok
+python-succeeds/agrees/child_imports_parent/main.py	0	: ok
+python-succeeds/agrees/child_imports_parent/pkg/__init__.py	0	: ok
+python-succeeds/agrees/child_imports_parent/pkg/sub.py	0	: ok
+python-succeeds/agrees/class_shadowed_call.py	0	: ok
+python-succeeds/agrees/class_type_across_modules/m.py	0	: ok
+python-succeeds/agrees/class_type_across_modules/main.py	0	: ok
+python-succeeds/agrees/comp_over_dict.py	0	: ok
+python-succeeds/agrees/comp_over_str.py	0	: ok
+python-succeeds/agrees/comp_over_str_literal.py	0	: ok
+python-succeeds/agrees/comp_over_tuple.py	0	: ok
+python-succeeds/agrees/comp_over_tuple_literal.py	0	: ok
+python-succeeds/agrees/comprehension_capture_outer.py	0	: ok
+python-succeeds/agrees/comprehension_capture_outer_guard.py	0	: ok
+python-succeeds/agrees/comprehension_capture_parameter.py	0	: ok
+python-succeeds/agrees/comprehension_var_local.py	0	: ok
+python-succeeds/agrees/cond_check_both_empty.py	0	: ok
+python-succeeds/agrees/cond_join_sized.py	0	: ok
+python-succeeds/agrees/cond_synth_empty_branch.py	0	: ok
+python-succeeds/agrees/conditionals/branch_join.py	0	: ok
+python-succeeds/agrees/conditionals/branch_local.py	0	: ok
+python-succeeds/agrees/conditionals/early_return.py	0	: ok
+python-succeeds/agrees/conditionals/elif_chain.py	0	: ok
+python-succeeds/agrees/conditionals/elif_chain_assign.py	0	: ok
+python-succeeds/agrees/constr_keyword_order.py	0	: ok
+python-succeeds/agrees/constr_keyword_split.py	0	: ok
+python-succeeds/agrees/dataclass_construct.py	0	: ok
+python-succeeds/agrees/dataclass_construct_base.py	0	: ok
+python-succeeds/agrees/dataclass_construct_inherit.py	0	: ok
+python-succeeds/agrees/declare_then_assign_branches.py	0	: ok
+python-succeeds/agrees/declare_then_assign_top.py	0	: ok
+python-succeeds/agrees/deep_qualified_class/main.py	0	: ok
+python-succeeds/agrees/deep_qualified_class/pkg/__init__.py	0	: ok
+python-succeeds/agrees/deep_qualified_class/pkg/sub.py	0	: ok
+python-succeeds/agrees/deep_sibling_submodules/main.py	0	: ok
+python-succeeds/agrees/deep_sibling_submodules/pkg/__init__.py	0	: ok
+python-succeeds/agrees/deep_sibling_submodules/pkg/sub/__init__.py	0	: ok
+python-succeeds/agrees/deep_sibling_submodules/pkg/sub/x.py	0	: ok
+python-succeeds/agrees/deep_sibling_submodules/pkg/sub/y.py	0	: ok
+python-succeeds/agrees/diamond/b.py	0	: ok
+python-succeeds/agrees/diamond/c.py	0	: ok
+python-succeeds/agrees/diamond/d.py	0	: ok
+python-succeeds/agrees/diamond/main.py	0	: ok
+python-succeeds/agrees/diamond_class/b.py	0	: ok
+python-succeeds/agrees/diamond_class/c.py	0	: ok
+python-succeeds/agrees/diamond_class/d.py	0	: ok
+python-succeeds/agrees/diamond_class/main.py	0	: ok
+python-succeeds/agrees/dict_check_wider.py	0	: ok
+python-succeeds/agrees/dict_commutative.py	0	: ok
+python-succeeds/agrees/dict_comp_check_wider.py	0	: ok
+python-succeeds/agrees/dict_comp_dup_key.py	0	: ok
+python-succeeds/agrees/dict_comp_guard.py	0	: ok
+python-succeeds/agrees/dict_duplicate_key.py	0	: ok
+python-succeeds/agrees/dict_insertion_order.py	0	: ok
+python-succeeds/agrees/dict_synth.py	0	: ok
+python-succeeds/agrees/dict_synth_elem_checked.py	0	: ok
+python-succeeds/agrees/dict_value_join.py	0	: ok
+python-succeeds/agrees/dotted_import/main.py	0	: ok
+python-succeeds/agrees/dotted_import/x/__init__.py	0	: ok
+python-succeeds/agrees/dotted_import/x/a.py	0	: ok
+python-succeeds/agrees/empty/main.py	0	: ok
+python-succeeds/agrees/empty_module.py	0	: ok
+python-succeeds/agrees/empty_tuple_type.py	0	: ok
+python-succeeds/agrees/eq_dict_nan_decided_early.py	0	: ok
+python-succeeds/agrees/eq_int_float.py	0	: ok
+python-succeeds/agrees/eq_nan_decided_early.py	0	: ok
+python-succeeds/agrees/eq_nan_direct.py	0	: ok
+python-succeeds/agrees/eq_object_operands.py	0	: ok
+python-succeeds/agrees/eq_subclass.py	0	: ok
+python-succeeds/agrees/eq_union.py	0	: ok
+python-succeeds/agrees/eq_union_literal.py	0	: ok
+python-succeeds/agrees/exempt_containing_of_importer/main.py	0	: ok
+python-succeeds/agrees/exempt_containing_of_importer/pkg/__init__.py	0	: ok
+python-succeeds/agrees/exempt_containing_of_importer/pkg/x.py	0	: ok
+python-succeeds/agrees/exempt_containing_of_importer/pkg/y.py	0	: ok
+python-succeeds/agrees/exit_status.py	0	: ok
+python-succeeds/agrees/extend_imported_class/base.py	0	: ok
+python-succeeds/agrees/extend_imported_class/main.py	0	: ok
+python-succeeds/agrees/extend_qualified_class/base.py	0	: ok
+python-succeeds/agrees/extend_qualified_class/main.py	0	: ok
+python-succeeds/agrees/float_floor_div_mod.py	0	: ok
+python-succeeds/agrees/floor_div_mod.py	0	: ok
+python-succeeds/agrees/from_import.py	0	: ok
+python-succeeds/agrees/from_import_alias/main.py	0	: ok
+python-succeeds/agrees/from_import_alias/shapes.py	0	: ok
+python-succeeds/agrees/from_import_class/main.py	0	: ok
+python-succeeds/agrees/from_import_class/shapes.py	0	: ok
+python-succeeds/agrees/from_import_multi/helper.py	0	: ok
+python-succeeds/agrees/from_import_multi/main.py	0	: ok
+python-succeeds/agrees/from_import_subclass/main.py	0	: ok
+python-succeeds/agrees/from_import_subclass/shapes.py	0	: ok
+python-succeeds/agrees/from_import_submodule/main.py	0	: ok
+python-succeeds/agrees/from_import_submodule/x/__init__.py	0	: ok
+python-succeeds/agrees/from_import_submodule/x/a.py	0	: ok
+python-succeeds/agrees/functions/assert_msg_stmt.py	0	: ok
+python-succeeds/agrees/functions/assert_stmt.py	0	: ok
+python-succeeds/agrees/functions/expr_stmt.py	0	: ok
+python-succeeds/agrees/functions/mutual.py	0	: ok
+python-succeeds/agrees/functions/nested_mutual_region.py	0	: ok
+python-succeeds/agrees/functions/self.py	0	: ok
+python-succeeds/agrees/generic_annotation.py	0	: ok
+python-succeeds/agrees/generic_annotation_equivalent_args.py	0	: ok
+python-succeeds/agrees/generic_attribute.py	0	: ok
+python-succeeds/agrees/generic_base_chain.py	0	: ok
+python-succeeds/agrees/generic_base_instantiated.py	0	: ok
+python-succeeds/agrees/generic_base_nested_arg.py	0	: ok
+python-succeeds/agrees/generic_base_two_params.py	0	: ok
+python-succeeds/agrees/generic_call_inference.py	0	: ok
+python-succeeds/agrees/generic_chain_upcast.py	0	: ok
+python-succeeds/agrees/generic_class.py	0	: ok
+python-succeeds/agrees/generic_constr.py	0	: ok
+python-succeeds/agrees/generic_constr_explicit.py	0	: ok
+python-succeeds/agrees/generic_constr_explicit_pair.py	0	: ok
+python-succeeds/agrees/generic_constr_explicit_union.py	0	: ok
+python-succeeds/agrees/generic_constr_join.py	0	: ok
+python-succeeds/agrees/generic_constr_keyword.py	0	: ok
+python-succeeds/agrees/generic_constr_subclass.py	0	: ok
+python-succeeds/agrees/generic_def.py	0	: ok
+python-succeeds/agrees/generic_def_in_branch.py	0	: ok
+python-succeeds/agrees/generic_higher_order.py	0	: ok
+python-succeeds/agrees/generic_import/lib.py	0	: ok
+python-succeeds/agrees/generic_import/main.py	0	: ok
+python-succeeds/agrees/generic_invariant_arg.py	0	: ok
+python-succeeds/agrees/generic_join.py	0	: ok
+python-succeeds/agrees/generic_lambda_arg_inferred.py	0	: ok
+python-succeeds/agrees/generic_match_subclass_then_base.py	0	: ok
+python-succeeds/agrees/generic_none_statement.py	0	: ok
+python-succeeds/agrees/generic_pattern.py	0	: ok
+python-succeeds/agrees/generic_pattern_subclass_scrutinee.py	0	: ok
+python-succeeds/agrees/generic_pattern_union_base.py	0	: ok
+python-succeeds/agrees/generic_pattern_union_base_disjunct.py	0	: ok
+python-succeeds/agrees/generic_recursion.py	0	: ok
+python-succeeds/agrees/generic_recursion_union.py	0	: ok
+python-succeeds/agrees/generic_tree_match.py	0	: ok
+python-succeeds/agrees/generic_type_arg_base_type.py	0	: ok
+python-succeeds/agrees/if_exp.py	0	: ok
+python-succeeds/agrees/implicit_none.py	0	: ok
+python-succeeds/agrees/implicit_return.py	0	: ok
+python-succeeds/agrees/import_predefined.py	0	: ok
+python-succeeds/agrees/import_submodule_attr/main.py	0	: ok
+python-succeeds/agrees/import_submodule_attr/pkg/__init__.py	0	: ok
+python-succeeds/agrees/import_submodule_attr/pkg/sub.py	0	: ok
+python-succeeds/agrees/import_twice/main.py	0	: ok
+python-succeeds/agrees/import_twice/pkg/__init__.py	0	: ok
+python-succeeds/agrees/import_twice/pkg/sub.py	0	: ok
+python-succeeds/agrees/int_below_float.py	0	: ok
+python-succeeds/agrees/lambda_annotated.py	0	: ok
+python-succeeds/agrees/lambda_applied.py	0	: ok
+python-succeeds/agrees/lambda_applied_checked.py	0	: ok
+python-succeeds/agrees/lambda_applied_synth.py	0	: ok
+python-succeeds/agrees/lambda_argument.py	0	: ok
+python-succeeds/agrees/list_check_wider.py	0	: ok
+python-succeeds/agrees/list_comp_float.py	0	: ok
+python-succeeds/agrees/list_comp_generators.py	0	: ok
+python-succeeds/agrees/list_comp_synth_base_type.py	0	: ok
+python-succeeds/agrees/list_elem_checked.py	0	: ok
+python-succeeds/agrees/list_ops.py	0	: ok
+python-succeeds/agrees/list_synth_base_type_eq.py	0	: ok
+python-succeeds/agrees/list_synth_elem_checked.py	0	: ok
+python-succeeds/agrees/literal_disjunct_union.py	0	: ok
+python-succeeds/agrees/literal_negative_annotation.py	0	: ok
+python-succeeds/agrees/match_as_simple.py	0	: ok
+python-succeeds/agrees/match_as_union.py	0	: ok
+python-succeeds/agrees/match_base_transitive.py	0	: ok
+python-succeeds/agrees/match_basic.py	0	: ok
+python-succeeds/agrees/match_bool_exhaustive.py	0	: ok
+python-succeeds/agrees/match_class.py	0	: ok
+python-succeeds/agrees/match_dict.py	0	: ok
+python-succeeds/agrees/match_dict_empty.py	0	: ok
+python-succeeds/agrees/match_dict_missing.py	0	: ok
+python-succeeds/agrees/match_dict_partial.py	0	: ok
+python-succeeds/agrees/match_dict_same_key.py	0	: ok
+python-succeeds/agrees/match_float_literal.py	0	: ok
+python-succeeds/agrees/match_float_literal_residual.py	0	: ok
+python-succeeds/agrees/match_int_lit_at_float.py	0	: ok
+python-succeeds/agrees/match_list.py	0	: ok
+python-succeeds/agrees/match_list_rows.py	0	: ok
+python-succeeds/agrees/match_literal_exhaustive.py	0	: ok
+python-succeeds/agrees/match_neg_lit.py	0	: ok
+python-succeeds/agrees/match_nested.py	0	: ok
+python-succeeds/agrees/match_nested_class_irrefutable.py	0	: ok
+python-succeeds/agrees/match_none_exhaustive.py	0	: ok
+python-succeeds/agrees/match_partial.py	0	: ok
+python-succeeds/agrees/match_partial_for_mypy_fallthrough.py	0	: ok
+python-succeeds/agrees/match_returning_branch.py	0	: ok
+python-succeeds/agrees/match_seq_union_catch_all.py	0	: ok
+python-succeeds/agrees/match_singleton.py	0	: ok
+python-succeeds/agrees/match_singleton_no_parentheses.py	0	: ok
+python-succeeds/agrees/match_split_sharper.py	0	: ok
+python-succeeds/agrees/match_subclass_fallthrough.py	0	: ok
+python-succeeds/agrees/match_tuple_lengths.py	0	: ok
+python-succeeds/agrees/match_tuple_no_parentheses.py	0	: ok
+python-succeeds/agrees/match_tuple_one_refutable.py	0	: ok
+python-succeeds/agrees/match_union_alt.py	0	: ok
+python-succeeds/agrees/match_union_bind.py	0	: ok
+python-succeeds/agrees/match_union_rest_var.py	0	: ok
+python-succeeds/agrees/match_var_after.py	0	: ok
+python-succeeds/agrees/match_var_bound_in_each_case.py	0	: ok
+python-succeeds/agrees/match_var_join.py	0	: ok
+python-succeeds/agrees/match_zero_field_constr.py	0	: ok
+python-succeeds/agrees/membership.py	0	: ok
+python-succeeds/agrees/membership_dict.py	0	: ok
+python-succeeds/agrees/membership_string.py	0	: ok
+python-succeeds/agrees/membership_tuple.py	0	: ok
+python-succeeds/agrees/membership_tuple_join.py	0	: ok
+python-succeeds/agrees/mypy-bug/match_bool_literal.py	0	: ok
+python-succeeds/agrees/name_member/lib.py	0	: ok
+python-succeeds/agrees/name_member/main.py	0	: ok
+python-succeeds/agrees/name_namespace/main.py	0	: ok
+python-succeeds/agrees/name_namespace/x/a.py	0	: ok
+python-succeeds/agrees/name_qualified/main.py	0	: ok
+python-succeeds/agrees/name_qualified/pkg/__init__.py	0	: ok
+python-succeeds/agrees/name_qualified/pkg/sub.py	0	: ok
+python-succeeds/agrees/name_var/helper.py	0	: ok
+python-succeeds/agrees/name_var/main.py	0	: ok
+python-succeeds/agrees/namespace_deep/main.py	0	: ok
+python-succeeds/agrees/namespace_deep/x/y/a.py	0	: ok
+python-succeeds/agrees/namespace_import/main.py	0	: ok
+python-succeeds/agrees/namespace_import/x/a.py	0	: ok
+python-succeeds/agrees/ne_ops.py	0	: ok
+python-succeeds/agrees/never_annotation.py	0	: ok
+python-succeeds/agrees/never_below.py	0	: ok
+python-succeeds/agrees/none_result_union_callee.py	0	: ok
+python-succeeds/agrees/object_above.py	0	: ok
+python-succeeds/agrees/parent_after_child/main.py	0	: ok
+python-succeeds/agrees/parent_after_child/pkg/__init__.py	0	: ok
+python-succeeds/agrees/parent_after_child/pkg/sub.py	0	: ok
+python-succeeds/agrees/pat_as_narrowed.py	0	: ok
+python-succeeds/agrees/pat_bool_literal_number.py	0	: ok
+python-succeeds/agrees/pat_constr_bool_fields.py	0	: ok
+python-succeeds/agrees/pat_constr_inherited_fields.py	0	: ok
+python-succeeds/agrees/pat_constr_lower_class.py	0	: ok
+python-succeeds/agrees/pat_constr_mixed.py	0	: ok
+python-succeeds/agrees/pat_constr_nested.py	0	: ok
+python-succeeds/agrees/pat_constr_object.py	0	: ok
+python-succeeds/agrees/pat_constr_sub_after_super.py	0	: ok
+python-succeeds/agrees/pat_constr_unrelated.py	0	: ok
+python-succeeds/agrees/pat_dict_field.py	0	: ok
+python-succeeds/agrees/pat_dict_in_list.py	0	: ok
+python-succeeds/agrees/pat_dict_in_tuple.py	0	: ok
+python-succeeds/agrees/pat_tuple_component_narrowing.py	0	: ok
+python-succeeds/agrees/pat_tuple_optional_field.py	0	: ok
+python-succeeds/agrees/pattern_shadows_outer.py	0	: ok
+python-succeeds/agrees/power.py	0	: ok
+python-succeeds/agrees/power_int_exponent.py	0	: ok
+python-succeeds/agrees/precedence.py	0	: ok
+python-succeeds/agrees/predefined_imports/main.py	0	: ok
+python-succeeds/agrees/predefined_name.py	0	: ok
+python-succeeds/agrees/qualified_alias_annotation/helper.py	0	: ok
+python-succeeds/agrees/qualified_alias_annotation/main.py	0	: ok
+python-succeeds/agrees/qualified_class_annotation/main.py	0	: ok
+python-succeeds/agrees/qualified_class_annotation/shapes.py	0	: ok
+python-succeeds/agrees/qualified_class_pattern/main.py	0	: ok
+python-succeeds/agrees/qualified_class_pattern/shapes.py	0	: ok
+python-succeeds/agrees/range_comprehension.py	0	: ok
+python-succeeds/agrees/range_empty.py	0	: ok
+python-succeeds/agrees/range_eq.py	0	: ok
+python-succeeds/agrees/range_fields.py	0	: ok
+python-succeeds/agrees/range_len.py	0	: ok
+python-succeeds/agrees/range_nested.py	0	: ok
+python-succeeds/agrees/recursive_datatype.py	0	: ok
+python-succeeds/agrees/recursive_datatype_generic.py	0	: ok
+python-succeeds/agrees/recursive_datatype_uninhabited.py	0	: ok
+python-succeeds/agrees/recursive_datatypes_mutual.py	0	: ok
+python-succeeds/agrees/return_annotation.py	0	: ok
+python-succeeds/agrees/return_none_alias.py	0	: ok
+python-succeeds/agrees/return_tuple_no_parentheses.py	0	: ok
+python-succeeds/agrees/round_int.py	0	: ok
+python-succeeds/agrees/round_ties_to_even.py	0	: ok
+python-succeeds/agrees/scopes/closure_capture.py	0	: ok
+python-succeeds/agrees/scopes/lambda_capture.py	0	: ok
+python-succeeds/agrees/scopes/nested_def_local.py	0	: ok
+python-succeeds/agrees/self_from_import/main.py	0	: ok
+python-succeeds/agrees/self_from_import/pkg/__init__.py	0	: ok
+python-succeeds/agrees/self_from_import/pkg/sub.py	0	: ok
+python-succeeds/agrees/self_from_import_deep/main.py	0	: ok
+python-succeeds/agrees/self_from_import_deep/pkg/__init__.py	0	: ok
+python-succeeds/agrees/self_from_import_deep/pkg/a/__init__.py	0	: ok
+python-succeeds/agrees/self_from_import_deep/pkg/a/b.py	0	: ok
+python-succeeds/agrees/short_circuit.py	0	: ok
+python-succeeds/agrees/sibling_imports_sibling/main.py	0	: ok
+python-succeeds/agrees/sibling_imports_sibling/pkg/__init__.py	0	: ok
+python-succeeds/agrees/sibling_imports_sibling/pkg/a.py	0	: ok
+python-succeeds/agrees/sibling_imports_sibling/pkg/b.py	0	: ok
+python-succeeds/agrees/sibling_submodules/main.py	0	: ok
+python-succeeds/agrees/sibling_submodules/pkg/__init__.py	0	: ok
+python-succeeds/agrees/sibling_submodules/pkg/a.py	0	: ok
+python-succeeds/agrees/sibling_submodules/pkg/b.py	0	: ok
+python-succeeds/agrees/sibling_submodules_swapped/main.py	0	: ok
+python-succeeds/agrees/sibling_submodules_swapped/pkg/__init__.py	0	: ok
+python-succeeds/agrees/sibling_submodules_swapped/pkg/a.py	0	: ok
+python-succeeds/agrees/sibling_submodules_swapped/pkg/b.py	0	: ok
+python-succeeds/agrees/simple.py	0	: ok
+python-succeeds/agrees/sized_annotation.py	0	: ok
+python-succeeds/agrees/sized_kinds.py	0	: ok
+python-succeeds/agrees/str_ops.py	0	: ok
+python-succeeds/agrees/str_subscript.py	0	: ok
+python-succeeds/agrees/string_literal.py	0	: ok
+python-succeeds/agrees/subclass_for_base.py	0	: ok
+python-succeeds/agrees/subscript_call.py	0	: ok
+python-succeeds/agrees/subscript_negative.py	0	: ok
+python-succeeds/agrees/subscript_str_literal.py	0	: ok
+python-succeeds/agrees/subscript_tuple_int.py	0	: ok
+python-succeeds/agrees/subscript_tuple_neg_literal.py	0	: ok
+python-succeeds/agrees/subscript_tuple_ok.py	0	: ok
+python-succeeds/agrees/true_div.py	0	: ok
+python-succeeds/agrees/tuple_check_empty_list.py	0	: ok
+python-succeeds/agrees/tuple_concat.py	0	: ok
+python-succeeds/agrees/tuple_no_parentheses.py	0	: ok
+python-succeeds/agrees/tuple_singleton_no_parentheses.py	0	: ok
+python-succeeds/agrees/tuple_subtype.py	0	: ok
+python-succeeds/agrees/two_modules/helper.py	0	: ok
+python-succeeds/agrees/two_modules/main.py	0	: ok
+python-succeeds/agrees/type_alias.py	0	: ok
+python-succeeds/agrees/type_alias_field.py	0	: ok
+python-succeeds/agrees/type_alias_generic.py	0	: ok
+python-succeeds/agrees/type_alias_generic_class.py	0	: ok
+python-succeeds/agrees/type_alias_names_later_alias.py	0	: ok
+python-succeeds/agrees/type_alias_names_later_class.py	0	: ok
+python-succeeds/agrees/type_alias_nested_args.py	0	: ok
+python-succeeds/agrees/type_alias_of_alias.py	0	: ok
+python-succeeds/agrees/type_alias_optional.py	0	: ok
+python-succeeds/agrees/type_alias_two_params.py	0	: ok
+python-succeeds/agrees/type_alias_union_match.py	0	: ok
+python-succeeds/agrees/type_variable_below_object.py	0	: ok
+python-succeeds/agrees/unary_ops.py	0	: ok
+python-succeeds/agrees/union_attr.py	0	: ok
+python-succeeds/agrees/union_attr_join.py	0	: ok
+python-succeeds/agrees/union_below_union.py	0	: ok
+python-succeeds/agrees/union_call.py	0	: ok
+python-succeeds/agrees/union_commutative.py	0	: ok
+python-succeeds/agrees/union_disjunct.py	0	: ok
+python-succeeds/agrees/union_iter.py	0	: ok
+python-succeeds/agrees/union_subscript.py	0	: ok
+python-succeeds/agrees/unused_module_not_parsed/main.py	0	: ok
+python-succeeds/agrees/unused_module_not_parsed/unused.py	1	:1:0: while loops not allowed in PurePy
+python-succeeds/parser-rejects/annotated_attribute_assign.py	1	:10:0: assignment target other than a simple name not allowed in PurePy
+python-succeeds/parser-rejects/annotation_callable_ellipsis.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/annotation_dict_int_key.py	1	:1:3: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/annotation_list_two_args.py	1	:1:4: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/annotation_literal_two_values.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/annotation_tuple_variadic.py	1	:1:4: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/async_def.py	1	:1:0: async not allowed in PurePy
+python-succeeds/parser-rejects/attribute_assign.py	1	:6:0: attribute assignment not allowed in PurePy
+python-succeeds/parser-rejects/augmented_assign.py	1	:2:0: augmented assignment (+=, etc.) not allowed in PurePy
+python-succeeds/parser-rejects/bitwise_and.py	1	:1:9: binary operator '&' not allowed in PurePy
+python-succeeds/parser-rejects/bitwise_not.py	1	:1:9: unary operator '~' not allowed in PurePy
+python-succeeds/parser-rejects/bitwise_xor.py	1	:1:9: binary operator '^' not allowed in PurePy
+python-succeeds/parser-rejects/bytes_literal.py	1	:1:4: bytes literal not allowed in PurePy
+python-succeeds/parser-rejects/call_dict_unpacking.py	1	:8:8: dictionary unpacking in argument list not allowed in PurePy
+python-succeeds/parser-rejects/case_guard.py	1	: case guards not allowed in PurePy
+python-succeeds/parser-rejects/chained_bool.py	1	:4:6: chained boolean operator not allowed in PurePy
+python-succeeds/parser-rejects/chained_compare.py	1	:2:6: chained comparison not allowed in PurePy
+python-succeeds/parser-rejects/class_bad_decorator.py	1	:5:0: class decorator other than @dataclass not allowed in PurePy
+python-succeeds/parser-rejects/class_base_subscript.py	1	:13:14: base class other than a name, optionally applied to type arguments not allowed in PurePy
+python-succeeds/parser-rejects/class_def.py	1	:1:0: undecorated class not allowed in PurePy
+python-succeeds/parser-rejects/class_keyword_args.py	1	:4:0: class keyword arguments not allowed in PurePy
+python-succeeds/parser-rejects/class_two_decorators.py	1	:6:0: multiple class decorators not allowed in PurePy
+python-succeeds/parser-rejects/complex_literal.py	1	:1:8: complex literal not allowed in PurePy
+python-succeeds/parser-rejects/dataclass_call_decorator.py	1	:5:0: class decorator other than @dataclass not allowed in PurePy
+python-succeeds/parser-rejects/dataclass_field_default.py	1	:5:4: field default values not allowed in PurePy
+python-succeeds/parser-rejects/dataclass_method.py	1	:4:4: dataclass member other than a field declaration not allowed in PurePy
+python-succeeds/parser-rejects/dataclass_two_bases.py	1	:12:0: multiple inheritance not allowed in PurePy
+python-succeeds/parser-rejects/decorator.py	1	:9:0: decorators not allowed in PurePy
+python-succeeds/parser-rejects/default_args.py	1	: default arguments not allowed in PurePy
+python-succeeds/parser-rejects/delete.py	1	:2:0: del not allowed in PurePy
+python-succeeds/parser-rejects/dict_unpacking.py	1	:2:4: dictionary unpacking not allowed in PurePy
+python-succeeds/parser-rejects/ellipsis_literal.py	1	:1:4: ellipsis literal not allowed in PurePy
+python-succeeds/parser-rejects/field_target_not_name.py	1	:6:4: field target other than a simple name not allowed in PurePy
+python-succeeds/parser-rejects/for_loop.py	1	:2:0: for loops not allowed in PurePy
+python-succeeds/parser-rejects/from_import_as/m.py	0	: ok
+python-succeeds/parser-rejects/from_import_as/main.py	1	:1:0: from-import-as not allowed in PurePy
+python-succeeds/parser-rejects/fstring.py	1	:2:6: f-strings not allowed in PurePy
+python-succeeds/parser-rejects/generator_expr.py	1	:1:7: generator expressions not allowed in PurePy
+python-succeeds/parser-rejects/global_stmt.py	1	:4:4: global not allowed in PurePy
+python-succeeds/parser-rejects/identity.py	1	:2:6: identity operator (is/is not) not allowed in PurePy
+python-succeeds/parser-rejects/import_as/m.py	0	: ok
+python-succeeds/parser-rejects/import_as/main.py	1	:1:0: import-as not allowed in PurePy
+python-succeeds/parser-rejects/import_in_def.py	1	:2:4: import outside the module top level not allowed in PurePy
+python-succeeds/parser-rejects/import_multi/a.py	0	: ok
+python-succeeds/parser-rejects/import_multi/b.py	0	: ok
+python-succeeds/parser-rejects/import_multi/main.py	1	:1:0: multi-target import (import a, b) not allowed in PurePy
+python-succeeds/parser-rejects/import_relative/main.py	0	: ok
+python-succeeds/parser-rejects/import_relative/pkg/__init__.py	0	: ok
+python-succeeds/parser-rejects/import_relative/pkg/sub.py	1	:1:0: relative imports not allowed in PurePy
+python-succeeds/parser-rejects/import_star/m.py	0	: ok
+python-succeeds/parser-rejects/import_star/main.py	1	:1:0: from M import * not allowed in PurePy
+python-succeeds/parser-rejects/item_assign.py	1	:2:0: item assignment not allowed in PurePy
+python-succeeds/parser-rejects/keyword_only_args.py	1	: keyword-only arguments not allowed in PurePy
+python-succeeds/parser-rejects/lambda_default_arg.py	1	: default arguments not allowed in PurePy
+python-succeeds/parser-rejects/literal_bytes_annotation.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/literal_float_annotation.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/match_attr_value.py	1	:13:9: attribute value patterns not allowed in PurePy
+python-succeeds/parser-rejects/match_complex_value.py	1	:3:9: complex and bytes literal patterns not allowed in PurePy
+python-succeeds/parser-rejects/match_enum.py	1	:3:0: enum classes not allowed in PurePy
+python-succeeds/parser-rejects/match_or.py	1	:3:9: or-patterns not allowed in PurePy
+python-succeeds/parser-rejects/match_star.py	1	:3:13: star patterns not allowed in PurePy
+python-succeeds/parser-rejects/missing_param_annotation.py	1	:1:0: unannotated parameter not allowed in PurePy
+python-succeeds/parser-rejects/missing_return_annotation.py	1	:1:0: unannotated return type not allowed in PurePy
+python-succeeds/parser-rejects/multiple_assign.py	1	:1:0: multiple assignment targets not allowed in PurePy
+python-succeeds/parser-rejects/nested_class.py	1	:5:4: class definition outside the module top level not allowed in PurePy
+python-succeeds/parser-rejects/nonlocal_stmt.py	1	:4:8: nonlocal not allowed in PurePy
+python-succeeds/parser-rejects/param_spec.py	1	:1:9: ParamSpec type parameter **P not allowed in PurePy
+python-succeeds/parser-rejects/pat_dict_int_key.py	1	:3:10: dictionary pattern key other than a string literal not allowed in PurePy
+python-succeeds/parser-rejects/pat_dict_rest.py	1	:3:9: rest capture in dictionary patterns not allowed in PurePy
+python-succeeds/parser-rejects/positional_only_args.py	1	: positional-only arguments not allowed in PurePy
+python-succeeds/parser-rejects/raise_stmt.py	1	:2:4: raise not allowed in PurePy
+python-succeeds/parser-rejects/set_comp.py	1	:2:14: set comprehensions not allowed in PurePy
+python-succeeds/parser-rejects/set_literal.py	1	:1:14: set literals not allowed in PurePy
+python-succeeds/parser-rejects/shift_left.py	1	:1:9: binary operator '<<' not allowed in PurePy
+python-succeeds/parser-rejects/shift_right.py	1	:1:9: binary operator '>>' not allowed in PurePy
+python-succeeds/parser-rejects/slicing.py	1	:2:9: slicing not allowed in PurePy
+python-succeeds/parser-rejects/star_args.py	1	: *args not allowed in PurePy
+python-succeeds/parser-rejects/star_kwargs.py	1	: **kwargs not allowed in PurePy
+python-succeeds/parser-rejects/starred_list.py	1	:1:6: starred expressions not allowed in PurePy
+python-succeeds/parser-rejects/stmt_before_import.py	1	:2:0: import after another statement not allowed in PurePy
+python-succeeds/parser-rejects/try_except.py	1	:1:0: try/except not allowed in PurePy
+python-succeeds/parser-rejects/try_except_star.py	1	:1:0: try/except not allowed in PurePy
+python-succeeds/parser-rejects/type_alias_local.py	1	:2:4: type statement outside the module top level not allowed in PurePy
+python-succeeds/parser-rejects/type_param_bound.py	1	:1:10: bound on type parameter T not allowed in PurePy
+python-succeeds/parser-rejects/type_param_constraints.py	1	:1:10: constraints on type parameter T not allowed in PurePy
+python-succeeds/parser-rejects/type_var_tuple.py	1	:1:9: TypeVarTuple type parameter *Ts not allowed in PurePy
+python-succeeds/parser-rejects/unpacking_assign.py	1	:3:0: unpacking assignment not allowed in PurePy
+python-succeeds/parser-rejects/unpacking_comp.py	1	: unpacking in comprehensions not allowed in PurePy
+python-succeeds/parser-rejects/unsupported_annotation.py	1	:1:3: annotation that is not a type expression not allowed in PurePy
+python-succeeds/parser-rejects/walrus.py	1	:3:11: walrus operator (:=) not allowed in PurePy
+python-succeeds/parser-rejects/while_loop.py	1	:2:0: while loops not allowed in PurePy
+python-succeeds/parser-rejects/with_stmt.py	1	:1:0: with statements not allowed in PurePy
+python-succeeds/parser-rejects/yield_expr.py	1	:2:4: yield not allowed in PurePy
+python-succeeds/typing-rejects/alias_later_class_arity.py	0	: ok
+python-succeeds/typing-rejects/and_non_bool.py	0	: ok
+python-succeeds/typing-rejects/and_right_non_bool.py	0	: ok
+python-succeeds/typing-rejects/annotation_bare_generic.py	0	: ok
+python-succeeds/typing-rejects/any_not_defined.py	0	: ok
+python-succeeds/typing-rejects/assert_false_unreachable.py	0	: ok
+python-succeeds/typing-rejects/assert_literal_false_type.py	0	: ok
+python-succeeds/typing-rejects/assert_literal_false_type_mismatch.py	0	: ok
+python-succeeds/typing-rejects/assert_literal_false_type_other_path.py	0	: ok
+python-succeeds/typing-rejects/assert_msg_type.py	0	: ok
+python-succeeds/typing-rejects/assert_truthy.py	0	: ok
+python-succeeds/typing-rejects/assign_before_declaration.py	0	: ok
+python-succeeds/typing-rejects/assign_type_mismatch.py	0	: ok
+python-succeeds/typing-rejects/assign_undeclared.py	0	: ok
+python-succeeds/typing-rejects/attr_builtin_method.py	0	: ok
+python-succeeds/typing-rejects/attr_type_mismatch/helper.py	0	: ok
+python-succeeds/typing-rejects/attr_type_mismatch/main.py	0	: ok
+python-succeeds/typing-rejects/bare_list_annotation.py	0	: ok
+python-succeeds/typing-rejects/bare_return_optional.py	0	: ok
+python-succeeds/typing-rejects/bare_return_type.py	0	: ok
+python-succeeds/typing-rejects/binop_bool_int.py	0	: ok
+python-succeeds/typing-rejects/binop_union_operand.py	0	: ok
+python-succeeds/typing-rejects/bitwise_or.py	0	: ok
+python-succeeds/typing-rejects/bool_not_int.py	0	: ok
+python-succeeds/typing-rejects/branch_declared_use.py	0	: ok
+python-succeeds/typing-rejects/builtin_use_before_declaration.py	0	: ok
+python-succeeds/typing-rejects/call_arg_type.py	0	: ok
+python-succeeds/typing-rejects/call_keyword_only.py	0	: ok
+python-succeeds/typing-rejects/call_stmt_arg_type.py	0	: ok
+python-succeeds/typing-rejects/callable_arity.py	0	: ok
+python-succeeds/typing-rejects/callable_as_value.py	0	: ok
+python-succeeds/typing-rejects/callable_param_narrower.py	0	: ok
+python-succeeds/typing-rejects/callable_result_wider.py	0	: ok
+python-succeeds/typing-rejects/class_as_value.py	0	: ok
+python-succeeds/typing-rejects/class_base_not_class.py	0	: ok
+python-succeeds/typing-rejects/class_extend_bare_generic.py	0	: ok
+python-succeeds/typing-rejects/class_name_assigned.py	0	: ok
+python-succeeds/typing-rejects/class_name_rebound.py	0	: ok
+python-succeeds/typing-rejects/class_rebound_pattern.py	0	: ok
+python-succeeds/typing-rejects/class_shadows_variable.py	0	: ok
+python-succeeds/typing-rejects/closure_unassigned.py	0	: ok
+python-succeeds/typing-rejects/comp_guard_bool.py	0	: ok
+python-succeeds/typing-rejects/comprehension_capture.py	0	: ok
+python-succeeds/typing-rejects/comprehension_capture_guard.py	0	: ok
+python-succeeds/typing-rejects/comprehension_capture_nested.py	0	: ok
+python-succeeds/typing-rejects/comprehension_capture_qualifier.py	0	: ok
+python-succeeds/typing-rejects/cond_check_branch.py	0	: ok
+python-succeeds/typing-rejects/cond_join_missing_field.py	0	: ok
+python-succeeds/typing-rejects/cond_non_bool.py	0	: ok
+python-succeeds/typing-rejects/cond_partial_def.py	0	: ok
+python-succeeds/typing-rejects/constr_field_type.py	0	: ok
+python-succeeds/typing-rejects/constr_type_arg_not_type.py	0	: ok
+python-succeeds/typing-rejects/contained_module_import/main.py	0	: ok
+python-succeeds/typing-rejects/contained_module_import/pkg/__init__.py	0	: ok
+python-succeeds/typing-rejects/contained_module_import/pkg/sub.py	0	: ok
+python-succeeds/typing-rejects/dataclass_dup_class.py	0	: ok
+python-succeeds/typing-rejects/dataclass_dup_field.py	0	: ok
+python-succeeds/typing-rejects/dataclass_inherited_field_clash.py	0	: ok
+python-succeeds/typing-rejects/declared_in_branch_use.py	0	: ok
+python-succeeds/typing-rejects/def_then_var_same_name.py	0	: ok
+python-succeeds/typing-rejects/dict_check_value.py	0	: ok
+python-succeeds/typing-rejects/dict_comp_capture.py	0	: ok
+python-succeeds/typing-rejects/dict_comp_check_int_keys.py	0	: ok
+python-succeeds/typing-rejects/dict_comp_int_keys.py	0	: ok
+python-succeeds/typing-rejects/dict_comp_synth_capture.py	0	: ok
+python-succeeds/typing-rejects/dict_comp_value_type.py	0	: ok
+python-succeeds/typing-rejects/dict_int_keys.py	0	: ok
+python-succeeds/typing-rejects/dict_invariant.py	0	: ok
+python-succeeds/typing-rejects/dict_str_shadowed.py	0	: ok
+python-succeeds/typing-rejects/dict_synth_elem_check_fails.py	0	: ok
+python-succeeds/typing-rejects/dict_synth_int_key.py	0	: ok
+python-succeeds/typing-rejects/duplicate_def_in_region.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member/main.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member/pkg/__init__.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member/pkg/sub.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_import/helper.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_import/main.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_import/pkg/__init__.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_import/pkg/sub.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_plain_import/main.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_plain_import/pkg/__init__.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_plain_import/pkg/sub.py	0	: ok
+python-succeeds/typing-rejects/duplicate_member_plain_import/sub.py	0	: ok
+python-succeeds/typing-rejects/elif_cond_non_bool.py	0	: ok
+python-succeeds/typing-rejects/elif_no_else.py	0	: ok
+python-succeeds/typing-rejects/empty_dict_synth.py	0	: ok
+python-succeeds/typing-rejects/empty_list_synth.py	0	: ok
+python-succeeds/typing-rejects/eq_bool_int.py	0	: ok
+python-succeeds/typing-rejects/eq_class_callable_field.py	0	: ok
+python-succeeds/typing-rejects/eq_function.py	0	: ok
+python-succeeds/typing-rejects/eq_list_tuple.py	0	: ok
+python-succeeds/typing-rejects/eq_short_circuit.py	0	: ok
+python-succeeds/typing-rejects/eq_type_variable.py	0	: ok
+python-succeeds/typing-rejects/eq_unrelated_classes.py	0	: ok
+python-succeeds/typing-rejects/eq_unrelated_types.py	0	: ok
+python-succeeds/typing-rejects/exit_bool.py	0	: ok
+python-succeeds/typing-rejects/exit_no_args.py	0	: ok
+python-succeeds/typing-rejects/exit_none.py	0	: ok
+python-succeeds/typing-rejects/exit_str.py	0	: ok
+python-succeeds/typing-rejects/float_not_int.py	0	: ok
+python-succeeds/typing-rejects/forward_alias_in_def.py	0	: ok
+python-succeeds/typing-rejects/forward_class_in_def.py	0	: ok
+python-succeeds/typing-rejects/forward_var_in_def.py	0	: ok
+python-succeeds/typing-rejects/from_import_own_submodule/main.py	0	: ok
+python-succeeds/typing-rejects/from_import_own_submodule/pkg/__init__.py	0	: ok
+python-succeeds/typing-rejects/from_import_own_submodule/pkg/sub.py	0	: ok
+python-succeeds/typing-rejects/from_import_repeated/m.py	0	: ok
+python-succeeds/typing-rejects/from_import_repeated/main.py	0	: ok
+python-succeeds/typing-rejects/from_import_same_name_twice/a.py	0	: ok
+python-succeeds/typing-rejects/from_import_same_name_twice/b.py	0	: ok
+python-succeeds/typing-rejects/from_import_same_name_twice/main.py	0	: ok
+python-succeeds/typing-rejects/from_import_then_import_same_name/a.py	0	: ok
+python-succeeds/typing-rejects/from_import_then_import_same_name/b.py	0	: ok
+python-succeeds/typing-rejects/from_import_then_import_same_name/main.py	0	: ok
+python-succeeds/typing-rejects/generic_annotation_not_subtype.py	0	: ok
+python-succeeds/typing-rejects/generic_args_invariant.py	0	: ok
+python-succeeds/typing-rejects/generic_as_value.py	0	: ok
+python-succeeds/typing-rejects/generic_attribute_of_subclass.py	0	: ok
+python-succeeds/typing-rejects/generic_chain_upcast_mismatch.py	0	: ok
+python-succeeds/typing-rejects/generic_constr_no_type_argument.py	0	: ok
+python-succeeds/typing-rejects/generic_constr_type_mismatch.py	0	: ok
+python-succeeds/typing-rejects/generic_def_after_branch.py	0	: ok
+python-succeeds/typing-rejects/generic_invariant_arg_mismatch.py	0	: ok
+python-succeeds/typing-rejects/generic_join_field_of_subclass.py	0	: ok
+python-succeeds/typing-rejects/generic_name_synthesised.py	0	: ok
+python-succeeds/typing-rejects/generic_no_type_argument.py	0	: ok
+python-succeeds/typing-rejects/generic_none_result.py	0	: ok
+python-succeeds/typing-rejects/generic_result_mismatch.py	0	: ok
+python-succeeds/typing-rejects/generic_var_scheme_mismatch.py	0	: ok
+python-succeeds/typing-rejects/grandparent_field_clash.py	0	: ok
+python-succeeds/typing-rejects/if_else_nonbool.py	0	: ok
+python-succeeds/typing-rejects/if_exp_synth_branch_checked.py	0	: ok
+python-succeeds/typing-rejects/if_exp_synth_no_branch.py	0	: ok
+python-succeeds/typing-rejects/if_exp_synth_test_bool.py	0	: ok
+python-succeeds/typing-rejects/if_nonbool.py	0	: ok
+python-succeeds/typing-rejects/import_absolute_shadow/main.py	0	: ok
+python-succeeds/typing-rejects/import_absolute_shadow/x/__init__.py	0	: ok
+python-succeeds/typing-rejects/import_absolute_shadow/x/y.py	0	: ok
+python-succeeds/typing-rejects/import_absolute_shadow/y/__init__.py	0	: ok
+python-succeeds/typing-rejects/import_absolute_shadow/y/z.py	0	: ok
+python-succeeds/typing-rejects/import_bound_by_pattern/m.py	0	: ok
+python-succeeds/typing-rejects/import_bound_by_pattern/main.py	0	: ok
+python-succeeds/typing-rejects/import_redeclared/m.py	0	: ok
+python-succeeds/typing-rejects/import_redeclared/main.py	0	: ok
+python-succeeds/typing-rejects/import_then_from_import_same_name/a.py	0	: ok
+python-succeeds/typing-rejects/import_then_from_import_same_name/b.py	0	: ok
+python-succeeds/typing-rejects/import_then_from_import_same_name/main.py	0	: ok
+python-succeeds/typing-rejects/import_unassigned/m.py	0	: ok
+python-succeeds/typing-rejects/import_unassigned/main.py	0	: ok
+python-succeeds/typing-rejects/imported_module_rejected/helper.py	0	: ok
+python-succeeds/typing-rejects/imported_module_rejected/main.py	0	: ok
+python-succeeds/typing-rejects/int_plus_float_not_int.py	0	: ok
+python-succeeds/typing-rejects/lambda_applied_arg_lambda.py	0	: ok
+python-succeeds/typing-rejects/lambda_applied_keyword.py	0	: ok
+python-succeeds/typing-rejects/lambda_applied_result.py	0	: ok
+python-succeeds/typing-rejects/lambda_arity.py	0	: ok
+python-succeeds/typing-rejects/lambda_not_callable.py	0	: ok
+python-succeeds/typing-rejects/lambda_result_type.py	0	: ok
+python-succeeds/typing-rejects/lambda_stmt.py	0	: ok
+python-succeeds/typing-rejects/list_check_elem.py	0	: ok
+python-succeeds/typing-rejects/list_comp_elem_type.py	0	: ok
+python-succeeds/typing-rejects/list_comp_synth_capture.py	0	: ok
+python-succeeds/typing-rejects/list_comp_synth_no_body_type.py	0	: ok
+python-succeeds/typing-rejects/list_invariant.py	0	: ok
+python-succeeds/typing-rejects/list_synth_elem_check_fails.py	0	: ok
+python-succeeds/typing-rejects/literal_mismatch.py	0	: ok
+python-succeeds/typing-rejects/match_as_literal_bind.py	0	: ok
+python-succeeds/typing-rejects/match_bool_catch_all.py	0	: ok
+python-succeeds/typing-rejects/match_dead_catch_all.py	0	: ok
+python-succeeds/typing-rejects/match_dict_empty_catch_all.py	0	: ok
+python-succeeds/typing-rejects/match_dict_pat_on_union.py	0	: ok
+python-succeeds/typing-rejects/match_dup_list.py	0	: ok
+python-succeeds/typing-rejects/match_dup_literal.py	0	: ok
+python-succeeds/typing-rejects/match_empty_residual_def.py	0	: ok
+python-succeeds/typing-rejects/match_float_literal_at_int.py	0	: ok
+python-succeeds/typing-rejects/match_float_literal_repeated.py	0	: ok
+python-succeeds/typing-rejects/match_float_literal_scrutinee.py	0	: ok
+python-succeeds/typing-rejects/match_int_literal_open.py	0	: ok
+python-succeeds/typing-rejects/match_list_lengths.py	0	: ok
+python-succeeds/typing-rejects/match_list_pat_on_int.py	0	: ok
+python-succeeds/typing-rejects/match_literal_catch_all.py	0	: ok
+python-succeeds/typing-rejects/match_never_scrutinee.py	0	: ok
+python-succeeds/typing-rejects/match_partial_def.py	0	: ok
+python-succeeds/typing-rejects/match_partial_in_if_branch.py	0	: ok
+python-succeeds/typing-rejects/match_partial_other_path.py	0	: ok
+python-succeeds/typing-rejects/match_seq_kinds.py	0	: ok
+python-succeeds/typing-rejects/match_str_partial.py	0	: ok
+python-succeeds/typing-rejects/match_str_pat_on_int.py	0	: ok
+python-succeeds/typing-rejects/match_true_pat_on_int.py	0	: ok
+python-succeeds/typing-rejects/match_tuple_pat_on_int.py	0	: ok
+python-succeeds/typing-rejects/match_tuple_two_refutable.py	0	: ok
+python-succeeds/typing-rejects/match_tuple_union_bind.py	0	: ok
+python-succeeds/typing-rejects/match_union_bind_narrow.py	0	: ok
+python-succeeds/typing-rejects/match_unreachable.py	0	: ok
+python-succeeds/typing-rejects/match_var_leak.py	0	: ok
+python-succeeds/typing-rejects/maybe_assigned.py	0	: ok
+python-succeeds/typing-rejects/membership_dict_int_key.py	0	: ok
+python-succeeds/typing-rejects/membership_incomparable.py	0	: ok
+python-succeeds/typing-rejects/membership_range.py	0	: ok
+python-succeeds/typing-rejects/membership_tuple_incomparable.py	0	: ok
+python-succeeds/typing-rejects/missing_return.py	0	: ok
+python-succeeds/typing-rejects/missing_return_optional.py	0	: ok
+python-succeeds/typing-rejects/module_as_value.py	0	: ok
+python-succeeds/typing-rejects/mutual_after_rebind.py	0	: ok
+python-succeeds/typing-rejects/mutual_def_block_local.py	0	: ok
+python-succeeds/typing-rejects/mutual_lambdas.py	0	: ok
+python-succeeds/typing-rejects/mutual_split_by_assign.py	0	: ok
+python-succeeds/typing-rejects/name_declared.py	0	: ok
+python-succeeds/typing-rejects/name_import/lib.py	0	: ok
+python-succeeds/typing-rejects/name_import/main.py	0	: ok
+python-succeeds/typing-rejects/name_pattern.py	0	: ok
+python-succeeds/typing-rejects/name_reassigned.py	0	: ok
+python-succeeds/typing-rejects/never_above.py	0	: ok
+python-succeeds/typing-rejects/no_else.py	0	: ok
+python-succeeds/typing-rejects/none_result_assigned.py	0	: ok
+python-succeeds/typing-rejects/not_non_bool.py	0	: ok
+python-succeeds/typing-rejects/object_not_below.py	0	: ok
+python-succeeds/typing-rejects/or_non_bool.py	0	: ok
+python-succeeds/typing-rejects/or_right_non_bool.py	0	: ok
+python-succeeds/typing-rejects/ordering_bool.py	0	: ok
+python-succeeds/typing-rejects/ordering_list.py	0	: ok
+python-succeeds/typing-rejects/param_bound_by_pattern.py	0	: ok
+python-succeeds/typing-rejects/param_def_clash.py	0	: ok
+python-succeeds/typing-rejects/param_reassign.py	0	: ok
+python-succeeds/typing-rejects/param_redeclared.py	0	: ok
+python-succeeds/typing-rejects/parents_cycle/main.py	0	: ok
+python-succeeds/typing-rejects/parents_cycle/x/__init__.py	0	: ok
+python-succeeds/typing-rejects/parents_cycle/x/a.py	0	: ok
+python-succeeds/typing-rejects/parents_cycle/y/__init__.py	0	: ok
+python-succeeds/typing-rejects/parents_cycle/y/a.py	0	: ok
+python-succeeds/typing-rejects/pat_as_tuple_on_list.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_arity.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_at_never.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_bad_keyword.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_bool_fields_unreachable.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_excluded_head.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_field_narrowing.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_free_param.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_free_param_never.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_no_instance.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_pair_undetermined.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_split_subsumed.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_sub_inherited_excluded.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_subclasses_partial.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_subsumed.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_taken_by_super.py	0	: ok
+python-succeeds/typing-rejects/pat_constr_undetermined.py	0	: ok
+python-succeeds/typing-rejects/pat_dict_on_object.py	0	: ok
+python-succeeds/typing-rejects/pat_dict_unreachable.py	0	: ok
+python-succeeds/typing-rejects/pat_head_int.py	0	: ok
+python-succeeds/typing-rejects/pat_list_on_range_union.py	0	: ok
+python-succeeds/typing-rejects/pat_list_on_sized_union.py	0	: ok
+python-succeeds/typing-rejects/pat_list_on_type_var.py	0	: ok
+python-succeeds/typing-rejects/pat_seq_in_dict_value.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_in_list_elem.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_on_object.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_on_range_union.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_on_seq_union.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_on_sized_union.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_on_type_var.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_on_union_field.py	0	: ok
+python-succeeds/typing-rejects/pat_tuple_wrong_length.py	0	: ok
+python-succeeds/typing-rejects/pat_var_declared.py	0	: ok
+python-succeeds/typing-rejects/pattern_in_if_clash.py	0	: ok
+python-succeeds/typing-rejects/pattern_subclass_unreachable.py	0	: ok
+python-succeeds/typing-rejects/pattern_then_declared.py	0	: ok
+python-succeeds/typing-rejects/pattern_union_base_absorbed.py	0	: ok
+python-succeeds/typing-rejects/pattern_union_base_two_params.py	0	: ok
+python-succeeds/typing-rejects/pattern_union_base_undetermined.py	0	: ok
+python-succeeds/typing-rejects/pattern_union_base_unreachable.py	0	: ok
+python-succeeds/typing-rejects/pattern_var_is_def_name.py	0	: ok
+python-succeeds/typing-rejects/pattern_variable_some_cases.py	0	: ok
+python-succeeds/typing-rejects/power_bool_exponent.py	0	: ok
+python-succeeds/typing-rejects/power_int_exponent_not_int.py	0	: ok
+python-succeeds/typing-rejects/predefined_attr_as_value.py	0	: ok
+python-succeeds/typing-rejects/predefined_member_unknown.py	0	: ok
+python-succeeds/typing-rejects/print_arity.py	0	: ok
+python-succeeds/typing-rejects/print_keyword_arg.py	0	: ok
+python-succeeds/typing-rejects/pu_captured_by_def.py	0	: ok
+python-succeeds/typing-rejects/qualified_alias_as_value/main.py	0	: ok
+python-succeeds/typing-rejects/qualified_alias_as_value/mod.py	0	: ok
+python-succeeds/typing-rejects/qualified_class_as_value/main.py	0	: ok
+python-succeeds/typing-rejects/qualified_class_as_value/mod.py	0	: ok
+python-succeeds/typing-rejects/range_one_arg.py	0	: ok
+python-succeeds/typing-rejects/range_pattern_keywords.py	0	: ok
+python-succeeds/typing-rejects/reassign/def_assign.py	0	: ok
+python-succeeds/typing-rejects/reassign/match.py	0	: ok
+python-succeeds/typing-rejects/redeclaration.py	0	: ok
+python-succeeds/typing-rejects/redeclaration_branch.py	0	: ok
+python-succeeds/typing-rejects/reexport_from_import/defs.py	0	: ok
+python-succeeds/typing-rejects/reexport_from_import/main.py	0	: ok
+python-succeeds/typing-rejects/reexport_from_import/mid.py	0	: ok
+python-succeeds/typing-rejects/reexport_import_alias/helper.py	0	: ok
+python-succeeds/typing-rejects/reexport_import_alias/main.py	0	: ok
+python-succeeds/typing-rejects/return_type_mismatch.py	0	: ok
+python-succeeds/typing-rejects/round_arity.py	0	: ok
+python-succeeds/typing-rejects/round_bool.py	0	: ok
+python-succeeds/typing-rejects/same_name_distinct_classes/a.py	0	: ok
+python-succeeds/typing-rejects/same_name_distinct_classes/b.py	0	: ok
+python-succeeds/typing-rejects/same_name_distinct_classes/main.py	0	: ok
+python-succeeds/typing-rejects/self_capture_lambda.py	0	: ok
+python-succeeds/typing-rejects/shadowed_int.py	0	: ok
+python-succeeds/typing-rejects/sized_int.py	0	: ok
+python-succeeds/typing-rejects/submodule_as_value/main.py	0	: ok
+python-succeeds/typing-rejects/submodule_as_value/pkg/__init__.py	0	: ok
+python-succeeds/typing-rejects/submodule_as_value/pkg/sub.py	0	: ok
+python-succeeds/typing-rejects/submodule_self_import/a/__init__.py	0	: ok
+python-succeeds/typing-rejects/submodule_self_import/a/b.py	0	: ok
+python-succeeds/typing-rejects/submodule_self_import/main.py	0	: ok
+python-succeeds/typing-rejects/submodule_transitive_import/a.py	0	: ok
+python-succeeds/typing-rejects/submodule_transitive_import/main.py	0	: ok
+python-succeeds/typing-rejects/submodule_transitive_import/pkg/__init__.py	0	: ok
+python-succeeds/typing-rejects/submodule_transitive_import/pkg/sub.py	0	: ok
+python-succeeds/typing-rejects/subscript_call_keyword.py	0	: ok
+python-succeeds/typing-rejects/subscript_list_bool_index.py	0	: ok
+python-succeeds/typing-rejects/subscript_range.py	0	: ok
+python-succeeds/typing-rejects/subscript_str_bool_index.py	0	: ok
+python-succeeds/typing-rejects/subscript_tuple_bool_index.py	0	: ok
+python-succeeds/typing-rejects/subscript_tuple_int_join.py	0	: ok
+python-succeeds/typing-rejects/subscript_tuple_key.py	0	: ok
+python-succeeds/typing-rejects/subscript_tuple_neg_literal_mismatch.py	0	: ok
+python-succeeds/typing-rejects/transitive_containing_cycle/main.py	0	: ok
+python-succeeds/typing-rejects/transitive_containing_cycle/x/__init__.py	0	: ok
+python-succeeds/typing-rejects/transitive_containing_cycle/x/z.py	0	: ok
+python-succeeds/typing-rejects/transitive_containing_cycle/y.py	0	: ok
+python-succeeds/typing-rejects/tuple_check_component.py	0	: ok
+python-succeeds/typing-rejects/tuple_check_length.py	0	: ok
+python-succeeds/typing-rejects/tuple_subtype_component.py	0	: ok
+python-succeeds/typing-rejects/tuple_subtype_length.py	0	: ok
+python-succeeds/typing-rejects/tuple_synth_elem_no_type.py	0	: ok
+python-succeeds/typing-rejects/type_alias_as_value.py	0	: ok
+python-succeeds/typing-rejects/type_alias_cycle.py	0	: ok
+python-succeeds/typing-rejects/type_alias_missing_args.py	0	: ok
+python-succeeds/typing-rejects/type_alias_names_class_after_statement.py	0	: ok
+python-succeeds/typing-rejects/type_alias_redeclared.py	0	: ok
+python-succeeds/typing-rejects/type_alias_self.py	0	: ok
+python-succeeds/typing-rejects/type_alias_too_many_args.py	0	: ok
+python-succeeds/typing-rejects/type_alias_two_params_swapped.py	0	: ok
+python-succeeds/typing-rejects/type_param_as_value.py	0	: ok
+python-succeeds/typing-rejects/type_variable_not_below.py	0	: ok
+python-succeeds/typing-rejects/union_attr_missing_field.py	0	: ok
+python-succeeds/typing-rejects/union_call_arg_type.py	0	: ok
+python-succeeds/typing-rejects/union_call_arity.py	0	: ok
+python-succeeds/typing-rejects/union_call_not_callable.py	0	: ok
+python-succeeds/typing-rejects/union_field_exhaustive.py	0	: ok
+python-succeeds/typing-rejects/union_iter_not_iterable.py	0	: ok
+python-succeeds/typing-rejects/union_not_below_disjunct.py	0	: ok
+python-succeeds/typing-rejects/union_subscript_index_type.py	0	: ok
+python-succeeds/typing-rejects/union_subscript_not_subscriptable.py	0	: ok
+python-succeeds/typing-rejects/unop_bool_operand.py	0	: ok
+python-succeeds/typing-rejects/unreachable.py	0	: ok
+python-succeeds/typing-rejects/unreachable_after_if_else.py	0	: ok
+python-succeeds/typing-rejects/unsupported_builtin.py	0	: ok
+python-succeeds/undefined/eq_bool_number.py	0	: ok
+python-succeeds/undefined/eq_dict_nan_left_order.py	0	: ok
+python-succeeds/undefined/eq_function_object.py	0	: ok
+python-succeeds/undefined/eq_nan_container.py	0	: ok
+python-succeeds/undefined/eq_primitive_object.py	0	: ok
+python-succeeds/undefined/membership_nan.py	0	: ok
+python-succeeds/undefined/pat_literal_bool_number.py	0	: ok
+syntactic-only/empty_from_import.py	1	:3:0: import after another statement not allowed in PurePy
+syntactic-only/helpers/__init__.py	0	: ok
+syntactic-only/helpers/harness.py	1	:3:0: import after another statement not allowed in PurePy

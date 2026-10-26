@@ -177,7 +177,7 @@ pub fn Constant::type_name(self : Constant) -> String {
 
 ///|
 /// The symbol a binary operator is written with -- what the sieve's
-/// "binary operator '{sym}' prohibited" prints.
+/// "binary operator '{sym}' not allowed in PurePy" prints.
 pub fn Operator::symbol(self : Operator) -> String {
   match self {
     Add => "+"

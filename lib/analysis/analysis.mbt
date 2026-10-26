@@ -699,6 +699,36 @@ pub fn declares(s : @ast.Stmt) -> Array[(String, @ast.Stmt)] {
 }
 
 ///|
+/// The names an import prefix binds, with the import binding each: a plain
+/// import's root once, at the last import of it, since `import a.b` and
+/// `import a.c` both bind `a`.
+pub fn declares_imports(iotas : Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)] {
+  let root = fn(s : @ast.Stmt) -> String? {
+    match s {
+      Import(names~, ..) =>
+        Some(
+          match names[0].name.split_once(".") {
+            Some((head, _)) => head.to_owned()
+            None => names[0].name
+          },
+        )
+      _ => None
+    }
+  }
+  let out = []
+  for i, s in iotas {
+    match root(s) {
+      Some(x) =>
+        if !iotas[i + 1:].iter().any(fn(t) { root(t) == Some(x) }) {
+          out.push((x, s))
+        }
+      None => out.append(declares(s))
+    }
+  }
+  out
+}
+
+///|
 pub fn declares_body(body : Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)] {
   let out = []
   for s in body {

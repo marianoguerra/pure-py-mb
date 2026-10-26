@@ -1,1 +1,1 @@
-1: identity.py:3:6: identity operator (is/is not) prohibited
+1: identity.py:3:6: identity operator (is/is not) not allowed in PurePy

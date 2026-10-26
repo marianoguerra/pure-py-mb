@@ -121,7 +121,7 @@ pub fn declared_type(
 /// pairs in the order the dict the reference builds iterates: the positional
 /// ones first, then the keywords as written.
 ///
-/// `None` when the count is wrong, a keyword repeats, or the keywords are not
+/// `None` when the count is wrong, or the keywords are not
 /// exactly the fields the positional arguments left over.
 pub fn[T] field_map(
   sigma : ClassTable,
@@ -134,13 +134,6 @@ pub fn[T] field_map(
   let n = positional.length()
   if n + kwd_names.length() != xs.length() {
     return None
-  }
-  for i, k in kwd_names {
-    for j in 0..<i {
-      if kwd_names[j] == k {
-        return None
-      }
-    }
   }
   for k in kwd_names {
     if !xs[n:].contains(k) {
@@ -161,7 +154,6 @@ pub fn[T] field_map(
 /// Why `field_map` is undefined.
 pub(all) enum FieldMapFailure {
   ArityMismatch(expected~ : Int32, given~ : Int32)
-  RepeatedKeywordArg
   UnknownKeywordArgs(Array[String])
 }
 
@@ -175,11 +167,6 @@ pub fn no_field_map(
   let xs = field_names(sigma, c)
   if n + kwd_names.length() != xs.length() {
     return ArityMismatch(expected=xs.length(), given=n + kwd_names.length())
-  }
-  for i, k in kwd_names {
-    if kwd_names[:i].contains(k) {
-      return RepeatedKeywordArg
-    }
   }
   let rest : Array[String] = []
   for x in xs[n:] {

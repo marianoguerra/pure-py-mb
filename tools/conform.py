@@ -51,6 +51,7 @@ GREEN, RED, YELLOW, DIM, RESET = (
 
 MODULE_LEVEL, PROGRAM_LEVEL = "module-level", "program-level"
 MAIN = "main.py"
+HELPERS = "helpers"
 
 # Exit codes, ours and the reference's (implementation-plan.md 2.1).
 OK, PROHIBITED, NOT_YET, ILL_FORMED, ILL_FORMED_PROGRAM, STUCK = 0, 1, 2, 3, 4, 5
@@ -91,44 +92,44 @@ def strip_prefix(line: str, name: str) -> str:
 # The suite
 
 
-def module_files() -> list[str]:
-    """Every module-level source, helpers included, suite-relative."""
-    return sorted(
-        str(p.relative_to(SUITE))
-        for p in (SUITE / MODULE_LEVEL).rglob("*.py")
-        if "__pycache__" not in p.parts
-    )
-
-
-def program_files() -> list[str]:
-    return sorted(
-        str(p.relative_to(SUITE))
-        for p in (SUITE / PROGRAM_LEVEL).rglob("*.py")
-        if "__pycache__" not in p.parts
-    )
-
-
 def all_files() -> list[str]:
-    return module_files() + program_files()
+    """Every source in the suite, helpers and the modules of programs
+    included, suite-relative."""
+    return sorted(
+        str(p.relative_to(SUITE))
+        for p in SUITE.rglob("*.py")
+        if "__pycache__" not in p.parts
+    )
 
 
 def program_dirs() -> list[str]:
+    """A program is a directory holding a `main.py`, outside `helpers/`."""
     return sorted(
         str(p.parent.relative_to(SUITE))
-        for p in (SUITE / PROGRAM_LEVEL).rglob(MAIN)
+        for p in SUITE.rglob(MAIN)
+        if HELPERS not in p.parts and "__pycache__" not in p.parts
     )
 
 
 def module_tests() -> list[str]:
-    """The module-level files the reference's runner asserts on: everything
-    but the `helpers/` fixtures."""
-    return [f for f in module_files() if "helpers" not in pathlib.Path(f).parts]
+    """The single-module tests the reference's runner asserts on: every
+    source outside `helpers/` and outside a program."""
+    programs = {SUITE / d for d in program_dirs()}
+    return [
+        f for f in all_files()
+        if HELPERS not in pathlib.Path(f).parts
+        and not any(d in programs for d in (SUITE / f).parents)
+    ]
 
 
 def verdict_parts(rel: str) -> tuple[str, ...]:
-    """The directories between `module-level/` and the file: the test's
-    specification, exactly as the reference's runner reads it."""
-    return pathlib.PurePosixPath(rel).parent.parts[1:]
+    """The directories above a test: its specification, exactly as the
+    reference's runner reads it. Before v0.23 the suite had a
+    `module-level/` and a `program-level/` tree above them."""
+    parts = pathlib.PurePosixPath(rel).parts
+    if parts and parts[0] in (MODULE_LEVEL, PROGRAM_LEVEL):
+        parts = parts[1:]
+    return parts[:-1]
 
 
 # --------------------------------------------------------------------------
@@ -342,20 +343,16 @@ def expect_stuck(r: Result) -> str | None:
 
 def run_expectation(parts: tuple[str, ...]) -> str | None:
     """What a test's path says its run must do: `output`, `stuck` or `abort`,
-    or None when nothing is run. Module-level and program-level tests read the
-    same way: <Python outcome>/<PurePy outcome>[/<subset>]/..., or
-    syntactic-only/..., a script that builds a tree Python source cannot
-    express, which only Python runs."""
+    or None when nothing is run. The path is <Python outcome>/<PurePy
+    outcome>/..., or syntactic-only/..., a script that builds a tree Python
+    source cannot express, which only Python runs."""
     if parts[0] == "syntactic-only" or len(parts) < 2:
         return None
     python, purepy = parts[0], parts[1]
-    subset = parts[2] if len(parts) > 2 else None
-    if subset == "pending":
-        return None  # refused as not yet supported
     if purepy == "undefined":
         return "stuck"
-    if purepy == "result":
-        return "output" if python == "no-exception" else "abort"
+    if purepy == "agrees":
+        return "output" if python == "python-succeeds" else "abort"
     return None  # refused by the parser or the type checker
 
 
@@ -376,7 +373,7 @@ def oracle_run(impl: Impl) -> Report:
             rep.add(rel, expect_abort(r, rel, sibling(rel, ".exception.expected")))
 
     for d in program_dirs():
-        want = run_expectation(pathlib.PurePosixPath(d).parts[1:])
+        want = run_expectation(verdict_parts(d))
         if want is None:
             continue
         r = impl.run_program(d)

@@ -234,11 +234,24 @@ fn as_number(v : Value) -> Num? {
 /// A BigInt as a double, correctly rounded -- which is what Python's
 /// `float(n)` gives. MoonBit's `BigInt` has no conversion, so it goes through
 /// the decimal text, which `parse_double` rounds correctly.
+///
+/// Out of a double's range it is an infinity; Python raises OverflowError
+/// there, which `int_to_float` says.
 pub fn big_to_double(n : BigInt) -> Double {
   @string.parse_double(n.to_string()) catch {
-    // Out of a double's range: Python raises OverflowError, which is not a
-    // termination kind, so the caller treats it as undefined.
     _ => if n < 0N { @double.neg_infinity } else { @double.infinity }
+  }
+}
+
+///|
+/// An integer as a float, as Python converts one for arithmetic: `None`
+/// where it is too large for a double, where Python raises OverflowError.
+pub fn int_to_float(n : BigInt) -> Double? {
+  let d = big_to_double(n)
+  if d.is_inf() {
+    None
+  } else {
+    Some(d)
   }
 }
 
@@ -254,7 +267,14 @@ fn to_double(x : Num) -> Double {
 fn arith(op : @ast.Operator, a : Num, b : Num) -> Outcome {
   match (a, b) {
     (I(x), I(y)) => int_arith(op, x, y)
-    _ => float_arith(op, to_double(a), to_double(b))
+    _ =>
+      // An integer too large for a float cannot meet one.
+      if (a is I(n) && int_to_float(n) is None) ||
+        (b is I(n) && int_to_float(n) is None) {
+        Aborts(OverflowError)
+      } else {
+        float_arith(op, to_double(a), to_double(b))
+      }
   }
 }
 
@@ -288,7 +308,10 @@ fn int_arith(op : @ast.Operator, x : BigInt, y : BigInt) -> Outcome {
         if x == 0N {
           Aborts(ZeroDivisionError)
         } else {
-          Val(Float(@math.pow(big_to_double(x), big_to_double(y))))
+          match (int_to_float(x), int_to_float(y)) {
+            (Some(dx), Some(dy)) => Val(Float(@math.pow(dx, dy)))
+            _ => Aborts(OverflowError)
+          }
         }
       } else {
         Val(Int(x.pow(y)))

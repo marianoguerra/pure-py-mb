@@ -115,14 +115,9 @@ fn match_dict(
   p : @ast.Pattern,
   ctx : ModCtx,
 ) -> MatchResult? raise {
-  guard p is MatchMapping(patterns~, span~, ..) else { abort("a dict pattern") }
+  guard p is MatchMapping(patterns~, ..) else { abort("a dict pattern") }
   guard k is Dict(_, beta, _) else { return None }
   let keys = key_patterns(p).map(fn(w) { w.0 })
-  for i, w in keys {
-    if keys[:i].contains(w) {
-      raise ill(DuplicateDictKey(w~), span)
-    }
-  }
   let ks : Array[@types.Shape] = []
   for w in keys {
     match lookup_key(beta, w) {
@@ -393,7 +388,6 @@ fn pattern_seq(
       match @types.no_field_map(sigma, c, patterns.length(), kwd_attrs) {
         ArityMismatch(expected~, given~) =>
           raise ill(PatternArityMismatch(c=name, expected~, got=given), span)
-        RepeatedKeywordArg => raise ill(DuplicatePatternKeyword(c=name), span)
         UnknownKeywordArgs(xs) =>
           raise ill(UnknownFieldInPattern(c=name, xs~), span)
       }
@@ -494,28 +488,43 @@ fn check_pattern(
     MatchAs(pattern=Some(q), name=Some(x), ..) => {
       check_unbound(x, p, ctx)
       let delta = check_pattern(q, tau, ctx)
-      pattern_bindings(
-        [delta, context_of([(x, Var(matched_as(tau, q, ctx)))])],
-        p,
-      )
+      pattern_bindings([delta, context_of([(x, Var(matched_as(tau, q, ctx)))])])
     }
     MatchAs(pattern=Some(q), name=None, ..) => check_pattern(q, tau, ctx)
     MatchValue(..) | MatchSingleton(..) => empty_context()
     MatchSequence(kind=Tuple, patterns~, span~) => {
       if has_list_values(sigma, tau) {
-        raise ill(SequenceKindMismatch(kind="tuple", tau=render(tau)), span)
+        raise ill(
+          SequenceKindMismatch(kind="tuple", tau=render(tau), other="list"),
+          span,
+        )
+      }
+      if has_range_values(sigma, tau) {
+        raise ill(
+          SequenceKindMismatch(kind="tuple", tau=render(tau), other="range"),
+          span,
+        )
       }
       bindings_at(tau, p, ctx, fn(s) raise {
         match s {
           Tuple(cs) if cs.length() == patterns.length() =>
-            Some(check_pattern_seq(patterns, cs, p, ctx))
+            Some(check_pattern_seq(patterns, cs, ctx))
           _ => None
         }
       })
     }
     MatchSequence(kind=List, patterns~, span~) => {
       if has_tuple_values(sigma, tau) {
-        raise ill(SequenceKindMismatch(kind="list", tau=render(tau)), span)
+        raise ill(
+          SequenceKindMismatch(kind="list", tau=render(tau), other="tuple"),
+          span,
+        )
+      }
+      if has_range_values(sigma, tau) {
+        raise ill(
+          SequenceKindMismatch(kind="list", tau=render(tau), other="range"),
+          span,
+        )
       }
       bindings_at(tau, p, ctx, fn(s) raise {
         match s {
@@ -524,7 +533,6 @@ fn check_pattern(
               check_pattern_seq(
                 patterns,
                 Array::make(patterns.length(), e),
-                p,
                 ctx,
               ),
             )
@@ -540,7 +548,6 @@ fn check_pattern(
               check_pattern_seq(
                 patterns,
                 Array::make(patterns.length(), v),
-                p,
                 ctx,
               ),
             )
@@ -561,7 +568,7 @@ fn check_pattern(
             )
           NoInstance => None
           Found(_, args) =>
-            Some(check_pattern_seq(qs, field_types(sigma, c, args), p, ctx))
+            Some(check_pattern_seq(qs, field_types(sigma, c, args), ctx))
         }
       })
     }
@@ -580,7 +587,6 @@ fn check_unbound(x : String, p : @ast.Pattern, ctx : ModCtx) -> Unit raise {
 fn check_pattern_seq(
   ps : Array[@ast.Pattern],
   taus : Array[@types.Type],
-  node : @ast.Pattern,
   ctx : ModCtx,
 ) -> Context raise {
   let deltas = []
@@ -589,7 +595,7 @@ fn check_pattern_seq(
       deltas.push(check_pattern(q, taus[i], ctx))
     }
   }
-  pattern_bindings(deltas, node)
+  pattern_bindings(deltas)
 }
 
 ///|
@@ -712,7 +718,10 @@ fn remaining(
 fn has_list_values(sigma : @types.ClassTable, tau : @types.Type) -> Bool {
   @types.disjuncts(tau)
   .iter()
-  .any(fn(s) { s is List(_) || @types.subtype(sigma, List(@types.t_object), s) })
+  .any(fn(s) {
+    s is (List(_) | TypeVar(_)) ||
+    @types.subtype(sigma, List(@types.t_object), s)
+  })
 }
 
 ///|
@@ -721,23 +730,28 @@ fn has_list_values(sigma : @types.ClassTable, tau : @types.Type) -> Bool {
 fn has_tuple_values(sigma : @types.ClassTable, tau : @types.Type) -> Bool {
   @types.disjuncts(tau)
   .iter()
-  .any(fn(s) { s is Tuple(_) || @types.subtype(sigma, Tuple([]), s) })
+  .any(fn(s) {
+    s is (Tuple(_) | TypeVar(_)) || @types.subtype(sigma, Tuple([]), s)
+  })
 }
 
 ///|
-/// The union of several patterns' bindings, which must be disjoint.
-fn pattern_bindings(
-  deltas : Array[Context],
-  node : @ast.Pattern,
-) -> Context raise {
+/// Whether a type has `range` values, which neither sequence pattern
+/// matches.
+fn has_range_values(sigma : @types.ClassTable, tau : @types.Type) -> Bool {
+  @types.disjuncts(tau)
+  .iter()
+  .any(fn(s) {
+    s is TypeVar(_) || @types.subtype(sigma, Class(@types.range_class, []), s)
+  })
+}
+
+///|
+/// The union of several patterns' bindings, which the parser has made
+/// disjoint.
+fn pattern_bindings(deltas : Array[Context]) -> Context {
   let mut merged = empty_context()
   for d in deltas {
-    let repeated : Array[String] = []
-    d.each(fn(x, _) { if merged.contains(x) { repeated.push(x) } })
-    if !repeated.is_empty() {
-      @basic.sort_names(repeated)
-      raise ill(NonlinearPattern(x=repeated[0]), node.span())
-    }
     merged = override_context(merged, d)
   }
   merged

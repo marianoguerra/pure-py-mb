@@ -75,13 +75,9 @@ pub(all) enum Reason {
   ClassArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)
   TypeAliasArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)
   UnknownFieldInPattern(c~ : String, xs~ : Array[String])
-  DuplicatePatternKeyword(c~ : String)
-  DuplicateDictKey(w~ : String)
-  NonlinearPattern(x~ : String)
   DuplicateMember(x~ : String, q~ : String)
   SubmoduleNotImported(q~ : String)
   UnassignedMember(x~ : String, q~ : String)
-  TopLevelReturn
   TopLevelAssertFalse
   UnknownModule(q~ : String)
   DuplicateImportedName(x~ : String)
@@ -98,7 +94,6 @@ pub(all) enum Reason {
   NoUnaryOverload(op~ : String, sigma~ : String)
   NotCallable(tau~ : String)
   KeywordArgumentsNotConstructor
-  DuplicateParameter(x~ : String, f~ : String?)
   CallArityMismatch(expected~ : Int32, given~ : Int32)
   TypeMismatch(expected~ : String, actual~ : String)
   LambdaTypeMismatch(expected~ : String, arity~ : Int32?)
@@ -106,7 +101,7 @@ pub(all) enum Reason {
   TupleIndexOutOfRange(index~ : @bigint.BigInt, length~ : Int32)
   UnreachableCase(pattern~ : String)
   PatternClassUndetermined(c~ : String, tau~ : String)
-  SequenceKindMismatch(kind~ : String, tau~ : String)
+  SequenceKindMismatch(kind~ : String, tau~ : String, other~ : String)
   NotIterable(tau~ : String)
   UnknownField(c~ : String, x~ : String)
   NoneResult

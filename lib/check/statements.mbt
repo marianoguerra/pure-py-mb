@@ -274,19 +274,9 @@ fn def_signature(d : @ast.Stmt, ctx : ModCtx) -> Entry raise {
 }
 
 ///|
-/// A parameter list's names, which must be distinct.
-fn parameter_names(
-  args : @ast.Arguments,
-  span : @basic.Span,
-  f : String?,
-) -> Array[String] raise {
-  let xs = args.args.map(fn(a) { a.arg })
-  for i, x in xs {
-    if xs[:i].contains(x) {
-      raise ill(DuplicateParameter(x~, f~), span)
-    }
-  }
-  xs
+/// A parameter list's names, which the parser has made distinct.
+fn parameter_names(args : @ast.Arguments) -> Array[String] {
+  args.args.map(fn(a) { a.arg })
 }
 
 // ---------------------------------------------------------------------------
@@ -426,14 +416,14 @@ fn def_body(d : @ast.Stmt, pi : Entry, ctx : ModCtx) -> Unit raise {
     Callable(ps, r) | Defaulted(ps, _, r) => (ps, r)
     _ => abort("a callable type")
   }
-  let xs = parameter_names(args, d.span(), Some(name))
+  let xs = parameter_names(args)
   check_assignments_declared(body, xs)
   check_defaults(d, params, ctx.override_gamma(type_vars(alphas)))
   let mut delta = type_vars(alphas)
   for i, x in xs {
     delta = delta.add(x, Var(params[i]))
   }
-  delta = override_context(delta, scope(xs, body))
+  delta = override_context(delta, scope(xs.map(fn(x) { (x, d) }), body))
   let r = check_body(body, ctx.override_gamma(delta), Some(result))
   let sigma = ctx.sigma()
   if !(r is Returns) && !@types.equivalent(sigma, result, @types.t_none) {
@@ -468,7 +458,19 @@ fn check_defaults(
 /// `def`, a class, a type alias or an import -- and never where a parameter
 /// or a pattern already binds it. Every other name the body assigns starts
 /// out unbound.
-fn scope(ys : Array[String], body : Array[@ast.Stmt]) -> Context raise {
+///
+/// `ys`: the names bound before the body, with what binds them. An import
+/// prefix may not bind a name twice.
+fn scope(
+  ys : Array[(String, @ast.Stmt)],
+  body : Array[@ast.Stmt],
+) -> Context raise {
+  for i, y in ys {
+    if ys[:i].iter().any(fn(z) { z.0 == y.0 }) {
+      raise ill(DuplicateImportedName(x=y.0), y.1.span())
+    }
+  }
+  let ys = ys.map(fn(y) { y.0 })
   let patterns = @analysis.pattern_bound(body)
   let is_pattern = fn(x : String) { patterns.iter().any(fn(p) { p.0 == x }) }
   let seen = [..ys]
@@ -587,7 +589,9 @@ fn check_stmt(
       assigns_nothing()
     }
     Return(value~, span~) => {
-      guard returns is Some(declared) else { raise ill(TopLevelReturn, span) }
+      guard returns is Some(declared) else {
+        abort("a return outside a function is rejected by the parser")
+      }
       match value {
         None => {
           let sigma = ctx.sigma()
@@ -613,7 +617,7 @@ fn check_stmt(
           check_body(or_else, ctx, returns)
         },
       )
-      merge_outcomes(branches, declared_names(s))
+      merge_outcomes(ctx.sigma(), branches, declared_names(s))
     }
     Assert(cond~, msg~, span~) => {
       let assert_false = cond is Constant(value=Bool(false), ..)
@@ -726,7 +730,7 @@ fn check_match_cases(
       ),
     )
   }
-  merge_outcomes(branches, declared_names(m))
+  merge_outcomes(ctx.sigma(), branches, declared_names(m))
 }
 
 ///|
@@ -1201,7 +1205,6 @@ fn constructor_args(
           )
         UnknownKeywordArgs(xs) =>
           raise ill(UnknownConstructorKeyword(c=name, xs~), span)
-        RepeatedKeywordArg => abort("a syntax error in Python")
       }
     }
   }
@@ -1236,9 +1239,19 @@ fn call_stmt(e : @ast.Expr, ctx : ModCtx) -> Unit raise {
     call(e, ctx) |> ignore
     return
   }
-  match callee(e, ctx) {
+  call_stmt_at(callee(e, ctx), e, ctx)
+}
+
+///|
+/// A call statement at a callee type: at each type of a union.
+fn call_stmt_at(fn_ : @types.Type, e : @ast.Expr, ctx : ModCtx) -> Unit raise {
+  match fn_ {
+    Union(s, t) => {
+      call_stmt_at(s, e, ctx)
+      call_stmt_at(t, e, ctx)
+    }
     Callable(ss, Prim(NoneType)) => check_args(e, ss, ctx)
-    fn_ => result_type(fn_, e, ctx) |> ignore
+    _ => result_type(fn_, e, ctx) |> ignore
   }
 }
 
@@ -1381,9 +1394,9 @@ fn lambda_arguments(
   e : @ast.Expr,
   ctx : ModCtx,
 ) -> Context raise {
-  guard f is Lambda(args=params, span=fspan, ..) else { abort("a lambda") }
+  guard f is Lambda(args=params, ..) else { abort("a lambda") }
   guard e is Call(args~, keywords~, span~, ..) else { abort("a call") }
-  let names = parameter_names(params, fspan, None)
+  let names = parameter_names(params)
   if !keywords.is_empty() {
     raise ill(KeywordArgumentsNotConstructor, span)
   }
@@ -1493,7 +1506,7 @@ fn check_lambda(
   ctx : ModCtx,
 ) -> Unit raise {
   guard e is Lambda(args~, body~, span~) else { abort("a lambda") }
-  let params = parameter_names(args, span, None)
+  let params = parameter_names(args)
   guard expected is Callable(ps, result) else {
     raise ill(LambdaTypeMismatch(expected=render(expected), arity=None), span)
   }

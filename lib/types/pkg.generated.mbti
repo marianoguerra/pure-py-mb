@@ -150,7 +150,6 @@ pub(all) struct ClassTableEntry {
 
 pub(all) enum FieldMapFailure {
   ArityMismatch(expected~ : Int32, given~ : Int32)
-  RepeatedKeywordArg
   UnknownKeywordArgs(Array[String])
 }
 

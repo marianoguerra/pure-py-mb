@@ -95,13 +95,13 @@ Two facts about the spec drive the design:
    CPython's tree is that it re-tags `MatchSequence` as `PatList` or `PatTuple`
    from the source text, because the spec distinguishes list and tuple
    patterns and CPython does not.
-2. **A test's path is its verdict.** Since v0.20 a test lives under
-   `<Python outcome>/<PurePy outcome>[/<subset>]/`: Python's outcome is
-   `syntax-error`, `exception` or `no-exception`; PurePy's is `parser`
-   (refused by the sieve), `type-checker` (refused by the checker),
-   `undefined` (accepted, then the semantics has no rule) or `result` (accepted,
-   and the run does what Python's does); the `pending` subset is refused as not
-   yet supported. The runner derives every assertion from the path, and the
+2. **A test's path is its verdict.** Since v0.23 a test lives under
+   `<Python outcome>/<PurePy outcome>/...`: Python's outcome is
+   `python-rejects`, `python-raises` or `python-succeeds`; PurePy's is
+   `parser-rejects` (refused by the sieve), `typing-rejects` (refused by the
+   checker), `undefined` (accepted, then the semantics has no rule) or `agrees`
+   (accepted, and the run does what Python's does). A program is a directory
+   holding a `main.py`, among the single-module tests. The runner derives every assertion from the path, and the
    reference scripts signal the stage with exit codes: `1` prohibited form, `2`
    planned but not yet supported, `3` ill-formed module, `4` ill-formed
    program.
@@ -1230,6 +1230,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.22.1 | the specification states that a return ends a sequence (`eval-seq-return`), which the evaluator already did | none |
 | v0.22.2 | the suite moves into the reference's package, `src/purepy/conformance-suite/`; its runner is `purepy.conformance` | `tools/fetch-reference.sh` (copies the suite from there), `test/conformance/` (the suite alone, without the runner) |
 | v0.22.3 | the reference's runner and the specification's change marks only | none |
+| v0.23.0 | the parser says `X not allowed in PurePy`, and takes over duplicate pattern variables, keywords, keys, keyword arguments and parameters and a return outside a function; branches join their variables' types; `range` is no sequence pattern's; repeated plain imports allowed; `round` and an integer too large for a float abort with `OverflowError`/`ValueError`; the suite is flat, `<Python outcome>/<PurePy outcome>/...` | `lib/sieve`, `lib/check`, `lib/analysis` (`declares_imports`), `lib/error`, `lib/value` and `lib/eval`, `tools/conform.py` |
 
 Decisions made on the way, recorded as §9's are:
 

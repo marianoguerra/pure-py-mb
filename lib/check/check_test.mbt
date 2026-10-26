@@ -334,3 +334,29 @@ test "assert False returns, and a float is not a literal type" {
     "no overload of '|' at operand types Literal[1] and Literal[2]",
   )
 }
+
+///|
+test "branches join their variables' types, and range is no sequence pattern's" {
+  assert_eq(
+    verdict(
+      "def f(v: tuple[int, str] | tuple[str, int]) -> int | str:\n    match v:\n        case (1, y):\n            pass\n        case (y, 2):\n            pass\n        case _:\n            return 0\n    return y\n",
+    ),
+    "ok",
+  )
+  assert_eq(
+    verdict(
+      "def f(r: range) -> int:\n    match r:\n        case [a]:\n            return 1\n        case _:\n            return 0\n",
+    ),
+    "list pattern at builtins.range, which has range values",
+  )
+  // A plain import binds its root once however often it is repeated; a name
+  // a from-import binds is bound once.
+  assert_eq(verdict("import sys\nimport sys\n"), "ok")
+  assert_eq(
+    verdict(
+      "from dataclasses import dataclass\nfrom dataclasses import dataclass\n",
+    ),
+    "name 'dataclass' imported twice",
+  )
+  assert_eq(verdict("import os.path\nimport os.sep\n"), "unknown module 'os'")
+}

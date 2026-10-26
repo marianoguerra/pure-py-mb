@@ -1,1 +1,1 @@
-1: destructuring.py:3:0: destructuring assignment prohibited
+1: destructuring.py:3:0: unpacking assignment not allowed in PurePy

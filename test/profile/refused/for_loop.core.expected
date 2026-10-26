@@ -1,1 +1,1 @@
-1: for_loop.py:1:0: for loops prohibited
+1: for_loop.py:1:0: for loops not allowed in PurePy

@@ -1,1 +1,1 @@
-1: fstring.py:6:6: f-strings prohibited
+1: fstring.py:6:6: f-strings not allowed in PurePy

@@ -100,8 +100,6 @@ pub fn Diagnostic::help(self : Diagnostic) -> String? {
       Some("call it to construct one, or match on it in a pattern")
     IllFormed(SubmoduleNotImported(q~)) =>
       Some("add `import " + q + "` or `from ... import ...` for it")
-    IllFormed(TopLevelReturn) =>
-      Some("a module body runs to the end; there is nothing to return to")
     NotYetSupported(issue~, ..) =>
       Some("tracked upstream as issue #" + issue.to_string())
     _ => None

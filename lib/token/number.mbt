@@ -4,7 +4,7 @@
 /// A token keeps its lexeme and nothing else, so that it can be reported
 /// before it is interpreted; this is where the lexeme becomes a number. Python
 /// has three kinds and PurePy's sieve rejects the third, so the third is still
-/// recognised here -- "complex literals prohibited" needs to know one when it
+/// recognised here -- "complex literals not allowed in PurePy" needs to know one when it
 /// sees one.
 pub(all) enum NumberValue {
   Int(BigInt)

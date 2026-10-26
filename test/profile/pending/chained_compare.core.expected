@@ -1,1 +1,1 @@
-1: chained_compare.py:2:6: chained comparison prohibited
+1: chained_compare.py:2:6: chained comparison not allowed in PurePy

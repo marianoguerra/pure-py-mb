@@ -72,15 +72,16 @@ async fn Interp::call_primitive(
       } else {
         Stuck("sys.exit with \{args.length()} arguments")
       }
-    // `round` is to the nearest integer, ties to even, and undefined at an
-    // infinity or a nan, which have none.
+    // `round` is to the nearest integer, ties to even. An infinity and a nan
+    // have none, and abort as Python's do.
     Round =>
       match args {
         [Int(_) as v] => Val(v)
+        [Float(d)] if d != d => Aborts(ValueError)
         [Float(d)] =>
           match @value.exact_integer(round_half_even(d)) {
             Some(n) => Val(Int(n))
-            None => Stuck("round of a value with no integer")
+            None => Aborts(OverflowError)
           }
         _ => Stuck("round of something other than a number")
       }
@@ -233,7 +234,11 @@ fn unary_builtin(p : @value.Primitive, v : Value) -> Outcome {
     ToFloat =>
       match v {
         Float(_) => Val(v)
-        Int(n) => Val(Float(@value.big_to_double(n)))
+        Int(n) =>
+          match @value.int_to_float(n) {
+            Some(d) => Val(Float(d))
+            None => Aborts(OverflowError)
+          }
         Str(t) =>
           try @string.parse_double(t.trim(chars=" ").to_owned()) catch {
             _ => Stuck("float of a string that is not a number")

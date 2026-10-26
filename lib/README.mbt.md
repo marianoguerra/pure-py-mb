@@ -25,7 +25,7 @@ describes.
 
 ## Status
 
-The conformance suite of specification v0.22.3 passes in full: 2112
+The conformance suite of specification v0.23.0 passes in full: 2378
 assertions across four oracles, compared against the reference's own answers
 for every one of its sources.
 Two more oracles compare the token stream and the parse tree against CPython's
@@ -95,7 +95,7 @@ test "the sieve rejects what PurePy excludes" {
   let m = @purepy.parse("for x in [1]:\n    print(x)\n")
   match @purepy.sieve(m) {
     Some(d) => {
-      inspect(d.message(), content="for loops prohibited")
+      inspect(d.message(), content="for loops not allowed in PurePy")
       // 1 for a form PurePy excludes, 2 for one it plans to accept.
       inspect(d.exit_code(), content="1")
     }
@@ -134,7 +134,7 @@ test "a profile widens what the sieve accepts" {
   // PurePy has no chained boolean operator yet, and says which issue it is.
   inspect(
     @purepy.check(m).unwrap().message(),
-    content="chained boolean operator prohibited",
+    content="chained boolean operator not allowed in PurePy",
   )
   // A caller who asked for the profile that has it gets it.
   inspect(@purepy.check(m, profile=@profile.pending()) is None, content="true")
@@ -142,7 +142,7 @@ test "a profile widens what the sieve accepts" {
   let looping = @purepy.parse("for x in [1]:\n    print(x)\n")
   inspect(
     @purepy.sieve(looping, profile=@profile.pending()).unwrap().message(),
-    content="for loops prohibited",
+    content="for loops not allowed in PurePy",
   )
 }
 ```

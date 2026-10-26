@@ -167,26 +167,54 @@ fn assigns_nothing() -> Outcome {
 }
 
 ///|
-/// Two branches agree on an entry, or it is possibly unassigned at the type
-/// it was declared at.
-fn merge_entry(a : Entry?, b : Entry?, declared_in_branch : Bool) -> Entry {
+/// Two branches' entries for a name: the same one, or one at the join of
+/// their types, possibly unassigned if either is.
+fn merge_entry(
+  sigma : @types.ClassTable,
+  a : Entry?,
+  b : Entry?,
+  declared_in_branch : Bool,
+) -> Entry {
   match (a, b) {
     (Some(x), Some(y)) if x == y => x
-    (Some(x), _) | (None, Some(x)) =>
+    (Some(x), Some(y)) =>
+      match (declared_type_of(x), declared_type_of(y)) {
+        (Mono(s), Mono(t)) => {
+          let j = @types.join(sigma, s, t)
+          if x is (DU(_) | PU(_, ..)) || y is (DU(_) | PU(_, ..)) {
+            PU(Mono(j), declared_in_branch~)
+          } else {
+            Var(j)
+          }
+        }
+        (d, e) => {
+          guard d == e else { abort("a generic signature on both sides") }
+          PU(d, declared_in_branch~)
+        }
+      }
+    (Some(x), None) | (None, Some(x)) =>
       PU(declared_type_of(x), declared_in_branch~)
     (None, None) => abort("an entry on one side at least")
   }
 }
 
 ///|
-fn merge_context(g : Context, h : Context, declared : Array[String]) -> Context {
+fn merge_context(
+  sigma : @types.ClassTable,
+  g : Context,
+  h : Context,
+  declared : Array[String],
+) -> Context {
   let mut out = empty_context()
   g.each(fn(x, a) {
-    out = out.add(x, merge_entry(Some(a), h.get(x), declared.contains(x)))
+    out = out.add(
+      x,
+      merge_entry(sigma, Some(a), h.get(x), declared.contains(x)),
+    )
   })
   h.each(fn(x, b) {
     if !g.contains(x) {
-      out = out.add(x, merge_entry(None, Some(b), declared.contains(x)))
+      out = out.add(x, merge_entry(sigma, None, Some(b), declared.contains(x)))
     }
   })
   out
@@ -204,7 +232,11 @@ fn declared_type_of(e : Entry) -> Declared {
 }
 
 ///|
-fn merge_outcomes(rs : Array[Outcome], declared : Array[String]) -> Outcome {
+fn merge_outcomes(
+  sigma : @types.ClassTable,
+  rs : Array[Outcome],
+  declared : Array[String],
+) -> Outcome {
   let branches : Array[Context] = []
   let mypy_only = []
   for r in rs {
@@ -218,7 +250,7 @@ fn merge_outcomes(rs : Array[Outcome], declared : Array[String]) -> Outcome {
   }
   let mut acc = branches[0]
   for i in 1..<branches.length() {
-    acc = merge_context(acc, branches[i], declared)
+    acc = merge_context(sigma, acc, branches[i], declared)
   }
   // Mypy-only when every branch that falls through does so only for mypy.
   Assigns(

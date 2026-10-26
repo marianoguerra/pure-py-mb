@@ -67,5 +67,5 @@ test "accepted_by names the profile that opens the gate" {
   // silent rather than pointing somewhere that would not help.
   assert_eq(@profile.accepted_by("*args"), None)
   // And a prohibition is never a profile away, so it never gets a hint.
-  assert_eq(@profile.accepted_by("for loops prohibited"), None)
+  assert_eq(@profile.accepted_by("for loops not allowed in PurePy"), None)
 }

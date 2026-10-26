@@ -47,11 +47,11 @@ test "a rejection with a second place to look" {
 
 ///|
 test "a rejection with no position renders as a message alone" {
-  let d = @err.Diagnostic::new(Prohibited(msg="del prohibited"))
+  let d = @err.Diagnostic::new(Prohibited(msg="del not allowed in PurePy"))
   inspect(
     render("del x\n", "a.py", d),
     content=(
-      #|error[purepy::prohibited]: del prohibited
+      #|error[purepy::prohibited]: del not allowed in PurePy
       #|
     ),
   )
@@ -69,7 +69,6 @@ test "every reason that earns a help line has one" {
     ModuleAsValue(q="sys"),
     ClassAsValue(q="P"),
     SubmoduleNotImported(q="pkg.sub"),
-    TopLevelReturn,
   ]
   for r in with_help {
     let d = @err.Diagnostic::new(IllFormed(r))

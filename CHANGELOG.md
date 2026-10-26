@@ -6,6 +6,31 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.23.0: not allowed in PurePy
+
+The parser's refusals read `<form> not allowed in PurePy`, and a few are
+renamed: `unpacking assignment`, `unpacking in comprehensions`, and
+`dictionary` for `dict` in the dictionary forms. The parser now refuses what
+Python's compiler refuses and the checker used to: a variable twice in one
+case's pattern, a keyword twice in a constructor pattern, a key twice in a
+dictionary pattern, a keyword argument or a parameter twice, and a `return`
+outside a function; the checker's reasons for those are gone.
+
+Branches that assign a variable at different types join them, rather than
+leaving it possibly unassigned. A list or tuple pattern at a type with
+`range` values is refused, as is one at a type variable. A call statement
+whose callee is a union is checked at each part. A plain import may repeat a
+module (`import a.b` and `import a.c` both bind `a`); any other name an import
+prefix binds twice is refused.
+
+`round` of an infinity aborts with `OverflowError` and of a nan with
+`ValueError`, and so does arithmetic that meets a float with an integer too
+large to be one, as Python's does.
+
+The suite is flat: `<Python outcome>/<PurePy outcome>/...`, with
+`python-succeeds/agrees/` and the like, and a program is any directory with a
+`main.py`. `tools/conform.py` finds tests and expectations so.
+
 ### Specification v0.22.3
 
 Nothing a program sees: the reference's runner changed, and the

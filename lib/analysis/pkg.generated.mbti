@@ -42,6 +42,8 @@ pub fn declares(@ast.Stmt) -> Array[(String, @ast.Stmt)]
 
 pub fn declares_body(Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)]
 
+pub fn declares_imports(Array[@ast.Stmt]) -> Array[(String, @ast.Stmt)]
+
 pub let empty : @sorted_set.SortedSet[String]
 
 pub fn find_first_reassigning(ArrayView[Statement], @sorted_set.SortedSet[String]) -> @ast.Stmt?

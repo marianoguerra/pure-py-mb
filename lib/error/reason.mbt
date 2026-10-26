@@ -34,13 +34,9 @@ pub(all) enum Reason {
   ClassArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)
   TypeAliasArityMismatch(q~ : String, expected~ : Int32, given~ : Int32)
   UnknownFieldInPattern(c~ : String, xs~ : Array[String])
-  DuplicatePatternKeyword(c~ : String)
-  DuplicateDictKey(w~ : String)
-  NonlinearPattern(x~ : String)
   DuplicateMember(x~ : String, q~ : String)
   SubmoduleNotImported(q~ : String)
   UnassignedMember(x~ : String, q~ : String)
-  TopLevelReturn
   TopLevelAssertFalse
   UnknownModule(q~ : String)
   DuplicateImportedName(x~ : String)
@@ -57,7 +53,6 @@ pub(all) enum Reason {
   NoUnaryOverload(op~ : String, sigma~ : String)
   NotCallable(tau~ : String)
   KeywordArgumentsNotConstructor
-  DuplicateParameter(x~ : String, f~ : String?)
   CallArityMismatch(expected~ : Int32, given~ : Int32)
   TypeMismatch(expected~ : String, actual~ : String)
   LambdaTypeMismatch(expected~ : String, arity~ : Int32?)
@@ -65,7 +60,7 @@ pub(all) enum Reason {
   TupleIndexOutOfRange(index~ : BigInt, length~ : Int32)
   UnreachableCase(pattern~ : String)
   PatternClassUndetermined(c~ : String, tau~ : String)
-  SequenceKindMismatch(kind~ : String, tau~ : String)
+  SequenceKindMismatch(kind~ : String, tau~ : String, other~ : String)
   NotIterable(tau~ : String)
   UnknownField(c~ : String, x~ : String)
   NoneResult
@@ -122,17 +117,12 @@ pub fn Reason::message(self : Reason) -> String {
       "type alias '\{q}' expects \{expected} type arguments, given \{given}"
     UnknownFieldInPattern(c~, xs~) =>
       "pattern keywords for '\{c}' must be " + xs.join(", ")
-    DuplicatePatternKeyword(c~) => "duplicate keyword in pattern for '\{c}'"
-    DuplicateDictKey(w~) => "duplicate key '\{w}' in dict pattern"
-    NonlinearPattern(x~) => "repeated variable '\{x}' in pattern"
     DuplicateMember(x~, q~) =>
       "duplicate member of module '\{q}': it defines '\{x}' and also has submodule '\{q}.\{x}'"
     SubmoduleNotImported(q~) => "submodule '\{q}' is not imported"
     UnassignedMember(x~, q~) =>
       "member '\{x}' of module '\{q}' is not definitely assigned"
     TopLevelAssertFalse => "module body definitely reaches 'assert False'"
-    TopLevelReturn =>
-      "top-level return not allowed (module body must not return)"
     UnknownModule(q~) => "unknown module '\{q}'"
     DuplicateImportedName(x~) => "name '\{x}' imported twice"
     UnknownMember(x~, q~) => "module '\{q}' has no member '\{x}'"
@@ -156,13 +146,6 @@ pub fn Reason::message(self : Reason) -> String {
     NotCallable(tau~) => "values of type \{tau} cannot be called"
     KeywordArgumentsNotConstructor =>
       "keyword arguments in a call other than a constructor call"
-    DuplicateParameter(x~, f~) => {
-      let where_ = match f {
-        None => "lambda"
-        Some(name) => "function '\{name}'"
-      }
-      "duplicate parameter '\{x}' in \{where_}"
-    }
     CallArityMismatch(expected~, given~) =>
       "call expects \{expected} arguments, given \{given}"
     TypeMismatch(expected~, actual~) =>
@@ -181,10 +164,8 @@ pub fn Reason::message(self : Reason) -> String {
     UnreachableCase(pattern~) => "case \{pattern} is unreachable"
     PatternClassUndetermined(c~, tau~) =>
       "type arguments of '\{c}' in pattern not determined by type \{tau}"
-    SequenceKindMismatch(kind~, tau~) => {
-      let other = if kind == "tuple" { "list" } else { "tuple" }
+    SequenceKindMismatch(kind~, tau~, other~) =>
       "\{kind} pattern at \{tau}, which has \{other} values"
-    }
     NotIterable(tau~) => "values of type \{tau} cannot be iterated"
     UnknownField(c~, x~) => "class '\{c}' has no field '\{x}'"
     NoneResult => "call returning None used as an expression"
@@ -235,7 +216,6 @@ pub fn Reason::code(self : Reason) -> String {
     NoTypeArgument(..) => "no-type-argument"
     TypeAliasAsValue(..) => "type-alias-as-value"
     KeywordArgumentsNotConstructor => "keyword-arguments-not-constructor"
-    DuplicateParameter(..) => "duplicate-parameter"
     PatternClassUndetermined(..) => "pattern-class-undetermined"
     NoneResult => "none-result"
     BareReturn(..) => "bare-return"
@@ -244,13 +224,9 @@ pub fn Reason::code(self : Reason) -> String {
     MypyCompatibility(r) => return r.code()
     NotClass(..) => "not-class"
     UnknownFieldInPattern(..) => "unknown-field-in-pattern"
-    DuplicatePatternKeyword(..) => "duplicate-pattern-keyword"
-    DuplicateDictKey(..) => "duplicate-dict-key"
-    NonlinearPattern(..) => "nonlinear-pattern"
     DuplicateMember(..) => "duplicate-member"
     SubmoduleNotImported(..) => "submodule-not-imported"
     UnassignedMember(..) => "unassigned-member"
-    TopLevelReturn => "top-level-return"
     TopLevelAssertFalse => "top-level-assert-false"
     UnknownModule(..) => "unknown-module"
     UnknownMember(..) => "unknown-member"

@@ -45,11 +45,6 @@ test "the reason catalogue" {
       KeywordArgumentsNotConstructor,
       "keyword arguments in a call other than a constructor call",
     ),
-    (DuplicateParameter(x="x", f=None), "duplicate parameter 'x' in lambda"),
-    (
-      DuplicateParameter(x="x", f=Some("g")),
-      "duplicate parameter 'x' in function 'g'",
-    ),
     (
       PatternClassUndetermined(c="Box", tau="object"),
       "type arguments of 'Box' in pattern not determined by type object",
@@ -96,9 +91,6 @@ test "the reason catalogue" {
       UnknownFieldInPattern(c="P", xs=["y"]),
       "pattern keywords for 'P' must be y",
     ),
-    (DuplicatePatternKeyword(c="P"), "duplicate keyword in pattern for 'P'"),
-    (DuplicateDictKey(w="k"), "duplicate key 'k' in dict pattern"),
-    (NonlinearPattern(x="x"), "repeated variable 'x' in pattern"),
     (
       DuplicateMember(x="sub", q="pkg"),
       "duplicate member of module 'pkg': it defines 'sub' and also has submodule 'pkg.sub'",
@@ -107,10 +99,6 @@ test "the reason catalogue" {
     (
       UnassignedMember(x="x", q="m"),
       "member 'x' of module 'm' is not definitely assigned",
-    ),
-    (
-      TopLevelReturn,
-      "top-level return not allowed (module body must not return)",
     ),
     (UnknownModule(q="nope"), "unknown module 'nope'"),
     (UnknownMember(x="y", q="m"), "module 'm' has no member 'y'"),
@@ -163,7 +151,7 @@ test "the reason catalogue" {
     ),
     (UnreachableCase(pattern="[a, b]"), "case [a, b] is unreachable"),
     (
-      SequenceKindMismatch(kind="list", tau="tuple[int]"),
+      SequenceKindMismatch(kind="list", tau="tuple[int]", other="tuple"),
       "list pattern at tuple[int], which has tuple values",
     ),
     (NotIterable(tau="int"), "values of type int cannot be iterated"),
@@ -179,7 +167,7 @@ test "the reason catalogue" {
       "values of type list[int] have no method 'append'",
     ),
   ]
-  assert_eq(cases.length(), 67)
+  assert_eq(cases.length(), 61)
   for c in cases {
     assert_eq(c.0.message(), c.1)
   }
@@ -197,8 +185,8 @@ test "a rejection's exit code and short form" {
   assert_eq(d.exit_code(), 3)
   assert_eq(d.short("a.py"), "a.py:3:4: 'x' is not definitely assigned")
   // With no position the reference prints the path and the message only.
-  let e = @err.Diagnostic::new(Prohibited(msg="del prohibited"))
-  assert_eq(e.short("a.py"), "a.py: del prohibited")
+  let e = @err.Diagnostic::new(Prohibited(msg="del not allowed in PurePy"))
+  assert_eq(e.short("a.py"), "a.py: del not allowed in PurePy")
   assert_eq(e.exit_code(), 1)
   assert_eq(
     @err.Reason::PossiblyUnassigned(x="x", declared_in_branch=false).code(),

@@ -54,6 +54,8 @@ pub fn getslice(Value, SliceBounds) -> Outcome
 
 pub fn host_fn(String) -> Value
 
+pub fn int_to_float(@bigint.BigInt) -> Double?
+
 pub fn iter(Value) -> Array[Value]?
 
 pub fn order(Value, Value) -> Int32?

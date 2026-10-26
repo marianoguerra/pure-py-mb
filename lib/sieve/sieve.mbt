@@ -128,13 +128,13 @@ fn not_yet(
   span : @basic.Span,
 ) -> @err.PurePyError {
   ignore(issue)
-  prohibited("\{feature} prohibited", span)
+  prohibited("\{feature} not allowed in PurePy", span)
 }
 
 ///|
 fn not_yet_nowhere(feature : String, issue : Int32) -> @err.PurePyError {
   ignore(issue)
-  prohibited_nowhere("\{feature} prohibited")
+  prohibited_nowhere("\{feature} not allowed in PurePy")
 }
 
 // ---------------------------------------------------------------------------
@@ -154,7 +154,18 @@ fn Sieve::check_top_level(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise 
   }
   for s in stmts[i:] {
     if @analysis.is_import(s) {
-      raise prohibited("import after another statement prohibited", s.span())
+      raise prohibited(
+        "import after another statement not allowed in PurePy",
+        s.span(),
+      )
+    }
+    match returns_outside_function(s) {
+      [r, ..] =>
+        raise prohibited(
+          "return outside a function not allowed in PurePy",
+          r.span(),
+        )
+      [] => ()
     }
     match s {
       ClassDef(..) => check_classdef(s)
@@ -165,6 +176,43 @@ fn Sieve::check_top_level(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise 
       _ => self.check_stmt(s)
     }
   }
+}
+
+///|
+/// The returns of a top-level statement, which Python refuses when it
+/// compiles the module.
+fn returns_outside_function(s : @ast.Stmt) -> Array[@ast.Stmt] {
+  match s {
+    Return(..) => [s]
+    If(body~, or_else~, ..) => {
+      let out = []
+      for t in [..body, ..or_else] {
+        out.append(returns_outside_function(t))
+      }
+      out
+    }
+    Match(cases~, ..) => {
+      let out = []
+      for c in cases {
+        for t in c.body {
+          out.append(returns_outside_function(t))
+        }
+      }
+      out
+    }
+    _ => []
+  }
+}
+
+///|
+/// The first element that occurs twice.
+fn[T : Eq] duplicate(xs : Array[T]) -> T? {
+  for i, x in xs {
+    if xs[:i].contains(x) {
+      return Some(x)
+    }
+  }
+  None
 }
 
 ///|
@@ -182,7 +230,7 @@ fn check_import(node : @ast.Stmt) -> Unit raise {
     }
     ImportFrom(names~, level~, ..) => {
       if names.is_empty() {
-        raise prohibited("empty name list prohibited", span)
+        raise prohibited("empty name list not allowed in PurePy", span)
       }
       if level > 0 {
         raise not_yet("relative imports", 126, span)
@@ -207,7 +255,7 @@ fn check_annotation(e : @ast.Expr?) -> Unit raise {
     Some(a) =>
       if @types.parse_annotation(a) is None {
         raise prohibited(
-          "annotation that is not a type expression prohibited",
+          "annotation that is not a type expression not allowed in PurePy",
           a.span(),
         )
       }
@@ -225,27 +273,33 @@ fn check_type_params(
   let names = params.map(fn(p) { p.name() })
   for i, x in names {
     if names[:i].contains(x) {
-      raise prohibited("duplicate type parameter \{x} prohibited", span)
+      raise prohibited(
+        "duplicate type parameter \{x} not allowed in PurePy",
+        span,
+      )
     }
   }
   for p in params {
     match p {
       TypeVar(name~, bound=Some(Tuple(..)), ..) =>
         raise prohibited(
-          "constraints on type parameter \{name} prohibited",
+          "constraints on type parameter \{name} not allowed in PurePy",
           p.span(),
         )
       TypeVar(name~, bound=Some(_), ..) =>
-        raise prohibited("bound on type parameter \{name} prohibited", p.span())
+        raise prohibited(
+          "bound on type parameter \{name} not allowed in PurePy",
+          p.span(),
+        )
       TypeVar(..) => ()
       ParamSpec(name~, ..) =>
         raise prohibited(
-          "ParamSpec type parameter **\{name} prohibited",
+          "ParamSpec type parameter **\{name} not allowed in PurePy",
           p.span(),
         )
       TypeVarTuple(name~, ..) =>
         raise prohibited(
-          "TypeVarTuple type parameter *\{name} prohibited",
+          "TypeVarTuple type parameter *\{name} not allowed in PurePy",
           p.span(),
         )
     }
@@ -271,11 +325,16 @@ fn Sieve::check_target(
       for x in elts {
         self.check_target(x, span)
       }
-    Subscript(..) => raise prohibited("item assignment prohibited", span)
-    Attribute(..) => raise prohibited("attribute assignment prohibited", span)
-    Starred(..) => raise prohibited("starred expressions prohibited", span)
+    Subscript(..) =>
+      raise prohibited("item assignment not allowed in PurePy", span)
+    Attribute(..) =>
+      raise prohibited("attribute assignment not allowed in PurePy", span)
+    Starred(..) =>
+      raise prohibited("starred expressions not allowed in PurePy", span)
     _ =>
-      raise prohibited("assignment target other than a name prohibited", span)
+      raise prohibited(
+        "assignment target other than a name not allowed in PurePy", span,
+      )
   }
 }
 
@@ -293,20 +352,18 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     Pass(..) => ()
     Assign(targets~, value~, ..) => {
       if targets.length() != 1 {
-        raise prohibited("multiple assignment targets prohibited", span)
+        raise prohibited(
+          "multiple assignment targets not allowed in PurePy", span,
+        )
       }
       match targets[0] {
-        Subscript(..) => raise prohibited("item assignment prohibited", span)
+        Subscript(..) =>
+          raise prohibited("item assignment not allowed in PurePy", span)
         Attribute(..) =>
-          raise prohibited("attribute assignment prohibited", span)
+          raise prohibited("attribute assignment not allowed in PurePy", span)
         Name(..) => ()
         _ => {
-          self.gate(
-            DestructuringAssignment,
-            "destructuring assignment",
-            54,
-            span,
-          )
+          self.gate(DestructuringAssignment, "unpacking assignment", 54, span)
           self.check_target(targets[0], span)
         }
       }
@@ -324,8 +381,9 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     }
     // `async def` is a different class in CPython and never reaches the
     // `FunctionDef` arm, so its arguments, decorators and annotation are not
-    // examined: it is simply "async prohibited".
-    FunctionDef(is_async=true, ..) => raise prohibited("async prohibited", span)
+    // examined: it is simply "async not allowed in PurePy".
+    FunctionDef(is_async=true, ..) =>
+      raise prohibited("async not allowed in PurePy", span)
     FunctionDef(args~, body~, decorators~, returns~, type_params~, ..) => {
       check_type_params(type_params, span)
       self.check_arguments(args)
@@ -333,10 +391,10 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
         raise not_yet("decorators", 58, span)
       }
       if args.args.iter().any(fn(a) { a.annotation is None }) {
-        raise prohibited("unannotated parameter prohibited", span)
+        raise prohibited("unannotated parameter not allowed in PurePy", span)
       }
       if returns is None {
-        raise prohibited("unannotated return type prohibited", span)
+        raise prohibited("unannotated return type not allowed in PurePy", span)
       }
       check_annotation(returns)
       self.check_body(body)
@@ -350,11 +408,13 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
       }
     }
     AugAssign(..) =>
-      raise prohibited("augmented assignment (+=, etc.) prohibited", span)
+      raise prohibited(
+        "augmented assignment (+=, etc.) not allowed in PurePy", span,
+      )
     AnnAssign(target~, annotation~, value~, ..) => {
       if !(target is Name(..)) {
         raise prohibited(
-          "assignment target other than a simple name prohibited", span,
+          "assignment target other than a simple name not allowed in PurePy", span,
         )
       }
       check_annotation(Some(annotation))
@@ -364,25 +424,28 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
         None => ()
       }
     }
-    Delete(..) => raise prohibited("del prohibited", span)
-    For(is_async=false, ..) => raise prohibited("for loops prohibited", span)
-    While(..) => raise prohibited("while loops prohibited", span)
+    Delete(..) => raise prohibited("del not allowed in PurePy", span)
+    For(is_async=false, ..) =>
+      raise prohibited("for loops not allowed in PurePy", span)
+    While(..) => raise prohibited("while loops not allowed in PurePy", span)
     With(is_async=false, ..) =>
-      raise prohibited("with statements prohibited", span)
-    For(..) | With(..) => raise prohibited("async prohibited", span)
-    Raise(..) => raise prohibited("raise prohibited", span)
-    Try(..) => raise prohibited("try/except prohibited", span)
+      raise prohibited("with statements not allowed in PurePy", span)
+    For(..) | With(..) => raise prohibited("async not allowed in PurePy", span)
+    Raise(..) => raise prohibited("raise not allowed in PurePy", span)
+    Try(..) => raise prohibited("try/except not allowed in PurePy", span)
     Import(..) | ImportFrom(..) =>
-      raise prohibited("import outside the module top level prohibited", span)
-    Global(..) => raise prohibited("global prohibited", span)
-    Nonlocal(..) => raise prohibited("nonlocal prohibited", span)
+      raise prohibited(
+        "import outside the module top level not allowed in PurePy", span,
+      )
+    Global(..) => raise prohibited("global not allowed in PurePy", span)
+    Nonlocal(..) => raise prohibited("nonlocal not allowed in PurePy", span)
     ClassDef(..) =>
       raise prohibited(
-        "class definition outside the module top level prohibited", span,
+        "class definition outside the module top level not allowed in PurePy", span,
       )
     TypeAlias(..) =>
       raise prohibited(
-        "type statement outside the module top level prohibited", span,
+        "type statement outside the module top level not allowed in PurePy", span,
       )
     Match(subject~, cases~, ..) => {
       self.check_expr(subject)
@@ -392,11 +455,19 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
           raise not_yet_nowhere("case guards", 190)
         }
         self.check_pattern(c.pattern)
+        match duplicate(@analysis.binds_seq(c.pattern)) {
+          Some(x) =>
+            raise prohibited(
+              "duplicate variable \{x} in pattern not allowed in PurePy",
+              c.pattern.span(),
+            )
+          None => ()
+        }
         self.check_body(c.body)
       }
     }
-    Break(..) => raise prohibited("break prohibited", span)
-    Continue(..) => raise prohibited("continue prohibited", span)
+    Break(..) => raise prohibited("break not allowed in PurePy", span)
+    Continue(..) => raise prohibited("continue not allowed in PurePy", span)
   }
 }
 
@@ -412,31 +483,33 @@ fn check_classdef(node : @ast.Stmt) -> Unit raise {
       }
       check_type_params(type_params, span)
       if decorators.is_empty() {
-        raise prohibited("undecorated class prohibited", span)
+        raise prohibited("undecorated class not allowed in PurePy", span)
       }
       if decorators.length() > 1 {
-        raise prohibited("multiple class decorators prohibited", span)
+        raise prohibited(
+          "multiple class decorators not allowed in PurePy", span,
+        )
       }
       if !(decorators[0] is Name(id="dataclass", ..)) {
         raise prohibited(
-          "class decorator other than @dataclass prohibited", span,
+          "class decorator other than @dataclass not allowed in PurePy", span,
         )
       }
       if bases.length() > 1 {
-        raise prohibited("multiple inheritance prohibited", span)
+        raise prohibited("multiple inheritance not allowed in PurePy", span)
       }
       if bases.length() > 0 {
         let base = bases[0]
         if !(@types.parse_annotation(base) is Some(TypeName(_, _))) {
           raise prohibited(
-            "base class other than a name, optionally applied to type arguments prohibited",
+            "base class other than a name, optionally applied to type arguments not allowed in PurePy",
             base.span(),
           )
         }
         check_annotation(Some(base))
       }
       if keywords.length() > 0 {
-        raise prohibited("class keyword arguments prohibited", span)
+        raise prohibited("class keyword arguments not allowed in PurePy", span)
       }
       if body.length() == 1 && body[0] is Pass(..) {
         return
@@ -456,17 +529,18 @@ fn check_field(stmt : @ast.Stmt) -> Unit raise {
     AnnAssign(target~, annotation~, value~, ..) => {
       if !(target is Name(..)) {
         raise prohibited(
-          "field target other than a simple name prohibited", span,
+          "field target other than a simple name not allowed in PurePy", span,
         )
       }
       if value is Some(_) {
-        raise prohibited("field default values prohibited", span)
+        raise prohibited("field default values not allowed in PurePy", span)
       }
       check_annotation(Some(annotation))
     }
     _ =>
       raise prohibited(
-        "dataclass member other than a field declaration prohibited", span,
+        "dataclass member other than a field declaration not allowed in PurePy",
+        span,
       )
   }
 }
@@ -497,7 +571,9 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
         Attribute(..) => raise not_yet("attribute value patterns", 86, span)
         _ => ()
       }
-      raise prohibited("complex and bytes literal patterns prohibited", span)
+      raise prohibited(
+        "complex and bytes literal patterns not allowed in PurePy", span,
+      )
     }
     MatchSingleton(..) => ()
     MatchAs(pattern~, ..) =>
@@ -509,26 +585,46 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
       for p in patterns {
         self.check_pattern(p)
       }
-    MatchClass(patterns~, kwd_patterns~, ..) => {
+    MatchClass(patterns~, kwd_attrs~, kwd_patterns~, ..) => {
       for p in patterns {
         self.check_pattern(p)
       }
       for p in kwd_patterns {
         self.check_pattern(p)
       }
+      match duplicate(kwd_attrs) {
+        Some(k) =>
+          raise prohibited(
+            "duplicate keyword \{k} in constructor pattern not allowed in PurePy",
+            span,
+          )
+        None => ()
+      }
     }
     MatchMapping(keys~, patterns~, rest~, ..) => {
       if rest is Some(_) {
-        raise not_yet("rest capture in dict patterns", 84, span)
+        raise not_yet("rest capture in dictionary patterns", 84, span)
       }
       for k in keys {
         if !(k is Constant(value=Str(_), ..)) {
           // The KEY's position, not the pattern's.
           raise prohibited(
-            "dict pattern key other than a string literal prohibited",
+            "dictionary pattern key other than a string literal not allowed in PurePy",
             k.span(),
           )
         }
+      }
+      let ws = keys.map(fn(k) {
+        guard k is Constant(value=Str(w), ..) else { abort("a string key") }
+        w
+      })
+      match duplicate(ws) {
+        Some(w) =>
+          raise prohibited(
+            "duplicate key '\{w}' in dictionary pattern not allowed in PurePy",
+            span,
+          )
+        None => ()
       }
       for p in patterns {
         self.check_pattern(p)
@@ -546,14 +642,21 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
     Constant(value~, ..) =>
       match value {
         Int(_) | Float(_) | Str(_) | Bool(_) | None => ()
-        _ => raise prohibited("\{value.type_name()} literal prohibited", span)
+        _ =>
+          raise prohibited(
+            "\{value.type_name()} literal not allowed in PurePy",
+            span,
+          )
       }
     Name(..) => ()
     BinOp(left~, op~, right~, ..) => {
       match op {
         Add | Sub | Mult | Div | FloorDiv | Mod | Pow | BitOr => ()
         _ =>
-          raise prohibited("binary operator '\{op.symbol()}' prohibited", span)
+          raise prohibited(
+            "binary operator '\{op.symbol()}' not allowed in PurePy",
+            span,
+          )
       }
       self.check_expr(left)
       self.check_expr(right)
@@ -562,7 +665,10 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       match op {
         Not | UAdd | USub => self.check_expr(operand)
         _ =>
-          raise prohibited("unary operator '\{op.symbol()}' prohibited", span)
+          raise prohibited(
+            "unary operator '\{op.symbol()}' not allowed in PurePy",
+            span,
+          )
       }
     BoolOp(values~, ..) => {
       if values.length() > 2 {
@@ -609,9 +715,20 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       }
       for k in keywords {
         if k.arg is None {
-          raise prohibited("dict unpacking in argument list prohibited", k.span)
+          raise prohibited(
+            "dictionary unpacking in argument list not allowed in PurePy",
+            k.span,
+          )
         }
         self.check_expr(k.value)
+      }
+      match duplicate(keywords.map(fn(k) { k.arg })) {
+        Some(Some(k)) =>
+          raise prohibited(
+            "duplicate keyword argument \{k} not allowed in PurePy",
+            span,
+          )
+        _ => ()
       }
     }
     IfExp(cond~, body~, or_else~, ..) => {
@@ -631,7 +748,8 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       for k in keys {
         match k {
           Some(e) => self.check_expr(e)
-          None => raise prohibited("dict unpacking prohibited", span)
+          None =>
+            raise prohibited("dictionary unpacking not allowed in PurePy", span)
         }
       }
       for v in values {
@@ -668,11 +786,14 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       }
     }
     GeneratorExp(..) =>
-      raise prohibited("generator expressions prohibited", span)
-    NamedExpr(..) => raise prohibited("walrus operator (:=) prohibited", span)
-    Starred(..) => raise prohibited("starred expressions prohibited", span)
-    Await(..) => raise prohibited("async prohibited", span)
-    Yield(..) | YieldFrom(..) => raise prohibited("yield prohibited", span)
+      raise prohibited("generator expressions not allowed in PurePy", span)
+    NamedExpr(..) =>
+      raise prohibited("walrus operator (:=) not allowed in PurePy", span)
+    Starred(..) =>
+      raise prohibited("starred expressions not allowed in PurePy", span)
+    Await(..) => raise prohibited("async not allowed in PurePy", span)
+    Yield(..) | YieldFrom(..) =>
+      raise prohibited("yield not allowed in PurePy", span)
     JoinedStr(parts~, ..) => {
       self.gate(FStrings, "f-strings", 55, span)
       for part in parts {
@@ -711,10 +832,10 @@ fn Sieve::check_generator(
   node : @ast.Comprehension,
 ) -> Unit raise {
   if node.is_async {
-    raise prohibited_nowhere("async comprehensions prohibited")
+    raise prohibited_nowhere("async comprehensions not allowed in PurePy")
   }
   if !(node.target is Name(..)) {
-    raise not_yet_nowhere("destructuring in comprehensions", 54)
+    raise not_yet_nowhere("unpacking in comprehensions", 54)
   }
   self.check_expr(node.iter)
   for i in node.ifs {
@@ -732,7 +853,7 @@ fn Sieve::check_arguments(self : Sieve, node : @ast.Arguments) -> Unit raise {
     raise not_yet_nowhere("**kwargs", 57)
   }
   if node.kwonlyargs.length() > 0 {
-    raise prohibited_nowhere("keyword-only arguments prohibited")
+    raise prohibited_nowhere("keyword-only arguments not allowed in PurePy")
   }
   if node.defaults.length() > 0 || node.kw_defaults.length() > 0 {
     self.gate_nowhere(DefaultArguments, "default arguments", 56)
@@ -749,7 +870,7 @@ fn Sieve::check_arguments(self : Sieve, node : @ast.Arguments) -> Unit raise {
             // Already prohibited as literals in their own right; refused here
             // too so the message names the same thing wherever it is written.
             raise prohibited(
-              "\{value.type_name()} literals prohibited",
+              "\{value.type_name()} literals not allowed in PurePy",
               d.span(),
             )
           }
@@ -763,9 +884,14 @@ fn Sieve::check_arguments(self : Sieve, node : @ast.Arguments) -> Unit raise {
     }
   }
   if node.posonlyargs.length() > 0 {
-    raise prohibited_nowhere("positional-only arguments prohibited")
+    raise prohibited_nowhere("positional-only arguments not allowed in PurePy")
   }
   for a in node.args {
     check_annotation(a.annotation)
+  }
+  match duplicate(node.args.map(fn(a) { a.arg })) {
+    Some(x) =>
+      raise prohibited_nowhere("duplicate parameter \{x} not allowed in PurePy")
+    None => ()
   }
 }

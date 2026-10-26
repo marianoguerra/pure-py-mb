@@ -192,7 +192,7 @@ fn check_module_body(
     None => ()
   }
   let (prefix, stmts) = @analysis.split_imports(m.body)
-  let imported = @analysis.declares_body(prefix).map(fn(d) { d.0 })
+  let imported = @analysis.declares_imports(prefix)
   let empty_ctx : ModCtx = { gamma: empty_context(), program, q, }
   let gamma = check_imports_prefix(prefix[:], empty_ctx)
   let body = [name_declaration(q), ..stmts]
@@ -250,11 +250,6 @@ fn check_import(iota : @ast.Stmt, ctx : ModCtx) -> Context raise {
         abort("a relative import is rejected by the sieve")
       }
       let xs = names.map(fn(a) { a.name })
-      for i, x in xs {
-        if xs[:i].contains(x) {
-          raise ill(DuplicateImportedName(x~), span)
-        }
-      }
       let delta = check_imported(q, span, ctx)
       // Every module containing the imported one is loaded too, unless it
       // contains the importing module -- which is being checked already.

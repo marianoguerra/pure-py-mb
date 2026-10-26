@@ -84,7 +84,7 @@ checker or the evaluator.
   `core`, accepted under the profile, and prints what `python3` prints.
   `test/profile-policy.json` is a SEPARATE ratchet, so a profile can never move
   a PurePy floor. A profile may open a `not_yet` gate -- a form the reference
-  once planned, and since v0.22 prohibits with the same message and exit code
+  once planned, and since v0.22 refuses with the same message and exit code
   as the rest -- and never a `prohibited` one; `test/profile/refused/` is that
   claim as a corpus.
 - **Three modules, one workspace.** `lib/` is `marianoguerra/pure-py`, `cli/`
