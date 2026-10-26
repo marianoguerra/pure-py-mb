@@ -189,7 +189,7 @@ module-level/excluded/static/predefined_member_unknown.py	0	: ok
 module-level/excluded/static/print_arity.py	0	: ok
 module-level/excluded/static/print_keyword_arg.py	0	: ok
 module-level/excluded/static/pu_captured_by_def.py	0	: ok
-module-level/excluded/static/range_two_args.py	0	: ok
+module-level/excluded/static/range_one_arg.py	0	: ok
 module-level/excluded/static/reassign/def_assign.py	0	: ok
 module-level/excluded/static/reassign/match.py	0	: ok
 module-level/excluded/static/redeclaration.py	0	: ok
@@ -553,9 +553,9 @@ module-level/semantically-valid/predefined_name.py	0	: ok
 module-level/semantically-valid/range_comprehension.py	0	: ok
 module-level/semantically-valid/range_empty.py	0	: ok
 module-level/semantically-valid/range_eq.py	0	: ok
+module-level/semantically-valid/range_fields.py	0	: ok
 module-level/semantically-valid/range_len.py	0	: ok
 module-level/semantically-valid/range_nested.py	0	: ok
-module-level/semantically-valid/range_stop.py	0	: ok
 module-level/semantically-valid/return_annotation.py	0	: ok
 module-level/semantically-valid/scopes/closure_capture.py	0	: ok
 module-level/semantically-valid/scopes/lambda_capture.py	0	: ok

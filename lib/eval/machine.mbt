@@ -1290,9 +1290,9 @@ fn Interp::comp_iter(
   }
   // A range draws its numbers in one move, so the budget pays for them
   // before they are drawn rather than after.
-  match @value.range_stop(v) {
-    Some(n) =>
-      if !self.spend(@value.range_length(n)) {
+  match @value.range_bounds(v) {
+    Some(r) =>
+      if !self.spend(@value.range_length(r)) {
         return Halt(Stuck("a run longer than \{self.max_steps} steps"))
       }
     None => ()

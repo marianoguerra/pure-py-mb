@@ -267,15 +267,18 @@ test "the builtins" {
     "2 3 1\n",
   )
   assert_eq(run("print(len(1))\n"), "!TypeError")
-  // `range` is a class since v0.18, with one field: `stop`. Its value prints
-  // as Python's, and a generator and `len` read it as its numbers.
-  assert_eq(run("print(range(3))\n"), "range(0, 3)\n")
-  assert_eq(run("print(range(3).stop)\n"), "3\n")
-  assert_eq(run("print(len(range(3)), len(range(-1)))\n"), "3 0\n")
-  assert_eq(run("print([i for i in range(3)])\n"), "[0, 1, 2]\n")
+  // `range` is a class since v0.18, with two fields from v0.18.2: `start`
+  // and `stop`. Its value prints as Python's, and a generator and `len` read
+  // it as its numbers.
+  assert_eq(run("print(range(1, 3))\n"), "range(1, 3)\n")
+  assert_eq(run("print(range(1, 3).stop)\n"), "3\n")
+  assert_eq(run("print(len(range(0, 3)), len(range(0, -1)))\n"), "3 0\n")
+  assert_eq(run("print([i for i in range(1, 4)])\n"), "[1, 2, 3]\n")
   assert_eq(
-    run("print(range(-1) == range(-2), range(2) == range(3))\n"),
-    "True False\n",
+    run(
+      "print(range(0, -1) == range(5, 2), range(0, 2) == range(0, 3), range(1, 3) == range(1, 3))\n",
+    ),
+    "True False True\n",
   )
 }
 

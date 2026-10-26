@@ -29,8 +29,8 @@ async fn Interp::call_primitive(
     Len =>
       if args.length() != 1 {
         Aborts(TypeError)
-      } else if @value.range_stop(args[0]) is Some(n) {
-        Val(Int(@value.range_length(n)))
+      } else if @value.range_bounds(args[0]) is Some(r) {
+        Val(Int(@value.range_length(r)))
       } else {
         match @value.iter(args[0]) {
           Some(xs) => Val(Int(BigInt::from_int(xs.length())))

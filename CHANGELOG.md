@@ -6,6 +6,12 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.18.2: `range(start, stop)`
+
+`range` has two fields, `start` and `stop`, both required: `range(1, 3)` is
+`1, 2`, prints as `range(1, 3)`, and two ranges are equal when both are
+empty or both start at the same number and draw as many.
+
 ### Specification v0.18.1
 
 Nothing a program sees: the reference's own test runner changed, and the

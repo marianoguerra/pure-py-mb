@@ -189,7 +189,7 @@ module-level/excluded/static/predefined_member_unknown.py	3	:3:11: module 'math'
 module-level/excluded/static/print_arity.py	3	:2:0: call expects 1 arguments, given 2
 module-level/excluded/static/print_keyword_arg.py	3	:2:0: keyword arguments in a call other than a constructor call
 module-level/excluded/static/pu_captured_by_def.py	3	:7:15: 'x' is not definitely assigned
-module-level/excluded/static/range_two_args.py	3	:1:18: constructor for 'range' expects 1 arguments, got 2
+module-level/excluded/static/range_one_arg.py	3	:1:18: constructor for 'range' expects 2 arguments, got 1
 module-level/excluded/static/reassign/def_assign.py	3	:7:4: 'x' is already assigned
 module-level/excluded/static/reassign/match.py	3	:7:4: 'y' is already assigned
 module-level/excluded/static/redeclaration.py	3	:3:0: 'x' is already declared
@@ -335,7 +335,7 @@ module-level/python-error/static/pat_dict_nonlinear.py	3	:3:9: repeated variable
 module-level/python-error/static/pat_list_on_tuple_component.py	3	:4:14: list pattern at tuple[int, int], which has tuple values
 module-level/python-error/static/pattern_var_before_match.py	3	:2:6: 'x' is unbound
 module-level/python-error/static/range_pattern.py	3	:2:9: 'range' not permitted in a constructor pattern
-module-level/python-error/static/range_str_arg.py	3	:1:16: expected type int, given Literal['a']
+module-level/python-error/static/range_str_arg.py	3	:1:19: expected type int, given Literal['a']
 module-level/python-error/static/self_referential_field.py	3	:5:0: 'Node' is unbound
 module-level/python-error/static/shadowed_dict.py	3	:3:0: 'dict' is not bound as a predefined name
 module-level/python-error/static/shadowed_list.py	3	:3:0: 'list' is not bound as a predefined name
@@ -553,9 +553,9 @@ module-level/semantically-valid/predefined_name.py	0	: ok
 module-level/semantically-valid/range_comprehension.py	0	: ok
 module-level/semantically-valid/range_empty.py	0	: ok
 module-level/semantically-valid/range_eq.py	0	: ok
+module-level/semantically-valid/range_fields.py	0	: ok
 module-level/semantically-valid/range_len.py	0	: ok
 module-level/semantically-valid/range_nested.py	0	: ok
-module-level/semantically-valid/range_stop.py	0	: ok
 module-level/semantically-valid/return_annotation.py	0	: ok
 module-level/semantically-valid/scopes/closure_capture.py	0	: ok
 module-level/semantically-valid/scopes/lambda_capture.py	0	: ok

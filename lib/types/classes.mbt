@@ -18,11 +18,12 @@ pub(all) struct ClassTableEntry {
 pub let range_class : String = "builtins.range"
 
 ///|
-/// The class table every program starts with: `range`, with its `stop`.
+/// The class table every program starts with: `range`, with its `start` and
+/// its `stop`.
 pub fn predefined_classes() -> ClassTable {
   @sorted_map.SortedMap::new().add(range_class, {
     type_params: [],
-    own_fields: [("stop", t_int)],
+    own_fields: [("start", t_int), ("stop", t_int)],
     base: None,
   })
 }

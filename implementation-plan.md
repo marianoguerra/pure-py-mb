@@ -1217,6 +1217,7 @@ below describe v0.15.1 and are kept as written; `lib/error/reason.mbt` and
 | v0.17.0 | declarations: a variable is declared with its type and assigned once; the capture rules and class rebinding fold into redeclaration and reassignment; branches merge by equality; `__name__` is in every signature | `lib/check` (`scope`, `check_assignments_declared`, the new entries `Unbound`/`DU`/`PU`), `lib/analysis` (`declares`, `assign_targets`, `pattern_bound`), `lib/sieve` (a bare declaration), `lib/eval` |
 | v0.18.0 | polymorphism: generic functions (type schemes), generic classes, type aliases, PEP 695 syntax; `range` a predefined class; `match` typed by the remaining type; mypy-compatibility rejections; sieve messages reworded; cross-form equality is `False` | `lib/ast`, `lib/parser`, `lib/write` (type parameters, `type`), `lib/types` (substitution, instances), `lib/check` (rewritten `match`), `lib/sieve`, `lib/value` and `lib/eval` (`range`, equality), `tools/conform.py` (one layout for both tiers) |
 | v0.18.1 | the reference's test runner only | `test/conformance/run-all.py` |
+| v0.18.2 | `range` has `start` and `stop` | `lib/types` (the predefined class), `lib/value` and `lib/eval` |
 
 Decisions made on the way, recorded as §9's are:
 

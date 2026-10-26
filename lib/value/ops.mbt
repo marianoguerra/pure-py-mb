@@ -50,9 +50,13 @@ pub fn eq(a : Value, b : Value) -> Bool? {
       eq_elems(left, right)
     }
     // Two ranges compare by their sequences, so that
-    // `range(-1) == range(-2)`.
-    (Obj(_, _), Obj(_, _)) if range_stop(a) is Some(m) &&
-      range_stop(b) is Some(n) => Some(range_length(m) == range_length(n))
+    // `range(0, -1) == range(0, -2)`: equal when both are empty, or when they
+    // start at the same number and draw as many.
+    (Obj(_, _), Obj(_, _)) if range_bounds(a) is Some(r) &&
+      range_bounds(b) is Some(q) => {
+      let (lr, lq) = (range_length(r), range_length(q))
+      Some(lr == lq && (lr == 0N || r.0 == q.0))
+    }
     (Obj(ca, ra), Obj(cb, rb)) => {
       if ca.name != cb.name {
         return Some(false)
@@ -96,7 +100,7 @@ fn Value::form(self : Value) -> Int32 {
 }
 
 ///|
-/// The class `range` is: one field, `stop`.
+/// The class `range` is: two fields, `start` and `stop`.
 pub let range_class_name : String = "builtins.range"
 
 ///|
@@ -104,18 +108,18 @@ pub fn range_entry() -> @context.ClassEntry {
   {
     context: @context.empty_context(),
     name: range_class_name,
-    own_fields: ["stop"],
+    own_fields: ["start", "stop"],
     base: None,
   }
 }
 
 ///|
-/// A range object's stop.
-pub fn range_stop(v : Value) -> BigInt? {
+/// A range object's start and stop.
+pub fn range_bounds(v : Value) -> (BigInt, BigInt)? {
   match v {
     Obj(c, env) if c.name == range_class_name =>
-      match env.get("stop") {
-        Some(Int(n)) => Some(n)
+      match (env.get("start"), env.get("stop")) {
+        (Some(Int(m)), Some(Int(n))) => Some((m, n))
         _ => Option::None
       }
     _ => Option::None
@@ -123,12 +127,13 @@ pub fn range_stop(v : Value) -> BigInt? {
 }
 
 ///|
-/// How many numbers a range with this stop draws.
-pub fn range_length(stop : BigInt) -> BigInt {
-  if stop < 0N {
+/// How many numbers a range draws.
+pub fn range_length(bounds : (BigInt, BigInt)) -> BigInt {
+  let (m, n) = bounds
+  if n <= m {
     0N
   } else {
-    stop
+    n - m
   }
 }
 
@@ -246,11 +251,11 @@ pub fn elems(v : Value) -> Array[Value]? {
 /// What a generator draws from a value: the KEYS of a dictionary, and
 /// otherwise its elements.
 pub fn iter(v : Value) -> Array[Value]? {
-  match range_stop(v) {
-    Some(n) => {
+  match range_bounds(v) {
+    Some(r) => {
       let out = []
-      for i in 0..<range_length(n).to_int() {
-        out.push(Value::Int(BigInt::from_int(i)))
+      for i in 0..<range_length(r).to_int() {
+        out.push(Value::Int(r.0 + BigInt::from_int(i)))
       }
       return Some(out)
     }
