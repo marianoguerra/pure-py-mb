@@ -215,7 +215,7 @@ fn Interp::predefined_value(self : Interp, q : String, x : String) -> Value {
   match (q, x) {
     ("builtins", "print") => Prim(Print)
     ("builtins", "len") => Prim(Len)
-    ("builtins", "range") => Prim(Range)
+    ("builtins", "range") => Class(@value.range_entry())
     ("math", "pi") => Float(3.141592653589793)
     ("math", "e") => Float(2.718281828459045)
     ("math", "sqrt") => Prim(Sqrt)

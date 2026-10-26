@@ -45,6 +45,7 @@ pub(all) enum Stmt {
     decorators~ : Array[Expr],
     returns~ : Expr?,
     is_async~ : Bool,
+    type_params~ : Array[TypeParam],
     span~ : @basic.Span
   )
   ClassDef(
@@ -53,6 +54,14 @@ pub(all) enum Stmt {
     keywords~ : Array[Keyword],
     body~ : Array[Stmt],
     decorators~ : Array[Expr],
+    type_params~ : Array[TypeParam],
+    span~ : @basic.Span
+  )
+  /// `type X[T] = ...` (PEP 695). `name` is always a `Name`, as in CPython.
+  TypeAlias(
+    name~ : Expr,
+    type_params~ : Array[TypeParam],
+    value~ : Expr,
     span~ : @basic.Span
   )
   Return(value~ : Expr?, span~ : @basic.Span)
@@ -205,6 +214,20 @@ pub(all) enum Constant {
   Bool(Bool)
   None
   Ellipsis
+} derive(Eq, Debug)
+
+///|
+/// A PEP 695 type parameter: `T`, `T: bound`, `*Ts`, `**P`, each with an
+/// optional default (`T = int`, Python 3.13).
+pub(all) enum TypeParam {
+  TypeVar(
+    name~ : String,
+    bound~ : Expr?,
+    default_value~ : Expr?,
+    span~ : @basic.Span
+  )
+  ParamSpec(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
+  TypeVarTuple(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
 } derive(Eq, Debug)
 
 ///|

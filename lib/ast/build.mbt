@@ -212,6 +212,7 @@ pub fn Stmt::def_(
       },
     ),
     is_async=false,
+    type_params=[],
     span=@basic.nowhere,
   )
 }
@@ -271,6 +272,7 @@ pub fn Stmt::dataclass(
       )
     }),
     decorators=[Expr::name("dataclass")],
+    type_params=[],
     span=@basic.nowhere,
   )
 }

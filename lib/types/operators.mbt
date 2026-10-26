@@ -46,11 +46,12 @@ pub fn equality_type(sigma : ClassTable, t : Type) -> Bool {
     List(s) | Dict(s) => equality_type(sigma, s)
     Tuple(ts) => ts.iter().all(fn(c) { equality_type(sigma, c) })
     Union(a, b) => equality_type(sigma, a) && equality_type(sigma, b)
-    Class(c) =>
-      fields(sigma, c)
+    Class(c, taus) =>
+      instantiate(fields(sigma, c), taus)
       .iter()
-      .all(fn(x) { equality_type(sigma, declared_type(sigma, c, x)) })
+      .all(fn(f) { equality_type(sigma, f.1) })
     Prim(_) | Literal(_) => true
+    TypeVar(_) => abort("a type parameter is not a value's type")
   }
 }
 

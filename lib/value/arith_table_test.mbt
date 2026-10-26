@@ -123,6 +123,10 @@ let arith_cases : Array[(String, String)] = [
   ("None == 1", "False"),
   ("1 == None", "False"),
   ("None != None", "False"),
+  ("1 == \"a\"", "False"),
+  ("\"a\" == 1", "False"),
+  ("[1, \"a\"] == [1, 3]", "False"),
+  ("[1] == (1,)", "False"),
   (
     "[1, \"a\", (2, 3), {\"k\": 1.5}, None, True]", "[1, 'a', (2, 3), {'k': 1.5}, None, True]",
   ),
@@ -178,8 +182,6 @@ let undefined_cases : Array[String] = [
    "\"a\" % []",
   // bool is not a count; CPython says 'a'
    "\"a\" * True",
-  // unrelated kinds; CPython says False
-   "\"a\" == 1",
   // string formatting; CPython says 'a-b'
    "\"a-%s\" % \"b\"",
   // bool is not a number; CPython says 0
@@ -190,8 +192,6 @@ let undefined_cases : Array[String] = [
    "1 % False",
   // unrelated kinds; CPython says !TypeError
    "1 < 'a'",
-  // unrelated kinds; CPython says False
-   "1 == \"a\"",
   // bool against int; CPython says True
    "1 == True",
   // membership in a number; CPython says !TypeError
@@ -204,12 +204,8 @@ let undefined_cases : Array[String] = [
    "True < 2",
   // bool against int; CPython says True
    "True == 1",
-  // eq reaches an undefined pair; CPython says False
-   "[1, \"a\"] == [1, 3]",
   // a list against a tuple; CPython says !TypeError
    "[1] < (1,)",
-  // a list against a tuple; CPython says False
-   "[1] == (1,)",
   // truthiness; CPython says False
    "not 1",
   // truthiness; CPython says True

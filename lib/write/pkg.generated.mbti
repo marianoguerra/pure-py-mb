@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn render_pattern(@ast.Pattern) -> String
+
 pub fn unparse(@ast.Module) -> String
 
 pub fn unparse_expr(@ast.Expr) -> String

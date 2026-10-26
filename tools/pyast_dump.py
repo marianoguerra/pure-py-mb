@@ -126,6 +126,21 @@ class Walk(Dumper):
             self.field(depth, name)
             self.expr(e, depth + 1)
 
+    def type_params(self, depth: int, params: list) -> None:
+        """Printed only when there are some: a definition without type
+        parameters dumps as it did before PEP 695."""
+        if not params:
+            return
+        self.field(depth, "type_params")
+        for tp in params:
+            self.type_param(tp, depth + 1)
+
+    def type_param(self, tp: ast.AST, depth: int) -> None:
+        self.node(depth, type(tp).__name__, [f"name={tp.name}"], self.at(tp))
+        if isinstance(tp, ast.TypeVar):
+            self.opt_child(depth + 1, "bound", tp.bound)
+        self.opt_child(depth + 1, "default_value", getattr(tp, "default_value", None))
+
     def stmt(self, s: ast.stmt, depth: int) -> None:
         d = depth + 1
         at = self.at(s)
@@ -138,6 +153,7 @@ class Walk(Dumper):
             self.stmts(d, "body", s.body)
             self.exprs(d, "decorator_list", s.decorator_list)
             self.opt_child(d, "returns", s.returns)
+            self.type_params(d, s.type_params)
         elif isinstance(s, ast.ClassDef):
             self.node(depth, "ClassDef", [f"name={s.name}"], at)
             self.exprs(d, "bases", s.bases)
@@ -146,6 +162,14 @@ class Walk(Dumper):
                 self.keyword(k, d + 1)
             self.stmts(d, "body", s.body)
             self.exprs(d, "decorator_list", s.decorator_list)
+            self.type_params(d, s.type_params)
+        elif isinstance(s, ast.TypeAlias):
+            self.node(depth, "TypeAlias", [], at)
+            self.child(d, "name", s.name)
+            self.field(d, "type_params")
+            for tp in s.type_params:
+                self.type_param(tp, d + 1)
+            self.child(d, "value", s.value)
         elif isinstance(s, ast.Return):
             self.node(depth, "Return", [], at)
             self.opt_child(d, "value", s.value)

@@ -83,7 +83,9 @@ pub(all) enum TypeExpr {
   DictE(TypeExpr)
   CallableE(Array[TypeExpr], TypeExpr)
   LitE(Lit)
-  ClassName(Array[String])
+  /// A name, possibly applied to type arguments: a class, a type parameter
+  /// or a type alias, which only the context can tell apart.
+  TypeName(Array[String], Array[TypeExpr])
   UnionE(TypeExpr, TypeExpr)
 } derive(Eq, Debug)
 
@@ -98,7 +100,11 @@ pub(all) enum Type {
   Dict(Type)
   Callable(Array[Type], Type)
   Literal(Lit)
-  Class(String)
+  /// A type parameter, by name.
+  TypeVar(String)
+  /// A class, by its qualified name in the class table, applied to its type
+  /// arguments.
+  Class(String, Array[Type])
   Union(Type, Type)
   /// A function whose last `n` parameters have defaults, under a profile
   /// with `DefaultArguments` (#56): callable with any count from the
@@ -145,7 +151,9 @@ pub fn render(tau : Type) -> String {
     Callable(ps, r) =>
       "Callable[[" + ps.map(render).join(", ") + "], \{render(r)}]"
     Literal(v) => "Literal[\{v.repr()}]"
-    Class(c) => c
+    TypeVar(a) => a
+    Class(c, []) => c
+    Class(c, ts) => c + "[" + ts.map(render).join(", ") + "]"
     Union(s, t) => "\{render(s)} | \{render(t)}"
     Defaulted(ps, n, r) => {
       let shown = ps.mapi(fn(i, p) {
@@ -225,11 +233,11 @@ pub fn parse_annotation(e : @ast.Expr) -> TypeExpr? {
           return Some(PrimE(p))
         }
       }
-      Some(ClassName([id]))
+      Some(TypeName([id], []))
     }
     Attribute(..) =>
       match dotted_name(e) {
-        Some(q) => Some(ClassName(q))
+        Some(q) => Some(TypeName(q, []))
         None => None
       }
     BinOp(op=BitOr, left~, right~, ..) =>
@@ -244,27 +252,36 @@ pub fn parse_annotation(e : @ast.Expr) -> TypeExpr? {
 
 ///|
 fn parse_subscript(value : @ast.Expr, slice : @ast.Expr) -> TypeExpr? {
-  guard value is Name(id~, ..) else { return None }
-  if id == "Literal" {
+  let head = match value {
+    Name(id~, ..) => Some(id)
+    _ => None
+  }
+  if head == Some("Literal") {
     return match literal_type(slice) {
       Some(v) => Some(LitE(v))
       None => None
     }
   }
-  if id == "Callable" {
+  if head == Some("Callable") {
     return parse_callable(subscript_args(slice))
   }
   guard parse_annotations(subscript_args(slice)) is Some(args) else {
     return None
   }
-  if id == "list" && args.length() == 1 {
-    Some(ListE(args[0]))
-  } else if id == "tuple" {
-    Some(TupleE(args))
-  } else if id == "dict" && args.length() == 2 && args[0] == PrimE(Str) {
-    Some(DictE(args[1]))
-  } else {
-    None
+  match head {
+    Some("list") => if args.length() == 1 { Some(ListE(args[0])) } else { None }
+    Some("tuple") => Some(TupleE(args))
+    Some("dict") =>
+      if args.length() == 2 && args[0] == PrimE(Str) {
+        Some(DictE(args[1]))
+      } else {
+        None
+      }
+    _ =>
+      match dotted_name(value) {
+        Some(q) => Some(TypeName(q, args))
+        None => None
+      }
   }
 }
 
@@ -310,4 +327,54 @@ fn parse_annotations(es : Array[@ast.Expr]) -> Array[TypeExpr]? {
     }
   }
   Some(out)
+}
+
+///|
+/// The types `taus` put for the parameters `alphas` in `sigma`.
+pub fn substitute(
+  taus : ArrayView[Type],
+  alphas : ArrayView[String],
+  sigma : Type,
+) -> Type {
+  match sigma {
+    TypeVar(a) =>
+      match alphas.search(a) {
+        Some(i) => taus[i]
+        None => sigma
+      }
+    List(s) => List(substitute(taus, alphas, s))
+    Tuple(ss) => Tuple(ss.map(fn(c) { substitute(taus, alphas, c) }))
+    Dict(s) => Dict(substitute(taus, alphas, s))
+    Callable(ps, r) =>
+      Callable(
+        ps.map(fn(p) { substitute(taus, alphas, p) }),
+        substitute(taus, alphas, r),
+      )
+    Defaulted(ps, n, r) =>
+      Defaulted(
+        ps.map(fn(p) { substitute(taus, alphas, p) }),
+        n,
+        substitute(taus, alphas, r),
+      )
+    Class(c, ss) => Class(c, ss.map(fn(a) { substitute(taus, alphas, a) }))
+    Union(s, t) =>
+      Union(substitute(taus, alphas, s), substitute(taus, alphas, t))
+    _ => sigma
+  }
+}
+
+///|
+/// A class's fields, generic in its type parameters.
+pub(all) struct FieldScheme {
+  type_params : Array[String]
+  fields : Array[(String, Type)]
+} derive(Eq, Debug)
+
+///|
+/// The fields at the type arguments `taus`.
+pub fn instantiate(
+  pi : FieldScheme,
+  taus : Array[Type],
+) -> Array[(String, Type)] {
+  pi.fields.map(fn(f) { (f.0, substitute(taus[:], pi.type_params[:], f.1)) })
 }

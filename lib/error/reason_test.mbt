@@ -8,7 +8,57 @@ test "the reason catalogue" {
     (DuplicateField(x="x", c="P"), "duplicate field 'x' in class 'P'"),
     (UndefinedVariable(x="x"), "'x' is not defined"),
     (UnassignedVariable(x="x"), "'x' is declared but not yet assigned"),
-    (PossiblyUnassigned(x="x"), "'x' is not definitely assigned"),
+    (
+      PossiblyUnassigned(x="x", declared_in_branch=false),
+      "'x' is not definitely assigned",
+    ),
+    (
+      PossiblyUnassigned(x="x", declared_in_branch=true),
+      "'x' is not definitely assigned: declared in a branch",
+    ),
+    (RangePattern, "'range' not permitted in a constructor pattern"),
+    (
+      ClassArityMismatch(q="Box", expected=1, given=2),
+      "class 'Box' expects 1 type arguments, given 2",
+    ),
+    (
+      TypeAliasArityMismatch(q="Pair", expected=2, given=1),
+      "type alias 'Pair' expects 2 type arguments, given 1",
+    ),
+    (DuplicateImportedName(x="a"), "name 'a' imported twice"),
+    (
+      TypeParameterAsValue(x="T"),
+      "'T' is a type parameter, usable only in annotations",
+    ),
+    (TypeSchemeAsValue(q="f"), "type arguments of 'f' cannot be inferred"),
+    (NoTypeArgument(alpha="T"), "type parameter 'T' has no type argument"),
+    (
+      TypeAliasAsValue(q="Pair"),
+      "'Pair' is a type alias, usable only in annotations",
+    ),
+    (
+      KeywordArgumentsNotConstructor,
+      "keyword arguments in a call other than a constructor call",
+    ),
+    (DuplicateParameter(x="x", f=None), "duplicate parameter 'x' in lambda"),
+    (
+      DuplicateParameter(x="x", f=Some("g")),
+      "duplicate parameter 'x' in function 'g'",
+    ),
+    (
+      PatternClassUndetermined(c="Box", tau="object"),
+      "type arguments of 'Box' in pattern not determined by type object",
+    ),
+    (NoneResult, "call returning None used as an expression"),
+    (BareReturn(tau="int"), "bare return in function with result type int"),
+    (
+      MissingReturnMatchPartial(remaining="str"),
+      "cases leave remaining type str, so the function does not always return",
+    ),
+    (
+      MypyCompatibility(NoneResult),
+      "call returning None used as an expression (mypy compatibility)",
+    ),
     (UnboundName(x="x"), "'x' is unbound"),
     (Redeclaration(x="x"), "'x' is already declared"),
     (UndeclaredAssignment(x="x"), "'x' is assigned but never declared"),
@@ -106,10 +156,10 @@ test "the reason catalogue" {
       TupleIndexOutOfRange(index=5N, length=2),
       "index 5 out of range for tuple of length 2",
     ),
-    (UnreachableCase(index=2), "case 2 is unreachable"),
+    (UnreachableCase(pattern="[a, b]"), "case [a, b] is unreachable"),
     (
       SequenceKindMismatch(kind="list", tau="tuple[int]"),
-      "list pattern requires values of list type, not tuple[int]",
+      "list pattern at tuple[int], which has tuple values",
     ),
     (NotIterable(tau="int"), "values of type int cannot be iterated"),
     (UnknownField(c="P", x="z"), "class 'P' has no field 'z'"),
@@ -124,7 +174,7 @@ test "the reason catalogue" {
       "values of type list[int] have no method 'append'",
     ),
   ]
-  assert_eq(cases.length(), 48)
+  assert_eq(cases.length(), 65)
   for c in cases {
     assert_eq(c.0.message(), c.1)
   }
@@ -132,10 +182,13 @@ test "the reason catalogue" {
 
 ///|
 test "a rejection's exit code and short form" {
-  let d = @err.Diagnostic::new(IllFormed(PossiblyUnassigned(x="x")), span={
-    start: { line: 3, col: 4, offset: 20, },
-    end: { line: 3, col: 5, offset: 21, },
-  })
+  let d = @err.Diagnostic::new(
+    IllFormed(PossiblyUnassigned(x="x", declared_in_branch=false)),
+    span={
+      start: { line: 3, col: 4, offset: 20, },
+      end: { line: 3, col: 5, offset: 21, },
+    },
+  )
   assert_eq(d.exit_code(), 3)
   assert_eq(d.short("a.py"), "a.py:3:4: 'x' is not definitely assigned")
   // With no position the reference prints the path and the message only.
@@ -143,7 +196,7 @@ test "a rejection's exit code and short form" {
   assert_eq(e.short("a.py"), "a.py: del prohibited")
   assert_eq(e.exit_code(), 1)
   assert_eq(
-    @err.Reason::PossiblyUnassigned(x="x").code(),
+    @err.Reason::PossiblyUnassigned(x="x", declared_in_branch=false).code(),
     "purepy::possibly-unassigned",
   )
 }

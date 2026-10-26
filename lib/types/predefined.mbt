@@ -1,57 +1,66 @@
 ///|
-/// The predefined modules of Figure 2.7 and the type of each member: the
-/// reference's `PREDEFINED_MEMBERS`.
-///
-/// `None` for a member usable only in an annotation or as a decorator --
-/// `int`, `list`, `Callable`, `dataclass` -- which the checker binds as a
-/// name that is not a value. The table lives here, below both the checker and
+/// What a predefined member is to the checker.
+pub(all) enum Member {
+  /// A value of a type.
+  Typed(Type)
+  /// A name usable only in an annotation or as a decorator: `int`, `list`,
+  /// `Callable`, `dataclass`.
+  AnnotationOnly
+  /// A class, by its qualified name in the class table: `range`.
+  ClassOf(String)
+} derive(Eq, Debug)
+
+///|
+/// The predefined modules of Figure 2.7 and what each member is: the
+/// reference's `PREDEFINED_MEMBERS`. The table lives here, below both the checker and
 /// the evaluator, because both have to agree on it: a name the checker
 /// accepts and the evaluator has no value for would type-check and then fail
 /// to run.
-pub fn predefined_members(q : String) -> Array[(String, Type?)]? {
+pub fn predefined_members(q : String) -> Array[(String, Member)]? {
   let float_to_float = Callable([t_float], t_float)
   let float_to_int = Callable([t_float], t_int)
   match q {
     "builtins" =>
       Some([
-        ("print", Some(Callable([t_object], t_none))),
-        ("len", Some(Callable([t_sized], t_int))),
-        ("None", None),
-        ("object", None),
-        ("bool", None),
-        ("int", None),
-        ("float", None),
-        ("str", None),
-        ("list", None),
-        ("dict", None),
-        ("tuple", None),
+        ("print", Typed(Callable([t_object], t_none))),
+        ("len", Typed(Callable([t_sized], t_int))),
+        ("range", ClassOf(range_class)),
+        ("None", AnnotationOnly),
+        ("object", AnnotationOnly),
+        ("bool", AnnotationOnly),
+        ("int", AnnotationOnly),
+        ("float", AnnotationOnly),
+        ("str", AnnotationOnly),
+        ("list", AnnotationOnly),
+        ("dict", AnnotationOnly),
+        ("tuple", AnnotationOnly),
       ])
     "math" =>
       Some([
-        ("pi", Some(t_float)),
-        ("e", Some(t_float)),
-        ("sqrt", Some(float_to_float)),
-        ("exp", Some(float_to_float)),
-        ("log", Some(float_to_float)),
-        ("sin", Some(float_to_float)),
-        ("cos", Some(float_to_float)),
-        ("tan", Some(float_to_float)),
-        ("floor", Some(float_to_int)),
-        ("ceil", Some(float_to_int)),
+        ("pi", Typed(t_float)),
+        ("e", Typed(t_float)),
+        ("sqrt", Typed(float_to_float)),
+        ("exp", Typed(float_to_float)),
+        ("log", Typed(float_to_float)),
+        ("sin", Typed(float_to_float)),
+        ("cos", Typed(float_to_float)),
+        ("tan", Typed(float_to_float)),
+        ("floor", Typed(float_to_int)),
+        ("ceil", Typed(float_to_int)),
       ])
     "sys" =>
       Some([
-        ("argv", Some(List(t_str))),
-        ("exit", Some(Callable([t_int], t_never))),
+        ("argv", Typed(List(t_str))),
+        ("exit", Typed(Callable([t_int], t_never))),
       ])
     "typing" =>
       Some([
-        ("Callable", None),
-        ("Literal", None),
-        ("Never", None),
-        ("Sized", None),
+        ("Callable", AnnotationOnly),
+        ("Literal", AnnotationOnly),
+        ("Never", AnnotationOnly),
+        ("Sized", AnnotationOnly),
       ])
-    "dataclasses" => Some([("dataclass", None)])
+    "dataclasses" => Some([("dataclass", AnnotationOnly)])
     _ => None
   }
 }

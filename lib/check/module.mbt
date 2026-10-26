@@ -54,7 +54,7 @@ pub fn Program::new(
     tree,
     host_members,
     profile,
-    sigma: @types.empty_class_table(),
+    sigma: @types.predefined_classes(),
     signatures: Map([]),
     loading: [],
   }
@@ -75,6 +75,20 @@ fn add_bodiless(tree : @program.SourceTree, q : String) -> Unit {
 }
 
 ///|
+/// `__name__: str = '<q>'`, the declaration that begins every module's body,
+/// at the start of the module.
+fn name_declaration(q : String) -> @ast.Stmt {
+  let at = @basic.Span::at({ line: 1, col: 0, offset: 0, })
+  AnnAssign(
+    target=Name(id="__name__", ctx=Store, span=at),
+    annotation=Name(id="str", ctx=Load, span=at),
+    value=Some(Constant(value=Str(q), span=at)),
+    simple=true,
+    span=at,
+  )
+}
+
+///|
 fn prefix_of(p : String, q : String) -> Bool {
   p == q || q.has_prefix(p + ".")
 }
@@ -88,22 +102,6 @@ fn proper_prefix_of(p : String, q : String) -> Bool {
 fn first_segment(q : String) -> String {
   match q.split_once(".") {
     Some((head, _)) => head.to_owned()
-    None => q
-  }
-}
-
-///|
-fn parent_name(q : String) -> String? {
-  match q.rev_split_once(".") {
-    Some((head, _)) => Some(head.to_owned())
-    None => None
-  }
-}
-
-///|
-fn last_segment(q : String) -> String {
-  match q.rev_split_once(".") {
-    Some((_, tail)) => tail.to_owned()
     None => q
   }
 }
@@ -193,10 +191,12 @@ fn check_module_body(
     Some(ms) => return predefined_context(ms)
     None => ()
   }
-  let (prefix, body) = @analysis.split_imports(m.body)
+  let (prefix, stmts) = @analysis.split_imports(m.body)
+  let imported = @analysis.declares_body(prefix).map(fn(d) { d.0 })
   let empty_ctx : ModCtx = { gamma: empty_context(), program, q, }
   let gamma = check_imports_prefix(prefix[:], empty_ctx)
-  let bound = scope(@analysis.declares_body(prefix).map(fn(d) { d.0 }), body)
+  let body = [name_declaration(q), ..stmts]
+  let bound = scope(imported, body)
   check_assignments_declared(body, [])
   let builtins = builtins_context(program.profile)
   let final_ctx = check_top_seq(@analysis.statements(body)[:], {
@@ -228,37 +228,44 @@ fn check_import(iota : @ast.Stmt, ctx : ModCtx) -> Context raise {
   match iota {
     Import(names~, span~) => {
       let q = names[0].name
-      if !program.tree.contains(q) {
-        raise ill(UnknownModule(q~), span)
-      }
       if proper_prefix_of(ctx.q, q) {
-        let from_import = match parent_name(q) {
-          Some(p) => "from \{p} import \{last_segment(q)}"
-          None => q
-        }
-        raise ill(ImportOfContainedModule(q~, q_=ctx.q, from_import~), span)
+        raise ill(
+          ImportOfContainedModule(
+            q~,
+            q_=ctx.q,
+            from_import="from \{q} import <name>",
+          ),
+          span,
+        )
       }
-      let delta = check_module(program, q)
-      context_of([(first_segment(q), loads_as(q, ModuleLoaded(q, delta), ctx))])
+      let parts = q.split(".").map(fn(v) { v.to_owned() }).collect()
+      let x = parts[0]
+      let delta = check_imported(x, span, ctx)
+      context_of([
+        (x, loads_as(ModuleLoaded(x, delta), parts[1:].to_owned(), span, ctx)),
+      ])
     }
     ImportFrom(module_name~, names~, span~, ..) => {
       guard module_name is Some(q) else {
         abort("a relative import is rejected by the sieve")
       }
-      if !program.tree.contains(q) {
-        raise ill(UnknownModule(q~), span)
+      let xs = names.map(fn(a) { a.name })
+      for i, x in xs {
+        if xs[:i].contains(x) {
+          raise ill(DuplicateImportedName(x~), span)
+        }
       }
-      let delta = check_module(program, q)
-      // Every ancestor of the imported module is loaded too, unless it is an
-      // ancestor of the importing module -- which is being checked already.
+      let delta = check_imported(q, span, ctx)
+      // Every module containing the imported one is loaded too, unless it
+      // contains the importing module -- which is being checked already.
       for p in @program.proper_prefixes(q) {
         if !prefix_of(p, ctx.q) {
           check_module(program, p) |> ignore
         }
       }
       let mut out = empty_context()
-      for a in names {
-        out = out.add(a.name, imported_entry(iota, a.name, q, delta, ctx))
+      for x in xs {
+        out = out.add(x, imported_entry(iota, x, q, delta, ctx))
       }
       out
     }
@@ -267,23 +274,35 @@ fn check_import(iota : @ast.Stmt, ctx : ModCtx) -> Context raise {
 }
 
 ///|
-/// `import a.b.c` binds `a`, to a module whose `b` is a module whose `c` is
-/// the module that was imported.
-fn loads_as(q : String, theta : Entry, ctx : ModCtx) -> Entry raise {
-  match parent_name(q) {
-    None => theta
-    Some(p) => {
-      let gamma = check_module(ctx.program, p)
-      loads_as(
-        p,
-        ModuleLoaded(
-          p,
-          extend_context(gamma, context_of([(last_segment(q), theta)])),
-        ),
-        ctx,
-      )
-    }
+fn check_imported(
+  q : String,
+  span : @basic.Span,
+  ctx : ModCtx,
+) -> Context raise {
+  if !ctx.program.tree.contains(q) {
+    raise ill(UnknownModule(q~), span)
   }
+  check_module(ctx.program, q)
+}
+
+///|
+/// `import a.b.c` binds `a`, to a module whose `b` is a module whose `c` is
+/// the module that was imported, each loaded in that order.
+fn loads_as(
+  theta : Entry,
+  xs : Array[String],
+  span : @basic.Span,
+  ctx : ModCtx,
+) -> Entry raise {
+  guard theta is ModuleLoaded(q, members) else { abort("a loaded module") }
+  if xs.is_empty() {
+    return theta
+  }
+  let x = xs[0]
+  let qx = q + "." + x
+  let gamma = check_imported(qx, span, ctx)
+  let inner = loads_as(ModuleLoaded(qx, gamma), xs[1:].to_owned(), span, ctx)
+  ModuleLoaded(q, extend_context(members, context_of([(x, inner)])))
 }
 
 ///|
@@ -384,8 +403,7 @@ fn module_signature(
       None => ()
     }
   }
-  // Every module has a `__name__`, a `str`.
-  override_context(submods(program, q), own.add("__name__", Var(@types.t_str)))
+  override_context(submods(program, q), own)
 }
 
 // ---------------------------------------------------------------------------

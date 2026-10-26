@@ -4,6 +4,7 @@ pub fn Stmt::span(self : Stmt) -> @basic.Span {
   match self {
     FunctionDef(span~, ..)
     | ClassDef(span~, ..)
+    | TypeAlias(span~, ..)
     | Return(span~, ..)
     | Delete(span~, ..)
     | Assign(span~, ..)
@@ -84,6 +85,7 @@ pub fn Stmt::kind_name(self : Stmt) -> String {
     FunctionDef(is_async=true, ..) => "AsyncFunctionDef"
     FunctionDef(..) => "FunctionDef"
     ClassDef(..) => "ClassDef"
+    TypeAlias(..) => "TypeAlias"
     Return(..) => "Return"
     Delete(..) => "Delete"
     Assign(..) => "Assign"
@@ -297,5 +299,31 @@ pub fn SeqKind::name(self : SeqKind) -> String {
   match self {
     List => "List"
     Tuple => "Tuple"
+  }
+}
+
+///|
+/// Where a type parameter is.
+pub fn TypeParam::span(self : TypeParam) -> @basic.Span {
+  match self {
+    TypeVar(span~, ..) | ParamSpec(span~, ..) | TypeVarTuple(span~, ..) => span
+  }
+}
+
+///|
+/// The type parameter's name.
+pub fn TypeParam::name(self : TypeParam) -> String {
+  match self {
+    TypeVar(name~, ..) | ParamSpec(name~, ..) | TypeVarTuple(name~, ..) => name
+  }
+}
+
+///|
+/// CPython's class name for the type parameter.
+pub fn TypeParam::kind_name(self : TypeParam) -> String {
+  match self {
+    TypeVar(..) => "TypeVar"
+    ParamSpec(..) => "ParamSpec"
+    TypeVarTuple(..) => "TypeVarTuple"
   }
 }

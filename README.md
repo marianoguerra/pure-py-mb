@@ -41,18 +41,18 @@ moon add marianoguerra/pure-py-cli   # the command
 ## Conformance
 
 Eight oracles, every one compared against something outside this port, over
-the conformance suite of specification v0.17.0.
+the conformance suite of specification v0.18.0.
 
 | oracle | compared with | result |
 |---|---|---|
-| tokens | CPython's `tokenize` | 558/558 |
-| trees, no positions | CPython's `ast` | 558/558 |
-| trees, with positions | CPython's `ast` | 558/558 |
-| printer round trip | this parser and CPython's | 557/557 |
-| `parse` | the reference checker | 534/534 |
-| `check` | the reference checker | 534/534 |
-| `check-program` | the reference checker | 70/70 |
-| `run` | CPython's output | 172/172 |
+| tokens | CPython's `tokenize` | 847/847 |
+| trees, no positions | CPython's `ast` | 847/847 |
+| trees, with positions | CPython's `ast` | 847/847 |
+| printer round trip | this parser and CPython's | 844/844 |
+| `parse` | the reference checker | 823/823 |
+| `check` | the reference checker | 823/823 |
+| `check-program` | the reference checker | 87/87 |
+| `run` | CPython's output | 266/266 |
 
 The conformance suite under `test/conformance/` is the reference's own,
 copied verbatim, and the expected answers under `test/golden/` are the

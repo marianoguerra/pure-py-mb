@@ -232,7 +232,7 @@ test "a case no value can reach is refused" {
       m +
       "        case 1:\n            return 1\n        case _:\n            return 2\n        case 2:\n            return 3\n",
     ),
-    "case 3 is unreachable",
+    "case 2 is unreachable",
   )
   // Exhaustive over the classes of a union: the function always returns.
   assert_eq(
@@ -248,7 +248,7 @@ test "a case no value can reach is refused" {
     verdict(
       "t: tuple[int, int] = (1, 2)\nmatch t:\n    case [a, b]:\n        pass\n",
     ),
-    "list pattern requires values of list type, not tuple[int, int]",
+    "list pattern at tuple[int, int], which has tuple values",
   )
 }
 

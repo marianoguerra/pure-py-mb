@@ -871,6 +871,10 @@ fn step_stmt(s : @ast.Stmt, env : Env, stack : Array[Frame]) -> Ctl {
     }
     // A declaration with no value binds nothing at run time, as in Python.
     AnnAssign(value=None, ..) => Delta(@value.empty_env())
+    // eval-type-alias: the alias is the checker's; the name is bound to an
+    // opaque value, which nothing well formed reads.
+    TypeAlias(name=Name(id~, ..), ..) =>
+      Delta(@value.env_of([(id, Prim(Opaque(id)))]))
     // eval-expr-stmt
     ExprStmt(value~, ..) => {
       stack.push(StExpr)
@@ -903,25 +907,20 @@ fn step_stmt(s : @ast.Stmt, env : Env, stack : Array[Frame]) -> Ctl {
     }
     // eval-class, eval-class-extend
     ClassDef(name~, bases~, ..) => {
-      let base = if bases.is_empty() {
-        None
-      } else {
-        match bases[0] {
-          Name(id~, ..) => Some(id)
-          _ => return Halt(Stuck("a base class that is not a name"))
-        }
-      }
       // The class entry carries the context its base can be resolved in. At
       // run time that context is built from the environment, where the base
-      // class is already a value.
-      let declaring = match base {
-        None => @context.empty_context()
-        Some(b) =>
-          match env.get(b) {
-            Some(Class(be)) =>
-              @context.context_of([(b, @context.Entry::Class(be))])
-            _ => return Halt(Stuck("a base class that is not a class"))
-          }
+      // class is already a value; the base is keyed by its qualified name.
+      let (base, declaring) = if bases.is_empty() {
+        (None, @context.empty_context())
+      } else {
+        match base_class_of(bases[0], env) {
+          Some(be) =>
+            (
+              Some(be.name),
+              @context.context_of([(be.name, @context.Entry::Class(be))]),
+            )
+          None => return Halt(Stuck("a base class that is not a class"))
+        }
       }
       let module_name = match env.get("__name__") {
         Some(Str(q)) => q
@@ -1288,6 +1287,15 @@ fn Interp::comp_iter(
   let name = match g.target {
     Name(id~, ..) => id
     _ => return Halt(Stuck("a comprehension target that is not a name"))
+  }
+  // A range draws its numbers in one move, so the budget pays for them
+  // before they are drawn rather than after.
+  match @value.range_stop(v) {
+    Some(n) =>
+      if !self.spend(@value.range_length(n)) {
+        return Halt(Stuck("a run longer than \{self.max_steps} steps"))
+      }
+    None => ()
   }
   let items = match @value.iter(v) {
     Some(xs) => xs

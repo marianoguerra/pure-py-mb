@@ -1,1 +1,1 @@
-expected type list[str], given list[int]
+expected type str, given int

@@ -230,11 +230,17 @@ def golden_rows(impl: Impl, name: str) -> list[tuple[str, int, str]]:
     if name == "parse":
         for rel in all_files():
             r = impl.parse(rel)
+            # From v0.18 `syntax.py` lets a Python syntax error escape as a
+            # traceback, where `check_module.py` reports it as a parse error
+            # with its position. The second is the answer, and the one
+            # `pure-py parse` gives.
+            if impl.reference and r.code != 0 and "SyntaxError" in r.output:
+                r = impl.check(rel)
             rows.append((rel, r.code, strip_prefix(one_line(r.output), rel)))
     elif name == "check":
         for rel in all_files():
             r = impl.parse(rel)
-            if r.code == OK:
+            if r.code == OK or (impl.reference and "SyntaxError" in r.output):
                 r = impl.check(rel)
             rows.append((rel, r.code, strip_prefix(one_line(r.output), rel)))
     elif name == "program":
@@ -314,8 +320,14 @@ def sibling(rel: str, suffix: str) -> pathlib.Path:
 
 
 def expect_run_output(r: Result, expected: pathlib.Path) -> str | None:
-    if r.code != 0:
-        return f"exit {r.code}: {r.err.strip()[:120]}"
+    # `<test>.status.expected` is the exit status a run that ends normally
+    # must have, when it is not 0: `sys.exit(1)` in a valid program.
+    status_file = expected.with_name(
+        expected.name.removesuffix(".expected") + ".status.expected"
+    )
+    status = int(status_file.read_text()) if status_file.exists() else 0
+    if r.code != status:
+        return f"exit {r.code}, want {status}: {r.err.strip()[:120]}"
     want = expected.read_text()
     if r.out != want:
         return f"output {r.out!r}, want {want!r}"
@@ -342,50 +354,54 @@ def expect_stuck(r: Result) -> str | None:
     return None
 
 
+def run_expectation(parts: tuple[str, ...]) -> str | None:
+    """What a test's path says its run must do: `output`, `stuck` or `abort`,
+    or None when nothing is run. Module-level and program-level tests read the
+    same way since v0.18: <verdict>[/<stage>]/..."""
+    verdict = parts[0]
+    stage = parts[1] if len(parts) > 1 else None
+    pending = "pending" in parts
+    if verdict == "semantically-valid":
+        return None if pending else "output"
+    if verdict == "excluded":
+        if stage in ("syntactic", "static") and not pending:
+            return None  # rejected before evaluation
+        # static/pending and dynamic: accepted, then the semantics has no
+        # rule for what happens next.
+        return "stuck"
+    if verdict == "python-error":
+        return "abort" if stage == "dynamic" else None
+    return None
+
+
 def oracle_run(impl: Impl) -> Report:
     """The verdict-driven oracle: what a test's path says must happen when the
     program is actually evaluated."""
     rep = Report("run")
     for rel in module_tests():
-        parts = verdict_parts(rel)
-        verdict = parts[0]
-        stage = parts[1] if len(parts) > 1 else None
-        pending = parts[-1] == "pending"
-        expected = sibling(rel, ".expected")
-        exception = sibling(rel, ".exception.expected")
-
-        if verdict == "semantically-valid":
-            if pending:
-                continue  # the sieve rejects it; nothing to run
-            rep.add(rel, expect_run_output(impl.run_module(rel), expected))
-        elif verdict == "excluded":
-            if stage == "syntactic":
-                continue  # rejected before evaluation
-            if stage == "static" and not pending:
-                continue  # rejected by the checker
-            # static/pending, dynamic and dynamic-semantic: accepted, then
-            # the semantics has no rule for what happens next.
-            rep.add(rel, expect_stuck(impl.run_module(rel)))
-        elif verdict == "python-error":
-            if stage == "dynamic":
-                r = impl.run_module(rel)
-                if rel in STUCK_PYTHON_ERRORS:
-                    rep.add(rel, expect_stuck(r))
-                else:
-                    rep.add(rel, expect_abort(r, rel, exception))
-            # static, static/pending and syntactic-only: Python's business.
+        want = run_expectation(verdict_parts(rel))
+        if want is None:
+            continue
+        r = impl.run_module(rel)
+        if want == "output":
+            rep.add(rel, expect_run_output(r, sibling(rel, ".expected")))
+        elif want == "stuck" or rel in STUCK_PYTHON_ERRORS:
+            rep.add(rel, expect_stuck(r))
+        else:
+            rep.add(rel, expect_abort(r, rel, sibling(rel, ".exception.expected")))
 
     for d in program_dirs():
-        expected_exit = int((SUITE / d / "expected_exit").read_text().strip())
-        if expected_exit != 0:
-            continue  # rejected by check-program; the `program` oracle has it
+        want = run_expectation(pathlib.PurePosixPath(d).parts[1:])
+        if want is None:
+            continue
         r = impl.run_program(d)
-        if d.startswith(f"{PROGRAM_LEVEL}/python-error"):
-            # A program the checker accepts but Python aborts: the kind it
-            # aborts with is in `main.exception.expected`, as at module level.
-            rep.add(d, expect_abort(r, f"{d}/{MAIN}", SUITE / d / "main.exception.expected"))
+        main = f"{d}/{MAIN}"
+        if want == "output":
+            rep.add(d, expect_run_output(r, SUITE / d / "main.expected"))
+        elif want == "stuck":
+            rep.add(d, expect_stuck(r))
         else:
-            rep.add(d, expect_run_output(r, SUITE / d / "expected"))
+            rep.add(d, expect_abort(r, main, SUITE / d / "main.exception.expected"))
     return rep
 
 

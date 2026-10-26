@@ -13,6 +13,8 @@ pub fn[A, B] all_pairs(Array[A], Array[B], (A, B) -> Bool) -> Bool
 
 pub fn ancestors(@sorted_map.SortedMap[String, ClassTableEntry], String) -> Array[String]
 
+pub fn base_of(@sorted_map.SortedMap[String, ClassTableEntry], String) -> (String, Array[Type])?
+
 pub fn base_type(Type) -> Type
 
 pub fn below_excluded(@sorted_map.SortedMap[String, ClassTableEntry], String, Array[Head]) -> Bool
@@ -21,7 +23,9 @@ pub fn binary_overloads(String) -> Array[(@sorted_map.SortedMap[String, ClassTab
 
 pub fn comparable(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) -> Bool
 
-pub fn declared_type(@sorted_map.SortedMap[String, ClassTableEntry], String, String) -> Type
+pub fn declared_type(@sorted_map.SortedMap[String, ClassTableEntry], String, Array[Type], String) -> Type
+
+pub fn disjuncts(Type) -> Array[Type]
 
 pub fn dotted_name(@ast.Expr) -> Array[String]?
 
@@ -33,13 +37,25 @@ pub fn equivalent(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) ->
 
 pub fn[T] field_map(@sorted_map.SortedMap[String, ClassTableEntry], String, Array[T], Array[String], Array[T]) -> Array[(String, T)]?
 
-pub fn field_type(@sorted_map.SortedMap[String, ClassTableEntry], String, String) -> Type?
+pub fn field_names(@sorted_map.SortedMap[String, ClassTableEntry], String) -> Array[String]
 
-pub fn fields(@sorted_map.SortedMap[String, ClassTableEntry], String) -> Array[String]
+pub fn field_type(@sorted_map.SortedMap[String, ClassTableEntry], String, Array[Type], String) -> Type?
+
+pub fn fields(@sorted_map.SortedMap[String, ClassTableEntry], String) -> FieldScheme
 
 pub fn head_typed(@sorted_map.SortedMap[String, ClassTableEntry], Head, Type) -> Bool
 
 pub fn heads_add(Array[Head], Head) -> Array[Head]
+
+pub fn instance(@sorted_map.SortedMap[String, ClassTableEntry], String, Type) -> Instance
+
+pub fn instance_above(@sorted_map.SortedMap[String, ClassTableEntry], String, Type) -> Instance
+
+pub fn instance_below(@sorted_map.SortedMap[String, ClassTableEntry], String, Type) -> Instance
+
+pub fn instantiate(FieldScheme, Array[Type]) -> Array[(String, Type)]
+
+pub fn instantiated_ancestor(@sorted_map.SortedMap[String, ClassTableEntry], Type, String) -> (String, Array[Type])
 
 pub fn join(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) -> Type
 
@@ -59,19 +75,25 @@ pub fn meet(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) -> Type
 
 pub fn minimum(@sorted_map.SortedMap[String, ClassTableEntry], Array[Resolved]) -> Resolved?
 
+pub fn no_field_map(@sorted_map.SortedMap[String, ClassTableEntry], String, Int32, Array[String]) -> FieldMapFailure
+
 pub fn overloads_binary(@sorted_map.SortedMap[String, ClassTableEntry], String, Type, Type) -> Array[Resolved]
 
 pub fn overloads_unary(@sorted_map.SortedMap[String, ClassTableEntry], String, Type) -> Array[Resolved]
 
 pub fn parse_annotation(@ast.Expr) -> TypeExpr?
 
-pub fn predefined_members(String) -> Array[(String, Type?)]?
+pub fn predefined_classes() -> @sorted_map.SortedMap[String, ClassTableEntry]
+
+pub fn predefined_members(String) -> Array[(String, Member)]?
 
 pub let predefined_modules : Array[String]
 
 pub let primitives : Array[Primitive]
 
 pub fn[T] product(ArrayView[Array[T]]) -> Array[Array[T]]
+
+pub let range_class : String
 
 pub fn render(Type) -> String
 
@@ -82,6 +104,8 @@ pub fn shapes(@sorted_map.SortedMap[String, ClassTableEntry], Type, Array[Head])
 pub fn shapes_seq(@sorted_map.SortedMap[String, ClassTableEntry], Array[Type]) -> Array[Array[Shape]]
 
 pub fn short_name(String) -> String
+
+pub fn substitute(ArrayView[Type], ArrayView[String], Type) -> Type
 
 pub fn subtype(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) -> Bool
 
@@ -101,6 +125,12 @@ pub let t_sized : Type
 
 pub let t_str : Type
 
+pub fn type_args(@sorted_map.SortedMap[String, ClassTableEntry], Type, Type) -> Array[(String, Type)]
+
+pub fn type_args_seq(@sorted_map.SortedMap[String, ClassTableEntry], Array[Type], Array[Type]) -> Array[(String, Type)]
+
+pub fn type_params_of(@sorted_map.SortedMap[String, ClassTableEntry], String) -> Array[String]
+
 pub fn typed_heads(@sorted_map.SortedMap[String, ClassTableEntry], Array[Head], Type) -> Array[Head]
 
 pub fn unary_overloads(String) -> Array[(@sorted_map.SortedMap[String, ClassTableEntry], Type) -> Resolved?]
@@ -109,8 +139,20 @@ pub fn unary_overloads(String) -> Array[(@sorted_map.SortedMap[String, ClassTabl
 
 // Types and methods
 pub(all) struct ClassTableEntry {
+  type_params : Array[String]
   own_fields : Array[(String, Type)]
-  base : String?
+  base : (String, Array[Type])?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum FieldMapFailure {
+  ArityMismatch(expected~ : Int32, given~ : Int32)
+  RepeatedKeywordArg
+  UnknownKeywordArgs(Array[String])
+}
+
+pub(all) struct FieldScheme {
+  type_params : Array[String]
+  fields : Array[(String, Type)]
 } derive(Eq, @debug.Debug)
 
 pub(all) enum Head {
@@ -118,6 +160,12 @@ pub(all) enum Head {
   HClass(String)
   HLen(Int32)
 } derive(Compare, Eq, @debug.Debug)
+
+pub(all) enum Instance {
+  Found(String, Array[Type])
+  Undetermined
+  NoInstance
+}
 
 pub(all) enum Lit {
   NoneLit
@@ -127,6 +175,12 @@ pub(all) enum Lit {
   Str(String)
 } derive(Compare, Eq, @debug.Debug)
 pub fn Lit::repr(Self) -> String
+
+pub(all) enum Member {
+  Typed(Type)
+  AnnotationOnly
+  ClassOf(String)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Primitive {
   Object
@@ -147,7 +201,7 @@ pub(all) struct Resolved {
 
 pub(all) enum Shape {
   Rest(Type, Array[Head])
-  Constr(String, Array[Shape], Array[Head])
+  Constr(Type, Array[Shape], Array[Head])
   Tuple(Array[Shape])
   List(Type, Array[Shape])
   Dict(Type, Array[(String, Shape)], Array[String])
@@ -160,7 +214,8 @@ pub(all) enum Type {
   Dict(Type)
   Callable(Array[Type], Type)
   Literal(Lit)
-  Class(String)
+  TypeVar(String)
+  Class(String, Array[Type])
   Union(Type, Type)
   Defaulted(Array[Type], Int32, Type)
   Builtin(String)
@@ -173,7 +228,7 @@ pub(all) enum TypeExpr {
   DictE(TypeExpr)
   CallableE(Array[TypeExpr], TypeExpr)
   LitE(Lit)
-  ClassName(Array[String])
+  TypeName(Array[String], Array[TypeExpr])
   UnionE(TypeExpr, TypeExpr)
 } derive(Eq, @debug.Debug)
 

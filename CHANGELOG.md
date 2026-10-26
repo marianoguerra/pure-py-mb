@@ -6,6 +6,41 @@ The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
 
+### Specification v0.18.0: polymorphism
+
+Generic functions, generic classes and type aliases, in PEP 695's syntax:
+`def first[T](xs: list[T]) -> T`, `class Box[T]`, `type Pair[T] =
+tuple[T, T]`. A generic function's type arguments are inferred from its
+arguments at each call; a generic class's from its constructor's, or given
+outright: `Box[int](1)`. The parser, the tree, the dump and the printer all
+gained type parameters and the `type` statement, and the token and tree
+oracles still agree with CPython on every file.
+
+`range` is back, as a predefined CLASS with one field, `stop`: `range(3)` is
+an object, `len` and a generator read it as its numbers, it prints as
+Python prints it, and two ranges compare by their numbers. Equality between
+values of different forms is now `False` -- `1 == "a"` -- where it was
+undefined; a bool against a number stays undefined.
+
+`match` is typed by the remaining type as well as checked by shapes: a case
+binds its variables at the type the earlier cases leave, and a function that
+returns from every case of a match that does not cover its type is refused
+for mypy's sake (`... (mypy compatibility)`), as is using the `None` a call
+returns. A call statement may discard `None`. Keyword arguments belong to
+constructors, a parameter list may not repeat a name, a from-import may not
+name the same member twice, and `import a.b.c` loads `a`, then `a.b`, then
+`a.b.c`.
+
+The sieve's prohibitions are reworded -- `X prohibited` throughout -- and it
+refuses a tuple or a sequence pattern written without brackets, a bound,
+constraints, `*Ts` or `**P` on a type parameter, and `**` in an argument
+list. A module that does not parse is exit 1, `path: parse error: ...`, in a
+program as it is alone. `__name__` is a declaration, `__name__: str`, at the
+start of every module. A `!` is an operator token, as in CPython 3.12.
+
+The suite's program-level tests follow the module-level layout now, and
+`tools/conform.py` reads both the same way, `.status.expected` included.
+
 ### Specification v0.17.0: declared once, assigned once
 
 A variable is DECLARED with its type -- `x: int = 1`, or `x: int` with the

@@ -180,7 +180,7 @@ test "a pending feature is typed" {
   let p = @profile.pending()
   // An arity mismatch in a destructuring is the shape of a tuple type.
   assert_eq(
-    outcome_under("a: int\nb: int\na, b = 1, 2, 3\n", p),
+    outcome_under("a: int\nb: int\na, b = (1, 2, 3)\n", p),
     "refused: expected type tuple of 2 components, given tuple[Literal[1], Literal[2], Literal[3]]",
   )
   assert_eq(

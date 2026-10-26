@@ -51,8 +51,8 @@ test "the checker's names and the evaluator's values are one table" {
 test "a profile leaves the core names where they were" {
   let core_names = @context.predefined_members("builtins").unwrap()
   assert_eq(core_names, [
-    "print", "len", "None", "object", "bool", "int", "float", "str", "list", "dict",
-    "tuple",
+    "print", "len", "range", "None", "object", "bool", "int", "float", "str", "list",
+    "dict", "tuple",
   ])
   let with_extras = @context.predefined_members(
     "builtins",

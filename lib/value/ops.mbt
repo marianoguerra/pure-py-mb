@@ -49,6 +49,10 @@ pub fn eq(a : Value, b : Value) -> Bool? {
       }
       eq_elems(left, right)
     }
+    // Two ranges compare by their sequences, so that
+    // `range(-1) == range(-2)`.
+    (Obj(_, _), Obj(_, _)) if range_stop(a) is Some(m) &&
+      range_stop(b) is Some(n) => Some(range_length(m) == range_length(n))
     (Obj(ca, ra), Obj(cb, rb)) => {
       if ca.name != cb.name {
         return Some(false)
@@ -66,7 +70,65 @@ pub fn eq(a : Value, b : Value) -> Bool? {
       }
       eq_elems(left, right)
     }
+    // Values of different forms are unequal -- except a bool and a number,
+    // which Python compares by coercing and PurePy does not compare at all.
+    (Bool(_), Int(_) | Float(_)) | (Int(_) | Float(_), Bool(_)) => Option::None
+    _ => if a.form() != b.form() { Some(false) } else { Option::None }
+  }
+}
+
+///|
+/// Which of the forms of value this is, for telling two apart.
+fn Value::form(self : Value) -> Int32 {
+  match self {
+    None => 0
+    Bool(_) => 1
+    Int(_) | Float(_) => 2
+    Str(_) => 3
+    List(_) => 4
+    Tuple(_) => 5
+    Dict(_) => 6
+    Obj(_, _) => 7
+    Lam(_) | Def(_) | Prim(_) => 8
+    ModStub(_) | Mod(_, _) => 9
+    Class(_) => 10
+  }
+}
+
+///|
+/// The class `range` is: one field, `stop`.
+pub let range_class_name : String = "builtins.range"
+
+///|
+pub fn range_entry() -> @context.ClassEntry {
+  {
+    context: @context.empty_context(),
+    name: range_class_name,
+    own_fields: ["stop"],
+    base: None,
+  }
+}
+
+///|
+/// A range object's stop.
+pub fn range_stop(v : Value) -> BigInt? {
+  match v {
+    Obj(c, env) if c.name == range_class_name =>
+      match env.get("stop") {
+        Some(Int(n)) => Some(n)
+        _ => Option::None
+      }
     _ => Option::None
+  }
+}
+
+///|
+/// How many numbers a range with this stop draws.
+pub fn range_length(stop : BigInt) -> BigInt {
+  if stop < 0N {
+    0N
+  } else {
+    stop
   }
 }
 
@@ -184,6 +246,16 @@ pub fn elems(v : Value) -> Array[Value]? {
 /// What a generator draws from a value: the KEYS of a dictionary, and
 /// otherwise its elements.
 pub fn iter(v : Value) -> Array[Value]? {
+  match range_stop(v) {
+    Some(n) => {
+      let out = []
+      for i in 0..<range_length(n).to_int() {
+        out.push(Value::Int(BigInt::from_int(i)))
+      }
+      return Some(out)
+    }
+    Option::None => ()
+  }
   match v {
     Dict(entries) => Some(entries.map(fn(e) { Value::Str(e.0) }))
     other => elems(other)

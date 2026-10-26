@@ -18,8 +18,15 @@ pub(all) enum Entry {
   Unbound
   /// Declared at a type and not yet assigned: `x: int` with no value.
   DU(@types.Type)
-  /// Possibly unassigned: assigned on some paths and not others.
-  PU(@types.Type)
+  /// Possibly unassigned: assigned on some paths and not others. Whether it
+  /// was declared in a branch changes only the message.
+  PU(Declared, declared_in_branch~ : Bool)
+  /// A generic function's signature: the reference's `TypeScheme`.
+  Scheme(Array[String], @types.Type)
+  /// A type parameter in scope: usable only in an annotation.
+  TypeParam
+  /// A type alias (`type X[T] = ...`), with its parameters.
+  Alias(Array[String], @types.Type)
   /// A module named but not loaded.
   ModuleStub(String)
   /// A module whose members are known.
@@ -29,6 +36,15 @@ pub(all) enum Entry {
   /// A name usable only in an annotation or as a decorator: `int`, `list`,
   /// `Callable`, `dataclass`.
   Predefined
+} derive(Eq, Debug)
+
+///|
+
+///|
+/// What a variable entry was declared at: a type, or a generic signature.
+pub(all) enum Declared {
+  Mono(@types.Type)
+  Poly(Array[String], @types.Type)
 } derive(Eq, Debug)
 
 ///|
@@ -138,31 +154,26 @@ fn assigns_nothing() -> Outcome {
 }
 
 ///|
-/// Two branches agree on an entry or it is possibly unassigned, at the type it
-/// was declared at: v0.17 merges by equality and no longer joins.
-fn merge_entry(a : Entry, b : Entry) -> Entry {
-  if a == b {
-    a
-  } else {
-    PU(declared_type_of(a))
+/// Two branches agree on an entry, or it is possibly unassigned at the type
+/// it was declared at.
+fn merge_entry(a : Entry?, b : Entry?, declared_in_branch : Bool) -> Entry {
+  match (a, b) {
+    (Some(x), Some(y)) if x == y => x
+    (Some(x), _) | (None, Some(x)) =>
+      PU(declared_type_of(x), declared_in_branch~)
+    (None, None) => abort("an entry on one side at least")
   }
 }
 
 ///|
-fn merge_context(g : Context, h : Context) -> Context {
+fn merge_context(g : Context, h : Context, declared : Array[String]) -> Context {
   let mut out = empty_context()
   g.each(fn(x, a) {
-    out = out.add(
-      x,
-      match h.get(x) {
-        Some(b) => merge_entry(a, b)
-        None => PU(declared_type_of(a))
-      },
-    )
+    out = out.add(x, merge_entry(Some(a), h.get(x), declared.contains(x)))
   })
   h.each(fn(x, b) {
     if !g.contains(x) {
-      out = out.add(x, PU(declared_type_of(b)))
+      out = out.add(x, merge_entry(None, Some(b), declared.contains(x)))
     }
   })
   out
@@ -170,15 +181,17 @@ fn merge_context(g : Context, h : Context) -> Context {
 
 ///|
 /// The type a variable entry was declared or assigned at.
-fn declared_type_of(e : Entry) -> @types.Type {
+fn declared_type_of(e : Entry) -> Declared {
   match e {
-    Var(t) | DU(t) | PU(t) => t
+    Var(t) | DU(t) => Mono(t)
+    PU(d, ..) => d
+    Scheme(ps, t) => Poly(ps, t)
     _ => abort("merged entries are assigned or declared variables")
   }
 }
 
 ///|
-fn merge_outcomes(rs : Array[Outcome]) -> Outcome {
+fn merge_outcomes(rs : Array[Outcome], declared : Array[String]) -> Outcome {
   let branches : Array[Context] = []
   for r in rs {
     if r is Assigns(d) {
@@ -190,7 +203,7 @@ fn merge_outcomes(rs : Array[Outcome]) -> Outcome {
   }
   let mut acc = branches[0]
   for i in 1..<branches.length() {
-    acc = merge_context(acc, branches[i])
+    acc = merge_context(acc, branches[i], declared)
   }
   Assigns(acc)
 }
@@ -265,8 +278,9 @@ pub fn predefined_members(q : String) -> Array[(String, Entry)]? {
           (
             m.0,
             match m.1 {
-              Some(t) => Var(t)
-              None => Predefined
+              Typed(t) => Var(t)
+              AnnotationOnly => Predefined
+              ClassOf(c) => Class(c)
             },
           )
         }),

@@ -148,12 +148,15 @@ fn Sieve::check_top_level(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise 
   }
   for s in stmts[i:] {
     if @analysis.is_import(s) {
-      raise prohibited("imports must precede all other statements", s.span())
+      raise prohibited("import after another statement prohibited", s.span())
     }
-    if s is ClassDef(..) {
-      check_classdef(s)
-    } else {
-      self.check_stmt(s)
+    match s {
+      ClassDef(..) => check_classdef(s)
+      TypeAlias(type_params~, value~, ..) => {
+        check_type_params(type_params, s.span())
+        check_annotation(Some(value))
+      }
+      _ => self.check_stmt(s)
     }
   }
 }
@@ -173,7 +176,7 @@ fn check_import(node : @ast.Stmt) -> Unit raise {
     }
     ImportFrom(names~, level~, ..) => {
       if names.is_empty() {
-        raise prohibited("empty name list", span)
+        raise prohibited("empty name list prohibited", span)
       }
       if level > 0 {
         raise not_yet("relative imports", 126, span)
@@ -197,10 +200,63 @@ fn check_annotation(e : @ast.Expr?) -> Unit raise {
   match e {
     Some(a) =>
       if @types.parse_annotation(a) is None {
-        raise prohibited("unsupported type annotation", a.span())
+        raise prohibited(
+          "annotation that is not a type expression prohibited",
+          a.span(),
+        )
       }
     None => ()
   }
+}
+
+///|
+/// A definition's type parameters (PEP 695): distinct, and plain -- no bound,
+/// no constraints, no `**P` or `*Ts`.
+fn check_type_params(
+  params : Array[@ast.TypeParam],
+  span : @basic.Span,
+) -> Unit raise {
+  let names = params.map(fn(p) { p.name() })
+  for i, x in names {
+    if names[:i].contains(x) {
+      raise prohibited("duplicate type parameter \{x} prohibited", span)
+    }
+  }
+  for p in params {
+    match p {
+      TypeVar(name~, bound=Some(Tuple(..)), ..) =>
+        raise prohibited(
+          "constraints on type parameter \{name} prohibited",
+          p.span(),
+        )
+      TypeVar(name~, bound=Some(_), ..) =>
+        raise prohibited("bound on type parameter \{name} prohibited", p.span())
+      TypeVar(..) => ()
+      ParamSpec(name~, ..) =>
+        raise prohibited(
+          "ParamSpec type parameter **\{name} prohibited",
+          p.span(),
+        )
+      TypeVarTuple(name~, ..) =>
+        raise prohibited(
+          "TypeVarTuple type parameter *\{name} prohibited",
+          p.span(),
+        )
+    }
+  }
+}
+
+///|
+/// Whether a tuple is written without its parentheses. The reference reads it
+/// off the source: a parenthesised tuple starts at its `(`, before its first
+/// element; one written bare starts where its first element does.
+///
+/// A tree built rather than parsed has no positions and no parentheses to
+/// read; the printer writes every tuple with them, so it is taken to have them.
+fn unparenthesised(span : @basic.Span, elts : Array[@ast.Expr]) -> Bool {
+  span != @basic.nowhere &&
+  !elts.is_empty() &&
+  elts[0].span().start == span.start
 }
 
 ///|
@@ -225,7 +281,8 @@ fn Sieve::check_target(
     Subscript(..) => raise prohibited("item assignment prohibited", span)
     Attribute(..) => raise prohibited("attribute assignment prohibited", span)
     Starred(..) => raise prohibited("starred expressions prohibited", span)
-    _ => raise prohibited("assignment target must be a name", span)
+    _ =>
+      raise prohibited("assignment target other than a name prohibited", span)
   }
 }
 
@@ -243,7 +300,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     Pass(..) => ()
     Assign(targets~, value~, ..) => {
       if targets.length() != 1 {
-        raise prohibited("multiple assignment targets", span)
+        raise prohibited("multiple assignment targets prohibited", span)
       }
       match targets[0] {
         Subscript(..) => raise prohibited("item assignment prohibited", span)
@@ -276,16 +333,17 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     // `FunctionDef` arm, so its arguments, decorators and annotation are not
     // examined: it is simply "async prohibited".
     FunctionDef(is_async=true, ..) => raise prohibited("async prohibited", span)
-    FunctionDef(args~, body~, decorators~, returns~, ..) => {
+    FunctionDef(args~, body~, decorators~, returns~, type_params~, ..) => {
+      check_type_params(type_params, span)
       self.check_arguments(args)
       if decorators.length() > 0 {
         raise not_yet("decorators", 58, span)
       }
       if args.args.iter().any(fn(a) { a.annotation is None }) {
-        raise prohibited("parameters must be annotated", span)
+        raise prohibited("unannotated parameter prohibited", span)
       }
       if returns is None {
-        raise prohibited("return type must be annotated", span)
+        raise prohibited("unannotated return type prohibited", span)
       }
       check_annotation(returns)
       self.check_body(body)
@@ -302,7 +360,9 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
       raise prohibited("augmented assignment (+=, etc.) prohibited", span)
     AnnAssign(target~, annotation~, value~, ..) => {
       if !(target is Name(..)) {
-        raise prohibited("assignment target must be a simple name", span)
+        raise prohibited(
+          "assignment target other than a simple name prohibited", span,
+        )
       }
       check_annotation(Some(annotation))
       // A declaration with no value is PurePy since v0.17.
@@ -318,15 +378,19 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
       raise prohibited("with statements prohibited", span)
     For(..) | With(..) => raise prohibited("async prohibited", span)
     Raise(..) => raise prohibited("raise prohibited", span)
-    // `try/except*` is `TryStar` in CPython, a class of its own that the
-    // reference's chain never names, so it falls through to the last line.
-    Try(is_star=false, ..) => raise prohibited("try/except prohibited", span)
+    Try(..) => raise prohibited("try/except prohibited", span)
     Import(..) | ImportFrom(..) =>
-      raise prohibited("import only allowed at module top level", span)
+      raise prohibited("import outside the module top level prohibited", span)
     Global(..) => raise prohibited("global prohibited", span)
     Nonlocal(..) => raise prohibited("nonlocal prohibited", span)
     ClassDef(..) =>
-      raise prohibited("class declaration only at module top level", span)
+      raise prohibited(
+        "class declaration outside the module top level prohibited", span,
+      )
+    TypeAlias(..) =>
+      raise prohibited(
+        "type statement outside the module top level prohibited", span,
+      )
     Match(subject~, cases~, ..) => {
       self.check_expr(subject)
       for c in cases {
@@ -340,7 +404,6 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     }
     Break(..) => raise prohibited("break prohibited", span)
     Continue(..) => raise prohibited("continue prohibited", span)
-    _ => raise prohibited("unknown statement type: \{node.kind_name()}", span)
   }
 }
 
@@ -348,27 +411,36 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
 fn check_classdef(node : @ast.Stmt) -> Unit raise {
   let span = node.span()
   match node {
-    ClassDef(bases~, keywords~, body~, decorators~, ..) => {
+    ClassDef(bases~, keywords~, body~, decorators~, type_params~, ..) => {
       for b in bases {
         if b is Name(id="Enum", ..) {
           raise not_yet("enum classes", 86, span)
         }
       }
-      if decorators.length() != 1 {
-        raise prohibited(
-          "class must have exactly the @dataclass decorator", span,
-        )
+      check_type_params(type_params, span)
+      if decorators.is_empty() {
+        raise prohibited("undecorated class prohibited", span)
+      }
+      if decorators.length() > 1 {
+        raise prohibited("multiple class decorators prohibited", span)
       }
       if !(decorators[0] is Name(id="dataclass", ..)) {
         raise prohibited(
-          "only the @dataclass decorator is supported on classes", span,
+          "class decorator other than @dataclass prohibited", span,
         )
       }
       if bases.length() > 1 {
         raise prohibited("multiple inheritance prohibited", span)
       }
-      if bases.length() > 0 && !(bases[0] is Name(..)) {
-        raise prohibited("base class must be a simple name", span)
+      if bases.length() > 0 {
+        let base = bases[0]
+        if !(@types.parse_annotation(base) is Some(TypeName(_, _))) {
+          raise prohibited(
+            "base class other than a name, optionally applied to type arguments prohibited",
+            base.span(),
+          )
+        }
+        check_annotation(Some(base))
       }
       if keywords.length() > 0 {
         raise prohibited("class keyword arguments prohibited", span)
@@ -390,7 +462,9 @@ fn check_field(stmt : @ast.Stmt) -> Unit raise {
   match stmt {
     AnnAssign(target~, annotation~, value~, ..) => {
       if !(target is Name(..)) {
-        raise prohibited("field target must be a simple name", span)
+        raise prohibited(
+          "field target other than a simple name prohibited", span,
+        )
       }
       if value is Some(_) {
         raise prohibited("field default values prohibited", span)
@@ -399,7 +473,7 @@ fn check_field(stmt : @ast.Stmt) -> Unit raise {
     }
     _ =>
       raise prohibited(
-        "dataclass body may contain only field declarations", span,
+        "dataclass member other than a field declaration prohibited", span,
       )
   }
 }
@@ -438,6 +512,12 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
         Some(p) => self.check_pattern(p)
         None => ()
       }
+    MatchSequence(kind=Tuple, patterns~, ..) if span != @basic.nowhere &&
+      !patterns.is_empty() &&
+      patterns[0].span().start == span.start =>
+      raise prohibited(
+        "sequence pattern without brackets or parentheses prohibited", span,
+      )
     MatchSequence(patterns~, ..) =>
       for p in patterns {
         self.check_pattern(p)
@@ -458,7 +538,7 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
         if !(k is Constant(value=Str(_), ..)) {
           // The KEY's position, not the pattern's.
           raise prohibited(
-            "dict pattern keys must be string literals",
+            "dict pattern key other than a string literal prohibited",
             k.span(),
           )
         }
@@ -479,13 +559,7 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
     Constant(value~, ..) =>
       match value {
         Int(_) | Float(_) | Str(_) | Bool(_) | None => ()
-        Bytes(_) | Complex(_) =>
-          raise prohibited("\{value.type_name()} literals prohibited", span)
-        _ =>
-          raise prohibited(
-            "prohibited literal type: \{value.type_name()}",
-            span,
-          )
+        _ => raise prohibited("\{value.type_name()} literal prohibited", span)
       }
     Name(..) => ()
     BinOp(left~, op~, right~, ..) => {
@@ -542,11 +616,19 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       }
     }
     Call(func~, args~, keywords~, ..) => {
-      self.check_expr(func)
+      match func {
+        // `Box[int](1)`: a class applied to type arguments, then called.
+        Subscript(value~, ..) if @types.parse_annotation(func)
+          is Some(TypeName(_, _)) => self.check_expr(value)
+        _ => self.check_expr(func)
+      }
       for a in args {
         self.check_expr(a)
       }
       for k in keywords {
+        if k.arg is None {
+          raise prohibited("dict unpacking in argument list prohibited", k.span)
+        }
         self.check_expr(k.value)
       }
     }
@@ -559,6 +641,8 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       self.check_arguments(args)
       self.check_expr(body)
     }
+    Tuple(elts~, ..) if unparenthesised(span, elts) =>
+      raise prohibited("tuple without parentheses prohibited", span)
     List(elts~, ..) | Tuple(elts~, ..) =>
       for e in elts {
         self.check_expr(e)

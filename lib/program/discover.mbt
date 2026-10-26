@@ -150,8 +150,9 @@ fn load_path(path : String, profile : @profile.Profile) -> @ast.Module raise {
   }
   let src = @basic.Source::new(text, name=path)
   let tree = @parser.parse(src) catch {
-    @err.PurePyError(d) =>
-      raise @err.ill_formed_program("\{path}: parse error: " + d.message())
+    // A syntax error keeps its exit code, 1, and is reported against the
+    // file without its position, as the reference reports it since v0.18.
+    @err.PurePyError(d) => raise d.as_parse_error().at_path(path).raise_()
     e => raise @err.ill_formed_program("\{path}: parse error: \{e}")
   }
   match @sieve.result(tree, profile~) {

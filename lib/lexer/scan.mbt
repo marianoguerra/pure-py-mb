@@ -44,12 +44,14 @@ fn Lexer::scan_name(self : Lexer) -> Unit {
 
 ///|
 /// Every operator and delimiter Python 3.12 has, longest first, because the
-/// scanner takes the first that matches.
+/// scanner takes the first that matches. A lone `!` is one since 3.12, for the
+/// `!r` of an f-string, so `hello!` tokenizes and is a syntax error rather
+/// than a lexical one.
 let operators : Array[String] = [
   "**=", "//=", ">>=", "<<=", "...", "!=", "**", "//", ">>", "<<", "<=", ">=", "==",
   "->", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "@=", ":=", "+", "-", "*",
   "/", "%", "@", "&", "|", "^", "~", "<", ">", "(", ")", "[", "]", "{", "}", ",",
-  ":", ".", ";", "=",
+  ":", ".", ";", "=", "!",
 ]
 
 ///|

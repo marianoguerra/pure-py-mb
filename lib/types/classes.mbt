@@ -1,16 +1,31 @@
 ///|
 /// The class table Σ: every class declared so far, by qualified name.
 ///
-/// A port of the reference's `classes.py`. Σ is threaded through checking the
-/// way the context is, and returned with it, so it is immutable: a class
-/// declared while checking one branch of an import must not appear in another.
+/// A port of the reference's `classes.py`. A class has type parameters, and
+/// its base is a class type applied to arguments in terms of them.
 pub type ClassTable = @sorted_map.SortedMap[String, ClassTableEntry]
 
 ///|
 pub(all) struct ClassTableEntry {
+  type_params : Array[String]
   own_fields : Array[(String, Type)]
-  base : String?
+  /// The base class, as a class name and its type arguments.
+  base : (String, Array[Type])?
 } derive(Eq, Debug)
+
+///|
+/// `builtins.range`, the one class the specification predefines.
+pub let range_class : String = "builtins.range"
+
+///|
+/// The class table every program starts with: `range`, with its `stop`.
+pub fn predefined_classes() -> ClassTable {
+  @sorted_map.SortedMap::new().add(range_class, {
+    type_params: [],
+    own_fields: [("stop", t_int)],
+    base: None,
+  })
+}
 
 ///|
 pub fn empty_class_table() -> ClassTable {
@@ -35,43 +50,66 @@ fn entry(sigma : ClassTable, c : String) -> ClassTableEntry {
 }
 
 ///|
+pub fn type_params_of(sigma : ClassTable, c : String) -> Array[String] {
+  entry(sigma, c).type_params
+}
+
+///|
+pub fn base_of(sigma : ClassTable, c : String) -> (String, Array[Type])? {
+  entry(sigma, c).base
+}
+
+///|
 /// The class and every class it inherits from, nearest first.
 pub fn ancestors(sigma : ClassTable, c : String) -> Array[String] {
   match entry(sigma, c).base {
     None => [c]
-    Some(b) => [c, ..ancestors(sigma, b)]
+    Some((b, _)) => [c, ..ancestors(sigma, b)]
   }
 }
 
 ///|
-/// Every field, inherited first.
-pub fn fields(sigma : ClassTable, c : String) -> Array[String] {
+/// Every field, inherited first, generic in the class's type parameters.
+pub fn fields(sigma : ClassTable, c : String) -> FieldScheme {
   let e = entry(sigma, c)
-  let own = e.own_fields.map(fn(p) { p.0 })
   match e.base {
-    None => own
-    Some(b) => [..fields(sigma, b), ..own]
-  }
-}
-
-///|
-/// A field's declared type, looked up through the ancestors.
-pub fn field_type(sigma : ClassTable, c : String, x : String) -> Type? {
-  let e = entry(sigma, c)
-  for p in e.own_fields {
-    if p.0 == x {
-      return Some(p.1)
+    None => { type_params: e.type_params, fields: e.own_fields, }
+    Some((b, args)) => {
+      let inherited = instantiate(fields(sigma, b), args)
+      { type_params: e.type_params, fields: [..inherited, ..e.own_fields], }
     }
   }
-  match e.base {
-    None => None
-    Some(b) => field_type(sigma, b, x)
-  }
 }
 
 ///|
-pub fn declared_type(sigma : ClassTable, c : String, x : String) -> Type {
-  match field_type(sigma, c, x) {
+pub fn field_names(sigma : ClassTable, c : String) -> Array[String] {
+  fields(sigma, c).fields.map(fn(f) { f.0 })
+}
+
+///|
+/// A field's type at a class type's arguments.
+pub fn field_type(
+  sigma : ClassTable,
+  c : String,
+  args : Array[Type],
+  x : String,
+) -> Type? {
+  for f in instantiate(fields(sigma, c), args) {
+    if f.0 == x {
+      return Some(f.1)
+    }
+  }
+  None
+}
+
+///|
+pub fn declared_type(
+  sigma : ClassTable,
+  c : String,
+  args : Array[Type],
+  x : String,
+) -> Type {
+  match field_type(sigma, c, args, x) {
     Some(t) => t
     None => abort("\{c} has no field \{x}")
   }
@@ -91,7 +129,7 @@ pub fn[T] field_map(
   kwd_names : Array[String],
   kwd_values : Array[T],
 ) -> Array[(String, T)]? {
-  let xs = fields(sigma, c)
+  let xs = field_names(sigma, c)
   let n = positional.length()
   if n + kwd_names.length() != xs.length() {
     return None
@@ -116,6 +154,40 @@ pub fn[T] field_map(
     out.push((k, kwd_values[i]))
   }
   Some(out)
+}
+
+///|
+/// Why `field_map` is undefined.
+pub(all) enum FieldMapFailure {
+  ArityMismatch(expected~ : Int32, given~ : Int32)
+  RepeatedKeywordArg
+  UnknownKeywordArgs(Array[String])
+}
+
+///|
+pub fn no_field_map(
+  sigma : ClassTable,
+  c : String,
+  n : Int32,
+  kwd_names : Array[String],
+) -> FieldMapFailure {
+  let xs = field_names(sigma, c)
+  if n + kwd_names.length() != xs.length() {
+    return ArityMismatch(expected=xs.length(), given=n + kwd_names.length())
+  }
+  for i, k in kwd_names {
+    if kwd_names[:i].contains(k) {
+      return RepeatedKeywordArg
+    }
+  }
+  let rest : Array[String] = []
+  for x in xs[n:] {
+    if !rest.contains(x) {
+      rest.push(x)
+    }
+  }
+  @basic.sort_names(rest)
+  UnknownKeywordArgs(rest)
 }
 
 ///|

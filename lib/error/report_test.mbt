@@ -61,7 +61,7 @@ test "a rejection with no position renders as a message alone" {
 test "every reason that earns a help line has one" {
   let with_help : Array[@err.Reason] = [
     UnassignedVariable(x="x"),
-    PossiblyUnassigned(x="x"),
+    PossiblyUnassigned(x="x", declared_in_branch=false),
     UndeclaredAssignment(x="x"),
     Reassignment(x="x"),
     UnassignedMember(x="x", q="lib"),

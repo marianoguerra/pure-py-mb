@@ -97,3 +97,23 @@ pub extend Type with Compare::{op_lt, op_le, op_ge, compare, op_gt}
 #deprecated(skip_current_package=true)
 #doc(hidden)
 pub extend Type with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Member with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Member with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend FieldScheme with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend FieldScheme with Debug::{to_repr}

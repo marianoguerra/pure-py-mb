@@ -19,7 +19,9 @@ pub(all) enum Head {
 ///|
 pub(all) enum Shape {
   Rest(Type, Array[Head])
-  Constr(String, Array[Shape], Array[Head])
+  /// A class type -- the class at its type arguments -- with the shapes of
+  /// its fields so far and the subclasses excluded.
+  Constr(Type, Array[Shape], Array[Head])
   Tuple(Array[Shape])
   List(Type, Array[Shape])
   /// The value type, the keys matched so far with their shapes (sorted by
@@ -52,7 +54,7 @@ pub fn keys_add(ks : Array[String], k : String) -> Array[String] {
 pub fn shape_type(k : Shape) -> Type {
   match k {
     Rest(t, _) => t
-    Constr(c, _, _) => Class(c)
+    Constr(t, _, _) => t
     Tuple(ks) => Tuple(ks.map(shape_type))
     List(t, _) => List(t)
     Dict(t, _, _) => Dict(t)
@@ -85,7 +87,7 @@ pub fn shapes(sigma : ClassTable, tau : Type, hs : Array[Head]) -> Array[Shape] 
   if tau == t_none && hs.contains(HLit(NoneLit)) {
     return []
   }
-  if tau is Class(c) && below_excluded(sigma, c, hs) {
+  if tau is Class(c, _) && below_excluded(sigma, c, hs) {
     return []
   }
   if tau == t_never {
@@ -100,7 +102,7 @@ pub fn shapes(sigma : ClassTable, tau : Type, hs : Array[Head]) -> Array[Shape] 
 ///|
 pub fn head_typed(sigma : ClassTable, h : Head, tau : Type) -> Bool {
   match h {
-    HClass(c) => subtype(sigma, Class(c), tau)
+    HClass(c) => !(instance_below(sigma, c, tau) is NoInstance)
     HLit(v) => subtype(sigma, Literal(v), tau)
     HLen(_) => tau is List(_)
   }
@@ -117,11 +119,12 @@ pub fn typed_heads(
 
 ///|
 pub fn below_excluded(sigma : ClassTable, c : String, hs : Array[Head]) -> Bool {
+  let above = ancestors(sigma, c)
   hs
   .iter()
   .any(fn(h) {
     match h {
-      HClass(d) => subtype(sigma, Class(c), Class(d))
+      HClass(d) => above.contains(d)
       _ => false
     }
   })

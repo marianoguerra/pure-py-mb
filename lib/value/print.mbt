@@ -67,6 +67,8 @@ pub fn Value::repr(self : Value) -> String? {
     }
     // `P(x=1, y='a')`: the class's short name and every field, inherited
     // first, which is the order `fields` gives them.
+    // Python's own spelling of a range, with its start.
+    Obj(_, _) if range_stop(self) is Some(n) => Some("range(0, \{n})")
     Obj(entry, env) => {
       let out = StringBuilder()
       out.write_string(entry.short_name())

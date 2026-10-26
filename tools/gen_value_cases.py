@@ -7,9 +7,8 @@ by hand -- CPython has an answer for all of them, and the point of the row is
 that this implementation does not.
 
 The undefined rows are the reason the table is written rather than derived:
-`True == 1` and `1 == "a"` are True and False in Python and have no rule in
-PurePy, and a table generated purely from CPython would assert the wrong
-thing.
+`True == 1` and `not 1` have an answer in Python and no rule in PurePy, and
+a table generated purely from CPython would assert the wrong thing.
 
 Regenerate with `just tables`; the diff is the review artifact.
 """
@@ -64,6 +63,9 @@ CASES = [
     "[1, 2, 3][3]", "[1, 2, 3][-4]", "[][0]", '{"a": 1}["b"]',
     # equality with None
     "None == None", "None == 1", "1 == None", "None != None",
+    # values of different forms are unequal (v0.18), all but a bool and a
+    # number
+    '1 == "a"', '"a" == 1', '[1, "a"] == [1, 3]', "[1] == (1,)",
     # nested repr
     '[1, "a", (2, 3), {"k": 1.5}, None, True]', "('x',)", "()", "[]", "{}",
     '{"k": [1, (2,)]}',
@@ -94,10 +96,6 @@ UNDEFINED = {
     "1 % False": "bool is not a number",
     "not 1": "truthiness",
     "not None": "truthiness",
-    '1 == "a"': "unrelated kinds",
-    '"a" == 1': "unrelated kinds",
-    '[1, "a"] == [1, 3]': "eq reaches an undefined pair",
-    "[1] == (1,)": "a list against a tuple",
     "1 < 'a'": "unrelated kinds",
     '{1: 2}': "a dict key that is not a string",
     "1 in 2": "membership in a number",

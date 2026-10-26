@@ -406,6 +406,7 @@ fn Parser::parse_simple_statement(self : Parser) -> Stmt raise {
       }
       "import" => return self.parse_import()
       "from" => return self.parse_from_import()
+      "type" => if self.starts_type_alias() { return self.parse_type_alias() }
       _ => ()
     }
   }
@@ -864,6 +865,7 @@ fn Parser::parse_def(
   let start = self.here()
   let _ = self.expect_name("def")
   let name = self.expect_identifier().text
+  let type_params = self.parse_type_params()
   let _ = self.expect_op("(")
   let args = self.parse_parameters()
   let _ = self.expect_op(")")
@@ -877,8 +879,79 @@ fn Parser::parse_def(
     decorators~,
     returns~,
     is_async~,
+    type_params~,
     span=span_to(start, body_end(body, start)),
   )
+}
+
+///|
+/// `[T, U: bound, *Ts, **P]` after a name (PEP 695), or nothing.
+fn Parser::parse_type_params(self : Parser) -> Array[@ast.TypeParam] raise {
+  let out : Array[@ast.TypeParam] = []
+  if !self.eat_op("[") {
+    return out
+  }
+  while !self.at_op("]") {
+    let start = self.here()
+    if self.eat_op("**") {
+      let name = self.expect_identifier().text
+      let default_value = if self.eat_op("=") {
+        Some(self.parse_expr())
+      } else {
+        None
+      }
+      out.push(ParamSpec(name~, default_value~, span=self.span_from(start)))
+    } else if self.eat_op("*") {
+      let name = self.expect_identifier().text
+      let default_value = if self.eat_op("=") {
+        Some(self.parse_expr())
+      } else {
+        None
+      }
+      out.push(TypeVarTuple(name~, default_value~, span=self.span_from(start)))
+    } else {
+      let name = self.expect_identifier().text
+      let bound = if self.eat_op(":") { Some(self.parse_expr()) } else { None }
+      let default_value = if self.eat_op("=") {
+        Some(self.parse_expr())
+      } else {
+        None
+      }
+      out.push(
+        TypeVar(name~, bound~, default_value~, span=self.span_from(start)),
+      )
+    }
+    if !self.eat_op(",") {
+      break
+    }
+  }
+  if out.is_empty() {
+    raise self.error("invalid syntax")
+  }
+  let _ = self.expect_op("]")
+  out
+}
+
+///|
+/// `type` is a soft keyword: `type X = ...` and `type X[T] = ...` are type
+/// alias statements, and `type = 1` is an assignment.
+fn Parser::starts_type_alias(self : Parser) -> Bool {
+  let name = self.peek_at(1)
+  name.kind is Name &&
+  !@token.is_keyword(name.text) &&
+  (self.peek_at(2).is_op("=") || self.peek_at(2).is_op("["))
+}
+
+///|
+fn Parser::parse_type_alias(self : Parser) -> Stmt raise {
+  let start = self.here()
+  let _ = self.expect_name("type")
+  let t = self.expect_identifier()
+  let name : Expr = Name(id=t.text, ctx=Store, span=t.span)
+  let type_params = self.parse_type_params()
+  let _ = self.expect_op("=")
+  let value = self.parse_expr()
+  TypeAlias(name~, type_params~, value~, span=self.span_from(start))
 }
 
 ///|
@@ -886,6 +959,7 @@ fn Parser::parse_class(self : Parser, decorators~ : Array[Expr]) -> Stmt raise {
   let start = self.here()
   let _ = self.expect_name("class")
   let name = self.expect_identifier().text
+  let type_params = self.parse_type_params()
   let bases : Array[Expr] = []
   let keywords : Array[@ast.Keyword] = []
   if self.eat_op("(") {
@@ -931,6 +1005,7 @@ fn Parser::parse_class(self : Parser, decorators~ : Array[Expr]) -> Stmt raise {
     keywords~,
     body~,
     decorators~,
+    type_params~,
     span=span_to(start, body_end(body, start)),
   )
 }
@@ -940,8 +1015,26 @@ fn Parser::parse_class(self : Parser, decorators~ : Array[Expr]) -> Stmt raise {
 /// the statement it precedes.
 fn retag_span(s : Stmt, span : Span) -> Stmt {
   match s {
-    FunctionDef(name~, args~, body~, decorators~, returns~, is_async~, ..) =>
-      FunctionDef(name~, args~, body~, decorators~, returns~, is_async~, span~)
+    FunctionDef(
+      name~,
+      args~,
+      body~,
+      decorators~,
+      returns~,
+      is_async~,
+      type_params~,
+      ..
+    ) =>
+      FunctionDef(
+        name~,
+        args~,
+        body~,
+        decorators~,
+        returns~,
+        is_async~,
+        type_params~,
+        span~,
+      )
     For(target~, iter~, body~, or_else~, is_async~, ..) =>
       For(target~, iter~, body~, or_else~, is_async~, span~)
     With(items~, body~, is_async~, ..) => With(items~, body~, is_async~, span~)

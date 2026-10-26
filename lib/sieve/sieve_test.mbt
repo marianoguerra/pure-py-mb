@@ -21,24 +21,56 @@ fn verdict(source : String) -> String {
 ///|
 test "prohibited forms" {
   let cases = [
-    ("x = y = 1\n", "1: multiple assignment targets"),
+    ("x = y = 1\n", "1: multiple assignment targets prohibited"),
+    ("x = 1, 2\n", "1: tuple without parentheses prohibited"),
+    (
+      "match v:\n    case a, b:\n        pass\n", "1: sequence pattern without brackets or parentheses prohibited",
+    ),
+    ("f(**d)\n", "1: dict unpacking in argument list prohibited"),
+    (
+      "def f() -> None:\n    type X = int\n", "1: type statement outside the module top level prohibited",
+    ),
+    (
+      "def f[T, T](x: T) -> T:\n    return x\n", "1: duplicate type parameter T prohibited",
+    ),
+    (
+      "def f[T: int](x: T) -> T:\n    return x\n", "1: bound on type parameter T prohibited",
+    ),
+    (
+      "def f[T: (int, str)](x: T) -> T:\n    return x\n", "1: constraints on type parameter T prohibited",
+    ),
+    (
+      "def f[**P](x: int) -> int:\n    return x\n", "1: ParamSpec type parameter **P prohibited",
+    ),
+    (
+      "def f[*Ts](x: int) -> int:\n    return x\n", "1: TypeVarTuple type parameter *Ts prohibited",
+    ),
+    (
+      "@dataclass\n@dataclass\nclass C:\n    pass\n", "1: multiple class decorators prohibited",
+    ),
     ("a[0] = 1\n", "1: item assignment prohibited"),
     ("a.b = 1\n", "1: attribute assignment prohibited"),
-    ("def f(x):\n    return 1\n", "1: parameters must be annotated"),
-    ("def f(x: int):\n    return 1\n", "1: return type must be annotated"),
-    ("def f(x: 1) -> int:\n    return 1\n", "1: unsupported type annotation"),
+    ("def f(x):\n    return 1\n", "1: unannotated parameter prohibited"),
+    ("def f(x: int):\n    return 1\n", "1: unannotated return type prohibited"),
     (
-      "def f() -> list[int, int]:\n    return 1\n", "1: unsupported type annotation",
+      "def f(x: 1) -> int:\n    return 1\n", "1: annotation that is not a type expression prohibited",
+    ),
+    (
+      "def f() -> list[int, int]:\n    return 1\n", "1: annotation that is not a type expression prohibited",
     ),
     ("x += 1\n", "1: augmented assignment (+=, etc.) prohibited"),
-    ("a.b: int = 1\n", "1: assignment target must be a simple name"),
-    ("x: dict[int, int] = {}\n", "1: unsupported type annotation"),
-    ("x = {**a}\n", "1: dict unpacking prohibited"),
     (
-      "import a\nx = 1\nimport b\n", "1: imports must precede all other statements",
+      "a.b: int = 1\n", "1: assignment target other than a simple name prohibited",
     ),
     (
-      "def f() -> None:\n    import a\n", "1: import only allowed at module top level",
+      "x: dict[int, int] = {}\n", "1: annotation that is not a type expression prohibited",
+    ),
+    ("x = {**a}\n", "1: dict unpacking prohibited"),
+    (
+      "import a\nx = 1\nimport b\n", "1: import after another statement prohibited",
+    ),
+    (
+      "def f() -> None:\n    import a\n", "1: import outside the module top level prohibited",
     ),
     (
       "match v:\n    case 1 + 2j:\n        pass\n", "1: complex and bytes literal patterns prohibited",
@@ -59,44 +91,44 @@ test "prohibited forms" {
     ("def f() -> None:\n    global x\n", "1: global prohibited"),
     ("def f() -> None:\n    nonlocal x\n", "1: nonlocal prohibited"),
     (
-      "def f() -> None:\n    class C:\n        pass\n", "1: class declaration only at module top level",
+      "def f() -> None:\n    class C:\n        pass\n", "1: class declaration outside the module top level prohibited",
     ),
     ("def f() -> None:\n    break\n", "1: break prohibited"),
     ("def f() -> None:\n    continue\n", "1: continue prohibited"),
     (
-      "try:\n    pass\nexcept* ValueError:\n    pass\n", "1: unknown statement type: TryStar",
+      "try:\n    pass\nexcept* ValueError:\n    pass\n", "1: try/except prohibited",
     ),
+    ("class C:\n    pass\n", "1: undecorated class prohibited"),
     (
-      "class C:\n    pass\n", "1: class must have exactly the @dataclass decorator",
-    ),
-    (
-      "@other\nclass C:\n    pass\n", "1: only the @dataclass decorator is supported on classes",
+      "@other\nclass C:\n    pass\n", "1: class decorator other than @dataclass prohibited",
     ),
     (
       "@dataclass\nclass C(A, B):\n    pass\n", "1: multiple inheritance prohibited",
     ),
     (
-      "@dataclass\nclass C(a.b):\n    pass\n", "1: base class must be a simple name",
+      "@dataclass\nclass C(f()):\n    pass\n", "1: base class other than a name, optionally applied to type arguments prohibited",
     ),
     (
       "@dataclass\nclass C(metaclass=type):\n    pass\n", "1: class keyword arguments prohibited",
     ),
     (
-      "@dataclass\nclass C:\n    def m():\n        pass\n", "1: dataclass body may contain only field declarations",
+      "@dataclass\nclass C:\n    def m():\n        pass\n", "1: dataclass member other than a field declaration prohibited",
     ),
     (
-      "@dataclass\nclass C:\n    a.b: Any\n", "1: field target must be a simple name",
+      "@dataclass\nclass C:\n    a.b: Any\n", "1: field target other than a simple name prohibited",
     ),
     (
       "@dataclass\nclass C:\n    x: Any = 1\n", "1: field default values prohibited",
     ),
-    ("@dataclass\nclass C:\n    x: 1\n", "1: unsupported type annotation"),
     (
-      "match v:\n    case {1: a}:\n        pass\n", "1: dict pattern keys must be string literals",
+      "@dataclass\nclass C:\n    x: 1\n", "1: annotation that is not a type expression prohibited",
     ),
-    ("x = b\"b\"\n", "1: bytes literals prohibited"),
-    ("x = 1j\n", "1: complex literals prohibited"),
-    ("x = ...\n", "1: prohibited literal type: ellipsis"),
+    (
+      "match v:\n    case {1: a}:\n        pass\n", "1: dict pattern key other than a string literal prohibited",
+    ),
+    ("x = b\"b\"\n", "1: bytes literal prohibited"),
+    ("x = 1j\n", "1: complex literal prohibited"),
+    ("x = ...\n", "1: ellipsis literal prohibited"),
     ("x = a | b\n", "1: binary operator '|' prohibited"),
     ("x = a & b\n", "1: binary operator '&' prohibited"),
     ("x = a ^ b\n", "1: binary operator '^' prohibited"),
@@ -181,10 +213,12 @@ test "what PurePy accepts" {
   let cases = [
     "pass\n", "x = 1\n", "x = a + b * c\n", "x = not a\n", "x = -a\n", "x = a < b\n",
     "x = f(1, k=2)\n", "x = a if b else c\n", "x = lambda p: p\n", "x = [1, 2]\n",
-    "x = (1, 2)\n", "x = {\"a\": 1}\n", "x = a.b\n", "x = a[0]\n", "x = [i for i in y if i]\n",
-    "x = {k: v for k in y}\n", "def f(a: int, b: str) -> int:\n    return a\n", "x: int = 1\n",
-    "x: list[int | str] = []\n", "x: Callable[[int], dict[str, int]] = f\n", "x: Literal[-1] = -1\n",
-    "x: tuple[int, str] | None = None\n", "if a:\n    x = 1\nelse:\n    x = 2\n",
+    "x = (1, 2)\n", "x = {\"a\": 1}\n", "type X = int\n", "type P[T] = tuple[T, T]\n",
+    "def f[T](x: T) -> T:\n    return x\n", "@dataclass\nclass B[T](A[T]):\n    x: T\n",
+    "x = Box[int](1)\n", "@dataclass\nclass C(m.A):\n    pass\n", "x = a.b\n", "x = a[0]\n",
+    "x = [i for i in y if i]\n", "x = {k: v for k in y}\n", "def f(a: int, b: str) -> int:\n    return a\n",
+    "x: int = 1\n", "x: list[int | str] = []\n", "x: Callable[[int], dict[str, int]] = f\n",
+    "x: Literal[-1] = -1\n", "x: tuple[int, str] | None = None\n", "if a:\n    x = 1\nelse:\n    x = 2\n",
     "assert a, \"m\"\n", "import sys\n", "from math import pi\n", "@dataclass\nclass C:\n    x: Any\n",
     "@dataclass\nclass C:\n    pass\n", "@dataclass\nclass D(C):\n    y: Any\n",
     "match v:\n    case 1:\n        pass\n    case _:\n        pass\n", "match v:\n    case [a]:\n        pass\n",
@@ -287,9 +321,9 @@ test "every pending feature is gated, not removed" {
     ),
     ("a = xs[1:2]\n", "2: slicing not yet supported (#59)"),
     ("a = xs[::-1]\n", "2: slicing not yet supported (#59)"),
-    ("a, b = 1, 2\n", "2: destructuring assignment not yet supported (#54)"),
+    ("a, b = (1, 2)\n", "2: destructuring assignment not yet supported (#54)"),
     (
-      "a, (b, c) = 1, (2, 3)\n", "2: destructuring assignment not yet supported (#54)",
+      "a, (b, c) = (1, (2, 3))\n", "2: destructuring assignment not yet supported (#54)",
     ),
     (
       "def f(x: int = 1) -> int:\n    return x\n", "2: default arguments not yet supported (#56)",

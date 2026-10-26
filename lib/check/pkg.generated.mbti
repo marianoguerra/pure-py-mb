@@ -35,11 +35,19 @@ pub let predefined_modules : Array[String]
 // Errors
 
 // Types and methods
+pub(all) enum Declared {
+  Mono(@types.Type)
+  Poly(Array[String], @types.Type)
+} derive(Eq, @debug.Debug)
+
 pub(all) enum Entry {
   Var(@types.Type)
   Unbound
   DU(@types.Type)
-  PU(@types.Type)
+  PU(Declared, declared_in_branch~ : Bool)
+  Scheme(Array[String], @types.Type)
+  TypeParam
+  Alias(Array[String], @types.Type)
   ModuleStub(String)
   ModuleLoaded(String, @sorted_map.SortedMap[String, Entry])
   Class(String)

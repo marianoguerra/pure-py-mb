@@ -351,6 +351,7 @@ pub fn assigns_stmt(s : @ast.Stmt) -> NameSet {
     }
     FunctionDef(name~, ..) | ClassDef(name~, ..) =>
       @sorted_set.SortedSet::singleton(name)
+    TypeAlias(name=Name(id~, ..), ..) => @sorted_set.SortedSet::singleton(id)
     _ => abort("unreachable after the sieve: " + s.kind_name())
   }
 }
@@ -681,6 +682,7 @@ pub fn declares(s : @ast.Stmt) -> Array[(String, @ast.Stmt)] {
       out
     }
     FunctionDef(name~, ..) | ClassDef(name~, ..) => [(name, s)]
+    TypeAlias(name=Name(id~, ..), ..) => [(id, s)]
     Import(names~, ..) =>
       [
         (

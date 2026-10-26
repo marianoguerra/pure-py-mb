@@ -62,6 +62,14 @@ pub fn override_env(@hashmap.HashMap[String, Value], @hashmap.HashMap[String, Va
 
 pub fn print_text(Array[Value]) -> String?
 
+pub let range_class_name : String
+
+pub fn range_entry() -> @context.ClassEntry
+
+pub fn range_length(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn range_stop(Value) -> @bigint.BigInt?
+
 pub fn seq_method(Array[Value], String, Array[Value]) -> Outcome?
 
 pub fn str_method(String, String, Array[Value]) -> Outcome?

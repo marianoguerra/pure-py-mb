@@ -40,5 +40,8 @@ if [ "${1-}" = "--sync" ]; then
   rm -rf "$root/test/conformance"
   mkdir -p "$root/test/conformance"
   (cd "$ref/test" && tar --exclude=__pycache__ -cf - .) | (cd "$root/test/conformance" && tar -xf -)
+  # A directory the reference's runs left holding nothing but bytecode is
+  # not a test: git does not track it, and the copy above leaves it empty.
+  find "$root/test/conformance" -type d -empty -delete
   echo "test/conformance synced from reference/test"
 fi

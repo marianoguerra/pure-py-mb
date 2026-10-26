@@ -267,9 +267,16 @@ test "the builtins" {
     "2 3 1\n",
   )
   assert_eq(run("print(len(1))\n"), "!TypeError")
-  // `range` is not in `builtins` from v0.16: the typed specification took it
-  // out until it had polymorphism to give it a type.
-  assert_eq(run("print(range(3))\n"), "!stuck: the unbound name 'range'")
+  // `range` is a class since v0.18, with one field: `stop`. Its value prints
+  // as Python's, and a generator and `len` read it as its numbers.
+  assert_eq(run("print(range(3))\n"), "range(0, 3)\n")
+  assert_eq(run("print(range(3).stop)\n"), "3\n")
+  assert_eq(run("print(len(range(3)), len(range(-1)))\n"), "3 0\n")
+  assert_eq(run("print([i for i in range(3)])\n"), "[0, 1, 2]\n")
+  assert_eq(
+    run("print(range(-1) == range(-2), range(2) == range(3))\n"),
+    "True False\n",
+  )
 }
 
 ///|
@@ -446,8 +453,8 @@ test "equality over objects, floats and mixed kinds" {
   )
   // Nested, so equality recurses through the fields.
   assert_eq(run(p + "print(P(1, [2]) == P(1, [2]))\n"), "True\n")
-  // An object against another kind has no rule, as any unrelated pair does.
-  assert_eq(run(p + "print(P(1, 2) == 1)\n"), "!stuck: == between P and int")
+  // Values of different forms are unequal since v0.18.
+  assert_eq(run(p + "print(P(1, 2) == 1)\n"), "False\n")
   // A float on the left of `==` with an int on the right: the comparison is
   // exact, so a large integer is not made equal to the double nearest it.
   assert_eq(run("print(1.0 == 1, 2.0 == 3)\n"), "True False\n")

@@ -173,7 +173,16 @@ fn Writer::expr(self : Writer, e : @ast.Expr, demanded : Int32) -> Unit {
 ///|
 fn Writer::stmt(self : Writer, s : @ast.Stmt) -> Unit {
   match s {
-    FunctionDef(name~, args~, body~, decorators~, returns~, is_async~, ..) => {
+    FunctionDef(
+      name~,
+      args~,
+      body~,
+      decorators~,
+      returns~,
+      is_async~,
+      type_params~,
+      ..
+    ) => {
       for d in decorators {
         self.out_prefix("@")
         self.expr(d, prec_tuple)
@@ -181,6 +190,7 @@ fn Writer::stmt(self : Writer, s : @ast.Stmt) -> Unit {
       }
       self.out_prefix(if is_async { "async def " } else { "def " })
       self.out.write_string(name)
+      self.type_params(type_params)
       self.out.write_string("(")
       self.arguments(args)
       self.out.write_string(")")
@@ -194,7 +204,7 @@ fn Writer::stmt(self : Writer, s : @ast.Stmt) -> Unit {
       self.out.write_string(":\n")
       self.block(body)
     }
-    ClassDef(name~, bases~, keywords~, body~, decorators~, ..) => {
+    ClassDef(name~, bases~, keywords~, body~, decorators~, type_params~, ..) => {
       for d in decorators {
         self.out_prefix("@")
         self.expr(d, prec_tuple)
@@ -202,6 +212,7 @@ fn Writer::stmt(self : Writer, s : @ast.Stmt) -> Unit {
       }
       self.out_prefix("class ")
       self.out.write_string(name)
+      self.type_params(type_params)
       if !bases.is_empty() || !keywords.is_empty() {
         self.out.write_string("(")
         let mut first = true
@@ -223,6 +234,14 @@ fn Writer::stmt(self : Writer, s : @ast.Stmt) -> Unit {
       }
       self.out.write_string(":\n")
       self.block(body)
+    }
+    TypeAlias(name~, type_params~, value~, ..) => {
+      self.out_prefix("type ")
+      self.expr(name, prec_atom)
+      self.type_params(type_params)
+      self.out.write_string(" = ")
+      self.expr(value, prec_test)
+      self.out.write_string("\n")
     }
     Return(value~, ..) =>
       match value {
@@ -507,5 +526,91 @@ fn Writer::comma_exprs(
       self.out.write_string(", ")
     }
     self.expr(e, demanded)
+  }
+}
+
+///|
+/// `[T, U: bound, *Ts, **P]`, or nothing.
+fn Writer::type_params(self : Writer, params : Array[@ast.TypeParam]) -> Unit {
+  if params.is_empty() {
+    return
+  }
+  self.out.write_string("[")
+  for i, p in params {
+    if i > 0 {
+      self.out.write_string(", ")
+    }
+    match p {
+      TypeVar(name~, bound~, default_value~, ..) => {
+        self.out.write_string(name)
+        match bound {
+          Some(b) => {
+            self.out.write_string(": ")
+            self.expr(b, prec_test)
+          }
+          None => ()
+        }
+        self.type_param_default(default_value)
+      }
+      ParamSpec(name~, default_value~, ..) => {
+        self.out.write_string("**" + name)
+        self.type_param_default(default_value)
+      }
+      TypeVarTuple(name~, default_value~, ..) => {
+        self.out.write_string("*" + name)
+        self.type_param_default(default_value)
+      }
+    }
+  }
+  self.out.write_string("]")
+}
+
+///|
+fn Writer::type_param_default(self : Writer, d : @ast.Expr?) -> Unit {
+  match d {
+    Some(e) => {
+      self.out.write_string(" = ")
+      self.expr(e, prec_test)
+    }
+    None => ()
+  }
+}
+
+///|
+/// A pattern as the reference's messages print it: its own rendering, not
+/// Python's, in that a tuple pattern is its parenthesised elements with no
+/// trailing comma, and a value is the source of its expression.
+pub fn render_pattern(p : @ast.Pattern) -> String {
+  match p {
+    MatchValue(value~, ..) => unparse_expr(value)
+    MatchSingleton(value~, ..) =>
+      match value {
+        None => "None"
+        Bool(true) => "True"
+        Bool(false) => "False"
+        _ => abort("a singleton")
+      }
+    MatchSequence(kind=List, patterns~, ..) =>
+      "[" + patterns.map(render_pattern).join(", ") + "]"
+    MatchSequence(patterns~, ..) =>
+      "(" + patterns.map(render_pattern).join(", ") + ")"
+    MatchMapping(keys~, patterns~, ..) =>
+      "{" +
+      keys
+      .mapi(fn(i, k) { unparse_expr(k) + ": " + render_pattern(patterns[i]) })
+      .join(", ") +
+      "}"
+    MatchClass(cls~, patterns~, kwd_attrs~, kwd_patterns~, ..) => {
+      let args = [
+        ..patterns.map(render_pattern),
+        ..kwd_attrs.mapi(fn(i, x) { x + "=" + render_pattern(kwd_patterns[i]) }),
+      ]
+      unparse_expr(cls) + "(" + args.join(", ") + ")"
+    }
+    MatchAs(pattern=None, name=None, ..) => "_"
+    MatchAs(pattern=None, name=Some(x), ..) => x
+    MatchAs(pattern=Some(q), name=Some(x), ..) => render_pattern(q) + " as " + x
+    MatchAs(pattern=Some(q), name=None, ..) => render_pattern(q)
+    MatchStar(..) | MatchOr(..) => abort("rejected by the sieve")
   }
 }

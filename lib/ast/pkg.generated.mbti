@@ -214,8 +214,9 @@ pub(all) enum SeqKind {
 pub fn SeqKind::name(Self) -> String
 
 pub(all) enum Stmt {
-  FunctionDef(name~ : String, args~ : Arguments, body~ : Array[Stmt], decorators~ : Array[Expr], returns~ : Expr?, is_async~ : Bool, span~ : @basic.Span)
-  ClassDef(name~ : String, bases~ : Array[Expr], keywords~ : Array[Keyword], body~ : Array[Stmt], decorators~ : Array[Expr], span~ : @basic.Span)
+  FunctionDef(name~ : String, args~ : Arguments, body~ : Array[Stmt], decorators~ : Array[Expr], returns~ : Expr?, is_async~ : Bool, type_params~ : Array[TypeParam], span~ : @basic.Span)
+  ClassDef(name~ : String, bases~ : Array[Expr], keywords~ : Array[Keyword], body~ : Array[Stmt], decorators~ : Array[Expr], type_params~ : Array[TypeParam], span~ : @basic.Span)
+  TypeAlias(name~ : Expr, type_params~ : Array[TypeParam], value~ : Expr, span~ : @basic.Span)
   Return(value~ : Expr?, span~ : @basic.Span)
   Delete(targets~ : Array[Expr], span~ : @basic.Span)
   Assign(targets~ : Array[Expr], value~ : Expr, span~ : @basic.Span)
@@ -252,6 +253,15 @@ pub fn Stmt::match_(Expr, Array[MatchCase]) -> Self
 pub fn Stmt::pass() -> Self
 pub fn Stmt::return_(value? : Expr) -> Self
 pub fn Stmt::span(Self) -> @basic.Span
+
+pub(all) enum TypeParam {
+  TypeVar(name~ : String, bound~ : Expr?, default_value~ : Expr?, span~ : @basic.Span)
+  ParamSpec(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
+  TypeVarTuple(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
+} derive(Eq, @debug.Debug)
+pub fn TypeParam::kind_name(Self) -> String
+pub fn TypeParam::name(Self) -> String
+pub fn TypeParam::span(Self) -> @basic.Span
 
 pub(all) enum UnaryOp {
   Invert

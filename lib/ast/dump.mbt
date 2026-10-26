@@ -172,7 +172,16 @@ fn Dumper::field_opt_expr(
 fn Dumper::stmt(self : Dumper, s : Stmt, depth : Int32) -> Unit {
   let d = depth + 1
   match s {
-    FunctionDef(name~, args~, body~, decorators~, returns~, is_async~, span~) => {
+    FunctionDef(
+      name~,
+      args~,
+      body~,
+      decorators~,
+      returns~,
+      is_async~,
+      type_params~,
+      span~
+    ) => {
       self.node(
         "FunctionDef",
         [("name", name), ("is_async", bool_text(is_async))],
@@ -184,8 +193,9 @@ fn Dumper::stmt(self : Dumper, s : Stmt, depth : Int32) -> Unit {
       self.field_stmts("body", body, d)
       self.field_exprs("decorator_list", decorators, d)
       self.field_opt_expr("returns", returns, d)
+      self.type_params(type_params, d)
     }
-    ClassDef(name~, bases~, keywords~, body~, decorators~, span~) => {
+    ClassDef(name~, bases~, keywords~, body~, decorators~, type_params~, span~) => {
       self.node("ClassDef", [("name", name)], depth, span)
       self.field_exprs("bases", bases, d)
       self.field("keywords", d)
@@ -194,6 +204,16 @@ fn Dumper::stmt(self : Dumper, s : Stmt, depth : Int32) -> Unit {
       }
       self.field_stmts("body", body, d)
       self.field_exprs("decorator_list", decorators, d)
+      self.type_params(type_params, d)
+    }
+    TypeAlias(name~, type_params~, value~, span~) => {
+      self.node("TypeAlias", [], depth, span)
+      self.field_expr("name", name, d)
+      self.field("type_params", d)
+      for p in type_params {
+        self.type_param(p, d + 1)
+      }
+      self.field_expr("value", value, d)
     }
     Return(value~, span~) => {
       self.node("Return", [], depth, span)
@@ -641,5 +661,35 @@ fn Dumper::pattern(self : Dumper, p : Pattern, depth : Int32) -> Unit {
       self.node("MatchOr", [], depth, span)
       self.field_patterns("patterns", patterns, d)
     }
+  }
+}
+
+///|
+/// A definition's type parameters, printed only when it has some: a
+/// definition without them dumps as it did before PEP 695.
+fn Dumper::type_params(
+  self : Dumper,
+  params : Array[TypeParam],
+  depth : Int32,
+) -> Unit {
+  if params.is_empty() {
+    return
+  }
+  self.field("type_params", depth)
+  for p in params {
+    self.type_param(p, depth + 1)
+  }
+}
+
+///|
+fn Dumper::type_param(self : Dumper, p : TypeParam, depth : Int32) -> Unit {
+  self.node(p.kind_name(), [("name", p.name())], depth, p.span())
+  match p {
+    TypeVar(bound~, default_value~, ..) => {
+      self.field_opt_expr("bound", bound, depth + 1)
+      self.field_opt_expr("default_value", default_value, depth + 1)
+    }
+    ParamSpec(default_value~, ..) | TypeVarTuple(default_value~, ..) =>
+      self.field_opt_expr("default_value", default_value, depth + 1)
   }
 }

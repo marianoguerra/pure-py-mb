@@ -232,6 +232,32 @@ pub async fn Interp::resolve_class(
           }
         _ => None
       }
+    // `Box[int]`: the class applied to type arguments, which only the
+    // checker reads.
+    Subscript(value~, ..) => self.resolve_class(value, env)
+    _ => None
+  }
+}
+
+///|
+/// The class a base class's annotation names -- `C`, `mod.C`, `Box[int]` --
+/// read off the environment, where it is already a value.
+fn base_class_of(e : @ast.Expr, env : Env) -> @context.ClassEntry? {
+  fn value_of(e : @ast.Expr) -> Value? {
+    match e {
+      Name(id~, ..) => env.get(id)
+      Attribute(value~, attr~, ..) =>
+        match value_of(value) {
+          Some(Mod(_, members)) => members.get(attr)
+          _ => None
+        }
+      Subscript(value~, ..) => value_of(value)
+      _ => None
+    }
+  }
+
+  match value_of(e) {
+    Some(Class(c)) => Some(c)
     _ => None
   }
 }
