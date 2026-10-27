@@ -361,20 +361,45 @@ fn check_seq(
   ctx : ModCtx,
   returns : @types.Type?,
 ) -> Outcome raise {
+  check_seq_narrowing(ss, ctx, returns).0
+}
+
+///|
+/// A sequence, and the narrowing it leaves for what follows it: under
+/// `Identity`, `if x is None: return 0` leaves `x` without `None`. Under
+/// `core` the narrowing is always empty.
+///
+/// Kept beside the outcome rather than in it, because an outcome's context is
+/// what a sequence ASSIGNS, and the branches of an enclosing `if` merge it:
+/// a narrowed variable in one branch and not the other would come out
+/// possibly unassigned. Nor does a module body carry one forward
+/// (`check_top_seq`), so a narrowing never reaches a module's members.
+fn check_seq_narrowing(
+  ss : ArrayView[@analysis.Statement],
+  ctx : ModCtx,
+  returns : @types.Type?,
+) -> (Outcome, Context) raise {
   if ss.is_empty() {
-    return assigns_nothing()
+    return (assigns_nothing(), empty_context())
   }
   let s = ss[0]
   let rest = ss[1:]
-  let r = check_statement(s, ctx, returns)
+  let (r, n) = match s {
+    Single(If(..) | Assert(..) as st) => check_branching(st, ctx, returns)
+    _ => (check_statement(s, ctx, returns), empty_context())
+  }
   if rest.is_empty() {
-    return r
+    return (r, n)
   }
   guard r is Assigns(delta, _) else {
     raise ill(UnreachableStatement, first_node(rest[0]).span())
   }
-  let r_ = check_seq(rest, ctx.override_gamma(delta), returns)
-  override_outcomes(r, r_)
+  let (r_, n_) = check_seq_narrowing(
+    rest,
+    ctx.override_gamma(delta).override_gamma(n),
+    returns,
+  )
+  (override_outcomes(r, r_), override_context(n, n_))
 }
 
 ///|
@@ -607,17 +632,57 @@ fn check_stmt(
       }
       Returns
     }
+    If(..) | Assert(..) => check_branching(s, ctx, returns).0
+    Match(subject~, ..) => {
+      let tau = synth_expr(subject, ctx)
+      check_match_cases(s, tau, ctx, returns)
+    }
+    _ => abort("unreachable after the sieve: " + s.kind_name())
+  }
+}
+
+///|
+/// An `if` or an `assert`: its outcome, and what it leaves narrowed.
+///
+/// A branch is checked where its condition narrows, and what follows the
+/// statement is checked where every branch that falls through does: the
+/// other branch's narrowing when one returns, what both know when neither
+/// does.
+fn check_branching(
+  s : @ast.Stmt,
+  ctx : ModCtx,
+  returns : @types.Type?,
+) -> (Outcome, Context) raise {
+  match s {
     If(cond~, body~, or_else~, ..) => {
       check_expr(cond, @types.t_bool, ctx)
-      let branches = [check_body(body, ctx, returns)]
-      branches.push(
-        if or_else.is_empty() {
-          assigns_nothing()
-        } else {
-          check_body(or_else, ctx, returns)
-        },
+      let n = narrowing(cond, ctx)
+      let (rb, nb) = check_seq_narrowing(
+        @analysis.statements(body)[:],
+        ctx.override_gamma(n.yes),
+        returns,
       )
-      merge_outcomes(ctx.sigma(), branches, declared_names(s))
+      let (re, ne) = if or_else.is_empty() {
+        (assigns_nothing(), empty_context())
+      } else {
+        check_seq_narrowing(
+          @analysis.statements(or_else)[:],
+          ctx.override_gamma(n.no),
+          returns,
+        )
+      }
+      let after_b = override_context(n.yes, nb)
+      let after_e = override_context(n.no, ne)
+      let after = match (rb, re) {
+        (Returns, Returns) => empty_context()
+        (Returns, _) => after_e
+        (_, Returns) => after_b
+        _ => join_narrowed(ctx.sigma(), after_b, after_e)
+      }
+      (
+        merge_outcomes(ctx.sigma(), [rb, re], declared_names(s)),
+        still_narrowed(after, ctx),
+      )
     }
     Assert(cond~, msg~, span~) => {
       let assert_false = cond is Constant(value=Bool(false), ..)
@@ -629,7 +694,7 @@ fn check_stmt(
         None => ()
       }
       if assert_false {
-        return Returns
+        return (Returns, empty_context())
       }
       // An assertion of an expression of type `Literal[False]` other than
       // `False` itself falls through only for mypy, which treats it as
@@ -637,21 +702,33 @@ fn check_stmt(
       let false_typed = returns is Some(_) &&
         synthesises(cond) &&
         synth_expr(cond, ctx) == Literal(Bool(false))
-      Assigns(
-        empty_context(),
-        if false_typed {
-          Some((MissingReturnAssertion, span))
-        } else {
-          None
-        },
+      (
+        Assigns(
+          empty_context(),
+          if false_typed {
+            Some((MissingReturnAssertion, span))
+          } else {
+            None
+          },
+        ),
+        narrowing(cond, ctx).yes,
       )
     }
-    Match(subject~, ..) => {
-      let tau = synth_expr(subject, ctx)
-      check_match_cases(s, tau, ctx, returns)
-    }
-    _ => abort("unreachable after the sieve: " + s.kind_name())
+    _ => abort("an if or an assert")
   }
+}
+
+///|
+/// A narrowing without the variables it leaves at the type they already had.
+fn still_narrowed(n : Context, ctx : ModCtx) -> Context {
+  let mut out = empty_context()
+  n.each(fn(x, e) {
+    match (e, ctx.assigned_type(x)) {
+      (Var(t), Some(tau)) if @types.equivalent(ctx.sigma(), t, tau) => ()
+      _ => out = out.add(x, e)
+    }
+  })
+  out
 }
 
 ///|
@@ -829,9 +906,15 @@ fn synth_expr(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
         None => raise ill(NoUnaryOverload(op=name, sigma=render(t)), span)
       }
     }
-    BoolOp(values~, ..) => {
+    BoolOp(op~, values~, ..) => {
+      // Each operand is read where the ones before it have decided: under
+      // `Identity`, `x is not None and x > 1` reads `x > 1` at `x`'s type
+      // without `None`.
+      let mut c = ctx
       for v in values {
-        check_expr(v, @types.t_bool, ctx)
+        check_expr(v, @types.t_bool, c)
+        let n = narrowing(v, c)
+        c = c.override_gamma(if op is And { n.yes } else { n.no })
       }
       @types.t_bool
     }
@@ -986,7 +1069,8 @@ fn subscript_type(
 ) -> @types.Type raise {
   guard e is Subscript(slice~, span~, ..) else { abort("a subscript") }
   // A slice, under a profile that has it, keeps the container's type; its
-  // bounds are ints.
+  // bounds are ints. A tuple's slice is the tuple of the components it
+  // takes, as mypy has it, which needs its bounds known.
   if slice is Slice(lower~, upper~, step~, ..) &&
     @types.base_type(container) is (Prim(Str) | List(_) | Tuple(_)) {
     for b in [lower, upper, step] {
@@ -996,7 +1080,7 @@ fn subscript_type(
       }
     }
     return match @types.base_type(container) {
-      Tuple(cs) => List(@types.join_seq(ctx.sigma(), cs))
+      Tuple(cs) => tuple_slice_type(cs, lower, upper, step)
       t => t
     }
   }
@@ -1021,6 +1105,71 @@ fn subscript_type(
     Tuple(cs) => tuple_subscript_type(cs, slice, ctx)
     _ => raise ill(NotSubscriptable(tau=render(container)), span)
   }
+}
+
+///|
+/// A slice bound of a tuple: absent, or an integer literal. A bound written
+/// as `None` has already been refused as a bound that is not an `int`.
+fn tuple_slice_bound(b : @ast.Expr?, tau : String) -> BigInt? raise {
+  guard b is Some(x) else { return None }
+  match @types.literal_type(x) {
+    Some(Int(n)) => Some(n)
+    _ => raise ill(TupleSliceBounds(tau~), x.span())
+  }
+}
+
+///|
+/// The components a slice of a tuple of `cs` takes, by CPython's
+/// `PySlice_AdjustIndices`: a bound past either end clamps, a negative one
+/// counts from the end.
+fn tuple_slice_type(
+  cs : Array[@types.Type],
+  lower : @ast.Expr?,
+  upper : @ast.Expr?,
+  step : @ast.Expr?,
+) -> @types.Type raise {
+  let tau = render(Tuple(cs))
+  let m = BigInt::from_int(cs.length())
+  let k = match tuple_slice_bound(step, tau) {
+    Some(k) => k
+    None => 1N
+  }
+  if k == 0N {
+    guard step is Some(x) else { abort("a zero step is written") }
+    raise ill(TupleSliceStepZero, x.span())
+  }
+  let (lo, hi) = if k > 0N { (0N, m) } else { (-1N, m - 1N) }
+  fn adjust(b : BigInt?, default : BigInt) -> BigInt {
+    match b {
+      None => default
+      Some(i) => {
+        let i = if i < 0N { i + m } else { i }
+        if i < lo {
+          lo
+        } else if i > hi {
+          hi
+        } else {
+          i
+        }
+      }
+    }
+  }
+  let start = adjust(
+    tuple_slice_bound(lower, tau),
+    if k > 0N {
+      lo
+    } else {
+      hi
+    },
+  )
+  let stop = adjust(tuple_slice_bound(upper, tau), if k > 0N { hi } else { lo })
+  let out = []
+  let mut i = start
+  while (k > 0N && i < stop) || (k < 0N && i > stop) {
+    out.push(cs[i.to_int()])
+    i = i + k
+  }
+  Tuple(out)
 }
 
 ///|
@@ -1054,12 +1203,18 @@ fn tuple_subscript_type(
 
 ///|
 fn branch_type(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
-  guard e is IfExp(body~, or_else~, span~, ..) else { abort("a conditional") }
-  let branches = [body, or_else]
+  guard e is IfExp(cond~, body~, or_else~, span~) else {
+    abort("a conditional")
+  }
+  let n = narrowing(cond, ctx)
+  let branches = [
+    (body, ctx.override_gamma(n.yes)),
+    (or_else, ctx.override_gamma(n.no)),
+  ]
   let taus = []
   for b in branches {
-    if synthesises(b) {
-      taus.push(synth_expr(b, ctx))
+    if synthesises(b.0) {
+      taus.push(synth_expr(b.0, b.1))
     }
   }
   if taus.is_empty() {
@@ -1067,8 +1222,8 @@ fn branch_type(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
   }
   let tau = @types.join_seq(ctx.sigma(), taus)
   for b in branches {
-    if !synthesises(b) {
-      check_expr(b, tau, ctx)
+    if !synthesises(b.0) {
+      check_expr(b.0, tau, b.1)
     }
   }
   tau
@@ -1474,8 +1629,9 @@ fn check_expr(
       }
     (IfExp(cond~, body~, or_else~, ..), _) => {
       check_expr(cond, @types.t_bool, ctx)
-      check_expr(body, expected, ctx)
-      check_expr(or_else, expected, ctx)
+      let n = narrowing(cond, ctx)
+      check_expr(body, expected, ctx.override_gamma(n.yes))
+      check_expr(or_else, expected, ctx.override_gamma(n.no))
       return
     }
     (ListComp(elt~, generators~, ..), List(t)) => {
@@ -1594,10 +1750,15 @@ fn check_quals(
     .contains(x) {
     raise ill(CapturedGeneratorVariable(x~), g.target.span())
   }
-  let delta = context_of([(x, Var(tau))])
-  let ctx_ = ctx.override_gamma(delta)
+  let mut delta = context_of([(x, Var(tau))])
+  let mut ctx_ = ctx.override_gamma(delta)
+  // A filter narrows what follows it: `[y for y in ys if y is not None]`,
+  // under `Identity`, is a list without `None`.
   for i in g.ifs {
     check_expr(i, @types.t_bool, ctx_)
+    let n = narrowing(i, ctx_).yes
+    delta = override_context(delta, n)
+    ctx_ = ctx_.override_gamma(n)
   }
   override_context(delta, check_quals(generators[1:], ctx_))
 }

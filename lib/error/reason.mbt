@@ -76,6 +76,13 @@ pub(all) enum Reason {
   /// Not the reference's: a method a profile's table does not have, on a
   /// value of a type that has methods under that profile.
   UnknownMethod(tau~ : String, x~ : String)
+  /// Not the reference's: a slice of a tuple, under a profile with slicing,
+  /// whose bounds are not integer literals. mypy types it `tuple[T, ...]`,
+  /// which PurePy has no annotation for.
+  TupleSliceBounds(tau~ : String)
+  /// Not the reference's: a slice of a tuple whose step is the literal `0`,
+  /// which mypy refuses and CPython answers with a `ValueError`.
+  TupleSliceStepZero
 } derive(Eq, Debug)
 
 ///|
@@ -180,6 +187,9 @@ pub fn Reason::message(self : Reason) -> String {
       "cases leave remaining type \{remaining}, so the function does not always return"
     MypyCompatibility(r) => r.message() + " (mypy compatibility)"
     UnknownMethod(tau~, x~) => "values of type \{tau} have no method '\{x}'"
+    TupleSliceBounds(tau~) =>
+      "a slice of a value of type \{tau} needs integer literal bounds"
+    TupleSliceStepZero => "slice step cannot be zero"
   }
 }
 
@@ -250,6 +260,8 @@ pub fn Reason::code(self : Reason) -> String {
     NoAttributes(..) => "no-attributes"
     MissingReturn(..) => "missing-return"
     UnknownMethod(..) => "unknown-method"
+    TupleSliceBounds(..) => "tuple-slice-bounds"
+    TupleSliceStepZero => "tuple-slice-step-zero"
   }
   "purepy::" + name
 }

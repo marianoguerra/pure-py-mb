@@ -334,11 +334,16 @@ test "every pending feature is gated, not removed" {
       "def f(x: int = 1) -> int:\n    return x\n", "1: default arguments not allowed in PurePy",
     ),
     ("f = lambda x=1: x\n", "1: default arguments not allowed in PurePy"),
+    ("a = f\"{b}\"\n", "1: f-strings not allowed in PurePy"),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)
     assert_eq(verdict_under(c.0, @profile.core), c.1, msg=c.0)
     assert_eq(verdict_under(c.0, @profile.pending()), "ok", msg=c.0)
+    // The CLI's hint reads the message, so a rename in the sieve that the
+    // hint's table does not follow silences it.
+    let msg = c.1.strip_prefix("1: ").unwrap().to_owned()
+    assert_eq(@profile.accepted_by(msg), Some("pending"), msg=c.0)
   }
 }
 

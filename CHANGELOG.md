@@ -24,6 +24,29 @@ section that made it:
 
 `lib/types` is new, and is where the type language lives.
 
+### Profiles, after the typed releases
+
+Outside the specification, so nothing `core` decides moves.
+
+`--profile` names the profile that would accept a refused form again: since
+v0.22 the sieve refuses a once-planned form as it refuses the rest, and the
+hint looked only for the old "not yet supported" kind. `accepted_by` takes the
+sieve's whole message, and knows the v0.23 name `unpacking assignment`.
+
+Under `pending`, a slice of a tuple is a tuple of the components it takes --
+`t[1:]` at `tuple[int, str, bool]` is `tuple[str, bool]`, as mypy types it --
+where it was typed as a list, which a well-typed program could then use as
+one and fail at run time. Its bounds must be integer literals, since mypy's
+type for any other is `tuple[T, ...]`, which PurePy cannot annotate, and a
+step of `0` is refused as mypy refuses it: `TupleSliceBounds` and
+`TupleSliceStepZero`.
+
+`x is None` and `x is not None` narrow `x`, as mypy narrows them: in the
+branches of an `if` and a conditional expression, in the later operands of
+`and` and `or`, under `not`, after an `assert`, after an `if` one branch of
+which returns, and in a comprehension's filter. A module body does not carry
+a narrowing forward, so a module's members keep their declared types.
+
 ### Specification v0.23.0: not allowed in PurePy
 
 The parser's refusals read `<form> not allowed in PurePy`, and a few are

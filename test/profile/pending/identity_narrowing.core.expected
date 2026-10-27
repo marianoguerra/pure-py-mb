@@ -1,0 +1,1 @@
+1: identity_narrowing.py:8:7: identity operator (is/is not) not allowed in PurePy

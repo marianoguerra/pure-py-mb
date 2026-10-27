@@ -166,8 +166,13 @@ test "the reason catalogue" {
       UnknownMethod(tau="list[int]", x="append"),
       "values of type list[int] have no method 'append'",
     ),
+    (
+      TupleSliceBounds(tau="tuple[int, str]"),
+      "a slice of a value of type tuple[int, str] needs integer literal bounds",
+    ),
+    (TupleSliceStepZero, "slice step cannot be zero"),
   ]
-  assert_eq(cases.length(), 61)
+  assert_eq(cases.length(), 63)
   for c in cases {
     assert_eq(c.0.message(), c.1)
   }

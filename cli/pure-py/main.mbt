@@ -125,13 +125,14 @@ fn profiles_listing() -> String {
 /// happens not to look here.
 fn profile_note(d : @err.Diagnostic, asked : Bool) -> String? {
   guard asked else { return None }
-  match d.kind {
-    NotYetSupported(feature~, ..) =>
-      match @profile.accepted_by(feature) {
-        Some(p) => Some("  accepted under --profile \{p}")
-        None => None
-      }
-    _ => None
+  let feature = match d.kind {
+    Prohibited(msg~) => msg
+    NotYetSupported(feature~, ..) => feature
+    _ => return None
+  }
+  match @profile.accepted_by(feature) {
+    Some(p) => Some("  accepted under --profile \{p}")
+    None => None
   }
 }
 

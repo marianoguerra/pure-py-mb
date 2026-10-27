@@ -50,9 +50,16 @@ pub(all) enum Feature {
   /// `x is None`, `x is not None` (#81). PurePy values have no identity, so
   /// this is defined against `None` -- which is a singleton in Python and the
   /// only thing `is` is reliably asked about -- and undefined elsewhere.
+  ///
+  /// It narrows, as mypy's does: past `if x is None: return 0`, `x` at
+  /// `int | None` is an `int`. That is what makes it worth having in a typed
+  /// language -- without it the answer is a `bool` no rule can use.
   Identity
   /// `xs[1:]`, `s[::-1]` (#59). Slicing is total where indexing is partial: a
   /// bound past the end clamps rather than aborting.
+  ///
+  /// A tuple's slice is a tuple of the components it takes, so its bounds
+  /// must be integer literals: the type depends on them.
   Slicing
   /// `a, b = 1, 2`, and the nested `a, (b, c) = ...` (#54). `*rest` is not
   /// part of it: a starred expression is prohibited outright, so a target
@@ -261,21 +268,30 @@ pub let names : Array[String] = ["core", "pending", "builtins", "methods"]
 ///|
 /// Which named profile accepts a form the sieve refused, if any does.
 ///
-/// Keyed on the feature STRING the sieve passes to `not_yet`, because
-/// `@error.Kind::NotYetSupported` already carries it and nothing else names the
-/// rule. That is also why this lives here and not in `lib/error`: a hint about
+/// Keyed on the feature string the sieve passes to `not_yet`, and takes the
+/// sieve's whole message as well: since v0.22 a form upstream once planned is
+/// refused as `<feature> not allowed in PurePy`, a `Prohibited` like every
+/// other refusal, so the message is all a diagnostic carries. A prohibition
+/// that no profile opens -- `for loops not allowed in PurePy` -- strips to a
+/// feature this table does not have, and answers nothing.
+///
+/// That is also why this lives here and not in `lib/error`: a hint about
 /// profiles is a rendering concern, and `Diagnostic::message` is compared
 /// against the reference checker's output word for word.
 ///
 /// The caller decides whether to show it. A run that asked for no profile
 /// should print what it printed before profiles existed.
 pub fn accepted_by(feature : String) -> String? {
+  let feature = match feature.strip_suffix(" not allowed in PurePy") {
+    Some(f) => f.to_owned()
+    None => feature
+  }
   match feature {
     "chained boolean operator"
     | "chained comparison"
     | "identity operator (is/is not)"
     | "slicing"
-    | "destructuring assignment"
+    | "unpacking assignment"
     | "default arguments"
     | "f-strings" => Some("pending")
     _ => None

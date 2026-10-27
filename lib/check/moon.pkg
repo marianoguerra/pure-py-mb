@@ -15,5 +15,6 @@ import {
   "marianoguerra/pure-py/ast",
   "marianoguerra/pure-py/check",
   "marianoguerra/pure-py/parser",
+  "marianoguerra/pure-py/profile",
   "marianoguerra/pure-py/program",
 } for "test"

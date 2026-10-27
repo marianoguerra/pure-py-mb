@@ -312,3 +312,118 @@ fn method_call_type(
     _ => None
   }
 }
+
+// ---------------------------------------------------------------------------
+// Narrowing, under `Identity`
+
+///|
+/// What a condition says about the variables it tests: their types where it
+/// holds, and where it does not. Only `Identity` produces one, so under
+/// `core` both are empty and every rule that consults this is unchanged.
+///
+/// mypy's narrowing, restricted to what PurePy can spell: a variable compared
+/// with `None` by `is` or `is not`, either way round, under `not`, `and` and
+/// `or`. A variable is assigned once, so the narrowed type holds for as long
+/// as the condition does -- nothing can assign it in between.
+///
+/// A side that would be `Never` -- `x is None` at `x: int` -- is left at the
+/// variable's own type. mypy calls that branch unreachable and skips it; it
+/// is never taken, so checking it at the wider type refuses nothing mypy
+/// accepts that would run.
+priv struct Narrowing {
+  yes : Context
+  no : Context
+}
+
+///|
+fn no_narrowing() -> Narrowing {
+  { yes: empty_context(), no: empty_context(), }
+}
+
+///|
+fn narrowing(cond : @ast.Expr, ctx : ModCtx) -> Narrowing {
+  guard ctx.program.profile.has(Identity) else { return no_narrowing() }
+  let sigma = ctx.sigma()
+  match cond {
+    Compare(left~, ops=[Is | IsNot as op], comparators=[right], ..) => {
+      let x = match (left, right) {
+        (Name(id~, ..), Constant(value=None, ..))
+        | (Constant(value=None, ..), Name(id~, ..)) => id
+        _ => return no_narrowing()
+      }
+      guard ctx.assigned_type(x) is Some(tau) else { return no_narrowing() }
+      let at = fn(t : @types.Type) {
+        if t == @types.t_never {
+          empty_context()
+        } else {
+          context_of([(x, Var(t))])
+        }
+      }
+      let none = at(@types.meet(sigma, @types.t_none, tau))
+      let some = at(not_none(sigma, tau))
+      if op is Is {
+        { yes: none, no: some, }
+      } else {
+        { yes: some, no: none, }
+      }
+    }
+    UnaryOp(op=Not, operand~, ..) => {
+      let n = narrowing(operand, ctx)
+      { yes: n.no, no: n.yes, }
+    }
+    // `a and b` holds where both do, and fails where `a` does or where `a`
+    // holds and `b` fails; `b` is read where `a` holds.
+    BoolOp(op=And, values~, ..) => {
+      let mut acc = narrowing(values[0], ctx)
+      for v in values[1:] {
+        let n = narrowing(v, ctx.override_gamma(acc.yes))
+        acc = {
+          yes: override_context(acc.yes, n.yes),
+          no: join_narrowed(sigma, acc.no, override_context(acc.yes, n.no)),
+        }
+      }
+      acc
+    }
+    BoolOp(op=Or, values~, ..) => {
+      let mut acc = narrowing(values[0], ctx)
+      for v in values[1:] {
+        let n = narrowing(v, ctx.override_gamma(acc.no))
+        acc = {
+          yes: join_narrowed(sigma, acc.yes, override_context(acc.no, n.yes)),
+          no: override_context(acc.no, n.no),
+        }
+      }
+      acc
+    }
+    _ => no_narrowing()
+  }
+}
+
+///|
+/// `tau` without `None`, as `case None:` leaves it.
+fn not_none(sigma : @types.ClassTable, tau : @types.Type) -> @types.Type {
+  @types.join_seq(
+    sigma,
+    @types.disjuncts(tau).filter(fn(t) {
+      t != @types.t_none && t != Literal(NoneLit)
+    }),
+  )
+}
+
+///|
+/// What two paths both know: a variable narrowed on both, at the join of its
+/// types. One narrowed on a single path is at its own type, and drops out.
+fn join_narrowed(
+  sigma : @types.ClassTable,
+  g : Context,
+  h : Context,
+) -> Context {
+  let mut out = empty_context()
+  g.each(fn(x, a) {
+    match (a, h.get(x)) {
+      (Var(s), Some(Var(t))) => out = out.add(x, Var(@types.join(sigma, s, t)))
+      _ => ()
+    }
+  })
+  out
+}
