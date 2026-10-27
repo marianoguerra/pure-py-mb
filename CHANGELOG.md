@@ -1,10 +1,28 @@
 # Changelog
 
-## Unreleased
+## 0.11.0 — 2026-10-27
 
 The port follows the specification from v0.15.1 to v0.23.0 a release at a
 time; each section below is one upstream release, in the commit that reached
 it. `tools/reference.json` names the release the goldens were generated from.
+
+This is a breaking release, because the language changed under it: PurePy is
+typed from v0.16, so a program 0.10 ran may now be refused before it runs.
+An embedder upgrading from 0.10.2 meets four changes, each described in the
+section that made it:
+
+- a host module declares its members' types (`HostModule.types`), and the
+  builders take annotations (`Stmt::def_`, `Stmt::dataclass`) -- v0.16.0;
+- `Diagnostic.prefix` is `Diagnostic.file`, and `message()` is the bare
+  message, without a position -- v0.22.0;
+- `Reason` follows the reference's checker: its variants are renamed, their
+  fields are the reference's names, and the ones the parser now decides are
+  gone -- v0.16.0 and v0.23.0;
+- `ast` has type parameters and `type` aliases (`TypeParam`,
+  `Stmt::TypeAlias`, and a `type_params` field on functions and classes) --
+  v0.18.0.
+
+`lib/types` is new, and is where the type language lives.
 
 ### Specification v0.23.0: not allowed in PurePy
 
