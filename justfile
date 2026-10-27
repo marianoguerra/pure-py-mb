@@ -9,7 +9,8 @@
 #   * The conformance suite is HERMETIC. `test/conformance/` and `test/golden/`
 #     are committed, so everything in the `conform` group runs with neither the
 #     `reference/` checkout nor `uv` present. Python 3 is needed, for the
-#     harness itself.
+#     harness itself, and mypy (>= 2.3.1) for the profile harness's typing
+#     question.
 #   * Regenerating a committed artifact -- the goldens, the ratchet, the
 #     vendored suite -- is a deliberate act whose diff is the review. Those are
 #     in `regen`, and none of them runs in CI.

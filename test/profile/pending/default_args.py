@@ -13,8 +13,9 @@ def area(w: float, h: float = 2.5) -> float:
 
 print([area(4), area(4, 3.0)])
 
-f: Callable[[int], int] = lambda x, y=10: x + y
-print(f(1))
+f: Callable[[float], float] = area
+g: Callable[[float, float], float] = area
+print([f(4), g(4, 3.0)])
 
 def only_defaults(a: int = 1, b: str = "two") -> list[int | str]:
     return [a, b]

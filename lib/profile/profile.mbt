@@ -20,12 +20,15 @@
 ///     program accepted under a poorer profile is accepted under a richer one.
 ///
 ///   * **A profile may open a `not_yet` gate and may not lift a
-///     `prohibited` one.** The sieve says "not yet" to a form the specification
-///     intends to have and says "prohibited" to one it excludes on purpose --
-///     `for`, `while`, `try`, `raise`, `del`, `+=`, item and attribute
-///     assignment. The second list is what makes PurePy pure, and no profile
-///     touches it. See `lib/sieve/sieve.mbt`, where the two have separate
-///     helpers for exactly this reason.
+///     `prohibited` one.** Both refuse with the same `<form> not allowed in
+///     PurePy` and exit code 1, as the reference has since v0.22. What tells
+///     them apart is upstream's history: a `not_yet` form is one the
+///     specification once planned to have, with the issue that planned it; a
+///     `prohibited` one it excludes on purpose -- `for`, `while`, `try`,
+///     `raise`, `del`, `+=`, item and attribute assignment. The second list is
+///     what makes PurePy pure, and no profile touches it. See
+///     `lib/sieve/sieve.mbt`, where the two have separate helpers for exactly
+///     this reason.
 ///
 /// This package is a LEAF: it imports nothing from the library, not even
 /// `value` or `ast`. It has to be, because the checker's `context` and the
@@ -91,8 +94,10 @@ pub(all) enum Feature {
   /// could not be otherwise: a `Value` is immutable and has no identity, so a
   /// mutating method has nothing to write to.
   BuiltinMethods
-  /// `def f(x=1)` and `lambda x=1: x` (#56), where the default is a LITERAL
-  /// int, float, str, bool or `None`.
+  /// `def f(x=1)` (#56), where the default is a LITERAL int, float, str, bool
+  /// or `None`. The sieve lets `lambda x=1: x` through too, and the checker
+  /// refuses it, as mypy does: it cannot infer a type for a lambda with
+  /// defaults, whatever the lambda is checked against.
   ///
   /// The restriction is what makes the feature small. Python evaluates a
   /// default once, when the `def` is executed, and that is observable: a
@@ -200,18 +205,21 @@ pub fn Profile::contains(self : Profile, other : Profile) -> Bool {
 // The named profiles, each built from the one below it.
 
 ///|
-/// The features upstream has already committed to, as far as they are
-/// implemented here.
+/// The forms upstream once planned to accept, as far as they are implemented
+/// here.
 ///
-/// Everything in it is a form the sieve refuses today with an issue number --
-/// `not yet supported (#82)` and its neighbours -- which makes it the profile
-/// with the least to lose: upstream intends to make these core, so this SHRINKS
-/// as each one lands rather than drifting away from the specification.
+/// Every one of them was `not yet supported (#82)` and its neighbours until
+/// v0.22, when the specification stopped planning and refused them all as it
+/// refuses the rest. The name is from that time, and kept because it is what
+/// a `--profile` flag and an embedder already say. What it means now is
+/// narrower than "upstream will get here": these are forms a specification
+/// author once judged to fit PurePy -- pure, and typable -- so they are the
+/// cheapest superset to defend. It is a superset that lasts, not a queue.
 ///
-/// It grows one feature per commit until it covers the whole table in
-/// `implementation-plan.md` § "After the plan: the pending features". Ask it
+/// `implementation-plan.md` § "After the plan: the pending features" is the
+/// whole list upstream once planned; this holds the part implemented. Ask it
 /// what it holds -- `Profile::features`, or `pure-py profiles` -- rather than
-/// assuming a feature from that table is in it yet.
+/// assuming a feature from that table is in it.
 pub fn pending() -> Profile {
   core.adding([
     ChainedBoolean,

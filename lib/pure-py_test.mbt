@@ -381,19 +381,26 @@ test "a default argument fills a missing parameter" {
     outcome_under("def g(a: int = 'x') -> int:\n    return a\n", p),
     "refused: expected type int, given Literal['x']",
   )
-  // A lambda takes the same rule, applied on the spot or given a type with
-  // fewer parameters than it has.
-  assert_eq(outcome_under("print((lambda x, y=10: x + y)(1))\n", p), "ok: 11\n")
+  // A function with defaults is a value of the shorter type too.
+  assert_eq(
+    outcome_under(
+      "from typing import Callable\n" +
+      f +
+      "g: Callable[[int], list[int]] = f\nprint(g(1))\n",
+      p,
+    ),
+    "ok: [1, 2, 3]\n",
+  )
+  // A lambda takes none, applied on the spot or given a type: mypy cannot
+  // infer a type for one with defaults, whatever it is checked against.
+  let refused = "refused: cannot infer type of a lambda with defaults (mypy compatibility)"
+  assert_eq(outcome_under("print((lambda x, y=10: x + y)(1))\n", p), refused)
   assert_eq(
     outcome_under(
       "from typing import Callable\ng: Callable[[int], int] = lambda x, y=10: x + y\nprint(g(1))\n",
       p,
     ),
-    "ok: 11\n",
-  )
-  assert_eq(
-    outcome_under("print((lambda x, y=10: x)())\n", p),
-    "refused: call expects 2 arguments, given 0",
+    refused,
   )
 }
 

@@ -45,7 +45,6 @@ pub fn Diagnostic::with_related(Self, @basic.Span, String) -> Self
 pub(all) enum Kind {
   PythonSyntax(msg~ : String)
   Prohibited(msg~ : String)
-  NotYetSupported(feature~ : String, issue~ : Int32)
   IllFormed(Reason)
   Program(msg~ : String)
 } derive(Eq, @debug.Debug)
@@ -115,6 +114,7 @@ pub(all) enum Reason {
   UnknownMethod(tau~ : String, x~ : String)
   TupleSliceBounds(tau~ : String)
   TupleSliceStepZero
+  LambdaDefaultArguments
 } derive(Eq, @debug.Debug)
 pub fn Reason::code(Self) -> String
 pub fn Reason::message(Self) -> String
@@ -122,7 +122,6 @@ pub fn Reason::message(Self) -> String
 pub(all) enum Stage {
   Syntax
   Prohibited
-  NotYetSupported
   IllFormedModule
   IllFormedProgram
   Abort

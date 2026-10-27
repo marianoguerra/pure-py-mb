@@ -1544,6 +1544,17 @@ fn applied_lambda(
 }
 
 ///|
+/// A lambda with a default, which `DefaultArguments` lets through the sieve
+/// for a `def`'s sake: mypy cannot type one, whatever it is checked against,
+/// so neither does this. A `def` with defaults it types.
+fn lambda_defaults(f : @ast.Expr) -> Unit raise {
+  guard f is Lambda(args~, span~, ..) else { abort("a lambda") }
+  if !args.defaults.is_empty() {
+    raise ill(MypyCompatibility(LambdaDefaultArguments), span)
+  }
+}
+
+///|
 fn lambda_arguments(
   f : @ast.Expr,
   e : @ast.Expr,
@@ -1551,14 +1562,12 @@ fn lambda_arguments(
 ) -> Context raise {
   guard f is Lambda(args=params, ..) else { abort("a lambda") }
   guard e is Call(args~, keywords~, span~, ..) else { abort("a call") }
+  lambda_defaults(f)
   let names = parameter_names(params)
   if !keywords.is_empty() {
     raise ill(KeywordArgumentsNotConstructor, span)
   }
-  // Under `DefaultArguments` the trailing parameters with defaults may be
-  // left out, and take their defaults' types.
-  let k = params.defaults.length()
-  if args.length() > names.length() || args.length() < names.length() - k {
+  if args.length() != names.length() {
     raise ill(
       CallArityMismatch(expected=names.length(), given=args.length()),
       span,
@@ -1566,14 +1575,7 @@ fn lambda_arguments(
   }
   let mut out = empty_context()
   for i, x in names {
-    let t = if i < args.length() {
-      synth_expr(args[i], ctx)
-    } else {
-      @types.base_type(
-        synth_expr(params.defaults[i - (names.length() - k)], ctx),
-      )
-    }
-    out = out.add(x, Var(t))
+    out = out.add(x, Var(synth_expr(args[i], ctx)))
   }
   out
 }
@@ -1662,14 +1664,12 @@ fn check_lambda(
   ctx : ModCtx,
 ) -> Unit raise {
   guard e is Lambda(args~, body~, span~) else { abort("a lambda") }
+  lambda_defaults(e)
   let params = parameter_names(args)
   guard expected is Callable(ps, result) else {
     raise ill(LambdaTypeMismatch(expected=render(expected), arity=None), span)
   }
-  // Under `DefaultArguments` a lambda may have more parameters than the type
-  // asks for, if the extra ones have defaults; each gets its default's type.
-  let k = args.defaults.length()
-  if ps.length() > params.length() || ps.length() < params.length() - k {
+  if ps.length() != params.length() {
     raise ill(
       LambdaTypeMismatch(expected=render(expected), arity=Some(params.length())),
       span,
@@ -1677,14 +1677,7 @@ fn check_lambda(
   }
   let mut delta = empty_context()
   for i, x in params {
-    let t = if i < ps.length() {
-      ps[i]
-    } else {
-      @types.base_type(
-        synth_expr(args.defaults[i - (params.length() - k)], ctx),
-      )
-    }
-    delta = delta.add(x, Var(t))
+    delta = delta.add(x, Var(ps[i]))
   }
   check_expr(body, result, ctx.override_gamma(delta))
 }

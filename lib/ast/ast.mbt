@@ -18,12 +18,12 @@
 ///     so the reference recovers the bracket from the source text; this port
 ///     records it where it is known, in the parser.
 ///   * Async is a FLAG on `FunctionDef`, `For` and `With`, not three more node
-///     kinds. The sieve's message is `async prohibited` either way.
+///     kinds. The sieve's message is `async not allowed in PurePy` either way.
 ///   * `Constant` is a typed enum, not a Python object. `Complex` and `Bytes`
 ///     are arms so that the sieve can say "complex literals not allowed in PurePy".
-///   * An f-string is `JoinedStr` with its text unparsed. The sieve rejects
-///     f-strings as not yet supported (#55); when that changes, the parts are
-///     parsed here and nothing else moves.
+///   * An f-string is `JoinedStr`, its text kept and its parts parsed. The
+///     sieve refuses f-strings as PurePy does; a profile with `FStrings`
+///     accepts them, and nothing else in the tree moves.
 ///   * Positions are a `Span` of two `Pos`, and the column counts CODE POINTS.
 ///     CPython's `col_offset` counts UTF-8 bytes; `Source::byte_col` converts,
 ///     and only where a message in the reference's format needs it.

@@ -79,9 +79,4 @@ test "every reason that earns a help line has one" {
   assert_true(
     @err.Diagnostic::new(IllFormed(DuplicateField(x="x", c="P"))).help() is None,
   )
-  // A not-yet-supported form points at its issue.
-  assert_eq(
-    @err.Diagnostic::new(NotYetSupported(feature="slicing", issue=59)).help(),
-    Some("tracked upstream as issue #59"),
-  )
 }

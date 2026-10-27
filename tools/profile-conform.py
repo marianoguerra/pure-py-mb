@@ -12,7 +12,7 @@ specification and inside Python**, which is the whole reason it is worth
 adding, and CPython is already this project's oracle for what a run prints. So
 the oracle for a profile is CPython, and the harness that uses it is this one.
 
-Three questions per file, and the first is the one that makes this a profile
+Four questions per file, and the first is the one that makes this a profile
 test rather than a Python test:
 
   1. **Does not work by default.** `pure-py run FILE` under `core` FAILS, with
@@ -26,16 +26,24 @@ test rather than a Python test:
      since PurePy has been typed from v0.16 -- before that it type-checked and
      was an undefined operation only when it ran).
 
-     (The REFERENCE's answer for the pending forms is pinned separately, by
-     `conform.py` over the vendored `pending/` files; this
+     (The REFERENCE's answer for these forms is pinned separately, by
+     `conform.py` over the vendored suite's `parser-rejects/` files; this
      pins that our own corpus is still opt-in.)
   2. **Accepted under the profile.** `pure-py --profile P check FILE` exits 0,
      so the sieve gate and the checker agree.
   3. **Agrees with CPython.** `pure-py --profile P run FILE` prints what
      `python3 FILE` prints. This is the conformance claim, and it is the same
      standard `conform.py`'s `run` oracle holds PurePy to.
+  4. **Typed as mypy types it.** `mypy FILE`, under the suite's own
+     configuration (`test/profile/mypy.ini`, the reference's
+     `test/mypy.ini`), finds no issue. PurePy is typed from v0.16,
+     and the reference asks the same of every test it accepts: a profile's
+     typing -- a tuple's slice, a narrowing by `is None` -- is outside the
+     specification, so mypy is what keeps it honest. The question is one way
+     only: a profile may refuse what mypy accepts, never accept what it
+     refuses, and this corpus is what the profile accepts.
 
-A file under `refused/` asks the OPPOSITE of 2 and 3: it must stay refused
+A file under `refused/` asks the OPPOSITE of 2, 3 and 4: it must stay refused
 under every profile there is, with the message in `FILE.core.expected`. That is
 the corpus form of "no profile lifts a prohibition" -- `for`, `while`, `try`,
 `raise`, `del`, `+=`, item and attribute assignment -- which is the claim
@@ -63,6 +71,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import shutil
 import subprocess
 import sys
 
@@ -72,6 +81,10 @@ POLICY = ROOT / "test" / "profile-policy.json"
 DEFAULT_IMPL = (
     ROOT / "_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 )
+# The reference's `test/mypy.ini`, copied by `just suite-sync`, so the harness
+# stays hermetic: it needs mypy, and not the reference checkout.
+MYPY_CONFIG = CORPUS / "mypy.ini"
+MYPY_CACHE = ROOT / "_build" / "mypy-cache"
 
 GREEN, RED, YELLOW, DIM, RESET = (
     "\033[32m", "\033[31m", "\033[33m", "\033[2m", "\033[0m",
@@ -159,6 +172,18 @@ def run_against_python(impl: pathlib.Path, src: pathlib.Path, profile: str) -> s
     return None
 
 
+def typed_as_mypy(mypy: str, src: pathlib.Path) -> str | None:
+    """Question 4: typed as mypy types it."""
+    code, out = run([
+        mypy, "--config-file", str(MYPY_CONFIG), "--cache-dir", str(MYPY_CACHE),
+        "--no-error-summary", str(src),
+    ])
+    if code != 0:
+        first = next((l for l in out.splitlines() if l.strip()), out)
+        return f"mypy: {strip_path(first, src)}"
+    return None
+
+
 def stays_refused(impl: pathlib.Path, src: pathlib.Path, names: list[str]) -> str | None:
     """A prohibition, under every profile there is."""
     want_file = src.with_suffix(".core.expected")
@@ -210,6 +235,7 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--impl", type=pathlib.Path, default=DEFAULT_IMPL)
+    ap.add_argument("--mypy", default="mypy", help="the mypy to ask (default: on PATH)")
     ap.add_argument("--show", type=int, default=5, help="failures to print per oracle")
     ap.add_argument("--regen", action="store_true")
     ap.add_argument("--regen-policy", action="store_true")
@@ -221,6 +247,9 @@ def main() -> int:
     if args.regen:
         regen(args.impl)
         return 0
+    if shutil.which(args.mypy) is None:
+        print(f"mypy not found: {args.mypy}\n  pip install 'mypy>=2.3.1', or --mypy PATH")
+        return 1
 
     names = profiles()
     if not names:
@@ -232,12 +261,14 @@ def main() -> int:
         opt_in = Report(f"{name}: fails under core")
         accepts = Report(f"{name}: accepted")
         agrees = Report(f"{name}: agrees with CPython")
+        typed = Report(f"{name}: typed as mypy")
         for src in sources(CORPUS / name):
             key = src.name
             opt_in.add(key, check_core(args.impl, src))
             accepts.add(key, check_profile(args.impl, src, name))
             agrees.add(key, run_against_python(args.impl, src, name))
-        reports += [opt_in, accepts, agrees]
+            typed.add(key, typed_as_mypy(args.mypy, src))
+        reports += [opt_in, accepts, agrees, typed]
 
     refused_dir = CORPUS / REFUSED
     if refused_dir.exists():

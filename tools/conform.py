@@ -53,8 +53,9 @@ MODULE_LEVEL, PROGRAM_LEVEL = "module-level", "program-level"
 MAIN = "main.py"
 HELPERS = "helpers"
 
-# Exit codes, ours and the reference's (implementation-plan.md 2.1).
-OK, PROHIBITED, NOT_YET, ILL_FORMED, ILL_FORMED_PROGRAM, STUCK = 0, 1, 2, 3, 4, 5
+# Exit codes, ours and the reference's (implementation-plan.md 2.1). 2, "not
+# yet supported", is gone since v0.22.
+OK, PROHIBITED, ILL_FORMED, ILL_FORMED_PROGRAM, STUCK = 0, 1, 3, 4, 5
 
 
 

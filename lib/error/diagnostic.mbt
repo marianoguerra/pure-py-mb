@@ -6,8 +6,6 @@ pub(all) enum Stage {
   Syntax
   /// `syntax.py`: a form PurePy excludes on sight.
   Prohibited
-  /// `syntax.py`: a form PurePy plans to accept and does not yet.
-  NotYetSupported
   /// `check_module.py`: the module is not well formed.
   IllFormedModule
   /// `check_program.py`: the program is not well formed.
@@ -27,8 +25,6 @@ pub(all) enum Kind {
   PythonSyntax(msg~ : String)
   /// Exit 1. `syntax.py`'s text, verbatim.
   Prohibited(msg~ : String)
-  /// Exit 2, printed as `<feature> not yet supported (#<issue>)`.
-  NotYetSupported(feature~ : String, issue~ : Int32)
   /// Exit 3. `check_module.py`'s answer.
   IllFormed(Reason)
   /// Exit 4.
@@ -70,7 +66,6 @@ pub fn Diagnostic::new(
 pub fn Diagnostic::exit_code(self : Diagnostic) -> Int32 {
   match self.kind {
     PythonSyntax(..) | Prohibited(..) => 1
-    NotYetSupported(..) => 2
     IllFormed(_) => 3
     Program(..) => 4
   }
@@ -81,7 +76,6 @@ pub fn Diagnostic::stage(self : Diagnostic) -> Stage {
   match self.kind {
     PythonSyntax(..) => Syntax
     Prohibited(..) => Prohibited
-    NotYetSupported(..) => NotYetSupported
     IllFormed(_) => IllFormedModule
     Program(..) => IllFormedProgram
   }
@@ -101,8 +95,6 @@ pub fn Diagnostic::message(self : Diagnostic) -> String {
   match self.kind {
     PythonSyntax(msg~) => msg
     Prohibited(msg~) => msg
-    NotYetSupported(feature~, issue~) =>
-      "\{feature} not yet supported (#\{issue})"
     IllFormed(r) => r.message()
     Program(msg~) => msg
   }

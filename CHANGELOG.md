@@ -1,5 +1,63 @@
 # Changelog
 
+## 0.12.0 — 2026-10-27
+
+The profiles, checked against the typed language. Nothing `core` decides
+moves: every oracle answers as it did in 0.11.0. A minor release, because the
+API changed in two ways:
+
+- `Kind::NotYetSupported` and `Stage::NotYetSupported` are gone, and with
+  them exit code 2. Nothing has produced them since 0.11.0, which follows the
+  reference to v0.22: a form the specification once planned is refused as
+  `<form> not allowed in PurePy`, a `Prohibited`, exit 1. A consumer that
+  matched them drops the arm.
+- `Reason` gains three arms a profile refuses with: `TupleSliceBounds`,
+  `TupleSliceStepZero` and `LambdaDefaultArguments`. A consumer that matches
+  `Reason` exhaustively adds them.
+
+### The profile hint is back
+
+`pure-py --profile P` prints `accepted under --profile pending` under a
+refusal a profile would accept. It looked only for the not-yet kind, so it
+had been silent since 0.11.0. `@profile.accepted_by` takes the sieve's whole
+message as well as the feature, and knows the v0.23 name `unpacking
+assignment`. A sieve test fails if the two drift apart again.
+
+### A tuple's slice is a tuple
+
+Under `pending`, `t[1:]` at `tuple[int, str, bool]` is `tuple[str, bool]`,
+as mypy types it. It used to be typed as a list, which a well-typed program
+could then use as one and fail at run time. The bounds must be integer
+literals, because mypy's type for any other bound is `tuple[T, ...]`, which
+PurePy cannot annotate. A step of `0` is refused, as mypy refuses it.
+
+### `is None` narrows
+
+Under `pending`, `x is None` and `x is not None` narrow `x` as mypy narrows
+them: in the branches of an `if` and of a conditional expression, in the
+later operands of `and` and `or`, under `not`, after an `assert`, after an
+`if` one of whose branches returns, and in a comprehension's filter. Without
+narrowing, `is` gave a `bool` that no rule could use. Two things stay as they
+were, on purpose. `x == None` does not narrow, because `==` belongs to PurePy
+and a profile does not change what PurePy decides. And a module body does not
+carry a narrowing forward, so a module's members keep their declared types.
+
+### A lambda takes no defaults
+
+mypy cannot infer a type for a lambda with default arguments, whatever it is
+checked against, so `pending` refuses one too: `cannot infer type of a lambda
+with defaults (mypy compatibility)`. A `def` takes defaults as before. A
+function with defaults is still a value of a shorter `Callable`, and that is
+how a program gets one.
+
+### The profile harness asks mypy
+
+`tools/profile-conform.py` asks a fourth question of each file in a profile's
+corpus: does it type-check under mypy, with the suite's own configuration
+(`test/profile/mypy.ini`, copied by `just suite-sync`)? A profile may refuse
+what mypy accepts but never accept what it refuses. This question is what
+found the lambda. The harness needs mypy 2.3.1 or later.
+
 ## 0.11.0 — 2026-10-27
 
 The port follows the specification from v0.15.1 to v0.23.0 a release at a
@@ -23,29 +81,6 @@ section that made it:
   v0.18.0.
 
 `lib/types` is new, and is where the type language lives.
-
-### Profiles, after the typed releases
-
-Outside the specification, so nothing `core` decides moves.
-
-`--profile` names the profile that would accept a refused form again: since
-v0.22 the sieve refuses a once-planned form as it refuses the rest, and the
-hint looked only for the old "not yet supported" kind. `accepted_by` takes the
-sieve's whole message, and knows the v0.23 name `unpacking assignment`.
-
-Under `pending`, a slice of a tuple is a tuple of the components it takes --
-`t[1:]` at `tuple[int, str, bool]` is `tuple[str, bool]`, as mypy types it --
-where it was typed as a list, which a well-typed program could then use as
-one and fail at run time. Its bounds must be integer literals, since mypy's
-type for any other is `tuple[T, ...]`, which PurePy cannot annotate, and a
-step of `0` is refused as mypy refuses it: `TupleSliceBounds` and
-`TupleSliceStepZero`.
-
-`x is None` and `x is not None` narrow `x`, as mypy narrows them: in the
-branches of an `if` and a conditional expression, in the later operands of
-`and` and `or`, under `not`, after an `assert`, after an `if` one branch of
-which returns, and in a comprehension's filter. A module body does not carry
-a narrowing forward, so a module's members keep their declared types.
 
 ### Specification v0.23.0: not allowed in PurePy
 

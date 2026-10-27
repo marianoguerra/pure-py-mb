@@ -102,15 +102,15 @@ Two facts about the spec drive the design:
    checker), `undefined` (accepted, then the semantics has no rule) or `agrees`
    (accepted, and the run does what Python's does). A program is a directory
    holding a `main.py`, among the single-module tests. The runner derives every assertion from the path, and the
-   reference scripts signal the stage with exit codes: `1` prohibited form, `2`
-   planned but not yet supported, `3` ill-formed module, `4` ill-formed
-   program.
+   reference scripts signal the stage with exit codes: `1` prohibited form,
+   `3` ill-formed module, `4` ill-formed program. (`2`, planned but not yet
+   supported, is gone since v0.22: every such form is prohibited, exit `1`.)
 
 ### 1.1 What the reference checker is, in one paragraph each
 
 - `syntax.py` (462 lines): the **sieve**. Walks CPython's AST and raises
-  `Prohibited` (exit 1) or `NotYetSupported(feature, issue)` (exit 2) with a
-  fixed message per construct. Its message strings are the conformance
+  `Prohibited` (exit 1) with a fixed message per construct -- until v0.22 also
+  `NotYetSupported(feature, issue)` (exit 2), which this port no longer has. Its message strings are the conformance
   suite's `.error.expected` for the `excluded/syntactic` bucket, so they must be
   reproduced verbatim.
 - `aux.py` (349): the syntactic analyses of Annex A.1 — `statements()` groups
@@ -1158,25 +1158,28 @@ Commit: `Harden the front end and the evaluator`.
 
 ### After the plan: the pending features
 
-The parser already accepts everything below; each is a sieve relaxation plus
-checker and evaluator rules, and each has tests waiting in
-`semantically-valid/pending` (exit 2 today). In the order upstream is likely
-to specify them, with the issue numbers the sieve cites:
+The forms upstream once planned to accept, with the issue numbers the sieve
+still cites. Until v0.22 the reference refused each as `not yet supported`
+(exit 2) and was expected to specify them in turn; since v0.22 it prohibits
+them all (exit 1), so none is coming to `core`. The ones implemented here are
+the `pending` profile (`lib/profile`), outside the specification, with CPython
+as their oracle and mypy's types as their typing (`test/profile/`).
 
-| feature | issue | sieve | checker | evaluator |
-|---|---|---|---|---|
-| chained comparison, chained `and`/`or` | #82 | drop `len > 1` checks | none | desugar to nested binary forms |
-| identity `is` / `is not` | #81 | allow ops | none | `None` only, else stuck |
-| case guards | #83 | allow guard | guard checked under pattern bindings; reachability weakens | evaluate guard |
-| default arguments | #56 | allow | defaults are expressions of Γ | arity range |
-| `*args` / `**kwargs` | #57 | allow | | |
-| destructuring assignment / comprehension targets | #54 | allow tuples | `binds` of targets | pattern-like assignment |
-| slicing | #59 | allow `Slice` | none | `getitem` on slices |
-| f-strings | #55 | parse `JoinedStr` parts | expressions of Γ | `str` of parts |
-| import-as, multi-import, relative, `*` | #53 | allow | context of aliases | |
-| star / or / rest patterns, attribute values | #84 #85 #86 | allow | subsumption extended | matching extended |
-| sets | #147 | allow | | new value kind |
-| decorators, enums | #58 #86 | | | |
+| feature | issue | sieve | checker | evaluator | `pending` |
+|---|---|---|---|---|---|
+| chained comparison, chained `and`/`or` | #82 | drop `len > 1` checks | conjunction of links | desugar to nested binary forms | yes |
+| identity `is` / `is not` | #81 | allow ops | narrows `x is None`, as mypy | `None` only, else stuck | yes |
+| case guards | #83 | allow guard | guard checked under pattern bindings; reachability weakens | evaluate guard | no |
+| default arguments | #56 | allow | literal defaults at the parameter's type | arity range | yes |
+| `*args` / `**kwargs` | #57 | allow | | | no |
+| destructuring assignment | #54 | allow tuples | each name at its component's type | pattern-like assignment | yes |
+| destructuring comprehension targets | #54 | | | | no |
+| slicing | #59 | allow `Slice` | the container's type; a tuple's by literal bounds | `getitem` on slices | yes |
+| f-strings | #55 | parse `JoinedStr` parts | expressions of Γ | `str` of parts | yes, no format spec |
+| import-as, multi-import, relative, `*` | #53 | allow | context of aliases | | no |
+| star / or / rest patterns, attribute values | #84 #85 #86 | allow | subsumption extended | matching extended | no |
+| sets | #147 | allow | | new value kind | no |
+| decorators, enums | #58 #86 | | | | no |
 
 ---
 
@@ -1275,7 +1278,9 @@ Prohibited (exit 1): `multiple assignment targets`, `item assignment prohibited`
 `keyword-only arguments prohibited`, `positional-only arguments prohibited`,
 `unknown expression type: <T>`.
 
-Not yet supported (exit 2), as `<feature> not yet supported (#N)`:
+Not yet supported (exit 2), as `<feature> not yet supported (#N)` -- until
+v0.22; since then each is `<feature> not allowed in PurePy`, exit 1, and the
+ones `pending` implements are listed in "After the plan":
 `destructuring assignment` #54, `decorators` #58,
 `multi-target import (import a, b)` #53, `import-as` #53, `relative imports` #53,
 `from-import with no module` #53, `from M import *` #53, `from-import-as` #53,

@@ -117,3 +117,25 @@ test "a narrowing in one branch leaves the variable assigned" {
     #|    return y + x if x is not None else y
   assert_eq(pending_verdict(src), "ok")
 }
+
+// ---------------------------------------------------------------------------
+// Default arguments
+
+///|
+/// A `def` may have defaults and a lambda may not: mypy types the one and
+/// cannot infer a type for the other, whatever it is checked against.
+test "a def may have defaults and a lambda may not" {
+  let def_ = "def area(w: float, h: float = 2.5) -> float:\n    return w * h\n"
+  let refused = "cannot infer type of a lambda with defaults (mypy compatibility)"
+  let cases = [
+    (def_ + "a: float = area(4)\n", "ok"),
+    (def_ + "f: Callable[[float], float] = area\n", "ok"),
+    ("f: Callable[[int], int] = lambda x, y=10: x + y\n", refused),
+    ("f: Callable[[int, int], int] = lambda x, y=10: x + y\n", refused),
+    ("a: int = (lambda x, y=10: x + y)(1)\n", refused),
+  ]
+  for c in cases {
+    let src = "from typing import Callable\n" + c.0
+    assert_eq(pending_verdict(src), c.1, msg=c.0)
+  }
+}

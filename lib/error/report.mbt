@@ -51,7 +51,6 @@ pub fn Diagnostic::code(self : Diagnostic) -> String? {
   match self.kind {
     IllFormed(r) => Some(r.code())
     Prohibited(_) => Some("purepy::prohibited")
-    NotYetSupported(..) => Some("purepy::not-yet-supported")
     PythonSyntax(_) => Some("purepy::syntax")
     Program(_) => Some("purepy::program")
   }
@@ -100,8 +99,6 @@ pub fn Diagnostic::help(self : Diagnostic) -> String? {
       Some("call it to construct one, or match on it in a pattern")
     IllFormed(SubmoduleNotImported(q~)) =>
       Some("add `import " + q + "` or `from ... import ...` for it")
-    NotYetSupported(issue~, ..) =>
-      Some("tracked upstream as issue #" + issue.to_string())
     _ => None
   }
 }

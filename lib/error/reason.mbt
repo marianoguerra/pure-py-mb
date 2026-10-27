@@ -83,6 +83,10 @@ pub(all) enum Reason {
   /// Not the reference's: a slice of a tuple whose step is the literal `0`,
   /// which mypy refuses and CPython answers with a `ValueError`.
   TupleSliceStepZero
+  /// Not the reference's: a lambda with default arguments, under a profile
+  /// with them, whose type mypy cannot infer. Always wrapped in
+  /// `MypyCompatibility`.
+  LambdaDefaultArguments
 } derive(Eq, Debug)
 
 ///|
@@ -190,6 +194,7 @@ pub fn Reason::message(self : Reason) -> String {
     TupleSliceBounds(tau~) =>
       "a slice of a value of type \{tau} needs integer literal bounds"
     TupleSliceStepZero => "slice step cannot be zero"
+    LambdaDefaultArguments => "cannot infer type of a lambda with defaults"
   }
 }
 
@@ -262,6 +267,7 @@ pub fn Reason::code(self : Reason) -> String {
     UnknownMethod(..) => "unknown-method"
     TupleSliceBounds(..) => "tuple-slice-bounds"
     TupleSliceStepZero => "tuple-slice-step-zero"
+    LambdaDefaultArguments => "lambda-default-arguments"
   }
   "purepy::" + name
 }

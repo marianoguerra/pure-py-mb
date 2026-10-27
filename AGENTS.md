@@ -81,7 +81,9 @@ checker or the evaluator.
   in it -- so the reference cannot be the oracle there. Every profile feature is
   outside the specification and inside Python, so CPython is: `test/profile/`
   and `tools/profile-conform.py` ask, per file, that it is still refused under
-  `core`, accepted under the profile, and prints what `python3` prints.
+  `core`, accepted under the profile, prints what `python3` prints, and
+  type-checks under mypy -- a profile may refuse what mypy accepts, never
+  accept what it refuses.
   `test/profile-policy.json` is a SEPARATE ratchet, so a profile can never move
   a PurePy floor. A profile may open a `not_yet` gate -- a form the reference
   once planned, and since v0.22 refuses with the same message and exit code

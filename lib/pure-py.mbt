@@ -30,14 +30,15 @@ pub fn parse(source : String, name~ : String = "<string>") -> @ast.Module raise 
 ///|
 /// Whether a module is within PurePy's syntax: the sieve of `syntax.py`.
 ///
-/// `None` means yes. A rejection carries exit code 1 for a form PurePy
-/// excludes and 2 for one it plans to accept and does not yet.
+/// `None` means yes. A rejection carries exit code 1, the reference's for
+/// every form PurePy excludes.
 ///
 /// `profile` is what a caller opted in to on top of PurePy. It defaults to
 /// `@profile.core`, which is PurePy and nothing else, so a caller who has
 /// never heard of profiles gets the specification's own answer. A richer
-/// profile turns some of the exit-2 rejections into acceptances -- and none of
-/// the exit-1 ones, which are what PurePy excludes on purpose.
+/// profile turns some rejections into acceptances: those of forms the
+/// reference once planned to accept (`lib/profile`), and none of the ones it
+/// always excluded on purpose.
 pub fn sieve(
   m : @ast.Module,
   profile~ : @profile.Profile = @profile.core,

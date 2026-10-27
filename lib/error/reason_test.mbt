@@ -171,8 +171,9 @@ test "the reason catalogue" {
       "a slice of a value of type tuple[int, str] needs integer literal bounds",
     ),
     (TupleSliceStepZero, "slice step cannot be zero"),
+    (LambdaDefaultArguments, "cannot infer type of a lambda with defaults"),
   ]
-  assert_eq(cases.length(), 63)
+  assert_eq(cases.length(), 64)
   for c in cases {
     assert_eq(c.0.message(), c.1)
   }

@@ -46,7 +46,7 @@ pub fn result(
 /// because the profile is consulted at leaves twenty levels down and the
 /// traversal is nine mutually recursive functions. Under `@profile.core` --
 /// the default of every entry point above -- it changes nothing: `gate` raises
-/// exactly where the `raise not_yet(...)` it replaced raised.
+/// the reference's refusal at the point the reference raises it.
 ///
 /// Three of the nine traversal functions -- `check_classdef`, `check_field`
 /// and `check_arguments` -- are still free functions rather than methods,
@@ -61,8 +61,9 @@ priv struct Sieve {
 ///|
 /// A `not_yet` that a profile can open.
 ///
-/// The rejection is byte-identical to the one it replaces and happens at the
-/// same point in the same traversal, which is what keeps `core` honest: the
+/// Without the feature the rejection is `not_yet`'s, byte-identical to the
+/// reference's and at the same point in the same traversal, which is what
+/// keeps `core` honest: the
 /// order of these tests is `syntax.py`'s and a file with two violations
 /// reports the first one the walk reaches. Under a profile that has the
 /// feature this returns, and the arm goes on to walk the node the way the
@@ -102,9 +103,11 @@ fn Sieve::gate_nowhere(
 /// There is deliberately no `Sieve::gate` for this the way there is for
 /// `not_yet`. `for`, `while`, `try`, `raise`, `del`, `+=`, item and attribute
 /// assignment are what make the language pure: a value has no cell to write to
-/// because nothing can spell a write. A profile may say "not yet, but yes"; it
-/// may not say "yes" to these. Two helpers rather than one parameterised one
-/// is what makes that readable here rather than a claim someone has to find.
+/// because nothing can spell a write. A profile may say "yes" to a form
+/// upstream once planned; it may not say "yes" to these. The two refuse with
+/// the same message since v0.22, so two helpers rather than one parameterised
+/// one is what keeps the difference readable here rather than a claim someone
+/// has to find.
 fn prohibited(msg : String, span : @basic.Span) -> @err.PurePyError {
   @err.PurePyError(@err.Diagnostic::new(Prohibited(msg~), span~))
 }

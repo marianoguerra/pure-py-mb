@@ -48,4 +48,8 @@ if [ "${1-}" = "--sync" ]; then
   # not a test: git does not track it, and the copy above leaves it empty.
   find "$root/test/conformance" -type d -empty -delete
   echo "test/conformance synced from ${suite#"$ref"/}"
+  # The mypy configuration the suite type-checks under, which the profile
+  # harness asks mypy with (tools/profile-conform.py, question 4).
+  cp "$ref/test/mypy.ini" "$root/test/profile/mypy.ini"
+  echo "test/profile/mypy.ini synced from test/mypy.ini"
 fi

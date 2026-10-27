@@ -6,7 +6,6 @@
 ///
 ///   0  accepted, or a run that finished
 ///   1  a prohibited form, or a Python syntax error, or an abort
-///   2  a form that is planned and not yet supported
 ///   3  an ill-formed module
 ///   4  an ill-formed program
 ///   5  an operation the semantics leaves undefined
@@ -125,12 +124,8 @@ fn profiles_listing() -> String {
 /// happens not to look here.
 fn profile_note(d : @err.Diagnostic, asked : Bool) -> String? {
   guard asked else { return None }
-  let feature = match d.kind {
-    Prohibited(msg~) => msg
-    NotYetSupported(feature~, ..) => feature
-    _ => return None
-  }
-  match @profile.accepted_by(feature) {
+  guard d.kind is Prohibited(msg~) else { return None }
+  match @profile.accepted_by(msg) {
     Some(p) => Some("  accepted under --profile \{p}")
     None => None
   }
