@@ -31,7 +31,7 @@
 // embedder that has its guest's code in hand never reaches it.
 name = "marianoguerra/pure-py"
 
-version = "0.11.0"
+version = "0.12.0"
 
 readme = "README.mbt.md"
 
