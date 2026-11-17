@@ -52,8 +52,12 @@ for m in $modules; do
     # module whose dependency is not published yet cannot be dry-run at all.
     # On a first release that is every module but the first, and it is not a
     # failure -- it is the order the two have to go out in.
-    if printf '%s' "$out" | grep -q 'no version satisfies requirement'; then
+    # moon has worded this two ways: "no version satisfies requirement", and
+    # since 0.1.2026-11 "version `X` was not found in the registry".
+    if printf '%s' "$out" | grep -q -e 'no version satisfies requirement' -e 'was not found in the registry'; then
       dep=$(printf '%s' "$out" | sed -n 's/.*resolve registry dependency `\([^`]*\)`.*/\1/p' | head -1)
+      need=$(printf '%s' "$out" | sed -n 's/.*version `\([^`]*\)` was not found in the registry.*/\1/p' | head -1)
+      [ -n "$need" ] && dep="$dep@$need"
       echo "  pending: needs $dep in the registry first, which is why lib goes before cli"
     else
       printf '%s\n' "$out" | grep -E 'Dry run|Server status|error|Error' | head -3
