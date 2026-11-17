@@ -38,21 +38,67 @@ fn equality(sigma : ClassTable, s : Type, t : Type) -> Resolved? {
 }
 
 ///|
-/// Whether values of a type can be compared with `==`: anything but a
-/// function, and anything that holds no function.
+/// Whether values of a type can be compared with `==`: comparing them never
+/// involves a type variable or a function.
+///
+/// The mechanisation's `equality_type` (`Operators.thy`), by way of its
+/// `needs_eq`, which walks a class's fields generic in its type parameters
+/// rather than instantiating them, so that a recursive class terminates.
 pub fn equality_type(sigma : ClassTable, t : Type) -> Bool {
+  !needs_eq(sigma, [], t, None) &&
+  fv(t).iter().all(fn(a) { !needs_eq(sigma, [], t, Some(a)) })
+}
+
+///|
+/// Whether comparing values of `t` involves a function (`xi` is `None`) or
+/// the type variable `xi`. `pending` holds the class and `xi` pairs whose
+/// answer is being worked out; asking one again answers `false`, which is the
+/// least fixed point the mechanisation's `needs_eq_class` computes.
+fn needs_eq(
+  sigma : ClassTable,
+  pending : Array[(String, String?)],
+  t : Type,
+  xi : String?,
+) -> Bool {
   match t {
-    Callable(_, _) | Defaulted(_, _, _) | Builtin(_) => false
-    List(s) | Dict(s) => equality_type(sigma, s)
-    Tuple(ts) => ts.iter().all(fn(c) { equality_type(sigma, c) })
-    Union(a, b) => equality_type(sigma, a) && equality_type(sigma, b)
-    Class(c, taus) =>
-      instantiate(fields(sigma, c), taus)
-      .iter()
-      .all(fn(f) { equality_type(sigma, f.1) })
-    Prim(_) | Literal(_) => true
-    TypeVar(_) => false
+    TypeVar(a) => xi == Some(a)
+    Callable(_, _) | Defaulted(_, _, _) | Builtin(_) => xi is None
+    List(s) | Dict(s) => needs_eq(sigma, pending, s, xi)
+    Tuple(ts) => ts.iter().any(fn(s) { needs_eq(sigma, pending, s, xi) })
+    Union(a, b) =>
+      needs_eq(sigma, pending, a, xi) || needs_eq(sigma, pending, b, xi)
+    Class(c, args) => {
+      if xi is None && needs_eq_class(sigma, pending, c, None) {
+        return true
+      }
+      let params = type_params_of(sigma, c)
+      for i, a in params {
+        if i < args.length() &&
+          needs_eq_class(sigma, pending, c, Some(a)) &&
+          needs_eq(sigma, pending, args[i], xi) {
+          return true
+        }
+      }
+      false
+    }
+    Prim(_) | Literal(_) => false
   }
+}
+
+///|
+/// Whether comparing values of class `c`, generic in its type parameters,
+/// involves a function (`xi` is `None`) or its type parameter `xi`.
+fn needs_eq_class(
+  sigma : ClassTable,
+  pending : Array[(String, String?)],
+  c : String,
+  xi : String?,
+) -> Bool {
+  if pending.contains((c, xi)) {
+    return false
+  }
+  let inner = [..pending, (c, xi)]
+  fields(sigma, c).fields.iter().any(fn(f) { needs_eq(sigma, inner, f.1, xi) })
 }
 
 ///|

@@ -360,3 +360,51 @@ test "branches join their variables' types, and range is no sequence pattern's" 
   )
   assert_eq(verdict("import os.path\nimport os.sep\n"), "unknown module 'os'")
 }
+
+///|
+/// `needs_eq` walks a class generic in its parameters, with the pairs in
+/// progress answering `false`, so a class that reaches itself terminates
+/// (it overflowed the stack before).
+test "== on a recursive class terminates, and still refuses a function field" {
+  let recursive =
+    #|from dataclasses import dataclass
+    #|type A = D | None
+    #|@dataclass
+    #|class C:
+    #|    x: A
+    #|@dataclass
+    #|class D:
+    #|    y: C
+    #|print(C(D(C(None))) == C(D(C(None))))
+  assert_eq(verdict(recursive), "ok")
+  let generic =
+    #|from dataclasses import dataclass
+    #|from typing import Callable
+    #|type A[T] = P[T] | None
+    #|@dataclass
+    #|class P[T]:
+    #|    rest: A[T]
+    #|type F = Callable[[int], int]
+    #|print(P[F](None) == P[F](None))
+  // `T` reaches no stored value, so a function argument is harmless.
+  assert_eq(verdict(generic), "ok")
+  let stored =
+    #|from dataclasses import dataclass
+    #|from typing import Callable
+    #|type A[T] = N[T] | None
+    #|@dataclass
+    #|class N[T]:
+    #|    value: T
+    #|    next: A[T]
+    #|type F = Callable[[int], int]
+    #|def f(x: int) -> int:
+    #|    return x
+    #|n: N[F] = N[F](f, None)
+    #|print(n == n)
+  inspect(
+    verdict(stored),
+    content=(
+      #|no overload of '==' at operand types __main__.N[Callable[[int], int]] and __main__.N[Callable[[int], int]]
+    ),
+  )
+}
