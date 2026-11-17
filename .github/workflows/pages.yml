@@ -28,7 +28,9 @@ jobs:
 
       - name: Install MoonBit
         run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          # Pinned in .moonbit-version: `--deny-warn` and the fmt/info diffs make a
+          # floating "latest" a build that breaks on someone else's release day.
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- "$(cat .moonbit-version)"
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
       - name: Update the registry index
