@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.1 — 2026-11-17
+
+Dependencies only: `marianoguerra/error-report` 0.1.2 and `moonbitlang/x`
+0.5.7, the registry's latest. Nothing an oracle answers moves.
+
 ## 0.13.0 — 2026-11-17
 
 Follows the specification from v0.23.0 to v0.27.10, and the reference checker
