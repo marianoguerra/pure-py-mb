@@ -268,6 +268,12 @@ suite-sync:
 goldens:
     tools/conform.py --reference --regen
 
+# The specification's own runner (`purepy-conformance`) over the vendored
+# suite, against our CLI, with messages checked. Needs reference-checker/.
+[group('regen')]
+upstream-conform *args: build
+    tools/upstream-conform.py {{args}}
+
 # Move the ratchet's floors to what this build actually achieves.
 [group('regen')]
 ratchet: build

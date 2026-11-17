@@ -21,7 +21,7 @@ fn main {
     ["--version"] => println("pure-py 0.12.0")
     // The conformance runner asks an interpreter what it is: `purepy` is a
     // PurePy implementation, held to exit 4 on undefined behaviour.
-    ["--implementation"] => println("purepy")
+    ["--implementation"] | ["run", "--implementation"] => println("purepy")
     ["profiles"] => println(profiles_listing())
     ["tokens", path] => @sys.exit(cmd_tokens(path))
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))

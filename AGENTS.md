@@ -62,9 +62,20 @@ checker or the evaluator.
 ### Two oracles, and which one decides
 
 - **The reference checker is the specification for what `parse` and `check`
-  decide.** `reference/src/*.py` (pinned in `tools/reference.json`) is what
+  decide.** Since spec v0.23.1 it is `pure-py/isabelle-purepy`'s `purepy`,
+  generated from the Isabelle/HOL mechanisation; `tools/fetch-reference.sh`
+  unpacks its release wheel (pinned in `tools/reference.json`, with the spec
+  commit the suite comes from) into `reference-checker/`. That is what
   `test/golden/{parse,check,program}.txt` was generated from, message for
-  message. A disagreement is our bug until upstream is shown to be wrong.
+  message (the trailing `[outcome, rule, Figure]` citation stripped). A
+  disagreement is our bug until upstream is shown to be wrong. The
+  mechanisation's `.thy` files are the readable source for a rule.
+- **The suite's runner is the contract.** `just upstream-conform` runs the
+  specification's own `purepy-conformance` over `test/conformance/` against
+  our CLI, with messages checked. Exit codes are its `Exit`: 0 ok, 1 excluded
+  by design (or a Python syntax error, or an abort), 3 ill-formed (module or
+  program), 4 undefined behaviour at run time, 5 excluded from this version;
+  6 a stuck run.
 - **CPython is the oracle for what `run` prints.** The suite's `.expected`,
   `.exception.expected` and `.output.expected` files are Python's own output.
 
@@ -86,9 +97,9 @@ checker or the evaluator.
   accept what it refuses.
   `test/profile-policy.json` is a SEPARATE ratchet, so a profile can never move
   a PurePy floor. A profile may open a `not_yet` gate -- a form the reference
-  once planned, and since v0.22 refuses with the same message and exit code
-  as the rest -- and never a `prohibited` one; `test/profile/refused/` is that
-  claim as a corpus.
+  once planned, which since v0.24 it refuses as excluded from this version
+  (exit 5) -- and never one excluded by design (exit 1);
+  `test/profile/refused/` is that claim as a corpus.
 - **Three modules, one workspace.** `lib/` is `marianoguerra/pure-py`, `cli/`
   is `marianoguerra/pure-py-cli`, and the root is a development module that is
   never published: it holds the conformance suite, the goldens, the corpora,
