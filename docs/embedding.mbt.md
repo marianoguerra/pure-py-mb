@@ -690,7 +690,10 @@ test "a guest that is refused" {
   let looping = Map([("__main__", @purepy.parse("while True:\n    print(1)\n"))])
   match @purepy.check_program(@purepy.source_tree(looping)) {
     Some(d) => {
-      inspect(d.message(), content="while loops not allowed in PurePy")
+      inspect(
+        d.message(),
+        content="while loops not allowed in PurePy (excluded by design)",
+      )
       // The module at fault, which `short` puts in front with the position.
       assert_eq(d.file, Some("__main__"))
     }
@@ -781,7 +784,7 @@ test "a guest written in a superset" {
     Some(d) =>
       inspect(
         d.message(),
-        content="chained boolean operator not allowed in PurePy",
+        content="chained boolean operator not allowed in PurePy (excluded from this version)",
       )
     None => fail("PurePy does not have chained boolean operators")
   }
@@ -811,8 +814,8 @@ Two things a profile will never do.
 
 It will not lift a **prohibition**. The sieve rejects two kinds of form, with
 the same message and exit code since v0.22: one the reference once planned to
-have (`chained boolean operator not allowed in PurePy`) and one it excludes on
-purpose (`for loops not allowed in PurePy`). Only the first kind has a gate a profile can open.
+have (`chained boolean operator not allowed in PurePy (excluded from this version)`) and one it excludes on
+purpose (`for loops not allowed in PurePy (excluded from this version)`). Only the first kind has a gate a profile can open.
 The second list -- `for`, `while`, `try`,
 `raise`, `del`, `+=`, item and attribute assignment -- is what makes the
 language pure, and it is the list this whole document's guarantees rest on. No

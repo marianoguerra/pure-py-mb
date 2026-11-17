@@ -108,23 +108,29 @@ fn Sieve::gate_nowhere(
 /// the same message since v0.22, so two helpers rather than one parameterised
 /// one is what keeps the difference readable here rather than a claim someone
 /// has to find.
+///
+/// The message is the classification's as well as the form's since v0.24
+/// (`classified`): which forms are excluded by design and which only from
+/// this version is upstream's call, not this helper's.
 fn prohibited(msg : String, span : @basic.Span) -> @err.PurePyError {
-  @err.PurePyError(@err.Diagnostic::new(Prohibited(msg~), span~))
+  @err.PurePyError(@err.Diagnostic::new(classified(msg), span~))
 }
 
 ///|
 /// A rejection with no position, for the three node kinds CPython gives none.
 fn prohibited_nowhere(msg : String) -> @err.PurePyError {
-  @err.PurePyError(@err.Diagnostic::new(Prohibited(msg~)))
+  @err.PurePyError(@err.Diagnostic::new(classified(msg)))
 }
 
 ///|
-/// A form the reference once planned and now prohibits.
+/// A form the reference once planned.
 ///
-/// Since v0.22 the reference has no "not yet supported": what it once marked
-/// as planned is prohibited, exit 1, like the rest. A profile still opens only
-/// these gates, the ones upstream once planned; `issue` is the upstream issue
-/// that planned it.
+/// Since v0.22 the reference has no "not yet supported", and since v0.24 it
+/// sorts every refusal into excluded by design (exit 1) or excluded from this
+/// version (exit 5) -- by the form, not by whether it was once planned, so
+/// `from M import *` is a `not_yet` here and excluded by design there. A
+/// profile still opens only these gates, the ones upstream once planned;
+/// `issue` is the upstream issue that planned it.
 fn not_yet(
   feature : String,
   issue : Int32,
@@ -138,6 +144,70 @@ fn not_yet(
 fn not_yet_nowhere(feature : String, issue : Int32) -> @err.PurePyError {
   ignore(issue)
   prohibited_nowhere("\{feature} not allowed in PurePy")
+}
+
+///|
+/// A form excluded from this version where the same feature is excluded by
+/// design elsewhere: an annotation with a string or `...` in it, and `is`
+/// against `None`, `True` or `False`. Upstream decides these by context
+/// (`syntax.excluded_for_now`, `expr_node`), so the call site does too.
+fn excluded_for_now(feature : String, span : @basic.Span) -> @err.PurePyError {
+  @err.PurePyError(
+    @err.Diagnostic::new(
+      Excluded(
+        msg="\{feature} not allowed in PurePy (excluded from this version)",
+      ),
+      span~,
+    ),
+  )
+}
+
+///|
+/// An identifier, which may not be one of Python's soft keywords: `match`,
+/// `case`, `type` and `_` are names to Python and keywords to PurePy's
+/// grammar. The reference's `syntax.ident`, applied where it is: every name
+/// bound or used.
+fn ident(x : String, span : @basic.Span) -> Unit raise {
+  if x is ("match" | "case" | "type" | "_") {
+    raise prohibited(
+      "soft keyword '\{x}' as identifier not allowed in PurePy",
+      span,
+    )
+  }
+}
+
+///|
+/// `<feature> not allowed in PurePy`, classified as the reference's
+/// `syntax.py` does: a refusal is excluded from this version (exit 5) unless
+/// upstream marks its form `BY_DESIGN` (exit 1). A message of another shape
+/// is one Python gives too (`duplicate parameter x`) and carries no
+/// classification.
+fn classified(msg : String) -> @err.Kind {
+  match msg.strip_suffix(" not allowed in PurePy") {
+    None => Prohibited(msg~)
+    Some(feature) =>
+      if excluded_by_design(feature.to_owned()) {
+        Prohibited(msg="\{msg} (excluded by design)")
+      } else {
+        Excluded(msg="\{msg} (excluded from this version)")
+      }
+  }
+}
+
+///|
+/// The forms `syntax.py` raises `SyntacticallyExcluded(..., BY_DESIGN)` for,
+/// by the construct it names. Everything else it excludes is excluded from
+/// this version, its default.
+fn excluded_by_design(feature : String) -> Bool {
+  feature.has_prefix("soft keyword ") ||
+  [
+    "annotation that is not a type expression", "identity operator (is/is not)",
+    "generator expressions", "walrus operator (:=)", "yield", "dictionary pattern key other than a string literal",
+    "item assignment", "attribute assignment", "assignment target other than a simple name",
+    "augmented assignment (+=, etc.)", "del", "for loops", "while loops", "import outside the module top level",
+    "global", "nonlocal", "break", "continue", "unannotated parameter", "unannotated return type",
+    "field target other than a simple name", "import after another statement", "from M import *",
+  ].contains(feature)
 }
 
 // ---------------------------------------------------------------------------
@@ -163,18 +233,17 @@ fn Sieve::check_top_level(self : Sieve, stmts : Array[@ast.Stmt]) -> Unit raise 
       )
     }
     match returns_outside_function(s) {
-      [r, ..] =>
-        raise prohibited(
-          "return outside a function not allowed in PurePy",
-          r.span(),
-        )
+      [r, ..] => raise prohibited("return outside a function", r.span())
       [] => ()
     }
     match s {
       ClassDef(..) => check_classdef(s)
-      TypeAlias(type_params~, value~, ..) => {
+      TypeAlias(name~, type_params~, value~, ..) => {
         check_type_params(type_params, s.span())
         check_annotation(Some(value))
+        if name is Name(id~, ..) {
+          ident(id, s.span())
+        }
       }
       _ => self.check_stmt(s)
     }
@@ -230,6 +299,9 @@ fn check_import(node : @ast.Stmt) -> Unit raise {
       if names[0].asname is Some(_) {
         raise not_yet("import-as", 135, span)
       }
+      for x in names[0].name.split(".") {
+        ident(x.to_owned(), span)
+      }
     }
     ImportFrom(names~, level~, ..) => {
       if names.is_empty() {
@@ -245,9 +317,36 @@ fn check_import(node : @ast.Stmt) -> Unit raise {
         if a.asname is Some(_) {
           raise not_yet("from-import-as", 135, span)
         }
+        ident(a.name, a.span)
       }
     }
     _ => ()
+  }
+}
+
+///|
+/// Whether an annotation outside the type expressions has a form excluded
+/// from this version rather than by design: a string (a forward reference),
+/// bytes or `...` anywhere in it, or `Literal[...]` of several values. The
+/// reference's `syntax.excluded_for_now`, which walks the whole tree; an
+/// annotation is built of these nodes, and the others hold nothing it looks
+/// for.
+fn annotation_excluded_for_now(e : @ast.Expr) -> Bool {
+  match e {
+    Constant(value=Str(_) | Bytes(_) | Ellipsis, ..) => true
+    Subscript(value=Name(id="Literal", ..), slice=Tuple(..), ..) => true
+    Subscript(value~, slice~, ..) =>
+      annotation_excluded_for_now(value) || annotation_excluded_for_now(slice)
+    Tuple(elts~, ..) | List(elts~, ..) =>
+      elts.iter().any(annotation_excluded_for_now)
+    BinOp(left~, right~, ..) =>
+      annotation_excluded_for_now(left) || annotation_excluded_for_now(right)
+    Attribute(value~, ..) | Starred(value~, ..) =>
+      annotation_excluded_for_now(value)
+    Call(func~, args~, ..) =>
+      annotation_excluded_for_now(func) ||
+      args.iter().any(annotation_excluded_for_now)
+    _ => false
   }
 }
 
@@ -257,10 +356,11 @@ fn check_annotation(e : @ast.Expr?) -> Unit raise {
   match e {
     Some(a) =>
       if @types.parse_annotation(a) is None {
-        raise prohibited(
-          "annotation that is not a type expression not allowed in PurePy",
-          a.span(),
-        )
+        let feature = "annotation that is not a type expression"
+        if annotation_excluded_for_now(a) {
+          raise excluded_for_now(feature, a.span())
+        }
+        raise prohibited("\{feature} not allowed in PurePy", a.span())
       }
     None => ()
   }
@@ -276,10 +376,7 @@ fn check_type_params(
   let names = params.map(fn(p) { p.name() })
   for i, x in names {
     if names[:i].contains(x) {
-      raise prohibited(
-        "duplicate type parameter \{x} not allowed in PurePy",
-        span,
-      )
+      raise prohibited("duplicate type parameter \{x}", span)
     }
   }
   for p in params {
@@ -294,7 +391,7 @@ fn check_type_params(
           "bound on type parameter \{name} not allowed in PurePy",
           p.span(),
         )
-      TypeVar(..) => ()
+      TypeVar(name~, ..) => ident(name, p.span())
       ParamSpec(name~, ..) =>
         raise prohibited(
           "ParamSpec type parameter **\{name} not allowed in PurePy",
@@ -323,7 +420,7 @@ fn Sieve::check_target(
   span : @basic.Span,
 ) -> Unit raise {
   match t {
-    Name(..) => ()
+    Name(id~, span=at, ..) => ident(id, at)
     Tuple(elts~, ..) | List(elts~, ..) =>
       for x in elts {
         self.check_target(x, span)
@@ -364,7 +461,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
           raise prohibited("item assignment not allowed in PurePy", span)
         Attribute(..) =>
           raise prohibited("attribute assignment not allowed in PurePy", span)
-        Name(..) => ()
+        Name(id~, ..) => ident(id, targets[0].span())
         _ => {
           self.gate(DestructuringAssignment, "unpacking assignment", 54, span)
           self.check_target(targets[0], span)
@@ -387,7 +484,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
     // examined: it is simply "async not allowed in PurePy".
     FunctionDef(is_async=true, ..) =>
       raise prohibited("async not allowed in PurePy", span)
-    FunctionDef(args~, body~, decorators~, returns~, type_params~, ..) => {
+    FunctionDef(name~, args~, body~, decorators~, returns~, type_params~, ..) => {
       check_type_params(type_params, span)
       self.check_arguments(args)
       if decorators.length() > 0 {
@@ -400,7 +497,25 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
         raise prohibited("unannotated return type not allowed in PurePy", span)
       }
       check_annotation(returns)
+      ident(name, span)
       self.check_body(body)
+    }
+    // `print(e)`, the statement (v0.24): one positional argument, no keyword.
+    ExprStmt(value=Call(func=Name(id="print", ..), args~, keywords~, ..), ..) => {
+      if keywords.length() > 0 {
+        raise prohibited(
+          "print with keyword arguments not allowed in PurePy", span,
+        )
+      }
+      if args.is_empty() {
+        raise prohibited("print with no arguments not allowed in PurePy", span)
+      }
+      if args.length() > 1 {
+        raise prohibited(
+          "print with several arguments not allowed in PurePy", span,
+        )
+      }
+      self.check_expr(args[0])
     }
     ExprStmt(value~, ..) => self.check_expr(value)
     Assert(cond~, msg~, ..) => {
@@ -421,6 +536,9 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
         )
       }
       check_annotation(Some(annotation))
+      if target is Name(id~, span=at, ..) {
+        ident(id, at)
+      }
       // A declaration with no value is PurePy since v0.17.
       match value {
         Some(v) => self.check_expr(v)
@@ -461,7 +579,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
         match duplicate(@analysis.binds_seq(c.pattern)) {
           Some(x) =>
             raise prohibited(
-              "duplicate variable \{x} in pattern not allowed in PurePy",
+              "duplicate variable \{x} in pattern",
               c.pattern.span(),
             )
           None => ()
@@ -478,7 +596,7 @@ fn Sieve::check_stmt(self : Sieve, node : @ast.Stmt) -> Unit raise {
 fn check_classdef(node : @ast.Stmt) -> Unit raise {
   let span = node.span()
   match node {
-    ClassDef(bases~, keywords~, body~, decorators~, type_params~, ..) => {
+    ClassDef(name~, bases~, keywords~, body~, decorators~, type_params~, ..) => {
       for b in bases {
         if b is Name(id="Enum", ..) {
           raise not_yet("enum classes", 86, span)
@@ -514,6 +632,7 @@ fn check_classdef(node : @ast.Stmt) -> Unit raise {
       if keywords.length() > 0 {
         raise prohibited("class keyword arguments not allowed in PurePy", span)
       }
+      ident(name, span)
       if body.length() == 1 && body[0] is Pass(..) {
         return
       }
@@ -539,6 +658,9 @@ fn check_field(stmt : @ast.Stmt) -> Unit raise {
         raise prohibited("field default values not allowed in PurePy", span)
       }
       check_annotation(Some(annotation))
+      if target is Name(id~, span=at, ..) {
+        ident(id, at)
+      }
     }
     _ =>
       raise prohibited(
@@ -579,11 +701,16 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
       )
     }
     MatchSingleton(..) => ()
-    MatchAs(pattern~, ..) =>
+    MatchAs(pattern~, name~, ..) => {
       match pattern {
         Some(p) => self.check_pattern(p)
         None => ()
       }
+      match name {
+        Some(x) => ident(x, span)
+        None => ()
+      }
+    }
     MatchSequence(patterns~, ..) =>
       for p in patterns {
         self.check_pattern(p)
@@ -598,7 +725,7 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
       match duplicate(kwd_attrs) {
         Some(k) =>
           raise prohibited(
-            "duplicate keyword \{k} in constructor pattern not allowed in PurePy",
+            "duplicate keyword \{k} in constructor pattern",
             span,
           )
         None => ()
@@ -623,10 +750,7 @@ fn Sieve::check_pattern(self : Sieve, node : @ast.Pattern) -> Unit raise {
       })
       match duplicate(ws) {
         Some(w) =>
-          raise prohibited(
-            "duplicate key '\{w}' in dictionary pattern not allowed in PurePy",
-            span,
-          )
+          raise prohibited("duplicate key '\{w}' in dictionary pattern", span)
         None => ()
       }
       for p in patterns {
@@ -651,7 +775,10 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
             span,
           )
       }
-    Name(..) => ()
+    // `print` is a statement in PurePy, not a value (v0.24).
+    Name(id="print", ..) =>
+      raise prohibited("print within expression not allowed in PurePy", span)
+    Name(id~, ..) => ident(id, span)
     BinOp(left~, op~, right~, ..) => {
       match op {
         Add | Sub | Mult | Div | FloorDiv | Mod | Pow | BitOr => ()
@@ -687,6 +814,14 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       }
       for op in ops {
         if op is (Is | IsNot) {
+          // Upstream excludes `is` by design except against `None`, `True` or
+          // `False`, which it excludes only from this version.
+          if !self.profile.has(Identity) &&
+            [left, ..comparators]
+            .iter()
+            .any(fn(c) { c is Constant(value=None | Bool(_), ..) }) {
+            raise excluded_for_now("identity operator (is/is not)", span)
+          }
           self.gate(Identity, "identity operator (is/is not)", 81, span)
           // `1 is 1` cannot be given an answer and never will be: a PurePy
           // value has no identity, and `None` is the whole of the exception.
@@ -724,13 +859,14 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
           )
         }
         self.check_expr(k.value)
+        match k.arg {
+          Some(x) => ident(x, k.span)
+          None => ()
+        }
       }
       match duplicate(keywords.map(fn(k) { k.arg })) {
         Some(Some(k)) =>
-          raise prohibited(
-            "duplicate keyword argument \{k} not allowed in PurePy",
-            span,
-          )
+          raise prohibited("duplicate keyword argument \{k}", span)
         _ => ()
       }
     }
@@ -760,7 +896,10 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
       }
     }
     Set(..) => raise not_yet("set literals", 147, span)
-    Attribute(value~, ..) => self.check_expr(value)
+    Attribute(value~, attr~, ..) => {
+      self.check_expr(value)
+      ident(attr, span)
+    }
     Subscript(value~, slice~, ..) => {
       self.check_expr(value)
       self.check_expr(slice)
@@ -841,6 +980,9 @@ fn Sieve::check_generator(
     raise not_yet_nowhere("unpacking in comprehensions", 54)
   }
   self.check_expr(node.iter)
+  if node.target is Name(id~, span~, ..) {
+    ident(id, span)
+  }
   for i in node.ifs {
     self.check_expr(i)
   }
@@ -891,10 +1033,10 @@ fn Sieve::check_arguments(self : Sieve, node : @ast.Arguments) -> Unit raise {
   }
   for a in node.args {
     check_annotation(a.annotation)
+    ident(a.arg, a.span)
   }
   match duplicate(node.args.map(fn(a) { a.arg })) {
-    Some(x) =>
-      raise prohibited_nowhere("duplicate parameter \{x} not allowed in PurePy")
+    Some(x) => raise prohibited_nowhere("duplicate parameter \{x}")
     None => ()
   }
 }

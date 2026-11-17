@@ -95,7 +95,10 @@ test "the sieve rejects what PurePy excludes" {
   let m = @purepy.parse("for x in [1]:\n    print(x)\n")
   match @purepy.sieve(m) {
     Some(d) => {
-      inspect(d.message(), content="for loops not allowed in PurePy")
+      inspect(
+        d.message(),
+        content="for loops not allowed in PurePy (excluded by design)",
+      )
       // 1 for a form PurePy excludes, 2 for one it plans to accept.
       inspect(d.exit_code(), content="1")
     }
@@ -134,7 +137,7 @@ test "a profile widens what the sieve accepts" {
   // PurePy has no chained boolean operator yet, and says which issue it is.
   inspect(
     @purepy.check(m).unwrap().message(),
-    content="chained boolean operator not allowed in PurePy",
+    content="chained boolean operator not allowed in PurePy (excluded from this version)",
   )
   // A caller who asked for the profile that has it gets it.
   inspect(@purepy.check(m, profile=@profile.pending()) is None, content="true")
@@ -142,7 +145,7 @@ test "a profile widens what the sieve accepts" {
   let looping = @purepy.parse("for x in [1]:\n    print(x)\n")
   inspect(
     @purepy.sieve(looping, profile=@profile.pending()).unwrap().message(),
-    content="for loops not allowed in PurePy",
+    content="for loops not allowed in PurePy (excluded by design)",
   )
 }
 ```

@@ -87,12 +87,26 @@ pub(all) enum Reason {
   /// with them, whose type mypy cannot infer. Always wrapped in
   /// `MypyCompatibility`.
   LambdaDefaultArguments
+  /// The use of an excluded Python feature the checker finds: a built-in,
+  /// a standard module, a member of a predefined module, a method of a
+  /// built-in type, or one of a few call forms (`round(x, n)`, `sys.exit()`,
+  /// `print` in a function). The reference's `messages.excluded_feature`
+  /// (v0.24). Excluded from this version is exit 5; by design is an ordinary
+  /// ill-formed program, exit 3, with the classification in its message.
+  Excluded(feature~ : String, by_design~ : Bool)
 } derive(Eq, Debug)
 
 ///|
 /// The message, exactly as `reasons.py` writes it.
 pub fn Reason::message(self : Reason) -> String {
   match self {
+    Excluded(feature~, by_design~) =>
+      "\{feature} not allowed in PurePy " +
+      (if by_design {
+        "(excluded by design)"
+      } else {
+        "(excluded from this version)"
+      })
     DuplicateField(x~, c~) => "duplicate field '\{x}' in class '\{c}'"
     NotTypeExpression(e~) => "'\{e}' is not a type expression"
     InheritedField(x~, c~, d~) =>
@@ -203,6 +217,7 @@ pub fn Reason::message(self : Reason) -> String {
 /// person searching: `purepy::unassigned-variable`.
 pub fn Reason::code(self : Reason) -> String {
   let name = match self {
+    Excluded(..) => "excluded"
     DuplicateField(..) => "duplicate-field"
     InheritedField(..) => "inherited-field"
     NotTypeExpression(..) => "not-type-expression"

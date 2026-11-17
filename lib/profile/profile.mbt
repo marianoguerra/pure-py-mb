@@ -290,6 +290,14 @@ pub let names : Array[String] = ["core", "pending", "builtins", "methods"]
 /// The caller decides whether to show it. A run that asked for no profile
 /// should print what it printed before profiles existed.
 pub fn accepted_by(feature : String) -> String? {
+  // The classification suffix first (v0.24), then the refusal itself.
+  let mut feature = feature
+  for suffix in [" (excluded from this version)", " (excluded by design)"] {
+    match feature.strip_suffix(suffix) {
+      Some(f) => feature = f.to_owned()
+      None => ()
+    }
+  }
   let feature = match feature.strip_suffix(" not allowed in PurePy") {
     Some(f) => f.to_owned()
     None => feature

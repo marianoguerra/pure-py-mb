@@ -1,1 +1,1 @@
-1: augmented.py:2:0: augmented assignment (+=, etc.) not allowed in PurePy
+1: augmented.py:2:0: augmented assignment (+=, etc.) not allowed in PurePy (excluded by design)

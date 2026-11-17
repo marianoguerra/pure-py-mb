@@ -191,8 +191,13 @@ test "a rejection's exit code and short form" {
   assert_eq(d.exit_code(), 3)
   assert_eq(d.short("a.py"), "a.py:3:4: 'x' is not definitely assigned")
   // With no position the reference prints the path and the message only.
-  let e = @err.Diagnostic::new(Prohibited(msg="del not allowed in PurePy"))
-  assert_eq(e.short("a.py"), "a.py: del not allowed in PurePy")
+  let e = @err.Diagnostic::new(
+    Prohibited(msg="del not allowed in PurePy (excluded by design)"),
+  )
+  assert_eq(
+    e.short("a.py"),
+    "a.py: del not allowed in PurePy (excluded by design)",
+  )
   assert_eq(e.exit_code(), 1)
   assert_eq(
     @err.Reason::PossiblyUnassigned(x="x", declared_in_branch=false).code(),

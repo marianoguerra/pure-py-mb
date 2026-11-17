@@ -51,6 +51,7 @@ pub fn Diagnostic::code(self : Diagnostic) -> String? {
   match self.kind {
     IllFormed(r) => Some(r.code())
     Prohibited(_) => Some("purepy::prohibited")
+    Excluded(_) => Some("purepy::excluded")
     PythonSyntax(_) => Some("purepy::syntax")
     Program(_) => Some("purepy::program")
   }

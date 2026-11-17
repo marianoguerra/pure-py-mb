@@ -1,1 +1,1 @@
-3: dicts.py:2:7: values of type dict[str, int] have no attributes
+5: dicts.py:2:7: 'dict.get' not allowed in PurePy (excluded from this version)

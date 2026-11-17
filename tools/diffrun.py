@@ -10,8 +10,8 @@ Three gates decide whether a program counts, in this order:
   * **the checker.** A module `pure-py check` rejects is discarded. The
     generator is not trying to emit well-formed PurePy -- it is trying to emit
     variety, and the validator is what turns variety into a usable sample.
-  * **`stuck`.** Exit 5 means the semantics has no rule for what the program
-    did. That is an ANSWER, not a failure: PurePy is a subset, and every
+  * **`stuck`.** Exit 4 (exit 5 until pure-py 0.12) means the program
+    reached an operation the semantics leaves undefined. That is an ANSWER, not a failure: PurePy is a subset, and every
     `undefined/` test in the conformance suite ends this way. Skipped.
   * **the allow list**, which is empty. Every divergence it once held was a
     defect: a `TypeError` this port raised where Python raises none. See
@@ -129,7 +129,7 @@ class Outcome:
 
 def ours(d: pathlib.Path) -> Outcome:
     code, out, err = run([str(IMPL), "run", "main.py"], d)
-    if code == 5:
+    if code == 4:  # undefined behaviour (purepy_conformance.Exit.UNDEFINED)
         return Outcome(out, (err or out).strip(), stuck=True)
     return Outcome(out, kind_of(err, out) if code else None)
 

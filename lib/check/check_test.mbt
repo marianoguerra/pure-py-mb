@@ -229,7 +229,9 @@ test "a case no value can reach is refused" {
       m +
       "        case int():\n            return 1\n        case str():\n            return 2\n",
     ),
-    "'int' is not a declared class",
+    // A built-in class is the use of a feature excluded for now (v0.24),
+    // not a name the program forgot to declare.
+    "constructor pattern for built-in class 'int' not allowed in PurePy (excluded from this version)",
   )
   assert_eq(
     verdict(
@@ -290,7 +292,8 @@ test "a program's modules are typed across imports" {
       ("b", "import a\n"),
       ("__main__", "import a\n"),
     ]),
-    "import cycle: a -> b -> a",
+    // Against the module the cycle starts from (v0.24).
+    "a: import cycle: a -> b -> a",
   )
 }
 
@@ -358,7 +361,10 @@ test "branches join their variables' types, and range is no sequence pattern's" 
     ),
     "name 'dataclass' imported twice",
   )
-  assert_eq(verdict("import os.path\nimport os.sep\n"), "unknown module 'os'")
+  assert_eq(
+    verdict("import os.path\nimport os.sep\n"),
+    "module 'os' not allowed in PurePy (excluded from this version)",
+  )
 }
 
 ///|

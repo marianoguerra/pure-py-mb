@@ -10,7 +10,10 @@ test "check answers on a tree the sieve would reject" {
   let m = @purepy.parse("for x in [1]:\n    pass\n")
   match @purepy.check(m) {
     Some(d) => {
-      assert_eq(d.message(), "for loops not allowed in PurePy")
+      assert_eq(
+        d.message(),
+        "for loops not allowed in PurePy (excluded by design)",
+      )
       assert_eq(d.exit_code(), 1)
     }
     None => fail("a for loop is not PurePy")
@@ -25,7 +28,10 @@ test "check_program answers on a module the sieve would reject" {
   ])
   match @purepy.check_program(@purepy.source_tree(modules)) {
     Some(d) => {
-      assert_eq(d.message(), "while loops not allowed in PurePy")
+      assert_eq(
+        d.message(),
+        "while loops not allowed in PurePy (excluded by design)",
+      )
       assert_eq(d.file, Some("lib"))
     }
     None => fail("a while loop is not PurePy")
@@ -84,8 +90,11 @@ test "a profile is opted in to, per call" {
 
   // Refused by default, with the message the reference prints.
   let refused = @purepy.sieve(m).unwrap()
-  assert_eq(refused.exit_code(), 1)
-  assert_eq(refused.message(), "chained boolean operator not allowed in PurePy")
+  assert_eq(refused.exit_code(), 5)
+  assert_eq(
+    refused.message(),
+    "chained boolean operator not allowed in PurePy (excluded from this version)",
+  )
   assert_eq(@purepy.check(m).unwrap().message(), refused.message())
 
   // Accepted, checked and run under the profile that has it.
@@ -242,10 +251,13 @@ test "an added builtin declines where Python coerces" {
 test "an added builtin is not in scope without the profile" {
   let m = @purepy.parse("print(sorted([2, 1]))\n")
   assert_eq(@purepy.sieve(m), None)
-  assert_eq(@purepy.check(m).unwrap().message(), "'sorted' is not defined")
+  assert_eq(
+    @purepy.check(m).unwrap().message(),
+    "'sorted' not allowed in PurePy (excluded from this version)",
+  )
   assert_eq(
     @purepy.check(m, profile=@profile.pending()).unwrap().message(),
-    "'sorted' is not defined",
+    "'sorted' not allowed in PurePy (excluded from this version)",
   )
   assert_eq(@purepy.check(m, profile=@profile.builtins()), None)
 }
@@ -306,7 +318,7 @@ test "a method is a call and not a value" {
   assert_eq(outcome_under("print(\"a\".upper())\n", p), "ok: A\n")
   assert_eq(
     outcome_under("print(\"a\".upper)\n", p),
-    "refused: values of type Literal['a'] have no attributes",
+    "refused: 'str.upper' not allowed in PurePy (excluded from this version)",
   )
   // A name no table has is refused by name.
   assert_eq(
@@ -315,7 +327,7 @@ test "a method is a call and not a value" {
   )
   assert_eq(
     outcome_under("print((1).bit_length())\n", p),
-    "refused: values of type Literal[1] have no attributes",
+    "refused: 'int.bit_length' not allowed in PurePy (excluded from this version)",
   )
 }
 

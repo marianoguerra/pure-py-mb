@@ -366,7 +366,16 @@ fn class_of_pattern(p : @ast.Pattern, ctx : ModCtx) -> String raise {
       } else {
         c
       }
-    None => raise ill(NotClass(q=@analysis.qualified_name(cls)), span)
+    None => {
+      let q = @analysis.qualified_name(cls)
+      if python_builtin_classes.contains(q) {
+        raise ill(
+          excluded_for_now("constructor pattern for built-in class '\{q}'"),
+          span,
+        )
+      }
+      raise ill(NotClass(q~), span)
+    }
   }
 }
 

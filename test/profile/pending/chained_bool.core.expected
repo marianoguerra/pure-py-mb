@@ -1,1 +1,1 @@
-1: chained_bool.py:4:6: chained boolean operator not allowed in PurePy
+5: chained_bool.py:4:6: chained boolean operator not allowed in PurePy (excluded from this version)

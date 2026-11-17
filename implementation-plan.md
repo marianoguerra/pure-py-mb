@@ -216,17 +216,24 @@ harness can swap one for the other:
 | `tokens FILE` | one token per line: `line:col-line:col KIND text` (§8 Phase 1 format) | 0, or 1 on a lexical error with `!error line:col: msg` |
 | `dump FILE [--pos]` | canonical AST dump (§3.4) | 0 / 1 |
 | `unparse FILE` | Python source regenerated from the AST | 0 / 1 |
-| `parse FILE...` | `FILE: ok` or `FILE:line:col: msg` (the sieve) | 0 ok, 1 prohibited, 2 not yet supported, 1 on a Python syntax error |
-| `check FILE...` | `FILE: ok` or `FILE:line:col: msg` (module well-formedness; the sieve runs first) | 0, 1, 2, 3 ill-formed |
-| `check-program MAIN` | `MAIN: ok` or the reference's message | 0, 1, 2, 3, 4 ill-formed program |
-| `run MAIN [ARGS...]` | the program's stdout; on abort, `Kind` or `Kind: msg` on stderr | 0 normal or `SystemExit(n)`'s `n`; 1 for other aborts; 5 stuck |
+| `parse FILE...` | `FILE: ok` or `FILE:line:col: msg` (the sieve) | 0 ok, 1 excluded by design or a Python syntax error, 5 excluded from this version |
+| `check FILE...` | `FILE: ok` or `FILE:line:col: msg` (module well-formedness; the sieve runs first) | 0, 1, 3 ill-formed, 5 |
+| `check-program MAIN` | `MAIN: ok` or the reference's message | 0, 1, 3 ill-formed (module or program), 5 |
+| `run MAIN [ARGS...]` | the program's stdout; on abort, `Kind` or `Kind: msg` on stderr | 0 normal or `SystemExit(n)`'s `n`; 1 for other aborts; 4 undefined; 6 stuck |
 | `check --error-format human|short|json --color auto|always|never` | human: `error-report` rendering with source | as `check` |
 
-Exit code 5, **stuck**, is this implementation's own: the run reached an
-operation the semantics leaves undefined (§1 of the spec allows either
-aborting or producing Python's result; we abort, so that the `excluded/dynamic`
-bucket is *checked* rather than merely tolerated). The message names the
-operation: `stuck: == between int and str`, `stuck: if condition is not a bool`.
+The codes are the specification's (`purepy_conformance.Exit`, v0.24; until
+pure-py 0.12 they were 4 for an ill-formed program and 5 for an undefined
+operation). Exit code 4, **undefined**: the run reached an operation the
+semantics leaves undefined (§1 of the spec allows either aborting or producing
+Python's result; a PurePy implementation must exit 4 on exactly the suite's
+`undefined` tests). The message names the operation:
+`undefined: == between bool and int`. Exit 5 is a form excluded from this
+version, which a later one may admit, as against 1, excluded by design; the
+message says which. Exit 6, **stuck**, cannot happen for a well-formed
+program. `pure-py --implementation` (and `pure-py run --implementation`)
+prints `purepy`, which is how the suite's runner tells a PurePy
+implementation from a Python.
 
 `run` passes `[MAIN, ARGS...]` as `sys.argv`, so `argv[0]` is the path as given,
 like Python.

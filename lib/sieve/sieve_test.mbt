@@ -21,137 +21,193 @@ fn verdict(source : String) -> String {
 ///|
 test "prohibited forms" {
   let cases = [
-    ("x = y = 1\n", "1: multiple assignment targets not allowed in PurePy"),
     (
-      "f(**d)\n", "1: dictionary unpacking in argument list not allowed in PurePy",
+      "x = y = 1\n", "5: multiple assignment targets not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f() -> None:\n    type X = int\n", "1: type statement outside the module top level not allowed in PurePy",
+      "f(**d)\n", "5: dictionary unpacking in argument list not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f[T, T](x: T) -> T:\n    return x\n", "1: duplicate type parameter T not allowed in PurePy",
+      "def f() -> None:\n    type X = int\n", "5: type statement outside the module top level not allowed in PurePy (excluded from this version)",
+    ),
+    ("def f[T, T](x: T) -> T:\n    return x\n", "1: duplicate type parameter T"),
+    (
+      "def f[T: int](x: T) -> T:\n    return x\n", "5: bound on type parameter T not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f[T: int](x: T) -> T:\n    return x\n", "1: bound on type parameter T not allowed in PurePy",
+      "def f[T: (int, str)](x: T) -> T:\n    return x\n", "5: constraints on type parameter T not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f[T: (int, str)](x: T) -> T:\n    return x\n", "1: constraints on type parameter T not allowed in PurePy",
+      "def f[**P](x: int) -> int:\n    return x\n", "5: ParamSpec type parameter **P not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f[**P](x: int) -> int:\n    return x\n", "1: ParamSpec type parameter **P not allowed in PurePy",
+      "def f[*Ts](x: int) -> int:\n    return x\n", "5: TypeVarTuple type parameter *Ts not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f[*Ts](x: int) -> int:\n    return x\n", "1: TypeVarTuple type parameter *Ts not allowed in PurePy",
+      "@dataclass\n@dataclass\nclass C:\n    pass\n", "5: multiple class decorators not allowed in PurePy (excluded from this version)",
     ),
     (
-      "@dataclass\n@dataclass\nclass C:\n    pass\n", "1: multiple class decorators not allowed in PurePy",
-    ),
-    ("a[0] = 1\n", "1: item assignment not allowed in PurePy"),
-    ("a.b = 1\n", "1: attribute assignment not allowed in PurePy"),
-    (
-      "def f(x):\n    return 1\n", "1: unannotated parameter not allowed in PurePy",
+      "a[0] = 1\n", "1: item assignment not allowed in PurePy (excluded by design)",
     ),
     (
-      "def f(x: int):\n    return 1\n", "1: unannotated return type not allowed in PurePy",
+      "a.b = 1\n", "1: attribute assignment not allowed in PurePy (excluded by design)",
     ),
     (
-      "def f(x: 1) -> int:\n    return 1\n", "1: annotation that is not a type expression not allowed in PurePy",
+      "def f(x):\n    return 1\n", "1: unannotated parameter not allowed in PurePy (excluded by design)",
     ),
     (
-      "def f() -> list[int, int]:\n    return 1\n", "1: annotation that is not a type expression not allowed in PurePy",
-    ),
-    ("x += 1\n", "1: augmented assignment (+=, etc.) not allowed in PurePy"),
-    (
-      "a.b: int = 1\n", "1: assignment target other than a simple name not allowed in PurePy",
+      "def f(x: int):\n    return 1\n", "1: unannotated return type not allowed in PurePy (excluded by design)",
     ),
     (
-      "x: dict[int, int] = {}\n", "1: annotation that is not a type expression not allowed in PurePy",
-    ),
-    ("x = {**a}\n", "1: dictionary unpacking not allowed in PurePy"),
-    (
-      "import a\nx = 1\nimport b\n", "1: import after another statement not allowed in PurePy",
+      "def f(x: 1) -> int:\n    return 1\n", "1: annotation that is not a type expression not allowed in PurePy (excluded by design)",
     ),
     (
-      "def f() -> None:\n    import a\n", "1: import outside the module top level not allowed in PurePy",
+      "def f() -> list[int, int]:\n    return 1\n", "1: annotation that is not a type expression not allowed in PurePy (excluded by design)",
     ),
     (
-      "match v:\n    case 1 + 2j:\n        pass\n", "1: complex and bytes literal patterns not allowed in PurePy",
-    ),
-    ("del x\n", "1: del not allowed in PurePy"),
-    ("for x in y:\n    pass\n", "1: for loops not allowed in PurePy"),
-    ("while x:\n    pass\n", "1: while loops not allowed in PurePy"),
-    ("with a:\n    pass\n", "1: with statements not allowed in PurePy"),
-    ("async def f():\n    pass\n", "1: async not allowed in PurePy"),
-    (
-      "def f() -> None:\n    async for x in y:\n        pass\n", "1: async not allowed in PurePy",
+      "x += 1\n", "1: augmented assignment (+=, etc.) not allowed in PurePy (excluded by design)",
     ),
     (
-      "def f() -> None:\n    async with a:\n        pass\n", "1: async not allowed in PurePy",
-    ),
-    ("raise ValueError\n", "1: raise not allowed in PurePy"),
-    (
-      "try:\n    pass\nexcept:\n    pass\n", "1: try/except not allowed in PurePy",
-    ),
-    ("def f() -> None:\n    global x\n", "1: global not allowed in PurePy"),
-    ("def f() -> None:\n    nonlocal x\n", "1: nonlocal not allowed in PurePy"),
-    (
-      "def f() -> None:\n    class C:\n        pass\n", "1: class definition outside the module top level not allowed in PurePy",
-    ),
-    ("def f() -> None:\n    break\n", "1: break not allowed in PurePy"),
-    ("def f() -> None:\n    continue\n", "1: continue not allowed in PurePy"),
-    (
-      "try:\n    pass\nexcept* ValueError:\n    pass\n", "1: try/except not allowed in PurePy",
-    ),
-    ("class C:\n    pass\n", "1: undecorated class not allowed in PurePy"),
-    (
-      "@other\nclass C:\n    pass\n", "1: class decorator other than @dataclass not allowed in PurePy",
+      "a.b: int = 1\n", "1: assignment target other than a simple name not allowed in PurePy (excluded by design)",
     ),
     (
-      "@dataclass\nclass C(A, B):\n    pass\n", "1: multiple inheritance not allowed in PurePy",
+      "x: dict[int, int] = {}\n", "1: annotation that is not a type expression not allowed in PurePy (excluded by design)",
     ),
     (
-      "@dataclass\nclass C(f()):\n    pass\n", "1: base class other than a name, optionally applied to type arguments not allowed in PurePy",
+      "x = {**a}\n", "5: dictionary unpacking not allowed in PurePy (excluded from this version)",
     ),
     (
-      "@dataclass\nclass C(metaclass=type):\n    pass\n", "1: class keyword arguments not allowed in PurePy",
+      "import a\nx = 1\nimport b\n", "1: import after another statement not allowed in PurePy (excluded by design)",
     ),
     (
-      "@dataclass\nclass C:\n    def m():\n        pass\n", "1: dataclass member other than a field declaration not allowed in PurePy",
+      "def f() -> None:\n    import a\n", "1: import outside the module top level not allowed in PurePy (excluded by design)",
     ),
     (
-      "@dataclass\nclass C:\n    a.b: Any\n", "1: field target other than a simple name not allowed in PurePy",
+      "match v:\n    case 1 + 2j:\n        pass\n", "5: complex and bytes literal patterns not allowed in PurePy (excluded from this version)",
+    ),
+    ("del x\n", "1: del not allowed in PurePy (excluded by design)"),
+    (
+      "for x in y:\n    pass\n", "1: for loops not allowed in PurePy (excluded by design)",
     ),
     (
-      "@dataclass\nclass C:\n    x: Any = 1\n", "1: field default values not allowed in PurePy",
+      "while x:\n    pass\n", "1: while loops not allowed in PurePy (excluded by design)",
     ),
     (
-      "@dataclass\nclass C:\n    x: 1\n", "1: annotation that is not a type expression not allowed in PurePy",
+      "with a:\n    pass\n", "5: with statements not allowed in PurePy (excluded from this version)",
     ),
     (
-      "match v:\n    case {1: a}:\n        pass\n", "1: dictionary pattern key other than a string literal not allowed in PurePy",
-    ),
-    ("x = b\"b\"\n", "1: bytes literal not allowed in PurePy"),
-    ("x = 1j\n", "1: complex literal not allowed in PurePy"),
-    ("x = ...\n", "1: ellipsis literal not allowed in PurePy"),
-    ("x = a & b\n", "1: binary operator '&' not allowed in PurePy"),
-    ("x = a ^ b\n", "1: binary operator '^' not allowed in PurePy"),
-    ("x = a << b\n", "1: binary operator '<<' not allowed in PurePy"),
-    ("x = a >> b\n", "1: binary operator '>>' not allowed in PurePy"),
-    ("x = a @ b\n", "1: binary operator '@' not allowed in PurePy"),
-    ("x = ~a\n", "1: unary operator '~' not allowed in PurePy"),
-    ("x = (i for i in y)\n", "1: generator expressions not allowed in PurePy"),
-    ("x = [(y := 1)]\n", "1: walrus operator (:=) not allowed in PurePy"),
-    ("x = [*y]\n", "1: starred expressions not allowed in PurePy"),
-    ("def f() -> None:\n    yield 1\n", "1: yield not allowed in PurePy"),
-    ("def f() -> None:\n    yield from y\n", "1: yield not allowed in PurePy"),
-    (
-      "x = [i async for i in y]\n", "1: async comprehensions not allowed in PurePy",
+      "async def f():\n    pass\n", "5: async not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f(*, x):\n    pass\n", "1: keyword-only arguments not allowed in PurePy",
+      "def f() -> None:\n    async for x in y:\n        pass\n", "5: async not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f(x, /):\n    pass\n", "1: positional-only arguments not allowed in PurePy",
+      "def f() -> None:\n    async with a:\n        pass\n", "5: async not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "raise ValueError\n", "5: raise not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "try:\n    pass\nexcept:\n    pass\n", "5: try/except not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f() -> None:\n    global x\n", "1: global not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "def f() -> None:\n    nonlocal x\n", "1: nonlocal not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "def f() -> None:\n    class C:\n        pass\n", "5: class definition outside the module top level not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f() -> None:\n    break\n", "1: break not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "def f() -> None:\n    continue\n", "1: continue not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "try:\n    pass\nexcept* ValueError:\n    pass\n", "5: try/except not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "class C:\n    pass\n", "5: undecorated class not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@other\nclass C:\n    pass\n", "5: class decorator other than @dataclass not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@dataclass\nclass C(A, B):\n    pass\n", "5: multiple inheritance not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@dataclass\nclass C(f()):\n    pass\n", "5: base class other than a name, optionally applied to type arguments not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@dataclass\nclass C(metaclass=type):\n    pass\n", "5: class keyword arguments not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@dataclass\nclass C:\n    def m():\n        pass\n", "5: dataclass member other than a field declaration not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@dataclass\nclass C:\n    a.b: Any\n", "1: field target other than a simple name not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "@dataclass\nclass C:\n    x: Any = 1\n", "5: field default values not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@dataclass\nclass C:\n    x: 1\n", "1: annotation that is not a type expression not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "match v:\n    case {1: a}:\n        pass\n", "1: dictionary pattern key other than a string literal not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "x = b\"b\"\n", "5: bytes literal not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = 1j\n", "5: complex literal not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = ...\n", "5: ellipsis literal not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = a & b\n", "5: binary operator '&' not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = a ^ b\n", "5: binary operator '^' not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = a << b\n", "5: binary operator '<<' not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = a >> b\n", "5: binary operator '>>' not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = a @ b\n", "5: binary operator '@' not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = ~a\n", "5: unary operator '~' not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = (i for i in y)\n", "1: generator expressions not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "x = [(y := 1)]\n", "1: walrus operator (:=) not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "x = [*y]\n", "5: starred expressions not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f() -> None:\n    yield 1\n", "1: yield not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "def f() -> None:\n    yield from y\n", "1: yield not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "x = [i async for i in y]\n", "5: async comprehensions not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f(*, x):\n    pass\n", "5: keyword-only arguments not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f(x, /):\n    pass\n", "5: positional-only arguments not allowed in PurePy (excluded from this version)",
     ),
   ]
   for c in cases {
@@ -162,53 +218,91 @@ test "prohibited forms" {
 ///|
 test "forms that are planned and not yet supported" {
   let cases = [
-    ("x, y = 1, 2\n", "1: unpacking assignment not allowed in PurePy"),
-    ("@deco\ndef f():\n    pass\n", "1: decorators not allowed in PurePy"),
     (
-      "import a, b\n", "1: multi-target import (import a, b) not allowed in PurePy",
-    ),
-    ("import a as b\n", "1: import-as not allowed in PurePy"),
-    ("from . import a\n", "1: relative imports not allowed in PurePy"),
-    ("from .m import a\n", "1: relative imports not allowed in PurePy"),
-    ("from m import *\n", "1: from M import * not allowed in PurePy"),
-    ("from m import a as b\n", "1: from-import-as not allowed in PurePy"),
-    (
-      "match v:\n    case a if a:\n        pass\n", "1: case guards not allowed in PurePy",
+      "x, y = 1, 2\n", "5: unpacking assignment not allowed in PurePy (excluded from this version)",
     ),
     (
-      "@dataclass\nclass C(Enum):\n    pass\n", "1: enum classes not allowed in PurePy",
+      "@deco\ndef f():\n    pass\n", "5: decorators not allowed in PurePy (excluded from this version)",
     ),
     (
-      "match v:\n    case a.b:\n        pass\n", "1: attribute value patterns not allowed in PurePy",
+      "import a, b\n", "5: multi-target import (import a, b) not allowed in PurePy (excluded from this version)",
     ),
     (
-      "match v:\n    case [*rest]:\n        pass\n", "1: star patterns not allowed in PurePy",
+      "import a as b\n", "5: import-as not allowed in PurePy (excluded from this version)",
     ),
     (
-      "match v:\n    case {**rest}:\n        pass\n", "1: rest capture in dictionary patterns not allowed in PurePy",
+      "from . import a\n", "5: relative imports not allowed in PurePy (excluded from this version)",
     ),
     (
-      "match v:\n    case 1 | 2:\n        pass\n", "1: or-patterns not allowed in PurePy",
+      "from .m import a\n", "5: relative imports not allowed in PurePy (excluded from this version)",
     ),
-    ("x = a and b and c\n", "1: chained boolean operator not allowed in PurePy"),
-    ("x = a < b < c\n", "1: chained comparison not allowed in PurePy"),
-    ("x = a is b\n", "1: identity operator (is/is not) not allowed in PurePy"),
     (
-      "x = a is not b\n", "1: identity operator (is/is not) not allowed in PurePy",
+      "from m import *\n", "1: from M import * not allowed in PurePy (excluded by design)",
     ),
-    ("x = {1, 2}\n", "1: set literals not allowed in PurePy"),
-    ("x = {i for i in y}\n", "1: set comprehensions not allowed in PurePy"),
-    ("x = a[1:2]\n", "1: slicing not allowed in PurePy"),
-    ("x = f\"{y}\"\n", "1: f-strings not allowed in PurePy"),
     (
-      "x = [a for a, b in y]\n", "1: unpacking in comprehensions not allowed in PurePy",
+      "from m import a as b\n", "5: from-import-as not allowed in PurePy (excluded from this version)",
     ),
-    ("def f(*args):\n    pass\n", "1: *args not allowed in PurePy"),
-    ("def f(**kw):\n    pass\n", "1: **kwargs not allowed in PurePy"),
-    ("def f(x=1):\n    pass\n", "1: default arguments not allowed in PurePy"),
-    ("f = lambda x=1: x\n", "1: default arguments not allowed in PurePy"),
-    ("x = f\"{a}\"\n", "1: f-strings not allowed in PurePy"),
-    ("x = f\"plain\"\n", "1: f-strings not allowed in PurePy"),
+    (
+      "match v:\n    case a if a:\n        pass\n", "5: case guards not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@dataclass\nclass C(Enum):\n    pass\n", "5: enum classes not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "match v:\n    case a.b:\n        pass\n", "5: attribute value patterns not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "match v:\n    case [*rest]:\n        pass\n", "5: star patterns not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "match v:\n    case {**rest}:\n        pass\n", "5: rest capture in dictionary patterns not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "match v:\n    case 1 | 2:\n        pass\n", "5: or-patterns not allowed in PurePy (excluded from this version)",
+    ),
+    ("x = a and b and c\n", "5: chained boolean operator not allowed in PurePy (excluded from this version)"),
+    (
+      "x = a < b < c\n", "5: chained comparison not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = a is b\n", "1: identity operator (is/is not) not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "x = a is not b\n", "1: identity operator (is/is not) not allowed in PurePy (excluded by design)",
+    ),
+    (
+      "x = {1, 2}\n", "5: set literals not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = {i for i in y}\n", "5: set comprehensions not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = a[1:2]\n", "5: slicing not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = f\"{y}\"\n", "5: f-strings not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = [a for a, b in y]\n", "5: unpacking in comprehensions not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f(*args):\n    pass\n", "5: *args not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f(**kw):\n    pass\n", "5: **kwargs not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f(x=1):\n    pass\n", "5: default arguments not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "f = lambda x=1: x\n", "5: default arguments not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = f\"{a}\"\n", "5: f-strings not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "x = f\"plain\"\n", "5: f-strings not allowed in PurePy (excluded from this version)",
+    ),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)
@@ -271,7 +365,7 @@ test "chained boolean operators are gated, not removed" {
   for source in cases {
     assert_eq(
       verdict(source),
-      "1: chained boolean operator not allowed in PurePy",
+      "5: chained boolean operator not allowed in PurePy (excluded from this version)",
     )
     assert_eq(verdict_under(source, @profile.core), verdict(source))
     assert_eq(verdict_under(source, @profile.pending()), "ok")
@@ -299,11 +393,11 @@ test "a profile keeps walking past the gate it opened" {
   let source = "a = b and c and d\ndef f(*g):\n    return 1\n"
   assert_eq(
     verdict(source),
-    "1: chained boolean operator not allowed in PurePy",
+    "5: chained boolean operator not allowed in PurePy (excluded from this version)",
   )
   assert_eq(
     verdict_under(source, @profile.pending()),
-    "1: *args not allowed in PurePy",
+    "5: *args not allowed in PurePy (excluded from this version)",
   )
 }
 
@@ -316,25 +410,37 @@ test "a profile keeps walking past the gate it opened" {
 /// are `test/profile/`, driven by `tools/profile-conform.py`.
 test "every pending feature is gated, not removed" {
   let cases = [
-    ("a = b and c and d\n", "1: chained boolean operator not allowed in PurePy"),
-    ("a = 1 < b < 3\n", "1: chained comparison not allowed in PurePy"),
+    ("a = b and c and d\n", "5: chained boolean operator not allowed in PurePy (excluded from this version)"),
     (
-      "a = b is None\n", "1: identity operator (is/is not) not allowed in PurePy",
+      "a = 1 < b < 3\n", "5: chained comparison not allowed in PurePy (excluded from this version)",
     ),
     (
-      "a = b is not None\n", "1: identity operator (is/is not) not allowed in PurePy",
-    ),
-    ("a = xs[1:2]\n", "1: slicing not allowed in PurePy"),
-    ("a = xs[::-1]\n", "1: slicing not allowed in PurePy"),
-    ("a, b = (1, 2)\n", "1: unpacking assignment not allowed in PurePy"),
-    (
-      "a, (b, c) = (1, (2, 3))\n", "1: unpacking assignment not allowed in PurePy",
+      "a = b is None\n", "5: identity operator (is/is not) not allowed in PurePy (excluded from this version)",
     ),
     (
-      "def f(x: int = 1) -> int:\n    return x\n", "1: default arguments not allowed in PurePy",
+      "a = b is not None\n", "5: identity operator (is/is not) not allowed in PurePy (excluded from this version)",
     ),
-    ("f = lambda x=1: x\n", "1: default arguments not allowed in PurePy"),
-    ("a = f\"{b}\"\n", "1: f-strings not allowed in PurePy"),
+    (
+      "a = xs[1:2]\n", "5: slicing not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "a = xs[::-1]\n", "5: slicing not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "a, b = (1, 2)\n", "5: unpacking assignment not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "a, (b, c) = (1, (2, 3))\n", "5: unpacking assignment not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f(x: int = 1) -> int:\n    return x\n", "5: default arguments not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "f = lambda x=1: x\n", "5: default arguments not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "a = f\"{b}\"\n", "5: f-strings not allowed in PurePy (excluded from this version)",
+    ),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)
@@ -342,7 +448,7 @@ test "every pending feature is gated, not removed" {
     assert_eq(verdict_under(c.0, @profile.pending()), "ok", msg=c.0)
     // The CLI's hint reads the message, so a rename in the sieve that the
     // hint's table does not follow silences it.
-    let msg = c.1.strip_prefix("1: ").unwrap().to_owned()
+    let msg = c.1.strip_prefix("5: ").unwrap().to_owned()
     assert_eq(@profile.accepted_by(msg), Some("pending"), msg=c.0)
   }
 }
@@ -355,17 +461,17 @@ test "a destructuring target may not assign an item or an attribute" {
   let p = @profile.pending()
   assert_eq(
     verdict_under("a.b, c = 1, 2\n", p),
-    "1: attribute assignment not allowed in PurePy",
+    "1: attribute assignment not allowed in PurePy (excluded by design)",
   )
   assert_eq(
     verdict_under("xs[0], c = 1, 2\n", p),
-    "1: item assignment not allowed in PurePy",
+    "1: item assignment not allowed in PurePy (excluded by design)",
   )
   // A starred target never reaches the shape test: it is prohibited outright,
   // which is what keeps a destructuring target exact in its arity.
   assert_eq(
     verdict_under("a, *rest = [1, 2, 3]\n", p),
-    "1: starred expressions not allowed in PurePy",
+    "5: starred expressions not allowed in PurePy (excluded from this version)",
   )
 }
 
@@ -378,14 +484,26 @@ test "a destructuring target may not assign an item or an attribute" {
 /// show up here as a changed message rather than as a silence.
 test "the rest of the pending table is still closed" {
   let cases = [
-    ("def f(*a):\n    return 1\n", "1: *args not allowed in PurePy"),
-    ("def f(**a):\n    return 1\n", "1: **kwargs not allowed in PurePy"),
-    ("@deco\ndef f():\n    pass\n", "1: decorators not allowed in PurePy"),
-    ("s = {1, 2}\n", "1: set literals not allowed in PurePy"),
-    ("s = {x for x in y}\n", "1: set comprehensions not allowed in PurePy"),
-    ("import a as b\n", "1: import-as not allowed in PurePy"),
     (
-      "xs = [a for a, b in items]\n", "1: unpacking in comprehensions not allowed in PurePy",
+      "def f(*a):\n    return 1\n", "5: *args not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "def f(**a):\n    return 1\n", "5: **kwargs not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "@deco\ndef f():\n    pass\n", "5: decorators not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "s = {1, 2}\n", "5: set literals not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "s = {x for x in y}\n", "5: set comprehensions not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "import a as b\n", "5: import-as not allowed in PurePy (excluded from this version)",
+    ),
+    (
+      "xs = [a for a, b in items]\n", "5: unpacking in comprehensions not allowed in PurePy (excluded from this version)",
     ),
   ]
   for c in cases {
@@ -414,21 +532,21 @@ test "an f-string takes expressions and not a format language" {
   // half was missing.
   assert_eq(
     verdict_under("x = f\"{a:>10}\"\n", p),
-    "1: an f-string format spec not allowed in PurePy",
+    "5: an f-string format spec not allowed in PurePy (excluded from this version)",
   )
   assert_eq(
     verdict_under("x = f\"{a=}\"\n", p),
-    "1: the f-string debug form (f\"{x=}\") not allowed in PurePy",
+    "5: the f-string debug form (f\"{x=}\") not allowed in PurePy (excluded from this version)",
   )
   assert_eq(
     verdict_under("x = f\"{a!a}\"\n", p),
-    "1: an f-string conversion not allowed in PurePy",
+    "5: an f-string conversion not allowed in PurePy (excluded from this version)",
   )
   // A hole is walked, so what is prohibited in an expression is prohibited in
   // one -- with the message it has anywhere else.
   assert_eq(
     verdict_under("x = f\"{a & b}\"\n", p),
-    "1: binary operator '&' not allowed in PurePy",
+    "5: binary operator '&' not allowed in PurePy (excluded from this version)",
   )
   assert_eq(
     verdict_under("x = f\"{1 is 1}\"\n", p),
@@ -470,7 +588,7 @@ test "a default argument must be a literal" {
     ] {
     assert_eq(
       verdict_under(source, p),
-      "1: a default argument that is not a literal not allowed in PurePy",
+      "5: a default argument that is not a literal not allowed in PurePy (excluded from this version)",
       msg=source,
     )
   }
@@ -491,7 +609,7 @@ test "identity against a literal is refused, not deferred" {
   // the reference's, unchanged.
   assert_eq(
     verdict("x = 1 is 1\n"),
-    "1: identity operator (is/is not) not allowed in PurePy",
+    "1: identity operator (is/is not) not allowed in PurePy (excluded by design)",
   )
   for name in @profile.names {
     let p = @profile.by_name(name).unwrap()
@@ -522,13 +640,16 @@ test "no profile lifts a prohibition" {
     let p = @profile.by_name(name).unwrap()
     assert_eq(
       verdict_under("for x in y:\n    pass\n", p),
-      "1: for loops not allowed in PurePy",
+      "1: for loops not allowed in PurePy (excluded by design)",
     )
     assert_eq(
       verdict_under("xs[0] = 1\n", p),
-      "1: item assignment not allowed in PurePy",
+      "1: item assignment not allowed in PurePy (excluded by design)",
     )
-    assert_eq(verdict_under("del x\n", p), "1: del not allowed in PurePy")
+    assert_eq(
+      verdict_under("del x\n", p),
+      "1: del not allowed in PurePy (excluded by design)",
+    )
   }
 }
 
@@ -539,21 +660,19 @@ test "no profile lifts a prohibition" {
 test "duplicates and a return outside a function" {
   let cases = [
     (
-      "match v:\n    case [x, x]:\n        pass\n", "1: duplicate variable x in pattern not allowed in PurePy",
+      "match v:\n    case [x, x]:\n        pass\n", "1: duplicate variable x in pattern",
     ),
     (
-      "match v:\n    case P(a=x, a=y):\n        pass\n", "1: duplicate keyword a in constructor pattern not allowed in PurePy",
+      "match v:\n    case P(a=x, a=y):\n        pass\n", "1: duplicate keyword a in constructor pattern",
     ),
     (
-      "match v:\n    case {\"k\": x, \"k\": y}:\n        pass\n", "1: duplicate key 'k' in dictionary pattern not allowed in PurePy",
+      "match v:\n    case {\"k\": x, \"k\": y}:\n        pass\n", "1: duplicate key 'k' in dictionary pattern",
     ),
     (
-      "def f(x: int, x: int) -> int:\n    return x\n", "1: duplicate parameter x not allowed in PurePy",
+      "def f(x: int, x: int) -> int:\n    return x\n", "1: duplicate parameter x",
     ),
-    ("return 1\n", "1: return outside a function not allowed in PurePy"),
-    (
-      "if True:\n    return 1\n", "1: return outside a function not allowed in PurePy",
-    ),
+    ("return 1\n", "1: return outside a function"),
+    ("if True:\n    return 1\n", "1: return outside a function"),
   ]
   for c in cases {
     assert_eq(verdict(c.0), c.1, msg=c.0)

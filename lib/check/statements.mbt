@@ -10,7 +10,7 @@
 
 ///|
 fn ill(reason : @err.Reason, span : @basic.Span) -> @err.PurePyError {
-  @err.ill_formed(reason, span~)
+  @err.ill_formed(classified(reason), span~)
 }
 
 ///|
@@ -604,6 +604,10 @@ fn check_stmt(
         }
       }
     }
+    // `print` is a statement of the module body; a function body may not
+    // print, for now (v0.24).
+    ExprStmt(value=Call(func=Name(id="print", ..), ..), span~) if returns
+      is Some(_) => raise ill(excluded_for_now("print inside function"), span)
     ExprStmt(value=Call(func~, ..) as e, ..) if !(func is Lambda(..)) &&
       class_of_name(func, ctx) is None => {
       call_stmt(e, ctx)
@@ -1057,7 +1061,7 @@ fn attribute_type(
         Some(t) => t
         None => raise ill(UnknownField(c=@types.short_name(c), x=attr), span)
       }
-    _ => raise ill(NoAttributes(tau=render(obj)), span)
+    _ => raise ill(no_attributes(obj, attr, render(obj)), span)
   }
 }
 
@@ -1518,15 +1522,12 @@ fn check_args(
   ps : Array[@types.Type],
   ctx : ModCtx,
 ) -> Unit raise {
-  guard e is Call(args~, keywords~, span~, ..) else { abort("a call") }
+  guard e is Call(func~, args~, keywords~, span~) else { abort("a call") }
   if !keywords.is_empty() {
     raise ill(KeywordArgumentsNotConstructor, span)
   }
   if ps.length() != args.length() {
-    raise ill(
-      CallArityMismatch(expected=ps.length(), given=args.length()),
-      span,
-    )
+    raise ill(arity_mismatch(func, ps.length(), args.length()), span)
   }
   for i, a in args {
     check_expr(a, ps[i], ctx)

@@ -5,15 +5,23 @@
 /// of the specification (`implementation-plan.md` §2.1) and not a convenience:
 ///
 ///   0  accepted, or a run that finished
-///   1  a prohibited form, or a Python syntax error, or an abort
-///   3  an ill-formed module
-///   4  an ill-formed program
-///   5  an operation the semantics leaves undefined
+///   1  a form excluded by design, or a Python syntax error, or an abort
+///   3  an ill-formed module or program
+///   4  a run that reached an operation the semantics leaves undefined
+///   5  a form excluded from this version of PurePy
+///   6  a stuck run, which a well-formed program cannot reach
+///
+/// These are `purepy_conformance.Exit`'s since spec v0.24, and the reference
+/// interpreter's (isabelle-purepy); until 0.12 4 was an ill-formed program
+/// and 5 an undefined operation.
 fn main {
   let (profile, asked, args) = take_profile(@env.args()[1:])
   match args {
     [] | ["-h"] | ["--help"] => println(usage)
     ["--version"] => println("pure-py 0.12.0")
+    // The conformance runner asks an interpreter what it is: `purepy` is a
+    // PurePy implementation, held to exit 4 on undefined behaviour.
+    ["--implementation"] => println("purepy")
     ["profiles"] => println(profiles_listing())
     ["tokens", path] => @sys.exit(cmd_tokens(path))
     ["dump", path] => @sys.exit(cmd_dump(path, pos=false))
@@ -124,7 +132,7 @@ fn profiles_listing() -> String {
 /// happens not to look here.
 fn profile_note(d : @err.Diagnostic, asked : Bool) -> String? {
   guard asked else { return None }
-  guard d.kind is Prohibited(msg~) else { return None }
+  guard d.kind is (Prohibited(msg~) | Excluded(msg~)) else { return None }
   match @profile.accepted_by(msg) {
     Some(p) => Some("  accepted under --profile \{p}")
     None => None
@@ -479,18 +487,21 @@ fn cmd_run(
       1
     }
     // An operation the semantics leaves undefined. Chapter 1 allows an
-    // implementation to abort or to produce Python's answer; this one aborts,
-    // so that the suite's dynamically excluded tests are checked.
+    // implementation to abort or to produce Python's answer; a PurePy
+    // implementation exits 4 on exactly the suite's `undefined` tests
+    // (`purepy_conformance.Exit.UNDEFINED`, v0.24), and this one does.
     Undefined(op) => {
-      write_stderr("stuck: " + op)
-      5
+      write_stderr("undefined: " + op)
+      4
     }
     // `run_program` builds the host itself, and that host answers no foreign
     // call, so a run started here cannot park. The arm exists because the
     // type allows what this caller does not.
+    // Stuck, which the reference interpreter answers with 6 and which a
+    // well-formed program cannot reach.
     Suspended => {
       write_stderr("stuck: a host call suspended in a run that has no host")
-      5
+      6
     }
   }
 }

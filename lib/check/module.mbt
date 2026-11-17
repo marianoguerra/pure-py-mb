@@ -137,6 +137,30 @@ fn members_without_source(
 // ---------------------------------------------------------------------------
 
 ///|
+/// The import of module `m` that reaches `next`: one naming `next`, a
+/// submodule of it (whose loading loads `next` first), or, as
+/// `from P import x`, the submodule `P.x` that is `next`.
+fn cycle_import(m : @ast.Module, next : String) -> @basic.Span? {
+  fn reaches(n : String) -> Bool {
+    n == next || n.has_prefix(next + ".")
+  }
+  for s in m.body {
+    match s {
+      Import(names~, span~) =>
+        if names.iter().any(fn(a) { reaches(a.name) }) {
+          return Some(span)
+        }
+      ImportFrom(module_name=Some(p), names~, span~, ..) =>
+        if reaches(p) || names.iter().any(fn(a) { "\{p}.\{a.name}" == next }) {
+          return Some(span)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 /// The signature of a module: what an import of it can name.
 ///
 /// Cached per program, and guarded by a loading stack so that a cycle is a
@@ -152,7 +176,16 @@ pub fn check_module(program : Program, q : String) -> Context raise {
   match program.loading.search(q) {
     Some(i) => {
       let cycle = [..program.loading[i:], q]
-      raise @err.ill_formed_program("import cycle: " + cycle.join(" -> "))
+      // Reported, as the reference reports it, against the module the cycle
+      // starts from, at its import of the next one.
+      let at = cycle_import(m, cycle[1])
+      raise @err.PurePyError({
+        ..@err.Diagnostic::new(
+          Program(msg="import cycle: " + cycle.join(" -> ")),
+        ),
+        span: at,
+        in_module: Some(q),
+      })
     }
     None => ()
   }
@@ -414,11 +447,32 @@ pub fn check_single(
 ) -> @err.Diagnostic? {
   let tree = @program.SourceTree::of(Map([("__main__", m)]))
   let program = Program::new(tree, host_members~, profile~)
-  try check_module(program, "__main__") |> ignore catch {
+  try {
+    parse_every_module(tree)
+    check_module(program, "__main__") |> ignore
+  } catch {
     @err.PurePyError(d) => Some(d)
     _ => None
   } noraise {
     _ => None
+  }
+}
+
+///|
+/// Every module of the program parsed (and sieved) before any is checked:
+/// the entry first, so that its rejections take precedence, then the rest in
+/// the order of their name segments. The reference's `parse_program` since
+/// v0.24; until then an unused module was parsed only when imported.
+fn parse_every_module(tree : @program.SourceTree) -> Unit raise {
+  tree.load("__main__") |> ignore
+  let names = tree
+    .module_names()
+    .filter(fn(n) { n != "__main__" && !predefined_modules.contains(n) })
+  names.sort_by(fn(a, b) {
+    a.split(".").collect().compare(b.split(".").collect())
+  })
+  for n in names {
+    tree.load(n) |> ignore
   }
 }
 
@@ -436,10 +490,15 @@ pub fn check_program(
   profile~ : @profile.Profile = @profile.core,
 ) -> @err.Diagnostic? {
   let program = Program::new(tree, host_members~, profile~)
-  try check_module(program, "__main__") |> ignore catch {
+  try {
+    parse_every_module(tree)
+    check_module(program, "__main__") |> ignore
+  } catch {
     @err.PurePyError(d) =>
       match d.kind {
-        IllFormed(_) => {
+        // An import cycle is reported against the module it starts from.
+        IllFormed(_) | Program(..) if d.kind is IllFormed(_) ||
+          d.in_module is Some(_) => {
           let q = match d.in_module {
             Some(q) => q
             None => "__main__"

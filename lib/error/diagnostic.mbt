@@ -4,8 +4,11 @@
 pub(all) enum Stage {
   /// CPython would not parse it either.
   Syntax
-  /// `syntax.py`: a form PurePy excludes on sight.
+  /// `syntax.py`: a form PurePy excludes on sight, by design.
   Prohibited
+  /// `syntax.py`, or the checker: a form excluded from this version of
+  /// PurePy, which a later one may admit.
+  Excluded
   /// `check_module.py`: the module is not well formed.
   IllFormedModule
   /// `check_program.py`: the program is not well formed.
@@ -23,11 +26,16 @@ pub(all) enum Stage {
 pub(all) enum Kind {
   /// Exit 1. A module the reference loads reports this as `parse error: <msg>`.
   PythonSyntax(msg~ : String)
-  /// Exit 1. `syntax.py`'s text, verbatim.
+  /// Exit 1. `syntax.py`'s text, verbatim: a form excluded by design, or
+  /// one Python refuses too (`duplicate parameter x`).
   Prohibited(msg~ : String)
+  /// Exit 5. A form excluded from this version, `syntax.py`'s text or the
+  /// checker's: `<feature> not allowed in PurePy (excluded from this
+  /// version)`.
+  Excluded(msg~ : String)
   /// Exit 3. `check_module.py`'s answer.
   IllFormed(Reason)
-  /// Exit 4.
+  /// Exit 3, as every ill-formed program is since v0.24; once exit 4.
   Program(msg~ : String)
 } derive(Eq, Debug)
 
@@ -66,8 +74,8 @@ pub fn Diagnostic::new(
 pub fn Diagnostic::exit_code(self : Diagnostic) -> Int32 {
   match self.kind {
     PythonSyntax(..) | Prohibited(..) => 1
-    IllFormed(_) => 3
-    Program(..) => 4
+    IllFormed(Excluded(by_design=false, ..)) | Excluded(..) => 5
+    IllFormed(_) | Program(..) => 3
   }
 }
 
@@ -76,6 +84,7 @@ pub fn Diagnostic::stage(self : Diagnostic) -> Stage {
   match self.kind {
     PythonSyntax(..) => Syntax
     Prohibited(..) => Prohibited
+    Excluded(..) => Excluded
     IllFormed(_) => IllFormedModule
     Program(..) => IllFormedProgram
   }
@@ -95,6 +104,7 @@ pub fn Diagnostic::message(self : Diagnostic) -> String {
   match self.kind {
     PythonSyntax(msg~) => msg
     Prohibited(msg~) => msg
+    Excluded(msg~) => msg
     IllFormed(r) => r.message()
     Program(msg~) => msg
   }
@@ -152,7 +162,7 @@ pub fn ill_formed(reason : Reason, span? : @basic.Span) -> PurePyError {
 }
 
 ///|
-/// Reject a program: exit 4.
+/// Reject a program: exit 3 (exit 4 until v0.24).
 pub fn ill_formed_program(msg : String) -> PurePyError {
   PurePyError(Diagnostic::new(Program(msg~)))
 }

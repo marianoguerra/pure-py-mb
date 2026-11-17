@@ -1,1 +1,1 @@
-3: numbers.py:1:7: 'abs' is not defined
+5: numbers.py:1:7: 'abs' not allowed in PurePy (excluded from this version)
