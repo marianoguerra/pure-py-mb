@@ -1,5 +1,87 @@
 # Changelog
 
+## 0.13.0 — 2026-11-17
+
+Follows the specification from v0.23.0 to v0.27.10, and the reference checker
+to where it lives now: `pure-py/isabelle-purepy`, generated from the
+Isabelle/HOL mechanisation. Every oracle is at its total -- 2553/2553 against
+the reference's goldens, 1075/1075 against CPython's tokens and trees -- and
+the specification's own runner, `purepy-conformance`, passes 896/896 with
+messages checked. A minor release that breaks things, as 0.x minors may:
+
+- **The exit codes are the specification's.** 1 excluded by design (or a
+  Python syntax error, or an abort), 3 ill-formed -- a module or a program,
+  which was 4 --, 4 undefined behaviour at run time, which was 5 and called
+  stuck, 5 excluded from this version, and 6 a stuck run, which a well-formed
+  program cannot reach. A script that read 4 or 5 reads them anew.
+- **Every refusal says how it is excluded**: `for loops not allowed in PurePy
+  (excluded by design)`, `f-strings not allowed in PurePy (excluded from this
+  version)`. A consumer that compared messages compares the new ones.
+- `Kind`, `Stage` and `Reason` gain arms: `Kind::Excluded` and
+  `Stage::Excluded` (exit 5), `Reason::Excluded` for the use of an excluded
+  Python feature, and `Reason::IntLiteralFloatValues` and
+  `Reason::DictPatternDictValues`. A consumer that matches them exhaustively
+  adds them. `@value.float_divmod` is new.
+- `pure-py --implementation` prints `purepy`, which is how the suite's runner
+  tells a PurePy implementation from a Python.
+
+### Refusals, classified
+
+The sieve sorts a form as `syntax.py` does: excluded from this version unless
+upstream marks it by design, with `is` against `None`, `True` or `False` and
+an annotation holding a string or `...` decided by context. The checker
+classifies the uses of Python features it finds: a built-in (`'sum'`), a
+standard module (`module 're'`), a member of a predefined module
+(`'sys.version'`), a method of a built-in type (`'str.upper'`), a constructor
+pattern for a built-in class, `round(x, n)`, `sys.exit()` and `print` in a
+function. The reference asks the Python it runs on; `tools/gen_python_names.py`
+writes that Python's answers as tables.
+
+Also as the reference has it now: `print(e)` is a statement of the module
+body, with one positional argument and no keyword; `match`, `case`, `type`
+and `_` are refused as identifiers; a duplicate or a `return` outside a
+function carries Python's own message; an import cycle is reported against
+the module it starts from, at its import of the next; and every module of a
+program is parsed before any is checked, so an unused module that will not
+parse is a refused program.
+
+### The language
+
+- Chained `and` and `or` are PurePy. The `pending` profile's
+  `ChainedBoolean` opens nothing now, and stays so that code naming it
+  builds.
+- An operator over a union operand is resolved at each branch and the results
+  joined: `x * 2` at `int | str` is `int | str`.
+- `float ** float` is refused; a float base takes an int exponent.
+- A definition's type parameters may not be an enclosing definition's.
+- An int literal pattern at a type with float values, and a dictionary
+  pattern at a non-dictionary type that has dictionary values, are refused.
+- A class pattern's type arguments are found by one-way matching, as the
+  mechanisation finds them, so a union among a base class's arguments leaves
+  them undetermined.
+- A generic call infers its type arguments from the arguments that
+  synthesise, so a generic function can be passed as one.
+- `==` on a dataclass that reaches itself through a type alias no longer
+  overflows the checker's stack.
+
+### Running
+
+- Float `//` and `%` are CPython's, built on `fmod`: `1.0 // 0.1` is `9.0`,
+  not `10.0`, and `-1.0 // inf` is `-1.0`.
+- A float power that overflows is undefined (exit 4), and `0.0 ** -1` raises
+  `ZeroDivisionError`, as `0 ** -1` does.
+- An undefined operation reports as `undefined: ...` on standard error.
+
+### The reference, and the tools
+
+`tools/reference.json` pins spec v0.27.10 for the suite and isabelle-purepy
+v0.27.9 for the checker; `tools/fetch-reference.sh` unpacks the checker's
+release wheels, checked against their digests, into `reference-checker/`.
+The goldens leave out the `[outcome, rule, Figure]` citation the checker now
+ends a rejection with. `just upstream-conform` runs the specification's
+runner against our CLI; `just reference-check` runs it against the reference.
+The goldens and the name tables come from Python 3.14.8.
+
 ## 0.12.0 — 2026-10-27
 
 The profiles, checked against the typed language. Nothing `core` decides

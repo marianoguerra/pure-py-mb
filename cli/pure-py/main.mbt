@@ -18,7 +18,7 @@ fn main {
   let (profile, asked, args) = take_profile(@env.args()[1:])
   match args {
     [] | ["-h"] | ["--help"] => println(usage)
-    ["--version"] => println("pure-py 0.12.0")
+    ["--version"] => println("pure-py 0.13.0")
     // The conformance runner asks an interpreter what it is: `purepy` is a
     // PurePy implementation, held to exit 4 on undefined behaviour.
     ["--implementation"] | ["run", "--implementation"] => println("purepy")
