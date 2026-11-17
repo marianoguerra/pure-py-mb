@@ -6,10 +6,11 @@
 /// again at their base types (so `Literal[1] + Literal[2]` finds `int + int`),
 /// duplicates are dropped keeping the first, and the least of what is left
 /// wins (`minimum`).
+#derive(Eq, Debug)
 pub(all) struct Resolved {
   params : Array[Type]
   result : Type
-} derive(Eq, Debug)
+}
 
 ///|
 fn both(

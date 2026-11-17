@@ -10,13 +10,15 @@ pub type Context = @sorted_map.SortedMap[String, Entry]
 
 ///|
 /// Whether a variable is definitely assigned. The spec writes `tt` and `ff`.
+#derive(Eq, Debug, Compare)
 pub(all) enum Status {
   TT
   FF
-} derive(Eq, Debug, Compare)
+}
 
 ///|
 /// What a name can stand for.
+#derive(Eq, Debug)
 pub(all) enum Entry {
   /// A variable, definitely assigned or not.
   Var(Status)
@@ -27,7 +29,7 @@ pub(all) enum Entry {
   ModuleLoaded(String, Context)
   /// A class declaration.
   Class(ClassEntry)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A class, with the context it was DECLARED in.
@@ -36,21 +38,23 @@ pub(all) enum Entry {
 /// resolve the base class through it and not through whatever context is
 /// current, so a class that is imported keeps the meaning it had where it was
 /// written.
+#derive(Eq, Debug)
 pub(all) struct ClassEntry {
   context : Context
   name : String
   own_fields : Array[String]
   base : String?
-} derive(Eq, Debug)
+}
 
 ///|
 /// A module being checked: the context, the program it belongs to, and its own
 /// qualified name.
+#derive(Eq, Debug)
 pub(all) struct ModuleContext[M] {
   gamma : Context
   program : M
   q : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn empty_context() -> Context {
@@ -244,10 +248,11 @@ pub fn[T] ClassEntry::field_map(
 
 ///|
 /// Figure 3.1's result: a sequence either returns or assigns a delta.
+#derive(Eq, Debug)
 pub(all) enum ResultType {
   Returns
   Assigns(VarContext)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn assigns_empty() -> ResultType {

@@ -253,6 +253,7 @@ async fn Interp::loads_as(
 
 ///|
 /// How a run ended, or that it has not ended yet.
+#derive(Debug)
 pub(all) enum RunResult {
   /// The main module loaded: `SystemExit(0)`.
   Finished
@@ -273,7 +274,7 @@ pub(all) enum RunResult {
   /// real answer then. A host whose `call` always answers immediately never
   /// sees this.
   Suspended
-} derive(Debug)
+}
 
 ///|
 /// `⇒ κ` (Figure 4.13): evaluate a program by loading its main module.

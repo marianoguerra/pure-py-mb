@@ -6,12 +6,13 @@
 pub type ClassTable = @sorted_map.SortedMap[String, ClassTableEntry]
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ClassTableEntry {
   type_params : Array[String]
   own_fields : Array[(String, Type)]
   /// The base class, as a class name and its type arguments.
   base : (String, Array[Type])?
-} derive(Eq, Debug)
+}
 
 ///|
 /// `builtins.range`, the one class the specification predefines.

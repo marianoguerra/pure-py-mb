@@ -19,18 +19,21 @@ pub fn module_of(Array[Stmt]) -> Module
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Alias {
   name : String
   asname : String?
   span : @basic.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Arg {
   arg : String
   annotation : Expr?
   span : @basic.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Arguments {
   posonlyargs : Array[Arg]
   args : Array[Arg]
@@ -39,15 +42,17 @@ pub(all) struct Arguments {
   kw_defaults : Array[Expr?]
   kwarg : Arg?
   defaults : Array[Expr]
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BoolOp {
   And
   Or
-} derive(Eq, @debug.Debug)
+}
 pub fn BoolOp::name(Self) -> String
 pub fn BoolOp::symbol(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CmpOp {
   Eq
   NotEq
@@ -59,17 +64,19 @@ pub(all) enum CmpOp {
   IsNot
   In
   NotIn
-} derive(Eq, @debug.Debug)
+}
 pub fn CmpOp::name(Self) -> String
 pub fn CmpOp::symbol(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Comprehension {
   target : Expr
   iter : Expr
   ifs : Array[Expr]
   is_async : Bool
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Constant {
   Int(@bigint.BigInt)
   Float(Double)
@@ -79,17 +86,19 @@ pub(all) enum Constant {
   Bool(Bool)
   None
   Ellipsis
-} derive(Eq, @debug.Debug)
+}
 pub fn Constant::to_literal(Self) -> String
 pub fn Constant::type_name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ExceptHandler {
   type_ : Expr?
   name : String?
   body : Array[Stmt]
   span : @basic.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Expr {
   BoolOp(op~ : BoolOp, values~ : Array[Expr], span~ : @basic.Span)
   NamedExpr(target~ : Expr, value~ : Expr, span~ : @basic.Span)
@@ -117,7 +126,7 @@ pub(all) enum Expr {
   List(elts~ : Array[Expr], ctx~ : ExprContext, span~ : @basic.Span)
   Tuple(elts~ : Array[Expr], ctx~ : ExprContext, span~ : @basic.Span)
   Slice(lower~ : Expr?, upper~ : Expr?, step~ : Expr?, span~ : @basic.Span)
-} derive(Eq, @debug.Debug)
+}
 pub fn Expr::attribute(Self, String, ctx? : ExprContext) -> Self
 pub fn Expr::bigint(@bigint.BigInt) -> Self
 pub fn Expr::binop(Self, Operator, Self) -> Self
@@ -142,35 +151,41 @@ pub fn Expr::str(String) -> Self
 pub fn Expr::subscript(Self, Self, ctx? : ExprContext) -> Self
 pub fn Expr::tuple(Array[Self], ctx? : ExprContext) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ExprContext {
   Load
   Store
   Del
-} derive(Eq, @debug.Debug)
+}
 pub fn ExprContext::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FStringPart {
   Text(String)
   Hole(value~ : Expr, conversion~ : Char?, spec~ : String?)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Keyword {
   arg : String?
   value : Expr
   span : @basic.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MatchCase {
   pattern : Pattern
   guard_ : Expr?
   body : Array[Stmt]
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Module {
   body : Array[Stmt]
   span : @basic.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Operator {
   Add
   Sub
@@ -185,10 +200,11 @@ pub(all) enum Operator {
   BitXor
   BitAnd
   FloorDiv
-} derive(Eq, @debug.Debug)
+}
 pub fn Operator::name(Self) -> String
 pub fn Operator::symbol(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Pattern {
   MatchValue(value~ : Expr, span~ : @basic.Span)
   MatchSingleton(value~ : Constant, span~ : @basic.Span)
@@ -198,7 +214,7 @@ pub(all) enum Pattern {
   MatchStar(name~ : String?, span~ : @basic.Span)
   MatchAs(pattern~ : Pattern?, name~ : String?, span~ : @basic.Span)
   MatchOr(patterns~ : Array[Pattern], span~ : @basic.Span)
-} derive(Eq, @debug.Debug)
+}
 pub fn Pattern::capture(String) -> Self
 pub fn Pattern::constr(String, Array[Self], keywords? : Array[(String, Self)]) -> Self
 pub fn Pattern::kind_name(Self) -> String
@@ -207,12 +223,14 @@ pub fn Pattern::sequence(SeqKind, Array[Self]) -> Self
 pub fn Pattern::span(Self) -> @basic.Span
 pub fn Pattern::wildcard() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SeqKind {
   List
   Tuple
-} derive(Eq, @debug.Debug)
+}
 pub fn SeqKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Stmt {
   FunctionDef(name~ : String, args~ : Arguments, body~ : Array[Stmt], decorators~ : Array[Expr], returns~ : Expr?, is_async~ : Bool, type_params~ : Array[TypeParam], span~ : @basic.Span)
   ClassDef(name~ : String, bases~ : Array[Expr], keywords~ : Array[Keyword], body~ : Array[Stmt], decorators~ : Array[Expr], type_params~ : Array[TypeParam], span~ : @basic.Span)
@@ -238,7 +256,7 @@ pub(all) enum Stmt {
   Pass(span~ : @basic.Span)
   Break(span~ : @basic.Span)
   Continue(span~ : @basic.Span)
-} derive(Eq, @debug.Debug)
+}
 pub fn Stmt::ann_assign(String, Expr, Expr) -> Self
 pub fn Stmt::assign(String, Expr) -> Self
 pub fn Stmt::dataclass(String, Array[(String, Expr)], base? : String) -> Self
@@ -254,28 +272,31 @@ pub fn Stmt::pass() -> Self
 pub fn Stmt::return_(value? : Expr) -> Self
 pub fn Stmt::span(Self) -> @basic.Span
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TypeParam {
   TypeVar(name~ : String, bound~ : Expr?, default_value~ : Expr?, span~ : @basic.Span)
   ParamSpec(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
   TypeVarTuple(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
-} derive(Eq, @debug.Debug)
+}
 pub fn TypeParam::kind_name(Self) -> String
 pub fn TypeParam::name(Self) -> String
 pub fn TypeParam::span(Self) -> @basic.Span
 
+#derive(Eq, @debug.Debug)
 pub(all) enum UnaryOp {
   Invert
   Not
   UAdd
   USub
-} derive(Eq, @debug.Debug)
+}
 pub fn UnaryOp::name(Self) -> String
 pub fn UnaryOp::symbol(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WithItem {
   context_expr : Expr
   optional_vars : Expr?
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 

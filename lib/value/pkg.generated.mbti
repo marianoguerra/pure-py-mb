@@ -87,34 +87,39 @@ pub fn update(Array[(String, Value)], String, Value) -> Array[(String, Value)]
 // Errors
 
 // Types and methods
+#derive(@debug.Debug)
 pub(all) struct DefClosure {
   env : @hashmap.HashMap[String, Value]
   region : Array[@ast.Stmt]
   index : Int32
   in_module : String
-} derive(@debug.Debug)
+}
 
+#derive(@debug.Debug)
 pub(all) struct LamClosure {
   env : @hashmap.HashMap[String, Value]
   params : Array[String]
   defaults : Array[Value]
   body : @ast.Expr
   in_module : String
-} derive(@debug.Debug)
+}
 
+#derive(@debug.Debug)
 pub(all) enum MatchResult {
   Match(@hashmap.HashMap[String, Value])
   NoMatch
   MatchStuck(String)
-} derive(@debug.Debug)
+}
 pub fn MatchResult::then(Self, Self) -> Self
 
+#derive(@debug.Debug)
 pub(all) enum Outcome {
   Val(Value)
   Aborts(Termination)
   Stuck(String)
-} derive(@debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Primitive {
   Print
   Len
@@ -140,7 +145,7 @@ pub(all) enum Primitive {
   Zip
   Opaque(String)
   Foreign(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Primitive::name(Self) -> String
 
 pub(all) struct SliceBounds {
@@ -149,15 +154,17 @@ pub(all) struct SliceBounds {
   step : Value?
 }
 
+#derive(@debug.Debug)
 pub(all) enum StmtResult {
   Assigns(@hashmap.HashMap[String, Value])
   Returns(Value)
   ResultAborts(Termination)
   ResultStuck(String)
-} derive(@debug.Debug)
+}
 pub fn StmtResult::outcome(Self) -> Outcome
 pub fn StmtResult::then(Self, Self) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Termination {
   TypeError
   IndexError
@@ -168,10 +175,11 @@ pub(all) enum Termination {
   AttributeError
   AssertionError(String?)
   SystemExit(@bigint.BigInt)
-} derive(Eq, @debug.Debug)
+}
 pub fn Termination::name(Self) -> String
 pub fn Termination::to_text(Self) -> String
 
+#derive(@debug.Debug)
 pub(all) enum Value {
   None
   Bool(Bool)
@@ -188,7 +196,7 @@ pub(all) enum Value {
   Mod(String, @hashmap.HashMap[String, Value])
   Class(@context.ClassEntry)
   Prim(Primitive)
-} derive(@debug.Debug)
+}
 pub fn Value::kind_name(Self) -> String
 pub fn Value::repr(Self) -> String?
 pub fn Value::str(Self) -> String?

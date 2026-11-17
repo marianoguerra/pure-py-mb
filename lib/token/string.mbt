@@ -222,10 +222,11 @@ pub fn Token::bytes_value(self : Token) -> Bytes raise {
 /// text. The parser needs it to give the sub-parsed expression the position it
 /// really has in the file, so that a diagnostic inside an f-string points into
 /// the f-string and not at character zero of a fragment.
+#derive(Eq, Debug)
 pub(all) enum FStringPiece {
   Text(String)
   Hole(source~ : String, at~ : Int32, conversion~ : Char?, spec~ : String?)
-} derive(Eq, Debug)
+}
 
 ///|
 /// Split an f-string literal into its literal text and its holes.

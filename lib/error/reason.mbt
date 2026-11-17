@@ -9,6 +9,7 @@
 /// A type in a message is carried already RENDERED, as the string `render`
 /// in `lib/types` makes of it: this package sits below the type checker and
 /// knows nothing of types but how they read.
+#derive(Eq, Debug)
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
   InheritedField(x~ : String, c~ : String, d~ : String)
@@ -100,7 +101,7 @@ pub(all) enum Reason {
   /// (v0.24). Excluded from this version is exit 5; by design is an ordinary
   /// ill-formed program, exit 3, with the classification in its message.
   Excluded(feature~ : String, by_design~ : Bool)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The message, exactly as `reasons.py` writes it.

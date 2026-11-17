@@ -30,6 +30,7 @@ struct Program {
 /// generator that drew any expression anywhere would have the checker discard
 /// nearly everything it made; drawing each one AT a type is what keeps the
 /// sample mostly programs that run.
+#derive(Eq)
 priv enum Ty {
   TInt
   TFloat
@@ -37,7 +38,7 @@ priv enum Ty {
   TBool
   TList
   TP
-} derive(Eq)
+}
 
 ///|
 /// The names a generated program may use, each at one type for the whole

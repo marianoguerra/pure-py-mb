@@ -35,11 +35,13 @@ pub let predefined_modules : Array[String]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Declared {
   Mono(@types.Type)
   Poly(Array[String], @types.Type)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Entry {
   Var(@types.Type)
   Unbound
@@ -52,7 +54,7 @@ pub(all) enum Entry {
   ModuleLoaded(String, @sorted_map.SortedMap[String, Entry])
   Class(String)
   Predefined
-} derive(Eq, @debug.Debug)
+}
 
 pub struct Program {
   tree : @program.SourceTree
@@ -64,12 +66,13 @@ pub struct Program {
 }
 pub fn Program::new(@program.SourceTree, host_members? : Map[String, Array[(String, @types.Type)]], profile? : @profile.Profile) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TypeDefinition {
   gamma : @sorted_map.SortedMap[String, Entry]
   q : String
   chis : Array[@ast.Stmt]
   i : Int32
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 pub type Context = @sorted_map.SortedMap[String, Entry]

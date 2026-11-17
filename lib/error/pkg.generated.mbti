@@ -16,18 +16,20 @@ pub fn ill_formed_program(String) -> PurePyError
 pub fn syntax_error(String, @basic.Span) -> PurePyError
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror PurePyError {
   PurePyError(Diagnostic)
-} derive(Eq, @debug.Debug)
+}
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Diagnostic {
   kind : Kind
   span : @basic.Span?
   in_module : String?
   related : Array[(@basic.Span, String)]
   file : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn Diagnostic::as_parse_error(Self) -> Self
 pub fn Diagnostic::at_path(Self, String) -> Self
 pub fn Diagnostic::attribute_to(Self, String) -> Self
@@ -42,14 +44,16 @@ pub fn Diagnostic::stage(Self) -> Stage
 pub fn Diagnostic::to_report(Self, @error-report.SourceId) -> @error-report.Report
 pub fn Diagnostic::with_related(Self, @basic.Span, String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Kind {
   PythonSyntax(msg~ : String)
   Prohibited(msg~ : String)
   Excluded(msg~ : String)
   IllFormed(Reason)
   Program(msg~ : String)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Reason {
   DuplicateField(x~ : String, c~ : String)
   InheritedField(x~ : String, c~ : String, d~ : String)
@@ -119,10 +123,11 @@ pub(all) enum Reason {
   TupleSliceStepZero
   LambdaDefaultArguments
   Excluded(feature~ : String, by_design~ : Bool)
-} derive(Eq, @debug.Debug)
+}
 pub fn Reason::code(Self) -> String
 pub fn Reason::message(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Stage {
   Syntax
   Prohibited
@@ -131,7 +136,7 @@ pub(all) enum Stage {
   IllFormedProgram
   Abort
   Stuck
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 

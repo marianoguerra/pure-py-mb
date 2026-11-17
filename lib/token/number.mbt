@@ -6,11 +6,12 @@
 /// has three kinds and PurePy's sieve rejects the third, so the third is still
 /// recognised here -- "complex literals not allowed in PurePy" needs to know one when it
 /// sees one.
+#derive(Eq, Debug)
 pub(all) enum NumberValue {
   Int(BigInt)
   Float(Double)
   Imaginary(Double)
-} derive(Eq, Debug)
+}
 
 ///|
 /// Interpret a NUMBER token.

@@ -1,6 +1,7 @@
 ///|
 /// Where a rejection came from, which is the same thing as which exit code it
 /// carries. The reference has one script per stage; this port has one type.
+#derive(Eq, Debug)
 pub(all) enum Stage {
   /// CPython would not parse it either.
   Syntax
@@ -17,12 +18,13 @@ pub(all) enum Stage {
   Abort
   /// The run reached an operation the semantics leaves undefined.
   Stuck
-} derive(Eq, Debug)
+}
 
 ///|
 /// What went wrong, in enough detail to reproduce the reference's message
 /// exactly. Every arm's `message` is compared against the reference's, so a
 /// wording change here is a conformance failure and not a matter of taste.
+#derive(Eq, Debug)
 pub(all) enum Kind {
   /// Exit 1. A module the reference loads reports this as `parse error: <msg>`.
   PythonSyntax(msg~ : String)
@@ -37,7 +39,7 @@ pub(all) enum Kind {
   IllFormed(Reason)
   /// Exit 3, as every ill-formed program is since v0.24; once exit 4.
   Program(msg~ : String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A rejection: what, where, in which module, and what else the reader should
@@ -47,6 +49,7 @@ pub(all) enum Kind {
 /// person reading `'g' captured by previous statement, reassigned here` wants
 /// to see the statement that captured it too. `short` never prints it, so the
 /// comparison with the reference is unaffected.
+#derive(Eq, Debug)
 pub(all) struct Diagnostic {
   kind : Kind
   span : @basic.Span?
@@ -56,7 +59,7 @@ pub(all) struct Diagnostic {
   /// prints `<file>:<line>:<col>: <message>` for the module at fault, and
   /// keeps its exit code, so the file cannot be a kind of its own.
   file : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Diagnostic::new(
@@ -139,9 +142,10 @@ pub fn Diagnostic::short(
 /// The one error this module raises. Everything that can reject carries a
 /// `Diagnostic`, so a caller never has to match on several error types to
 /// decide an exit code.
+#derive(Eq, Debug)
 pub(all) suberror PurePyError {
   PurePyError(Diagnostic)
-} derive(Eq, Debug)
+}
 
 ///|
 /// Record which module a rejection came from, if it does not already say.

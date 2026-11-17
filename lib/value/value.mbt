@@ -11,6 +11,7 @@
 ///     abort or to produce Python's answer. This one aborts, with the
 ///     operation named, so that the conformance suite's dynamically excluded
 ///     bucket is CHECKED rather than merely tolerated.
+#derive(Debug)
 pub(all) enum Value {
   None
   Bool(Bool)
@@ -38,7 +39,7 @@ pub(all) enum Value {
   Class(@context.ClassEntry)
   /// `Prim(f)`.
   Prim(Primitive)
-} derive(Debug)
+}
 
 ///|
 /// `in_module` is not part of `LamΓ`: the spec's closures carry an
@@ -48,6 +49,7 @@ pub(all) enum Value {
 /// read as line 4 of `__main__`. The evaluator's import stack cannot supply
 /// it, because during a call it names the module that IMPORTED the callee,
 /// not the one that defined it. Only the closure knows.
+#derive(Debug)
 pub(all) struct LamClosure {
   env : Env
   params : Array[String]
@@ -59,16 +61,17 @@ pub(all) struct LamClosure {
   body : @ast.Expr
   /// The module whose source `body` was read from.
   in_module : String
-} derive(Debug)
+}
 
 ///|
+#derive(Debug)
 pub(all) struct DefClosure {
   env : Env
   region : Array[@ast.Stmt]
   index : Int32
   /// The module whose source `region` was read from.
   in_module : String
-} derive(Debug)
+}
 
 ///|
 /// An environment: `ρ`. Immutable, because a closure captures one by value.
@@ -126,6 +129,7 @@ pub fn extend_value(a : Value, b : Value) -> Value {
 /// binds something -- `int`, `list`, `typing.Callable`,
 /// `dataclasses.dataclass` and the rest of the names usable only in an
 /// annotation or as a decorator. None of them is ever called.
+#derive(Eq, Debug)
 pub(all) enum Primitive {
   Print
   Len
@@ -162,11 +166,12 @@ pub(all) enum Primitive {
   /// printable and free of the host's types; the host dispatches on it when
   /// the guest calls. That is what lets a `Value` cross the boundary at all.
   Foreign(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// How a run ends. Every kind but `SystemExit` is named after the exception
 /// the same program raises under Python.
+#derive(Eq, Debug)
 pub(all) enum Termination {
   TypeError
   IndexError
@@ -177,7 +182,7 @@ pub(all) enum Termination {
   AttributeError
   AssertionError(String?)
   SystemExit(BigInt)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The name Python prints for a termination, and the message after it.
@@ -209,28 +214,31 @@ pub fn Termination::to_text(self : Termination) -> String {
 ///|
 /// The outcome of evaluating an expression: a value, an abort, or an
 /// operation the semantics leaves undefined.
+#derive(Debug)
 pub(all) enum Outcome {
   Val(Value)
   Aborts(Termination)
   Stuck(String)
-} derive(Debug)
+}
 
 ///|
 /// The result of evaluating a statement.
+#derive(Debug)
 pub(all) enum StmtResult {
   Assigns(Env)
   Returns(Value)
   ResultAborts(Termination)
   ResultStuck(String)
-} derive(Debug)
+}
 
 ///|
 /// Whether a pattern matched, and what it bound.
+#derive(Debug)
 pub(all) enum MatchResult {
   Match(Env)
   NoMatch
   MatchStuck(String)
-} derive(Debug)
+}
 
 ///|
 /// `outcome(r)`: a statement's result read as the outcome of calling it.

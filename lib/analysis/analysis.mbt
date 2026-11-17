@@ -24,10 +24,11 @@ pub fn names(xs : Array[String]) -> NameSet {
 ///|
 /// A PurePy statement: a Python statement, or a mutual region of consecutive
 /// function definitions. A Python body is the spec's right-nested sequence.
+#derive(Eq, Debug)
 pub(all) enum Statement {
   Single(@ast.Stmt)
   Region(Array[@ast.Stmt])
-} derive(Eq, Debug)
+}
 
 // ---------------------------------------------------------------------------
 // Imports

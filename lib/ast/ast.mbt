@@ -31,12 +31,14 @@
 /// Deliberately absent: `type_comment`, `type_ignores`, `type_params`,
 /// `TemplateStr` and `Interpolation`. PurePy is Python 3.12 and PEP 695 syntax
 /// is a syntax error here.
+#derive(Eq, Debug)
 pub(all) struct Module {
   body : Array[Stmt]
   span : @basic.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Stmt {
   FunctionDef(
     name~ : String,
@@ -125,9 +127,10 @@ pub(all) enum Stmt {
   Pass(span~ : @basic.Span)
   Break(span~ : @basic.Span)
   Continue(span~ : @basic.Span)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Expr {
   BoolOp(op~ : BoolOp, values~ : Array[Expr], span~ : @basic.Span)
   NamedExpr(target~ : Expr, value~ : Expr, span~ : @basic.Span)
@@ -199,12 +202,13 @@ pub(all) enum Expr {
   List(elts~ : Array[Expr], ctx~ : ExprContext, span~ : @basic.Span)
   Tuple(elts~ : Array[Expr], ctx~ : ExprContext, span~ : @basic.Span)
   Slice(lower~ : Expr?, upper~ : Expr?, step~ : Expr?, span~ : @basic.Span)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A literal's value. `Complex` keeps only the imaginary part: a Python
 /// complex LITERAL is always `0+bj`, and the sieve rejects it before anything
 /// needs the real part.
+#derive(Eq, Debug)
 pub(all) enum Constant {
   Int(BigInt)
   Float(Double)
@@ -214,11 +218,12 @@ pub(all) enum Constant {
   Bool(Bool)
   None
   Ellipsis
-} derive(Eq, Debug)
+}
 
 ///|
 /// A PEP 695 type parameter: `T`, `T: bound`, `*Ts`, `**P`, each with an
 /// optional default (`T = int`, Python 3.13).
+#derive(Eq, Debug)
 pub(all) enum TypeParam {
   TypeVar(
     name~ : String,
@@ -228,22 +233,25 @@ pub(all) enum TypeParam {
   )
   ParamSpec(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
   TypeVarTuple(name~ : String, default_value~ : Expr?, span~ : @basic.Span)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ExprContext {
   Load
   Store
   Del
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum BoolOp {
   And
   Or
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Operator {
   Add
   Sub
@@ -258,17 +266,19 @@ pub(all) enum Operator {
   BitXor
   BitAnd
   FloorDiv
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum UnaryOp {
   Invert
   Not
   UAdd
   USub
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum CmpOp {
   Eq
   NotEq
@@ -280,23 +290,25 @@ pub(all) enum CmpOp {
   IsNot
   In
   NotIn
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Comprehension {
   target : Expr
   iter : Expr
   ifs : Array[Expr]
   is_async : Bool
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ExceptHandler {
   type_ : Expr?
   name : String?
   body : Array[Stmt]
   span : @basic.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// One piece of an f-string: literal text, or an interpolation.
@@ -305,12 +317,14 @@ pub(all) struct ExceptHandler {
 /// form, which has the same shape and the same decision behind it. `spec` is
 /// the `>10` of `f"{x:>10}"`, kept as source: it is a language of its own, and
 /// nothing here pretends to implement it.
+#derive(Eq, Debug)
 pub(all) enum FStringPart {
   Text(String)
   Hole(value~ : Expr, conversion~ : Char?, spec~ : String?)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Arguments {
   posonlyargs : Array[Arg]
   args : Array[Arg]
@@ -319,52 +333,59 @@ pub(all) struct Arguments {
   kw_defaults : Array[Expr?]
   kwarg : Arg?
   defaults : Array[Expr]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Arg {
   arg : String
   annotation : Expr?
   span : @basic.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// A keyword argument. `arg` of `None` is `**kwargs`.
+#derive(Eq, Debug)
 pub(all) struct Keyword {
   arg : String?
   value : Expr
   span : @basic.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Alias {
   name : String
   asname : String?
   span : @basic.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct WithItem {
   context_expr : Expr
   optional_vars : Expr?
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct MatchCase {
   pattern : Pattern
   guard_ : Expr?
   body : Array[Stmt]
-} derive(Eq, Debug)
+}
 
 ///|
 /// Which bracket a sequence pattern was written with. CPython forgets; the
 /// spec distinguishes `[p]` from `(p)`, and a bare `case a, b:` is a tuple.
+#derive(Eq, Debug)
 pub(all) enum SeqKind {
   List
   Tuple
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Pattern {
   /// A literal, a negated literal, a complex literal, or a dotted name.
   MatchValue(value~ : Expr, span~ : @basic.Span)
@@ -392,7 +413,7 @@ pub(all) enum Pattern {
   /// `_` is `MatchAs(None, None)`; `x` is `MatchAs(None, Some("x"))`.
   MatchAs(pattern~ : Pattern?, name~ : String?, span~ : @basic.Span)
   MatchOr(patterns~ : Array[Pattern], span~ : @basic.Span)
-} derive(Eq, Debug)
+}
 
 ///|
 #deprecated(skip_current_package=true)

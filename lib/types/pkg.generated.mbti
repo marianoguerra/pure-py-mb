@@ -142,27 +142,30 @@ pub fn unary_overloads(String) -> Array[(@sorted_map.SortedMap[String, ClassTabl
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct ClassTableEntry {
   type_params : Array[String]
   own_fields : Array[(String, Type)]
   base : (String, Array[Type])?
-} derive(Eq, @debug.Debug)
+}
 
 pub(all) enum FieldMapFailure {
   ArityMismatch(expected~ : Int32, given~ : Int32)
   UnknownKeywordArgs(Array[String])
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FieldScheme {
   type_params : Array[String]
   fields : Array[(String, Type)]
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Compare, Eq, @debug.Debug)
 pub(all) enum Head {
   HLit(Lit)
   HClass(String)
   HLen(Int32)
-} derive(Compare, Eq, @debug.Debug)
+}
 
 pub(all) enum Instance {
   Found(String, Array[Type])
@@ -170,21 +173,24 @@ pub(all) enum Instance {
   NoInstance
 }
 
+#derive(Compare, Eq, @debug.Debug)
 pub(all) enum Lit {
   NoneLit
   Bool(Bool)
   Int(@bigint.BigInt)
   Float(Double)
   Str(String)
-} derive(Compare, Eq, @debug.Debug)
+}
 pub fn Lit::repr(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Member {
   Typed(Type)
   AnnotationOnly
   ClassOf(String)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Compare, Eq, @debug.Debug)
 pub(all) enum Primitive {
   Object
   Never
@@ -194,22 +200,25 @@ pub(all) enum Primitive {
   Float
   Str
   Sized
-} derive(Compare, Eq, @debug.Debug)
+}
 pub fn Primitive::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Resolved {
   params : Array[Type]
   result : Type
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Shape {
   Rest(Type, Array[Head])
   Constr(Type, Array[Shape], Array[Head])
   Tuple(Array[Shape])
   List(Type, Array[Shape])
   Dict(Type, Array[(String, Shape)], Array[String])
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Compare, Eq, @debug.Debug)
 pub(all) enum Type {
   Prim(Primitive)
   List(Type)
@@ -222,8 +231,9 @@ pub(all) enum Type {
   Union(Type, Type)
   Defaulted(Array[Type], Int32, Type)
   Builtin(String)
-} derive(Compare, Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TypeExpr {
   PrimE(Primitive)
   ListE(TypeExpr)
@@ -233,7 +243,7 @@ pub(all) enum TypeExpr {
   LitE(Lit)
   TypeName(Array[String], Array[TypeExpr])
   UnionE(TypeExpr, TypeExpr)
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 pub type ClassTable = @sorted_map.SortedMap[String, ClassTableEntry]

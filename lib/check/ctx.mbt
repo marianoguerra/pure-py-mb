@@ -10,6 +10,7 @@ pub type Context = @sorted_map.SortedMap[String, Entry]
 
 ///|
 /// What a name can stand for.
+#derive(Eq, Debug)
 pub(all) enum Entry {
   /// A variable that is definitely assigned, with its type.
   Var(@types.Type)
@@ -37,24 +38,26 @@ pub(all) enum Entry {
   /// A name usable only in an annotation or as a decorator: `int`, `list`,
   /// `Callable`, `dataclass`.
   Predefined
-} derive(Eq, Debug)
+}
 
 ///|
 /// The `i`th definition of a mutual type region, and the context and module
 /// the region was checked in.
+#derive(Eq, Debug)
 pub(all) struct TypeDefinition {
   gamma : Context
   q : String
   chis : Array[@ast.Stmt]
   i : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 /// What a variable entry was declared at: a type, or a generic signature.
+#derive(Eq, Debug)
 pub(all) enum Declared {
   Mono(@types.Type)
   Poly(Array[String], @types.Type)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn empty_context() -> Context {

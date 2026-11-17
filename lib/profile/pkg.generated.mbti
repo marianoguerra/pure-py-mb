@@ -24,6 +24,7 @@ pub fn pending() -> Profile
 // Errors
 
 // Types and methods
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub(all) enum Feature {
   ChainedBoolean
   ChainedComparison
@@ -34,13 +35,14 @@ pub(all) enum Feature {
   BuiltinMethods
   DefaultArguments
   FStrings
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
 pub fn Feature::compare(Self, Self) -> Int32
 pub fn Feature::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct Profile {
   features : @sorted_set.SortedSet[Feature]
-} derive(Eq, @debug.Debug)
+}
 pub fn Profile::adding(Self, Array[Feature]) -> Self
 pub fn Profile::contains(Self, Self) -> Bool
 pub fn Profile::features(Self) -> Array[Feature]

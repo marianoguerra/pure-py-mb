@@ -1,5 +1,6 @@
 ///|
 /// What a predefined member is to the checker.
+#derive(Eq, Debug)
 pub(all) enum Member {
   /// A value of a type.
   Typed(Type)
@@ -8,7 +9,7 @@ pub(all) enum Member {
   AnnotationOnly
   /// A class, by its qualified name in the class table: `range`.
   ClassOf(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The predefined modules of Figure 2.7 and what each member is: the

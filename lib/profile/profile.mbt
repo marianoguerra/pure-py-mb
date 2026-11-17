@@ -45,6 +45,7 @@
 /// tag order is the order `Profile::features` answers in. Adding one is
 /// additive for a caller who builds a profile and breaking for one who matches
 /// a `Feature` exhaustively, which is the usual trade for an open enum.
+#derive(Eq, Compare, Hash, Debug)
 pub(all) enum Feature {
   /// `a and b and c`: three or more operands in one boolean expression (#82).
   ///
@@ -120,7 +121,7 @@ pub(all) enum Feature {
   /// prints the source of the expression alongside its value. Both are still
   /// refused, and named in the message so it is clear which half was missing.
   FStrings
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 /// The name a `--profile` flag prints and a person reads.
@@ -156,9 +157,10 @@ pub fn Feature::name(self : Feature) -> String {
 /// is a fair question; `Debug` because a failing test should be able to say
 /// which profile it had. `adding` rather than `with` only because `with` is a
 /// keyword.
+#derive(Eq, Debug)
 pub struct Profile {
   features : @sorted_set.SortedSet[Feature]
-} derive(Eq, Debug)
+}
 
 ///|
 /// PurePy exactly as specified: no feature at all, and the default of every

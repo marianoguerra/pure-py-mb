@@ -10,13 +10,15 @@
 
 ///|
 /// A head: a literal, a class, or a length `n` standing for the head `list_n`.
+#derive(Eq, Compare, Debug)
 pub(all) enum Head {
   HLit(Lit)
   HClass(String)
   HLen(Int32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Shape {
   Rest(Type, Array[Head])
   /// A class type -- the class at its type arguments -- with the shapes of
@@ -27,7 +29,7 @@ pub(all) enum Shape {
   /// The value type, the keys matched so far with their shapes (sorted by
   /// key), and the keys excluded.
   Dict(Type, Array[(String, Shape)], Array[String])
-} derive(Eq, Debug)
+}
 
 ///|
 /// A set of heads, as a sorted array with no repeats.

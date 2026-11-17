@@ -85,10 +85,11 @@ pub fn target_names(@ast.Expr) -> Array[String]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Statement {
   Single(@ast.Stmt)
   Region(Array[@ast.Stmt])
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 pub type NameSet = @sorted_set.SortedSet[String]

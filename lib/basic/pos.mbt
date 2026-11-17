@@ -13,11 +13,12 @@
 ///   * `offset` counts UTF-16 code units from the start of the source, 0-based.
 ///     It exists to slice a MoonBit `String` and to hand a span to
 ///     `error-report`, and it is never reported.
+#derive(Eq, Compare, Debug)
 pub(all) struct Pos {
   line : Int32
   col : Int32
   offset : Int32
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 /// The position before the first character.
@@ -31,10 +32,11 @@ pub fn Pos::to_display(self : Pos) -> String {
 
 ///|
 /// A half-open range of a source file.
+#derive(Eq, Debug)
 pub(all) struct Span {
   start : Pos
   end : Pos
-} derive(Eq, Debug)
+}
 
 ///|
 /// The empty span at `p`, for something with no extent -- an unexpected end of

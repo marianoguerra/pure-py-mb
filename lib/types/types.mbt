@@ -6,6 +6,7 @@
 /// `Type` is what it MEANS once every name has been looked up in the module's
 /// context. The checker resolves one into the other (`resolve_type` in
 /// `lib/check`), because only it has the context.
+#derive(Eq, Compare, Debug)
 pub(all) enum Primitive {
   Object
   Never
@@ -15,7 +16,7 @@ pub(all) enum Primitive {
   Float
   Str
   Sized
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 /// The name an annotation spells a primitive with, and the one `render`
@@ -53,13 +54,14 @@ pub let primitives : Array[Primitive] = [
 /// `LiteralType.__eq__` does, since `True == 1` and `1 == 1.0` hold between
 /// values of different types and `Literal[True]` is not `Literal[1]`. Separate
 /// arms give that for free.
+#derive(Eq, Compare, Debug)
 pub(all) enum Lit {
   NoneLit
   Bool(Bool)
   Int(BigInt)
   Float(Double)
   Str(String)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 /// Python's `repr` of the value, which is what `Literal[...]` prints.
@@ -76,6 +78,7 @@ pub fn Lit::repr(self : Lit) -> String {
 
 ///|
 /// What an annotation says, before its class names are resolved.
+#derive(Eq, Debug)
 pub(all) enum TypeExpr {
   PrimE(Primitive)
   ListE(TypeExpr)
@@ -87,12 +90,13 @@ pub(all) enum TypeExpr {
   /// or a type alias, which only the context can tell apart.
   TypeName(Array[String], Array[TypeExpr])
   UnionE(TypeExpr, TypeExpr)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A type. A class is named by its qualified name, which is what identifies
 /// it in the class table: two classes of one name in two modules are two
 /// classes.
+#derive(Eq, Compare, Debug)
 pub(all) enum Type {
   Prim(Primitive)
   List(Type)
@@ -114,7 +118,7 @@ pub(all) enum Type {
   /// typed by a rule rather than by a signature (`lib/check`'s
   /// `builtin_call_type`). Never produced under `core`.
   Builtin(String)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub let t_object : Type = Prim(Object)
@@ -397,10 +401,11 @@ pub fn substitute(
 
 ///|
 /// A class's fields, generic in its type parameters.
+#derive(Eq, Debug)
 pub(all) struct FieldScheme {
   type_params : Array[String]
   fields : Array[(String, Type)]
-} derive(Eq, Debug)
+}
 
 ///|
 /// The fields at the type arguments `taus`.

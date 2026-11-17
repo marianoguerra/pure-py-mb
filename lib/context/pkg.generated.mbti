@@ -50,44 +50,49 @@ pub fn vars_of(Array[(String, Status)]) -> @sorted_map.SortedMap[String, Status]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct ClassEntry {
   context : @sorted_map.SortedMap[String, Entry]
   name : String
   own_fields : Array[String]
   base : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn ClassEntry::ancestors(Self) -> Array[Self]
 pub fn[T] ClassEntry::field_map(Self, Array[T], Array[String], Array[T]) -> Array[(String, T)]?
 pub fn ClassEntry::fields(Self) -> Array[String]
 pub fn ClassEntry::short_name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Entry {
   Var(Status)
   ModuleStub(String)
   ModuleLoaded(String, @sorted_map.SortedMap[String, Entry])
   Class(ClassEntry)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ModuleContext[M] {
   gamma : @sorted_map.SortedMap[String, Entry]
   program : M
   q : String
-} derive(Eq, @debug.Debug)
+}
 pub fn[M] ModuleContext::class_of(Self[M], String) -> ClassEntry?
 pub fn[M] ModuleContext::module_of(Self[M], String) -> Entry?
 pub fn[M] ModuleContext::override_gamma(Self[M], @sorted_map.SortedMap[String, Entry]) -> Self[M]
 pub fn[M] ModuleContext::override_var(Self[M], @sorted_map.SortedMap[String, Status]) -> Self[M]
 pub fn[M] ModuleContext::var_status(Self[M], String) -> Status?
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ResultType {
   Returns
   Assigns(@sorted_map.SortedMap[String, Status])
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Compare, Eq, @debug.Debug)
 pub(all) enum Status {
   TT
   FF
-} derive(Compare, Eq, @debug.Debug)
+}
 pub fn Status::compare(Self, Self) -> Int32
 
 // Type aliases

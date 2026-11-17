@@ -80,12 +80,13 @@ pub fn Interp::predefined(Self, String) -> @hashmap.HashMap[String, @value.Value
 pub async fn Interp::resolve_class(Self, @ast.Expr, @hashmap.HashMap[String, @value.Value]) -> @context.ClassEntry? noraise
 pub async fn Interp::run(Self) -> RunResult noraise
 
+#derive(@debug.Debug)
 pub(all) enum RunResult {
   Finished
   Terminated(@value.Termination, Site?)
   Undefined(String)
   Suspended
-} derive(@debug.Debug)
+}
 
 pub struct Sink {
   buf : StringBuilder
@@ -94,10 +95,11 @@ pub fn Sink::new() -> Self
 pub fn Sink::text(Self) -> String
 pub fn Sink::write(Self, String) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Site {
   in_module : String
   span : @basic.Span
-} derive(Eq, @debug.Debug)
+}
 pub fn Site::to_display(Self) -> String
 
 // Type aliases

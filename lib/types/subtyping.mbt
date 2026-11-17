@@ -229,7 +229,7 @@ fn merge_match(a : ArgMatch, b : ArgMatch) -> ArgMatch {
     (ArgIncomparable, _) | (_, ArgIncomparable) => ArgIncomparable
     (ArgUndefined, _) | (_, ArgUndefined) => ArgUndefined
     (Matched(g), Matched(h)) => {
-      let out = Map::new()
+      let out = Map([])
       for k, v in g {
         out[k] = v
       }
@@ -245,7 +245,7 @@ fn merge_match(a : ArgMatch, b : ArgMatch) -> ArgMatch {
 fn match_args(rho : Type, s : Type) -> ArgMatch {
   match (rho, s) {
     (TypeVar(a), _) => Matched(Map::from_array([(a, s)]))
-    (Union(_, _), _) => Matched(Map::new())
+    (Union(_, _), _) => Matched(Map([]))
     (_, TypeVar(_)) | (_, Union(_, _)) => ArgUndefined
     (List(r), List(t)) | (Dict(r), Dict(t)) => match_args(r, t)
     (Tuple(rs), Tuple(ts)) => match_args_seq(rs, ts)
@@ -256,7 +256,7 @@ fn match_args(rho : Type, s : Type) -> ArgMatch {
       } else {
         ArgIncomparable
       }
-    _ => if rho == s { Matched(Map::new()) } else { ArgIncomparable }
+    _ => if rho == s { Matched(Map([])) } else { ArgIncomparable }
   }
 }
 
@@ -265,7 +265,7 @@ fn match_args_seq(rhos : Array[Type], ss : Array[Type]) -> ArgMatch {
   if rhos.length() != ss.length() {
     return ArgIncomparable
   }
-  let mut acc = Matched(Map::new())
+  let mut acc = Matched(Map([]))
   for i, r in rhos {
     acc = merge_match(acc, match_args(r, ss[i]))
   }

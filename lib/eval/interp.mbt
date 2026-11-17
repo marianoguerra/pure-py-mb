@@ -81,10 +81,11 @@ pub struct Interp {
 /// (`operational-semantics.tex`). This is reporting, then, and not semantics:
 /// a `Site` never changes which `Termination` a run yields, and two runs that
 /// abort at different places with the same kind still agree.
+#derive(Eq, Debug)
 pub(all) struct Site {
   in_module : String
   span : @basic.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// `module:line:col`, the site as a person reads it.

@@ -13,6 +13,7 @@
 ///     literal, its parts left unparsed (issue #55).
 ///   * `tokenize` has no error token: it raises. `Error` exists so that a
 ///     stream can be reported as far as it got.
+#derive(Eq, Debug)
 pub(all) enum TokenKind {
   /// An identifier or a keyword. Which of the two is the parser's business:
   /// `match`, `case`, `type` and `_` are keywords only in some positions.
@@ -37,7 +38,7 @@ pub(all) enum TokenKind {
   EndMarker
   /// A lexical error, with the message CPython would raise.
   Error(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A token: what it is, how it was spelled, and where.
@@ -45,11 +46,12 @@ pub(all) enum TokenKind {
 /// `text` is the source's own characters -- the lexeme, not a value. A number's
 /// value and a string's value are computed on demand (`int_value`,
 /// `str_value`), so that a token can be reported before it is interpreted.
+#derive(Eq, Debug)
 pub(all) struct Token {
   kind : TokenKind
   text : String
   span : @basic.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// The name `tokenize` reports for this token's type, which is what the token
