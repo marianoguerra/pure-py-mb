@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """The conformance harness: our CLI against the PurePy reference.
 
-The suite under `test/conformance/` is the reference's own, copied verbatim
-from its package (`src/purepy/conformance-suite/`). The reference's
-`purepy.conformance` drives its own checker over it; this script drives OUR
-command-line tool the same way, so the two can be compared directly.
+The suite under `test/conformance/` is the specification's own, copied
+verbatim from its `purepy-conformance` package. The reference checker
+(isabelle-purepy's `purepy`, unpacked into `reference-checker/` from its
+release wheel) is driven over it by this script exactly as OUR command-line
+tool is, so the two can be compared directly.
 
 Four oracles, three of them golden-file comparisons and one verdict-driven:
 
@@ -18,7 +19,7 @@ one of the suite's .py files, not only the ones the reference's runner
 asserts on. They are committed, so `conform.py` needs neither Python's `ast`
 nor the `reference/` checkout. Regenerating them does:
 
-  tools/conform.py --reference --regen      needs reference/ (see fetch-reference.sh)
+  tools/conform.py --reference --regen      needs reference-checker/ (see fetch-reference.sh)
 
 `test/conform-policy.json` is a ratchet: each oracle has a floor, and a run
 fails when it drops BELOW the floor (a regression) or rises ABOVE it (an
@@ -32,6 +33,7 @@ import argparse
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -40,7 +42,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SUITE = ROOT / "test" / "conformance"
 GOLDEN = ROOT / "test" / "golden"
 POLICY = ROOT / "test" / "conform-policy.json"
-REFERENCE = ROOT / "reference"
+REFERENCE = ROOT / "reference-checker"
 DEFAULT_IMPL = (
     ROOT / "_build/native/debug/build/marianoguerra/pure-py-cli/pure-py/pure-py.exe"
 )
@@ -53,9 +55,12 @@ MODULE_LEVEL, PROGRAM_LEVEL = "module-level", "program-level"
 MAIN = "main.py"
 HELPERS = "helpers"
 
-# Exit codes, ours and the reference's (implementation-plan.md 2.1). 2, "not
-# yet supported", is gone since v0.22.
-OK, PROHIBITED, ILL_FORMED, ILL_FORMED_PROGRAM, STUCK = 0, 1, 3, 4, 5
+# Exit codes, ours and the reference's (implementation-plan.md 2.1), as
+# `purepy_conformance.Exit` has them since v0.24: 1 not allowed by design,
+# 3 ill-formed (a module or a program), 4 undefined behaviour at run time,
+# 5 excluded from this version. 6 is a stuck run, which the reference
+# interpreter also answers with and the suite never expects.
+OK, NOT_ALLOWED, ILL_FORMED, UNDEFINED, EXCLUDED_FOR_NOW, STUCK = 0, 1, 3, 4, 5, 6
 
 
 
@@ -87,6 +92,18 @@ def strip_prefix(line: str, name: str) -> str:
     was addressed."""
     line = line.rstrip("\n")
     return line[len(name):] if line.startswith(name) else line
+
+
+CITATION = re.compile(r" \[(parser-rejects|typing-rejects|excluded-for-now)(, [^\]]*)?\]$")
+
+
+def strip_citation(line: str) -> str:
+    """The reference ends a rejection with `[<outcome>]`, a typing rejection
+    with the rule and figure it cites too: `[typing-rejects, rule binop,
+    Figure 21]`. The outcome is the exit code again and the rule is
+    specification bookkeeping we do not track, so the golden leaves both
+    out."""
+    return CITATION.sub("", line)
 
 
 # --------------------------------------------------------------------------
@@ -144,14 +161,14 @@ class Impl:
         self.reference = reference
         self.path = path
         if reference:
-            if not (REFERENCE / "src" / "purepy" / "__main__.py").exists():
-                sys.exit("reference/src/purepy is missing; run tools/fetch-reference.sh")
+            if not (REFERENCE / "purepy" / "__main__.py").exists():
+                sys.exit("reference-checker/purepy is missing; run tools/fetch-reference.sh")
         elif path is None or not path.exists():
             sys.exit(f"{path}: not built; run `moon build --target native`")
 
     def reference_run(self, args: list[str], cwd: pathlib.Path) -> Result:
-        """The reference's package, `python -m purepy ...`, from the checkout."""
-        env = {**os.environ, "PYTHONPATH": str(REFERENCE / "src")}
+        """The reference's package, `python -m purepy ...`, from the wheels."""
+        env = {**os.environ, "PYTHONPATH": str(REFERENCE)}
         p = subprocess.run(
             ["python3", *args], cwd=cwd, env=env, capture_output=True, text=True,
             check=False,
@@ -175,11 +192,19 @@ class Impl:
         return run([str(self.path), "check-program", MAIN], cwd=cwd)
 
     def run_module(self, rel: str) -> Result:
-        return run([str(self.path), "run", pathlib.PurePosixPath(rel).name],
-                   cwd=SUITE / pathlib.PurePosixPath(rel).parent)
+        p = pathlib.PurePosixPath(rel)
+        return run([str(self.path), "run", p.name, *run_args(SUITE / p)],
+                   cwd=SUITE / p.parent)
 
     def run_program(self, d: str) -> Result:
-        return run([str(self.path), "run", MAIN], cwd=SUITE / d)
+        return run([str(self.path), "run", MAIN, *run_args(SUITE / d / MAIN)],
+                   cwd=SUITE / d)
+
+
+def run_args(main: pathlib.Path) -> list[str]:
+    """`<test>.args`: the run's `sys.argv[1:]`, one per line (v0.24)."""
+    args = main.with_suffix(".args")
+    return args.read_text().splitlines() if args.exists() else []
 
 
 # --------------------------------------------------------------------------
@@ -224,17 +249,17 @@ def golden_rows(impl: Impl, name: str) -> list[tuple[str, int, str]]:
     if name == "parse":
         for rel in all_files():
             r = impl.parse(rel)
-            rows.append((rel, r.code, strip_prefix(one_line(r.output), rel)))
+            rows.append((rel, r.code, strip_citation(strip_prefix(one_line(r.output), rel))))
     elif name == "check":
         for rel in all_files():
             r = impl.parse(rel)
             if r.code == OK:
                 r = impl.check(rel)
-            rows.append((rel, r.code, strip_prefix(one_line(r.output), rel)))
+            rows.append((rel, r.code, strip_citation(strip_prefix(one_line(r.output), rel))))
     elif name == "program":
         for d in program_dirs():
             r = impl.check_program(d)
-            rows.append((d, r.code, one_line(r.output)))
+            rows.append((d, r.code, strip_citation(one_line(r.output))))
     return rows
 
 
@@ -334,24 +359,29 @@ def expect_abort(r: Result, rel: str, exception: pathlib.Path) -> str | None:
     return None
 
 
-def expect_stuck(r: Result) -> str | None:
-    if r.code != STUCK:
-        return f"exit {r.code}, want 5 (stuck): {r.output.strip()[:120]}"
-    if "stuck" not in r.err:
+def expect_undefined(r: Result) -> str | None:
+    """A PurePy implementation exits 4 on exactly the `undefined` tests,
+    whatever Python does (`purepy_conformance.Runner.check_run`); the suite
+    asks nothing of the output, and we ask that the message name the
+    operation."""
+    if r.code != UNDEFINED:
+        return f"exit {r.code}, want 4 (undefined): {r.output.strip()[:120]}"
+    if "undefined" not in r.err:
         return f"stderr {r.err.strip()!r}, want to name the undefined operation"
     return None
 
 
 def run_expectation(parts: tuple[str, ...]) -> str | None:
-    """What a test's path says its run must do: `output`, `stuck` or `abort`,
-    or None when nothing is run. The path is <Python outcome>/<PurePy
-    outcome>/..., or syntactic-only/..., a script that builds a tree Python
-    source cannot express, which only Python runs."""
-    if parts[0] == "syntactic-only" or len(parts) < 2:
+    """What a test's path says its run must do: `output`, `undefined` or
+    `abort`, or None when nothing is run. The path is <Python outcome>/<PurePy
+    outcome>/...; only `agrees` and `undefined` tests are well-formed, and so
+    run. (`syntactic-only/`, scripts building trees Python source cannot
+    express, went in v0.24.)"""
+    if len(parts) < 2:
         return None
     python, purepy = parts[0], parts[1]
     if purepy == "undefined":
-        return "stuck"
+        return "undefined"
     if purepy == "agrees":
         return "output" if python == "python-succeeds" else "abort"
     return None  # refused by the parser or the type checker
@@ -368,8 +398,8 @@ def oracle_run(impl: Impl) -> Report:
         r = impl.run_module(rel)
         if want == "output":
             rep.add(rel, expect_run_output(r, sibling(rel, ".expected")))
-        elif want == "stuck":
-            rep.add(rel, expect_stuck(r))
+        elif want == "undefined":
+            rep.add(rel, expect_undefined(r))
         else:
             rep.add(rel, expect_abort(r, rel, sibling(rel, ".exception.expected")))
 
@@ -381,8 +411,8 @@ def oracle_run(impl: Impl) -> Report:
         main = f"{d}/{MAIN}"
         if want == "output":
             rep.add(d, expect_run_output(r, SUITE / d / "main.expected"))
-        elif want == "stuck":
-            rep.add(d, expect_stuck(r))
+        elif want == "undefined":
+            rep.add(d, expect_undefined(r))
         else:
             rep.add(d, expect_abort(r, main, SUITE / d / "main.exception.expected"))
     return rep

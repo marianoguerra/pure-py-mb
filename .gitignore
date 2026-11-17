@@ -7,6 +7,8 @@ target
 # The read-only reference checkout (`just reference-fetch`). Never a build or
 # CI input: the conformance suite and the goldens under `test/` are committed.
 /reference/
+# The reference checker, unpacked from its release wheels (same script).
+/reference-checker/
 __pycache__/
 
 # Built by `just playground-build`; the deployment builds its own.

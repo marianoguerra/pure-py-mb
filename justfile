@@ -251,7 +251,8 @@ explain file: build
 # Regenerating committed artifacts (needs reference/; never in CI)
 # ---------------------------------------------------------------------------
 
-# Restore the read-only reference checkout at the pinned commit.
+# Restore the read-only reference material at the pinned versions: the
+# specification checkout and the reference checker's wheels.
 [group('regen')]
 reference-fetch:
     tools/fetch-reference.sh
@@ -336,4 +337,4 @@ package-size:
 # Prove the reference implementation passes its own suite.
 [group('regen')]
 reference-check:
-    cd {{justfile_directory()}}/reference && uv run --locked ./test/run-all.sh --no-mypy
+    PYTHONPATH={{justfile_directory()}}/reference-checker python3 -c "import sys, purepy_conformance as p; p.main(sys.argv[1:])" --type-checker "python3 -m purepy --check" --check-messages "python3 -m purepy"

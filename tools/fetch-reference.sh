@@ -1,10 +1,17 @@
 #!/bin/sh
-# Restore the read-only reference checkout at the pinned commit.
+# Restore the read-only reference material at the pinned versions.
 #
-# `reference/` is gitignored. It is used for exactly three things -- as the
-# source this port is written from, as the implementation the goldens under
-# `test/golden/` are generated from, and as the origin of `test/conformance/`
-# -- and is never a build or CI input.
+# Two directories, both gitignored and never a build or CI input:
+#
+#   reference/          the specification (pure-py-spec) at its pinned commit:
+#                       the source this port is written from, and the origin
+#                       of `test/conformance/`.
+#   reference-checker/  the reference type checker and interpreter (the
+#                       `purepy` wheel of isabelle-purepy, generated from the
+#                       mechanisation) and the `purepy-conformance` wheel it
+#                       imports, unpacked: what the goldens under
+#                       `test/golden/` are generated from. Since v0.23.1 the
+#                       checker is no longer in the specification's repository.
 #
 #   tools/fetch-reference.sh            clone or update, then verify
 #   tools/fetch-reference.sh --sync     also re-copy the suite into test/conformance/
@@ -36,12 +43,36 @@ if [ "$have" != "$commit" ]; then
 fi
 echo "reference at $commit ($(field ref))"
 
+# The checker: two wheels, checked against their pinned digests, unpacked
+# side by side so that `PYTHONPATH=reference-checker` finds both packages.
+checker="$root/reference-checker"
+stamp="$checker/.pinned"
+want="$(field checker_wheel_sha256) $(field conformance_wheel_sha256)"
+if [ "$(cat "$stamp" 2>/dev/null)" != "$want" ]; then
+  rm -rf "$checker"
+  mkdir -p "$checker/wheels"
+  for w in checker_wheel conformance_wheel; do
+    url=$(field "$w")
+    file="$checker/wheels/${url##*/}"
+    curl -sSfL -o "$file" "$url"
+    have=$(sha256sum "$file" | cut -d' ' -f1)
+    if [ "$have" != "$(field "${w}_sha256")" ]; then
+      echo "$file: sha256 $have, expected $(field "${w}_sha256")" >&2
+      exit 1
+    fi
+    (cd "$checker" && python3 -m zipfile -e "$file" .)
+  done
+  echo "$want" > "$stamp"
+fi
+echo "reference-checker at $(field checker_ref) ($(field checker_commit))"
+
 if [ "${1-}" = "--sync" ]; then
   rm -rf "$root/test/conformance"
   mkdir -p "$root/test/conformance"
-  # The suite is a part of the reference's package from v0.22.2, and was
-  # its test/ directory before.
-  suite="$ref/src/purepy/conformance-suite"
+  # The suite is the `purepy-conformance` package's from v0.23.1, the
+  # reference checker's package's from v0.22.2, and test/ before that.
+  suite="$ref/src/purepy_conformance/conformance-suite"
+  [ -d "$suite" ] || suite="$ref/src/purepy/conformance-suite"
   [ -d "$suite" ] || suite="$ref/test"
   (cd "$suite" && tar --exclude=__pycache__ -cf - .) | (cd "$root/test/conformance" && tar -xf -)
   # A directory the reference's runs left holding nothing but bytecode is

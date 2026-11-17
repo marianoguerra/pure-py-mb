@@ -1,8 +1,15 @@
 {
   "repository": "https://github.com/pure-py/pure-py-spec",
-  "commit": "6be0ecdc1ee227b5eafd2d4069bcc336e9d86eab",
-  "ref": "v0.23.0",
-  "date": "2026-10-22",
-  "spec_version": "0.23.0",
-  "note": "The reference checker (src/) and the conformance suite (test/). The suite is copied into test/conformance/ and committed, so the differential harness is hermetic; the checker is read-only material this port is written from and the source of the goldens under test/golden/."
+  "commit": "9e7c078787aa8de9acb303b86f3fcee70cd360c9",
+  "ref": "v0.27.10",
+  "date": "2026-11-17",
+  "spec_version": "0.27.10",
+  "checker_repository": "https://github.com/pure-py/isabelle-purepy",
+  "checker_commit": "7254cf8769b287f94571b114875059d0abf6f791",
+  "checker_ref": "v0.27.9",
+  "checker_wheel": "https://github.com/pure-py/isabelle-purepy/releases/download/v0.27.9/purepy-0.27.9-py3-none-any.whl",
+  "checker_wheel_sha256": "910b028070c1d109fbc0587eb6df607b34f308be34775178db0f190e22f22ba4",
+  "conformance_wheel": "https://github.com/pure-py/pure-py-spec/releases/download/v0.27.9/purepy_conformance-0.27.9-py3-none-any.whl",
+  "conformance_wheel_sha256": "4b75847429de697f242a9ae4691988a63c785373da72067f401bb0fe2a0d8a9d",
+  "note": "Two oracles for parse and check, from two repositories. The specification (pure-py-spec) holds the conformance suite and its runner, the `purepy-conformance` package; the suite is copied into test/conformance/ and committed, so the differential harness is hermetic. Since v0.23.1 the reference type checker and interpreter live in isabelle-purepy, generated from the Isabelle/HOL mechanisation; the generated code is not committed there, so the checker is taken from its release wheel, together with the `purepy-conformance` wheel it imports (which carries the figure-numbers.json the source tree lacks). The checker v0.27.9 is paired with spec v0.27.10, whose suite is byte-identical to v0.27.9's. The goldens under test/golden/ are generated from the wheel."
 }

@@ -7,6 +7,8 @@ python-raises/agrees/eval_order_args.py	0	: ok
 python-raises/agrees/eval_order_binop.py	0	: ok
 python-raises/agrees/eval_order_callee.py	0	: ok
 python-raises/agrees/eval_order_dict_key.py	0	: ok
+python-raises/agrees/float_mod_by_zero.py	0	: ok
+python-raises/agrees/floor_div_by_zero.py	0	: ok
 python-raises/agrees/from_import_both_fail/main.py	0	: ok
 python-raises/agrees/from_import_both_fail/pkg/__init__.py	0	: ok
 python-raises/agrees/from_import_both_fail/pkg/sub.py	0	: ok
@@ -33,11 +35,22 @@ python-raises/agrees/import_prefix_fails/main.py	0	: ok
 python-raises/agrees/import_target_fails/helper.py	0	: ok
 python-raises/agrees/import_target_fails/main.py	0	: ok
 python-raises/agrees/key_error.py	0	: ok
+python-raises/agrees/mod_by_zero.py	0	: ok
 python-raises/agrees/overflow_int_to_float.py	0	: ok
+python-raises/agrees/power_zero_negative.py	0	: ok
+python-raises/agrees/print_then_assert.py	0	: ok
 python-raises/agrees/round_infinite.py	0	: ok
 python-raises/agrees/round_nan.py	0	: ok
 python-raises/agrees/subscript_negative_out_of_range.py	0	: ok
 python-raises/agrees/subscript_out_of_range.py	0	: ok
+python-raises/agrees/true_div_overflow.py	0	: ok
+python-raises/excluded-for-now/lambda_default_arg_zero_division.py	5	: default arguments not allowed in PurePy (excluded from this version)
+python-raises/excluded-for-now/pat_head_int_two_positional.py	0	: ok
+python-raises/excluded-for-now/with_stmt_missing_file.py	5	:1:0: with statements not allowed in PurePy (excluded from this version)
+python-raises/parser-rejects/augmented_assign_key_error.py	1	:2:0: augmented assignment (+=, etc.) not allowed in PurePy (excluded by design)
+python-raises/parser-rejects/delete_name_error.py	1	:2:0: del not allowed in PurePy (excluded by design)
+python-raises/parser-rejects/for_loop_index_error.py	1	:2:0: for loops not allowed in PurePy (excluded by design)
+python-raises/parser-rejects/while_loop_zero_division.py	1	:2:0: while loops not allowed in PurePy (excluded by design)
 python-raises/typing-rejects/alias_args_on_plain_alias.py	0	: ok
 python-raises/typing-rejects/alias_as_base.py	0	: ok
 python-raises/typing-rejects/annotation_args_on_plain_class.py	0	: ok
@@ -56,8 +69,10 @@ python-raises/typing-rejects/base_class_later.py	0	: ok
 python-raises/typing-rejects/base_type_arg_unbound.py	0	: ok
 python-raises/typing-rejects/base_type_param.py	0	: ok
 python-raises/typing-rejects/binop_non_number.py	0	: ok
+python-raises/typing-rejects/binop_union_none.py	0	: ok
 python-raises/typing-rejects/call_keyword_arg.py	0	: ok
 python-raises/typing-rejects/call_non_callable_typed.py	0	: ok
+python-raises/typing-rejects/call_result_not_callable.py	0	: ok
 python-raises/typing-rejects/call_too_few_args.py	0	: ok
 python-raises/typing-rejects/call_too_many_args.py	0	: ok
 python-raises/typing-rejects/callable_not_imported.py	0	: ok
@@ -109,7 +124,6 @@ python-raises/typing-rejects/pat_constr_excess_subpatterns.py	0	: ok
 python-raises/typing-rejects/pat_constr_keyword_positional.py	0	: ok
 python-raises/typing-rejects/pat_constr_unknown.py	0	: ok
 python-raises/typing-rejects/pat_head_closure.py	0	: ok
-python-raises/typing-rejects/pat_head_int_two_positional.py	0	: ok
 python-raises/typing-rejects/pat_head_module.py	0	: ok
 python-raises/typing-rejects/pat_head_sized.py	0	: ok
 python-raises/typing-rejects/pat_head_variable.py	0	: ok
@@ -139,6 +153,7 @@ python-raises/typing-rejects/subscript_non_list.py	0	: ok
 python-raises/typing-rejects/subscript_str_bad_index.py	0	: ok
 python-raises/typing-rejects/subscript_tuple_str_index.py	0	: ok
 python-raises/typing-rejects/top_level_assert_false.py	0	: ok
+python-raises/typing-rejects/top_level_assert_false_then_print.py	0	: ok
 python-raises/typing-rejects/tuple_index_neg_range.py	0	: ok
 python-raises/typing-rejects/tuple_index_range.py	0	: ok
 python-raises/typing-rejects/type_alias_as_pattern.py	0	: ok
@@ -153,25 +168,32 @@ python-raises/typing-rejects/unknown_submodule/main.py	0	: ok
 python-raises/typing-rejects/unknown_submodule/pkg/__init__.py	0	: ok
 python-raises/typing-rejects/use_before_declaration_top.py	0	: ok
 python-raises/typing-rejects/use_before_if_declaration.py	0	: ok
-python-rejects/parser-rejects/break_outside_loop.py	1	:1:0: break not allowed in PurePy
-python-rejects/parser-rejects/call_dup_keyword.py	1	:5:6: duplicate keyword argument x not allowed in PurePy
-python-rejects/parser-rejects/constructor_dup_keyword.py	1	:9:6: duplicate keyword argument x not allowed in PurePy
-python-rejects/parser-rejects/continue_outside_loop.py	1	:1:0: continue not allowed in PurePy
-python-rejects/parser-rejects/duplicate_param.py	1	: duplicate parameter x not allowed in PurePy
-python-rejects/parser-rejects/duplicate_type_param.py	1	:1:0: duplicate type parameter T not allowed in PurePy
-python-rejects/parser-rejects/lambda_applied_duplicate_param.py	1	: duplicate parameter x not allowed in PurePy
-python-rejects/parser-rejects/lambda_duplicate_param.py	1	: duplicate parameter x not allowed in PurePy
-python-rejects/parser-rejects/nonlinear_pattern.py	1	:10:9: duplicate variable x in pattern not allowed in PurePy
-python-rejects/parser-rejects/pat_as_nonlinear.py	1	:3:9: duplicate variable x in pattern not allowed in PurePy
-python-rejects/parser-rejects/pat_constr_dup_keyword.py	1	:10:13: duplicate keyword x in constructor pattern not allowed in PurePy
-python-rejects/parser-rejects/pat_dict_dup_key.py	1	:3:9: duplicate key 'a' in dictionary pattern not allowed in PurePy
-python-rejects/parser-rejects/pat_dict_nonlinear.py	1	:3:9: duplicate variable x in pattern not allowed in PurePy
-python-rejects/parser-rejects/return_in_top_level_if.py	1	:2:4: return outside a function not allowed in PurePy
-python-rejects/parser-rejects/top_level_return.py	1	:1:0: return outside a function not allowed in PurePy
+python-raises/undefined/eq_function_object_then_index_error.py	0	: ok
+python-raises/undefined/eq_nan_container_then_zero_division.py	0	: ok
+python-raises/undefined/power_overflow.py	0	: ok
+python-rejects/excluded-for-now/callable_ellipsis_before_unreachable_case.py	5	:3:3: annotation that is not a type expression not allowed in PurePy (excluded from this version)
+python-rejects/parser-rejects/break_outside_loop.py	1	:1:0: break not allowed in PurePy (excluded by design)
+python-rejects/parser-rejects/call_dup_keyword.py	1	:5:6: duplicate keyword argument x
+python-rejects/parser-rejects/class_dup_type_param.py	1	:4:0: duplicate type parameter T
+python-rejects/parser-rejects/constructor_dup_keyword.py	1	:9:6: duplicate keyword argument x
+python-rejects/parser-rejects/continue_outside_loop.py	1	:1:0: continue not allowed in PurePy (excluded by design)
+python-rejects/parser-rejects/duplicate_param.py	1	: duplicate parameter x
+python-rejects/parser-rejects/duplicate_type_param.py	1	:1:0: duplicate type parameter T
+python-rejects/parser-rejects/lambda_applied_duplicate_param.py	1	: duplicate parameter x
+python-rejects/parser-rejects/lambda_duplicate_param.py	1	: duplicate parameter x
+python-rejects/parser-rejects/nonlinear_pattern.py	1	:10:9: duplicate variable x in pattern
+python-rejects/parser-rejects/pat_as_nonlinear.py	1	:3:9: duplicate variable x in pattern
+python-rejects/parser-rejects/pat_constr_dup_keyword.py	1	:10:13: duplicate keyword x in constructor pattern
+python-rejects/parser-rejects/pat_dict_dup_key.py	1	:3:9: duplicate key 'a' in dictionary pattern
+python-rejects/parser-rejects/pat_dict_nonlinear.py	1	:3:9: duplicate variable x in pattern
+python-rejects/parser-rejects/pat_dup_variable.py	1	:3:13: duplicate variable a in pattern
+python-rejects/parser-rejects/return_in_top_level_if.py	1	:2:4: return outside a function
+python-rejects/parser-rejects/top_level_return.py	1	:1:0: return outside a function
 python-rejects/typing-rejects/match_catchall_unreachable.py	0	: ok
 python-rejects/typing-rejects/match_wildcard_unreachable.py	0	: ok
 python-succeeds/agrees/alias_later_class_args.py	0	: ok
 python-succeeds/agrees/annotated_assign.py	0	: ok
+python-succeeds/agrees/argv.py	0	: ok
 python-succeeds/agrees/assert_false.py	0	: ok
 python-succeeds/agrees/assert_false_function_branch.py	0	: ok
 python-succeeds/agrees/assert_false_module_branch.py	0	: ok
@@ -179,7 +201,12 @@ python-succeeds/agrees/assert_false_msg.py	0	: ok
 python-succeeds/agrees/attr_access/helper.py	0	: ok
 python-succeeds/agrees/attr_access/main.py	0	: ok
 python-succeeds/agrees/attr_field_type.py	0	: ok
+python-succeeds/agrees/binop_int_at_float.py	0	: ok
 python-succeeds/agrees/binop_union_below_float.py	0	: ok
+python-succeeds/agrees/binop_union_left.py	0	: ok
+python-succeeds/agrees/binop_union_right.py	0	: ok
+python-succeeds/agrees/bool_chain_and.py	0	: ok
+python-succeeds/agrees/bool_chain_or.py	0	: ok
 python-succeeds/agrees/bool_op.py	0	: ok
 python-succeeds/agrees/builtin_shadow.py	0	: ok
 python-succeeds/agrees/call_stmt_callable_param.py	0	: ok
@@ -254,12 +281,17 @@ python-succeeds/agrees/empty_module.py	0	: ok
 python-succeeds/agrees/empty_tuple_type.py	0	: ok
 python-succeeds/agrees/eq_dict_nan_decided_early.py	0	: ok
 python-succeeds/agrees/eq_int_float.py	0	: ok
+python-succeeds/agrees/eq_int_float_inexact.py	0	: ok
+python-succeeds/agrees/eq_mutually_recursive_generic_classes.py	0	: ok
 python-succeeds/agrees/eq_nan_decided_early.py	0	: ok
 python-succeeds/agrees/eq_nan_direct.py	0	: ok
 python-succeeds/agrees/eq_object_operands.py	0	: ok
+python-succeeds/agrees/eq_recursive_class.py	0	: ok
+python-succeeds/agrees/eq_recursive_generic_class.py	0	: ok
 python-succeeds/agrees/eq_subclass.py	0	: ok
 python-succeeds/agrees/eq_union.py	0	: ok
 python-succeeds/agrees/eq_union_literal.py	0	: ok
+python-succeeds/agrees/eq_zero_neg_zero.py	0	: ok
 python-succeeds/agrees/exempt_containing_of_importer/main.py	0	: ok
 python-succeeds/agrees/exempt_containing_of_importer/pkg/__init__.py	0	: ok
 python-succeeds/agrees/exempt_containing_of_importer/pkg/x.py	0	: ok
@@ -269,8 +301,12 @@ python-succeeds/agrees/extend_imported_class/base.py	0	: ok
 python-succeeds/agrees/extend_imported_class/main.py	0	: ok
 python-succeeds/agrees/extend_qualified_class/base.py	0	: ok
 python-succeeds/agrees/extend_qualified_class/main.py	0	: ok
+python-succeeds/agrees/float_add_rounding.py	0	: ok
 python-succeeds/agrees/float_floor_div_mod.py	0	: ok
+python-succeeds/agrees/float_literal_overflow.py	0	: ok
+python-succeeds/agrees/float_overflow_inf.py	0	: ok
 python-succeeds/agrees/floor_div_mod.py	0	: ok
+python-succeeds/agrees/floor_div_mod_negative.py	0	: ok
 python-succeeds/agrees/from_import.py	0	: ok
 python-succeeds/agrees/from_import_alias/main.py	0	: ok
 python-succeeds/agrees/from_import_alias/shapes.py	0	: ok
@@ -308,6 +344,7 @@ python-succeeds/agrees/generic_constr_keyword.py	0	: ok
 python-succeeds/agrees/generic_constr_subclass.py	0	: ok
 python-succeeds/agrees/generic_def.py	0	: ok
 python-succeeds/agrees/generic_def_in_branch.py	0	: ok
+python-succeeds/agrees/generic_function_argument.py	0	: ok
 python-succeeds/agrees/generic_higher_order.py	0	: ok
 python-succeeds/agrees/generic_import/lib.py	0	: ok
 python-succeeds/agrees/generic_import/main.py	0	: ok
@@ -318,12 +355,12 @@ python-succeeds/agrees/generic_match_subclass_then_base.py	0	: ok
 python-succeeds/agrees/generic_none_statement.py	0	: ok
 python-succeeds/agrees/generic_pattern.py	0	: ok
 python-succeeds/agrees/generic_pattern_subclass_scrutinee.py	0	: ok
-python-succeeds/agrees/generic_pattern_union_base.py	0	: ok
-python-succeeds/agrees/generic_pattern_union_base_disjunct.py	0	: ok
 python-succeeds/agrees/generic_recursion.py	0	: ok
 python-succeeds/agrees/generic_recursion_union.py	0	: ok
 python-succeeds/agrees/generic_tree_match.py	0	: ok
 python-succeeds/agrees/generic_type_arg_base_type.py	0	: ok
+python-succeeds/agrees/graalpy-bug/float_floor_div_mod_signs.py	0	: ok
+python-succeeds/agrees/identifier_outside_latin1.py	0	: ok
 python-succeeds/agrees/if_exp.py	0	: ok
 python-succeeds/agrees/implicit_none.py	0	: ok
 python-succeeds/agrees/implicit_return.py	0	: ok
@@ -363,7 +400,6 @@ python-succeeds/agrees/match_dict_partial.py	0	: ok
 python-succeeds/agrees/match_dict_same_key.py	0	: ok
 python-succeeds/agrees/match_float_literal.py	0	: ok
 python-succeeds/agrees/match_float_literal_residual.py	0	: ok
-python-succeeds/agrees/match_int_lit_at_float.py	0	: ok
 python-succeeds/agrees/match_list.py	0	: ok
 python-succeeds/agrees/match_list_rows.py	0	: ok
 python-succeeds/agrees/match_literal_exhaustive.py	0	: ok
@@ -413,6 +449,9 @@ python-succeeds/agrees/never_annotation.py	0	: ok
 python-succeeds/agrees/never_below.py	0	: ok
 python-succeeds/agrees/none_result_union_callee.py	0	: ok
 python-succeeds/agrees/object_above.py	0	: ok
+python-succeeds/agrees/order_int_float.py	0	: ok
+python-succeeds/agrees/order_int_float_exact.py	0	: ok
+python-succeeds/agrees/order_nan.py	0	: ok
 python-succeeds/agrees/parent_after_child/main.py	0	: ok
 python-succeeds/agrees/parent_after_child/pkg/__init__.py	0	: ok
 python-succeeds/agrees/parent_after_child/pkg/sub.py	0	: ok
@@ -433,10 +472,15 @@ python-succeeds/agrees/pat_tuple_component_narrowing.py	0	: ok
 python-succeeds/agrees/pat_tuple_optional_field.py	0	: ok
 python-succeeds/agrees/pattern_shadows_outer.py	0	: ok
 python-succeeds/agrees/power.py	0	: ok
+python-succeeds/agrees/power_float_int_exponent.py	0	: ok
 python-succeeds/agrees/power_int_exponent.py	0	: ok
 python-succeeds/agrees/precedence.py	0	: ok
 python-succeeds/agrees/predefined_imports/main.py	0	: ok
 python-succeeds/agrees/predefined_name.py	0	: ok
+python-succeeds/agrees/print_in_if.py	0	: ok
+python-succeeds/agrees/print_load_order/a.py	0	: ok
+python-succeeds/agrees/print_load_order/b.py	0	: ok
+python-succeeds/agrees/print_load_order/main.py	0	: ok
 python-succeeds/agrees/qualified_alias_annotation/helper.py	0	: ok
 python-succeeds/agrees/qualified_alias_annotation/main.py	0	: ok
 python-succeeds/agrees/qualified_class_annotation/main.py	0	: ok
@@ -487,6 +531,7 @@ python-succeeds/agrees/sized_kinds.py	0	: ok
 python-succeeds/agrees/str_ops.py	0	: ok
 python-succeeds/agrees/str_subscript.py	0	: ok
 python-succeeds/agrees/string_literal.py	0	: ok
+python-succeeds/agrees/string_literal_outside_latin1.py	0	: ok
 python-succeeds/agrees/subclass_for_base.py	0	: ok
 python-succeeds/agrees/subscript_call.py	0	: ok
 python-succeeds/agrees/subscript_negative.py	0	: ok
@@ -495,6 +540,8 @@ python-succeeds/agrees/subscript_tuple_int.py	0	: ok
 python-succeeds/agrees/subscript_tuple_neg_literal.py	0	: ok
 python-succeeds/agrees/subscript_tuple_ok.py	0	: ok
 python-succeeds/agrees/true_div.py	0	: ok
+python-succeeds/agrees/true_div_exact_quotient.py	0	: ok
+python-succeeds/agrees/true_div_integral.py	0	: ok
 python-succeeds/agrees/tuple_check_empty_list.py	0	: ok
 python-succeeds/agrees/tuple_concat.py	0	: ok
 python-succeeds/agrees/tuple_no_parentheses.py	0	: ok
@@ -513,6 +560,8 @@ python-succeeds/agrees/type_alias_of_alias.py	0	: ok
 python-succeeds/agrees/type_alias_optional.py	0	: ok
 python-succeeds/agrees/type_alias_two_params.py	0	: ok
 python-succeeds/agrees/type_alias_union_match.py	0	: ok
+python-succeeds/agrees/type_param_nested_fresh.py	0	: ok
+python-succeeds/agrees/type_param_sibling.py	0	: ok
 python-succeeds/agrees/type_variable_below_object.py	0	: ok
 python-succeeds/agrees/unary_ops.py	0	: ok
 python-succeeds/agrees/union_attr.py	0	: ok
@@ -523,101 +572,117 @@ python-succeeds/agrees/union_commutative.py	0	: ok
 python-succeeds/agrees/union_disjunct.py	0	: ok
 python-succeeds/agrees/union_iter.py	0	: ok
 python-succeeds/agrees/union_subscript.py	0	: ok
-python-succeeds/agrees/unused_module_not_parsed/main.py	0	: ok
-python-succeeds/agrees/unused_module_not_parsed/unused.py	1	:1:0: while loops not allowed in PurePy
-python-succeeds/parser-rejects/annotated_attribute_assign.py	1	:10:0: assignment target other than a simple name not allowed in PurePy
-python-succeeds/parser-rejects/annotation_callable_ellipsis.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/annotation_dict_int_key.py	1	:1:3: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/annotation_list_two_args.py	1	:1:4: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/annotation_literal_two_values.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/annotation_tuple_variadic.py	1	:1:4: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/async_def.py	1	:1:0: async not allowed in PurePy
-python-succeeds/parser-rejects/attribute_assign.py	1	:6:0: attribute assignment not allowed in PurePy
-python-succeeds/parser-rejects/augmented_assign.py	1	:2:0: augmented assignment (+=, etc.) not allowed in PurePy
-python-succeeds/parser-rejects/bitwise_and.py	1	:1:9: binary operator '&' not allowed in PurePy
-python-succeeds/parser-rejects/bitwise_not.py	1	:1:9: unary operator '~' not allowed in PurePy
-python-succeeds/parser-rejects/bitwise_xor.py	1	:1:9: binary operator '^' not allowed in PurePy
-python-succeeds/parser-rejects/bytes_literal.py	1	:1:4: bytes literal not allowed in PurePy
-python-succeeds/parser-rejects/call_dict_unpacking.py	1	:8:8: dictionary unpacking in argument list not allowed in PurePy
-python-succeeds/parser-rejects/case_guard.py	1	: case guards not allowed in PurePy
-python-succeeds/parser-rejects/chained_bool.py	1	:4:6: chained boolean operator not allowed in PurePy
-python-succeeds/parser-rejects/chained_compare.py	1	:2:6: chained comparison not allowed in PurePy
-python-succeeds/parser-rejects/class_bad_decorator.py	1	:5:0: class decorator other than @dataclass not allowed in PurePy
-python-succeeds/parser-rejects/class_base_subscript.py	1	:13:14: base class other than a name, optionally applied to type arguments not allowed in PurePy
-python-succeeds/parser-rejects/class_def.py	1	:1:0: undecorated class not allowed in PurePy
-python-succeeds/parser-rejects/class_keyword_args.py	1	:4:0: class keyword arguments not allowed in PurePy
-python-succeeds/parser-rejects/class_two_decorators.py	1	:6:0: multiple class decorators not allowed in PurePy
-python-succeeds/parser-rejects/complex_literal.py	1	:1:8: complex literal not allowed in PurePy
-python-succeeds/parser-rejects/dataclass_call_decorator.py	1	:5:0: class decorator other than @dataclass not allowed in PurePy
-python-succeeds/parser-rejects/dataclass_field_default.py	1	:5:4: field default values not allowed in PurePy
-python-succeeds/parser-rejects/dataclass_method.py	1	:4:4: dataclass member other than a field declaration not allowed in PurePy
-python-succeeds/parser-rejects/dataclass_two_bases.py	1	:12:0: multiple inheritance not allowed in PurePy
-python-succeeds/parser-rejects/decorator.py	1	:9:0: decorators not allowed in PurePy
-python-succeeds/parser-rejects/default_args.py	1	: default arguments not allowed in PurePy
-python-succeeds/parser-rejects/delete.py	1	:2:0: del not allowed in PurePy
-python-succeeds/parser-rejects/dict_unpacking.py	1	:2:4: dictionary unpacking not allowed in PurePy
-python-succeeds/parser-rejects/ellipsis_literal.py	1	:1:4: ellipsis literal not allowed in PurePy
-python-succeeds/parser-rejects/field_target_not_name.py	1	:6:4: field target other than a simple name not allowed in PurePy
-python-succeeds/parser-rejects/for_loop.py	1	:2:0: for loops not allowed in PurePy
-python-succeeds/parser-rejects/from_import_as/m.py	0	: ok
-python-succeeds/parser-rejects/from_import_as/main.py	1	:1:0: from-import-as not allowed in PurePy
-python-succeeds/parser-rejects/fstring.py	1	:2:6: f-strings not allowed in PurePy
-python-succeeds/parser-rejects/generator_expr.py	1	:1:7: generator expressions not allowed in PurePy
-python-succeeds/parser-rejects/global_stmt.py	1	:4:4: global not allowed in PurePy
-python-succeeds/parser-rejects/identity.py	1	:2:6: identity operator (is/is not) not allowed in PurePy
-python-succeeds/parser-rejects/import_as/m.py	0	: ok
-python-succeeds/parser-rejects/import_as/main.py	1	:1:0: import-as not allowed in PurePy
-python-succeeds/parser-rejects/import_in_def.py	1	:2:4: import outside the module top level not allowed in PurePy
-python-succeeds/parser-rejects/import_multi/a.py	0	: ok
-python-succeeds/parser-rejects/import_multi/b.py	0	: ok
-python-succeeds/parser-rejects/import_multi/main.py	1	:1:0: multi-target import (import a, b) not allowed in PurePy
-python-succeeds/parser-rejects/import_relative/main.py	0	: ok
-python-succeeds/parser-rejects/import_relative/pkg/__init__.py	0	: ok
-python-succeeds/parser-rejects/import_relative/pkg/sub.py	1	:1:0: relative imports not allowed in PurePy
+python-succeeds/excluded-for-now/annotation_callable_ellipsis.py	5	:3:3: annotation that is not a type expression not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/annotation_literal_two_values.py	5	:3:3: annotation that is not a type expression not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/annotation_tuple_variadic.py	5	:1:4: annotation that is not a type expression not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/async_def.py	5	:1:0: async not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/bitwise_and.py	5	:1:9: binary operator '&' not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/bitwise_not.py	5	:1:9: unary operator '~' not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/bitwise_xor.py	5	:1:9: binary operator '^' not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/builtin_sum.py	0	: ok
+python-succeeds/excluded-for-now/bytes_literal.py	5	:1:4: bytes literal not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/call_dict_unpacking.py	5	:8:8: dictionary unpacking in argument list not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/case_guard.py	5	: case guards not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/chained_compare.py	5	:2:6: chained comparison not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/class_bad_decorator.py	5	:5:0: class decorator other than @dataclass not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/class_base_subscript.py	5	:13:14: base class other than a name, optionally applied to type arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/class_def.py	5	:1:0: undecorated class not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/class_keyword_args.py	5	:4:0: class keyword arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/class_two_decorators.py	5	:6:0: multiple class decorators not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/complex_literal.py	5	:1:8: complex literal not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/dataclass_call_decorator.py	5	:5:0: class decorator other than @dataclass not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/dataclass_field_default.py	5	:5:4: field default values not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/dataclass_method.py	5	:4:4: dataclass member other than a field declaration not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/dataclass_two_bases.py	5	:12:0: multiple inheritance not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/decorator.py	5	:9:0: decorators not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/default_args.py	5	: default arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/dict_unpacking.py	5	:2:4: dictionary unpacking not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/ellipsis_literal.py	5	:1:4: ellipsis literal not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/exit_no_args.py	0	: ok
+python-succeeds/excluded-for-now/from_import_as/m.py	0	: ok
+python-succeeds/excluded-for-now/from_import_as/main.py	5	:1:0: from-import-as not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/fstring.py	5	:2:6: f-strings not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/identity_none.py	5	:2:6: identity operator (is/is not) not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/import_as/m.py	0	: ok
+python-succeeds/excluded-for-now/import_as/main.py	5	:1:0: import-as not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/import_multi/a.py	0	: ok
+python-succeeds/excluded-for-now/import_multi/b.py	0	: ok
+python-succeeds/excluded-for-now/import_multi/main.py	5	:1:0: multi-target import (import a, b) not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/import_relative/main.py	0	: ok
+python-succeeds/excluded-for-now/import_relative/pkg/__init__.py	0	: ok
+python-succeeds/excluded-for-now/import_relative/pkg/sub.py	5	:1:0: relative imports not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/keyword_only_args.py	5	: keyword-only arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/lambda_default_arg.py	5	: default arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/literal_bytes_annotation.py	5	:3:3: annotation that is not a type expression not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/match_attr_value.py	5	:13:9: attribute value patterns not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/match_complex_value.py	5	:3:9: complex and bytes literal patterns not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/match_enum.py	5	:3:0: enum classes not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/match_or.py	5	:3:9: or-patterns not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/match_star.py	5	:3:13: star patterns not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/multiple_assign.py	5	:1:0: multiple assignment targets not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/nested_class.py	5	:5:4: class definition outside the module top level not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/param_spec.py	5	:1:9: ParamSpec type parameter **P not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/pat_dict_rest.py	5	:3:9: rest capture in dictionary patterns not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/pat_head_int.py	0	: ok
+python-succeeds/excluded-for-now/positional_only_args.py	5	: positional-only arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/predefined_member_unknown.py	0	: ok
+python-succeeds/excluded-for-now/print_arity.py	5	:1:0: print with several arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/print_as_value.py	5	:1:10: print within expression not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/print_in_function.py	0	: ok
+python-succeeds/excluded-for-now/print_keyword_arg.py	5	:1:0: print with keyword arguments not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/raise_stmt.py	5	:2:4: raise not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/round_arity.py	0	: ok
+python-succeeds/excluded-for-now/set_comp.py	5	:2:14: set comprehensions not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/set_literal.py	5	:1:14: set literals not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/shift_left.py	5	:1:9: binary operator '<<' not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/shift_right.py	5	:1:9: binary operator '>>' not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/slicing.py	5	:2:9: slicing not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/star_args.py	5	: *args not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/star_kwargs.py	5	: **kwargs not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/starred_list.py	5	:1:6: starred expressions not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/stdlib_module.py	0	: ok
+python-succeeds/excluded-for-now/str_method.py	0	: ok
+python-succeeds/excluded-for-now/try_except.py	5	:1:0: try/except not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/try_except_star.py	5	:1:0: try/except not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/type_alias_local.py	5	:2:4: type statement outside the module top level not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/type_param_bound.py	5	:1:10: bound on type parameter T not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/type_param_constraints.py	5	:1:10: constraints on type parameter T not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/type_var_tuple.py	5	:1:9: TypeVarTuple type parameter *Ts not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/unpacking_assign.py	5	:3:0: unpacking assignment not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/unpacking_comp.py	5	: unpacking in comprehensions not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/unsupported_annotation.py	5	:1:3: annotation that is not a type expression not allowed in PurePy (excluded from this version)
+python-succeeds/excluded-for-now/with_stmt.py	5	:1:0: with statements not allowed in PurePy (excluded from this version)
+python-succeeds/parser-rejects/annotated_attribute_assign.py	1	:10:0: assignment target other than a simple name not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/annotation_dict_int_key.py	1	:1:3: annotation that is not a type expression not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/annotation_list_two_args.py	1	:1:4: annotation that is not a type expression not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/attribute_assign.py	1	:6:0: attribute assignment not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/augmented_assign.py	1	:2:0: augmented assignment (+=, etc.) not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/delete.py	1	:2:0: del not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/field_target_not_name.py	1	:6:4: field target other than a simple name not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/for_loop.py	1	:2:0: for loops not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/generator_expr.py	1	:1:7: generator expressions not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/global_stmt.py	1	:4:4: global not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/identity.py	1	:1:6: identity operator (is/is not) not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/import_in_def.py	1	:2:4: import outside the module top level not allowed in PurePy (excluded by design)
 python-succeeds/parser-rejects/import_star/m.py	0	: ok
-python-succeeds/parser-rejects/import_star/main.py	1	:1:0: from M import * not allowed in PurePy
-python-succeeds/parser-rejects/item_assign.py	1	:2:0: item assignment not allowed in PurePy
-python-succeeds/parser-rejects/keyword_only_args.py	1	: keyword-only arguments not allowed in PurePy
-python-succeeds/parser-rejects/lambda_default_arg.py	1	: default arguments not allowed in PurePy
-python-succeeds/parser-rejects/literal_bytes_annotation.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/literal_float_annotation.py	1	:3:3: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/match_attr_value.py	1	:13:9: attribute value patterns not allowed in PurePy
-python-succeeds/parser-rejects/match_complex_value.py	1	:3:9: complex and bytes literal patterns not allowed in PurePy
-python-succeeds/parser-rejects/match_enum.py	1	:3:0: enum classes not allowed in PurePy
-python-succeeds/parser-rejects/match_or.py	1	:3:9: or-patterns not allowed in PurePy
-python-succeeds/parser-rejects/match_star.py	1	:3:13: star patterns not allowed in PurePy
-python-succeeds/parser-rejects/missing_param_annotation.py	1	:1:0: unannotated parameter not allowed in PurePy
-python-succeeds/parser-rejects/missing_return_annotation.py	1	:1:0: unannotated return type not allowed in PurePy
-python-succeeds/parser-rejects/multiple_assign.py	1	:1:0: multiple assignment targets not allowed in PurePy
-python-succeeds/parser-rejects/nested_class.py	1	:5:4: class definition outside the module top level not allowed in PurePy
-python-succeeds/parser-rejects/nonlocal_stmt.py	1	:4:8: nonlocal not allowed in PurePy
-python-succeeds/parser-rejects/param_spec.py	1	:1:9: ParamSpec type parameter **P not allowed in PurePy
-python-succeeds/parser-rejects/pat_dict_int_key.py	1	:3:10: dictionary pattern key other than a string literal not allowed in PurePy
-python-succeeds/parser-rejects/pat_dict_rest.py	1	:3:9: rest capture in dictionary patterns not allowed in PurePy
-python-succeeds/parser-rejects/positional_only_args.py	1	: positional-only arguments not allowed in PurePy
-python-succeeds/parser-rejects/raise_stmt.py	1	:2:4: raise not allowed in PurePy
-python-succeeds/parser-rejects/set_comp.py	1	:2:14: set comprehensions not allowed in PurePy
-python-succeeds/parser-rejects/set_literal.py	1	:1:14: set literals not allowed in PurePy
-python-succeeds/parser-rejects/shift_left.py	1	:1:9: binary operator '<<' not allowed in PurePy
-python-succeeds/parser-rejects/shift_right.py	1	:1:9: binary operator '>>' not allowed in PurePy
-python-succeeds/parser-rejects/slicing.py	1	:2:9: slicing not allowed in PurePy
-python-succeeds/parser-rejects/star_args.py	1	: *args not allowed in PurePy
-python-succeeds/parser-rejects/star_kwargs.py	1	: **kwargs not allowed in PurePy
-python-succeeds/parser-rejects/starred_list.py	1	:1:6: starred expressions not allowed in PurePy
-python-succeeds/parser-rejects/stmt_before_import.py	1	:2:0: import after another statement not allowed in PurePy
-python-succeeds/parser-rejects/try_except.py	1	:1:0: try/except not allowed in PurePy
-python-succeeds/parser-rejects/try_except_star.py	1	:1:0: try/except not allowed in PurePy
-python-succeeds/parser-rejects/type_alias_local.py	1	:2:4: type statement outside the module top level not allowed in PurePy
-python-succeeds/parser-rejects/type_param_bound.py	1	:1:10: bound on type parameter T not allowed in PurePy
-python-succeeds/parser-rejects/type_param_constraints.py	1	:1:10: constraints on type parameter T not allowed in PurePy
-python-succeeds/parser-rejects/type_var_tuple.py	1	:1:9: TypeVarTuple type parameter *Ts not allowed in PurePy
-python-succeeds/parser-rejects/unpacking_assign.py	1	:3:0: unpacking assignment not allowed in PurePy
-python-succeeds/parser-rejects/unpacking_comp.py	1	: unpacking in comprehensions not allowed in PurePy
-python-succeeds/parser-rejects/unsupported_annotation.py	1	:1:3: annotation that is not a type expression not allowed in PurePy
-python-succeeds/parser-rejects/walrus.py	1	:3:11: walrus operator (:=) not allowed in PurePy
-python-succeeds/parser-rejects/while_loop.py	1	:2:0: while loops not allowed in PurePy
-python-succeeds/parser-rejects/with_stmt.py	1	:1:0: with statements not allowed in PurePy
-python-succeeds/parser-rejects/yield_expr.py	1	:2:4: yield not allowed in PurePy
+python-succeeds/parser-rejects/import_star/main.py	1	:1:0: from M import * not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/item_assign.py	1	:2:0: item assignment not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/literal_float_annotation.py	1	:3:3: annotation that is not a type expression not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/missing_param_annotation.py	1	:1:0: unannotated parameter not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/missing_return_annotation.py	1	:1:0: unannotated return type not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/nonlocal_stmt.py	1	:4:8: nonlocal not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/pat_dict_int_key.py	1	:3:10: dictionary pattern key other than a string literal not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/soft_keyword_case.py	1	:1:0: soft keyword 'case' as identifier not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/soft_keyword_match.py	1	:1:0: soft keyword 'match' as identifier not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/soft_keyword_type.py	1	:1:0: soft keyword 'type' as identifier not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/stmt_before_import.py	1	:2:0: import after another statement not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/underscore_generator.py	1	:1:13: soft keyword '_' as identifier not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/underscore_variable.py	1	:1:0: soft keyword '_' as identifier not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/walrus.py	1	:3:11: walrus operator (:=) not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/while_in_unused_module/main.py	0	: ok
+python-succeeds/parser-rejects/while_in_unused_module/unused.py	1	:1:0: while loops not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/while_loop.py	1	:2:0: while loops not allowed in PurePy (excluded by design)
+python-succeeds/parser-rejects/yield_expr.py	1	:2:4: yield not allowed in PurePy (excluded by design)
 python-succeeds/typing-rejects/alias_later_class_arity.py	0	: ok
 python-succeeds/typing-rejects/and_non_bool.py	0	: ok
 python-succeeds/typing-rejects/and_right_non_bool.py	0	: ok
@@ -643,6 +708,9 @@ python-succeeds/typing-rejects/binop_union_operand.py	0	: ok
 python-succeeds/typing-rejects/bitwise_or.py	0	: ok
 python-succeeds/typing-rejects/bool_not_int.py	0	: ok
 python-succeeds/typing-rejects/branch_declared_use.py	0	: ok
+python-succeeds/typing-rejects/builtin_getattr.py	0	: ok
+python-succeeds/typing-rejects/builtin_id.py	0	: ok
+python-succeeds/typing-rejects/builtin_iter.py	0	: ok
 python-succeeds/typing-rejects/builtin_use_before_declaration.py	0	: ok
 python-succeeds/typing-rejects/call_arg_type.py	0	: ok
 python-succeeds/typing-rejects/call_keyword_only.py	0	: ok
@@ -676,6 +744,7 @@ python-succeeds/typing-rejects/contained_module_import/pkg/sub.py	0	: ok
 python-succeeds/typing-rejects/dataclass_dup_class.py	0	: ok
 python-succeeds/typing-rejects/dataclass_dup_field.py	0	: ok
 python-succeeds/typing-rejects/dataclass_inherited_field_clash.py	0	: ok
+python-succeeds/typing-rejects/declare_twice.py	0	: ok
 python-succeeds/typing-rejects/declared_in_branch_use.py	0	: ok
 python-succeeds/typing-rejects/def_then_var_same_name.py	0	: ok
 python-succeeds/typing-rejects/dict_check_value.py	0	: ok
@@ -708,13 +777,14 @@ python-succeeds/typing-rejects/empty_list_synth.py	0	: ok
 python-succeeds/typing-rejects/eq_bool_int.py	0	: ok
 python-succeeds/typing-rejects/eq_class_callable_field.py	0	: ok
 python-succeeds/typing-rejects/eq_function.py	0	: ok
+python-succeeds/typing-rejects/eq_generic_class_callable_argument.py	0	: ok
+python-succeeds/typing-rejects/eq_generic_field_callable_argument.py	0	: ok
 python-succeeds/typing-rejects/eq_list_tuple.py	0	: ok
 python-succeeds/typing-rejects/eq_short_circuit.py	0	: ok
 python-succeeds/typing-rejects/eq_type_variable.py	0	: ok
 python-succeeds/typing-rejects/eq_unrelated_classes.py	0	: ok
 python-succeeds/typing-rejects/eq_unrelated_types.py	0	: ok
 python-succeeds/typing-rejects/exit_bool.py	0	: ok
-python-succeeds/typing-rejects/exit_no_args.py	0	: ok
 python-succeeds/typing-rejects/exit_none.py	0	: ok
 python-succeeds/typing-rejects/exit_str.py	0	: ok
 python-succeeds/typing-rejects/float_not_int.py	0	: ok
@@ -736,6 +806,7 @@ python-succeeds/typing-rejects/generic_annotation_not_subtype.py	0	: ok
 python-succeeds/typing-rejects/generic_args_invariant.py	0	: ok
 python-succeeds/typing-rejects/generic_as_value.py	0	: ok
 python-succeeds/typing-rejects/generic_attribute_of_subclass.py	0	: ok
+python-succeeds/typing-rejects/generic_call_argument_unknown_field.py	0	: ok
 python-succeeds/typing-rejects/generic_chain_upcast_mismatch.py	0	: ok
 python-succeeds/typing-rejects/generic_constr_no_type_argument.py	0	: ok
 python-succeeds/typing-rejects/generic_constr_type_mismatch.py	0	: ok
@@ -745,6 +816,7 @@ python-succeeds/typing-rejects/generic_join_field_of_subclass.py	0	: ok
 python-succeeds/typing-rejects/generic_name_synthesised.py	0	: ok
 python-succeeds/typing-rejects/generic_no_type_argument.py	0	: ok
 python-succeeds/typing-rejects/generic_none_result.py	0	: ok
+python-succeeds/typing-rejects/generic_param_superclass_arg.py	0	: ok
 python-succeeds/typing-rejects/generic_result_mismatch.py	0	: ok
 python-succeeds/typing-rejects/generic_var_scheme_mismatch.py	0	: ok
 python-succeeds/typing-rejects/grandparent_field_clash.py	0	: ok
@@ -782,6 +854,7 @@ python-succeeds/typing-rejects/list_comp_elem_type.py	0	: ok
 python-succeeds/typing-rejects/list_comp_synth_capture.py	0	: ok
 python-succeeds/typing-rejects/list_comp_synth_no_body_type.py	0	: ok
 python-succeeds/typing-rejects/list_invariant.py	0	: ok
+python-succeeds/typing-rejects/list_no_synthesised_element.py	0	: ok
 python-succeeds/typing-rejects/list_synth_elem_check_fails.py	0	: ok
 python-succeeds/typing-rejects/literal_mismatch.py	0	: ok
 python-succeeds/typing-rejects/match_as_literal_bind.py	0	: ok
@@ -867,7 +940,7 @@ python-succeeds/typing-rejects/pat_constr_taken_by_super.py	0	: ok
 python-succeeds/typing-rejects/pat_constr_undetermined.py	0	: ok
 python-succeeds/typing-rejects/pat_dict_on_object.py	0	: ok
 python-succeeds/typing-rejects/pat_dict_unreachable.py	0	: ok
-python-succeeds/typing-rejects/pat_head_int.py	0	: ok
+python-succeeds/typing-rejects/pat_int_literal_on_float.py	0	: ok
 python-succeeds/typing-rejects/pat_list_on_range_union.py	0	: ok
 python-succeeds/typing-rejects/pat_list_on_sized_union.py	0	: ok
 python-succeeds/typing-rejects/pat_list_on_type_var.py	0	: ok
@@ -881,21 +954,22 @@ python-succeeds/typing-rejects/pat_tuple_on_type_var.py	0	: ok
 python-succeeds/typing-rejects/pat_tuple_on_union_field.py	0	: ok
 python-succeeds/typing-rejects/pat_tuple_wrong_length.py	0	: ok
 python-succeeds/typing-rejects/pat_var_declared.py	0	: ok
+python-succeeds/typing-rejects/pattern_as_rebound_nested.py	0	: ok
 python-succeeds/typing-rejects/pattern_in_if_clash.py	0	: ok
 python-succeeds/typing-rejects/pattern_subclass_unreachable.py	0	: ok
 python-succeeds/typing-rejects/pattern_then_declared.py	0	: ok
 python-succeeds/typing-rejects/pattern_union_base_absorbed.py	0	: ok
 python-succeeds/typing-rejects/pattern_union_base_two_params.py	0	: ok
 python-succeeds/typing-rejects/pattern_union_base_undetermined.py	0	: ok
-python-succeeds/typing-rejects/pattern_union_base_unreachable.py	0	: ok
+python-succeeds/typing-rejects/pattern_union_base_unique.py	0	: ok
+python-succeeds/typing-rejects/pattern_union_base_unique_disjunct.py	0	: ok
 python-succeeds/typing-rejects/pattern_var_is_def_name.py	0	: ok
+python-succeeds/typing-rejects/pattern_var_rebound_nested.py	0	: ok
 python-succeeds/typing-rejects/pattern_variable_some_cases.py	0	: ok
 python-succeeds/typing-rejects/power_bool_exponent.py	0	: ok
+python-succeeds/typing-rejects/power_float_exponent.py	0	: ok
 python-succeeds/typing-rejects/power_int_exponent_not_int.py	0	: ok
 python-succeeds/typing-rejects/predefined_attr_as_value.py	0	: ok
-python-succeeds/typing-rejects/predefined_member_unknown.py	0	: ok
-python-succeeds/typing-rejects/print_arity.py	0	: ok
-python-succeeds/typing-rejects/print_keyword_arg.py	0	: ok
 python-succeeds/typing-rejects/pu_captured_by_def.py	0	: ok
 python-succeeds/typing-rejects/qualified_alias_as_value/main.py	0	: ok
 python-succeeds/typing-rejects/qualified_alias_as_value/mod.py	0	: ok
@@ -913,7 +987,6 @@ python-succeeds/typing-rejects/reexport_from_import/mid.py	0	: ok
 python-succeeds/typing-rejects/reexport_import_alias/helper.py	0	: ok
 python-succeeds/typing-rejects/reexport_import_alias/main.py	0	: ok
 python-succeeds/typing-rejects/return_type_mismatch.py	0	: ok
-python-succeeds/typing-rejects/round_arity.py	0	: ok
 python-succeeds/typing-rejects/round_bool.py	0	: ok
 python-succeeds/typing-rejects/same_name_distinct_classes/a.py	0	: ok
 python-succeeds/typing-rejects/same_name_distinct_classes/b.py	0	: ok
@@ -957,6 +1030,7 @@ python-succeeds/typing-rejects/type_alias_self.py	0	: ok
 python-succeeds/typing-rejects/type_alias_too_many_args.py	0	: ok
 python-succeeds/typing-rejects/type_alias_two_params_swapped.py	0	: ok
 python-succeeds/typing-rejects/type_param_as_value.py	0	: ok
+python-succeeds/typing-rejects/type_param_redeclared.py	0	: ok
 python-succeeds/typing-rejects/type_variable_not_below.py	0	: ok
 python-succeeds/typing-rejects/union_attr_missing_field.py	0	: ok
 python-succeeds/typing-rejects/union_call_arg_type.py	0	: ok
@@ -970,7 +1044,6 @@ python-succeeds/typing-rejects/union_subscript_not_subscriptable.py	0	: ok
 python-succeeds/typing-rejects/unop_bool_operand.py	0	: ok
 python-succeeds/typing-rejects/unreachable.py	0	: ok
 python-succeeds/typing-rejects/unreachable_after_if_else.py	0	: ok
-python-succeeds/typing-rejects/unsupported_builtin.py	0	: ok
 python-succeeds/undefined/eq_bool_number.py	0	: ok
 python-succeeds/undefined/eq_dict_nan_left_order.py	0	: ok
 python-succeeds/undefined/eq_function_object.py	0	: ok
@@ -978,6 +1051,3 @@ python-succeeds/undefined/eq_nan_container.py	0	: ok
 python-succeeds/undefined/eq_primitive_object.py	0	: ok
 python-succeeds/undefined/membership_nan.py	0	: ok
 python-succeeds/undefined/pat_literal_bool_number.py	0	: ok
-syntactic-only/empty_from_import.py	1	:3:0: import after another statement not allowed in PurePy
-syntactic-only/helpers/__init__.py	0	: ok
-syntactic-only/helpers/harness.py	1	:3:0: import after another statement not allowed in PurePy
