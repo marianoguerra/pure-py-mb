@@ -61,7 +61,8 @@ test "features answers in tag order" {
 /// The hint the CLI prints. Keyed on the feature string the sieve passes to
 /// `not_yet`, so a rename there must be a rename here.
 test "accepted_by names the profile that opens the gate" {
-  assert_eq(@profile.accepted_by("chained boolean operator"), Some("pending"))
+  assert_eq(@profile.accepted_by("chained boolean operator"), None)
+  assert_eq(@profile.accepted_by("chained comparison"), Some("pending"))
   assert_eq(@profile.accepted_by("f-strings"), Some("pending"))
   assert_eq(@profile.accepted_by("unpacking assignment"), Some("pending"))
   // The sieve's whole message, which is what a diagnostic carries since the

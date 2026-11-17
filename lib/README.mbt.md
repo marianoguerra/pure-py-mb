@@ -133,11 +133,11 @@ is PurePy, and each named profile is the one below it plus features.
 ```mbt check
 ///|
 test "a profile widens what the sieve accepts" {
-  let m = @purepy.parse("print(True and True and True)\n")
-  // PurePy has no chained boolean operator yet, and says which issue it is.
+  let m = @purepy.parse("print(1 < 2 < 3)\n")
+  // PurePy has no chained comparison yet, and says so.
   inspect(
     @purepy.check(m).unwrap().message(),
-    content="chained boolean operator not allowed in PurePy (excluded from this version)",
+    content="chained comparison not allowed in PurePy (excluded from this version)",
   )
   // A caller who asked for the profile that has it gets it.
   inspect(@purepy.check(m, profile=@profile.pending()) is None, content="true")

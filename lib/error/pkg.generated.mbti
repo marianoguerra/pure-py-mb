@@ -102,6 +102,8 @@ pub(all) enum Reason {
   UnreachableCase(pattern~ : String)
   PatternClassUndetermined(c~ : String, tau~ : String)
   SequenceKindMismatch(kind~ : String, tau~ : String, other~ : String)
+  IntLiteralFloatValues(tau~ : String)
+  DictPatternDictValues(tau~ : String)
   NotIterable(tau~ : String)
   UnknownField(c~ : String, x~ : String)
   NoneResult

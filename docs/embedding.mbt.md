@@ -776,17 +776,17 @@ crossing this boundary: `Host.call` receives `Value`s.
 ```mbt check
 ///|
 test "a guest written in a superset" {
-  let source = "print(True and True and True)\n"
+  let source = "print(1 < 2 < 3)\n"
   let m = @purepy.parse(source)
 
-  // PurePy refuses a chained boolean operator, and says which issue it is.
+  // PurePy refuses a chained comparison, and says so.
   match @purepy.check(m) {
     Some(d) =>
       inspect(
         d.message(),
-        content="chained boolean operator not allowed in PurePy (excluded from this version)",
+        content="chained comparison not allowed in PurePy (excluded from this version)",
       )
-    None => fail("PurePy does not have chained boolean operators")
+    None => fail("PurePy does not have chained comparisons")
   }
 
   // A host that opted in gets it.
@@ -814,7 +814,7 @@ Two things a profile will never do.
 
 It will not lift a **prohibition**. The sieve rejects two kinds of form, with
 the same message and exit code since v0.22: one the reference once planned to
-have (`chained boolean operator not allowed in PurePy (excluded from this version)`) and one it excludes on
+have (`chained comparison not allowed in PurePy (excluded from this version)`) and one it excludes on
 purpose (`for loops not allowed in PurePy (excluded from this version)`). Only the first kind has a gate a profile can open.
 The second list -- `for`, `while`, `try`,
 `raise`, `del`, `+=`, item and attribute assignment -- is what makes the

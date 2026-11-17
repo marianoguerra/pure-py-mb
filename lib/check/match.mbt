@@ -500,6 +500,9 @@ fn check_pattern(
       pattern_bindings([delta, context_of([(x, Var(matched_as(tau, q, ctx)))])])
     }
     MatchAs(pattern=Some(q), name=None, ..) => check_pattern(q, tau, ctx)
+    MatchValue(span~, ..) if literal_of(p) is Int(_) &&
+      has_float_values(sigma, tau) =>
+      raise ill(IntLiteralFloatValues(tau=render(tau)), span)
     MatchValue(..) | MatchSingleton(..) => empty_context()
     MatchSequence(kind=Tuple, patterns~, span~) => {
       if has_list_values(sigma, tau) {
@@ -549,7 +552,7 @@ fn check_pattern(
         }
       })
     }
-    MatchMapping(patterns~, ..) =>
+    MatchMapping(patterns~, span~, ..) =>
       bindings_at(tau, p, ctx, fn(s) raise {
         match s {
           Dict(v) =>
@@ -560,6 +563,8 @@ fn check_pattern(
                 ctx,
               ),
             )
+          _ if has_dict_values(sigma, s) =>
+            raise ill(DictPatternDictValues(tau=render(s)), span)
           _ => None
         }
       })
@@ -742,6 +747,28 @@ fn has_tuple_values(sigma : @types.ClassTable, tau : @types.Type) -> Bool {
   .any(fn(s) {
     s is (Tuple(_) | TypeVar(_)) || @types.subtype(sigma, Tuple([]), s)
   })
+}
+
+///|
+/// Whether a type has float values that an int literal pattern would match:
+/// the mechanisation's `has_float_values`.
+fn has_float_values(sigma : @types.ClassTable, tau : @types.Type) -> Bool {
+  match tau {
+    Union(a, b) => has_float_values(sigma, a) || has_float_values(sigma, b)
+    TypeVar(_) | Literal(Float(_)) => true
+    _ => @types.subtype(sigma, @types.t_float, tau)
+  }
+}
+
+///|
+/// Whether a type has dictionary values: the mechanisation's
+/// `has_dict_values`.
+fn has_dict_values(sigma : @types.ClassTable, tau : @types.Type) -> Bool {
+  match tau {
+    Union(a, b) => has_dict_values(sigma, a) || has_dict_values(sigma, b)
+    TypeVar(_) | Dict(_) => true
+    _ => @types.subtype(sigma, Dict(@types.t_object), tau)
+  }
 }
 
 ///|

@@ -255,6 +255,14 @@ fn def_parts(
 /// parameters.
 fn def_signature(d : @ast.Stmt, ctx : ModCtx) -> Entry raise {
   let (_, args, _, returns, alphas) = def_parts(d)
+  // A definition's type parameters are fresh: none is a type variable already
+  // in scope, as an enclosing definition's would be (rule `def-signature`,
+  // spec v0.25; `tyvars Γ` in the mechanisation).
+  for a in alphas {
+    if ctx.gamma.get(a) is Some(TypeParam) {
+      raise ill(Redeclaration(x=a), d.span())
+    }
+  }
   let ctx_ = ctx.override_gamma(type_vars(alphas))
   let ps = args.args.map(fn(a) raise {
     resolve_type(type_expr(a.annotation), a.span, ctx_)
@@ -1425,16 +1433,35 @@ fn callee(e : @ast.Expr, ctx : ModCtx) -> @types.Type raise {
         Callable(ps, _) | Defaulted(ps, _, _) => ps
         _ => abort("a callable type")
       }
+      // Inferred from the arguments that synthesise; an argument that does
+      // not -- a generic function passed as one, say -- is checked against
+      // its instantiated parameter afterwards, and its failure is the answer
+      // only if the others do not determine the type arguments (rule
+      // `callee-scheme`; the mechanisation's `inferred_type_args`, v0.24).
       let ss = []
       let ts = []
+      let mut failure : Error? = None
       for i, a in args {
         if i < params.length() && synthesises(a) {
-          ss.push(params[i])
-          ts.push(synth_expr(a, ctx))
+          try synth_expr(a, ctx) catch {
+            err => if failure is None { failure = Some(err) }
+          } noraise {
+            t => {
+              ss.push(params[i])
+              ts.push(t)
+            }
+          }
         }
       }
       let gamma = @types.type_args_seq(ctx.sigma(), alphas, ss, ts)
-      @types.substitute(type_arguments(gamma, alphas, span)[:], alphas[:], tau)
+      let taus = type_arguments(gamma, alphas, span) catch {
+        err =>
+          match failure {
+            Some(f) => raise f
+            None => raise err
+          }
+      }
+      @types.substitute(taus[:], alphas[:], tau)
     }
     _ => synth_expr(func, ctx)
   }
@@ -1693,12 +1720,41 @@ fn binary(
 ) -> @types.Type raise {
   let s = synth_expr(left, ctx)
   let t = synth_expr(right, ctx)
-  match
-    @types.minimum(ctx.sigma(), @types.overloads_binary(ctx.sigma(), op, s, t)) {
-    Some(r) => r.result
+  match resolve_binary_union(ctx.sigma(), op, s, t) {
+    Some(r) => r
     None =>
       raise ill(NoBinaryOverload(op~, sigma=render(s), sigma_=render(t)), span)
   }
+}
+
+///|
+/// An operator's result: its overload at the operand types, or else, with a
+/// union operand, the join of its results at each branch -- the left
+/// operand's union first (rules `binop-union-left` and `binop-union-right`,
+/// spec v0.24; the mechanisation's `resolve_binop_union`).
+fn resolve_binary_union(
+  sigma : @types.ClassTable,
+  op : String,
+  s : @types.Type,
+  t : @types.Type,
+) -> @types.Type? {
+  match @types.minimum(sigma, @types.overloads_binary(sigma, op, s, t)) {
+    Some(r) => return Some(r.result)
+    None => ()
+  }
+  let branches = match (s, t) {
+    (Union(s1, s2), _) => [(s1, t), (s2, t)]
+    (_, Union(t1, t2)) => [(s, t1), (s, t2)]
+    _ => return None
+  }
+  let results = []
+  for b in branches {
+    match resolve_binary_union(sigma, op, b.0, b.1) {
+      Some(r) => results.push(r)
+      None => return None
+    }
+  }
+  Some(@types.join_seq(sigma, results))
 }
 
 ///|

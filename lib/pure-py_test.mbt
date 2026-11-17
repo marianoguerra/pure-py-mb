@@ -81,11 +81,11 @@ test "an in-memory program can import sys and the rest" {
 /// a caller who asked for the superset that has it.
 ///
 /// Note what does NOT appear here. `run` takes no profile, because the
-/// evaluator already evaluates an n-ary `and` correctly -- it always did, the
+/// evaluator already evaluates a chained comparison correctly -- it always did, the
 /// sieve simply never let one through. A profile is not a mode the runtime is
 /// in; it is what a caller was allowed to write.
 test "a profile is opted in to, per call" {
-  let source = "print(True and True and True)\n"
+  let source = "print(1 < 2 < 3)\n"
   let m = @purepy.parse(source)
 
   // Refused by default, with the message the reference prints.
@@ -93,7 +93,7 @@ test "a profile is opted in to, per call" {
   assert_eq(refused.exit_code(), 5)
   assert_eq(
     refused.message(),
-    "chained boolean operator not allowed in PurePy (excluded from this version)",
+    "chained comparison not allowed in PurePy (excluded from this version)",
   )
   assert_eq(@purepy.check(m).unwrap().message(), refused.message())
 
@@ -112,7 +112,7 @@ test "a profile is opted in to, per call" {
 /// Passing `@profile.core` explicitly is passing nothing, which is what makes
 /// the default safe to rely on.
 test "core is the default, spelled out" {
-  let m = @purepy.parse("x = a and b and c\n")
+  let m = @purepy.parse("x = 1 < a < 3\n")
   assert_eq(
     @purepy.sieve(m, profile=@profile.core).unwrap().message(),
     @purepy.sieve(m).unwrap().message(),

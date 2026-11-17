@@ -800,14 +800,12 @@ fn Sieve::check_expr(self : Sieve, node : @ast.Expr) -> Unit raise {
             span,
           )
       }
-    BoolOp(values~, ..) => {
-      if values.length() > 2 {
-        self.gate(ChainedBoolean, "chained boolean operator", 82, span)
-      }
+    // `a and b and c` is PurePy since spec v0.24 (#312); it was the
+    // `ChainedBoolean` gate of the `pending` profile before.
+    BoolOp(values~, ..) =>
       for v in values {
         self.check_expr(v)
       }
-    }
     Compare(left~, ops~, comparators~, ..) => {
       if ops.length() > 1 {
         self.gate(ChainedComparison, "chained comparison", 82, span)

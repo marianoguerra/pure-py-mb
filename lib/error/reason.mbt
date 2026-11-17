@@ -61,6 +61,12 @@ pub(all) enum Reason {
   UnreachableCase(pattern~ : String)
   PatternClassUndetermined(c~ : String, tau~ : String)
   SequenceKindMismatch(kind~ : String, tau~ : String, other~ : String)
+  /// An int literal pattern at a type with float values, which `1` would
+  /// match as `1.0` (rule `check-literal`, spec v0.25).
+  IntLiteralFloatValues(tau~ : String)
+  /// A dictionary pattern at a disjunct that is not a dictionary type and
+  /// has dictionary values (rule `check-dict-none`, spec v0.25).
+  DictPatternDictValues(tau~ : String)
   NotIterable(tau~ : String)
   UnknownField(c~ : String, x~ : String)
   NoneResult
@@ -100,6 +106,10 @@ pub(all) enum Reason {
 /// The message, exactly as `reasons.py` writes it.
 pub fn Reason::message(self : Reason) -> String {
   match self {
+    IntLiteralFloatValues(tau~) =>
+      "int literal pattern at \{tau}, which has float values"
+    DictPatternDictValues(tau~) =>
+      "dictionary pattern at \{tau}, which has dictionary values"
     Excluded(feature~, by_design~) =>
       "\{feature} not allowed in PurePy " +
       (if by_design {
@@ -218,6 +228,8 @@ pub fn Reason::message(self : Reason) -> String {
 pub fn Reason::code(self : Reason) -> String {
   let name = match self {
     Excluded(..) => "excluded"
+    IntLiteralFloatValues(..) => "int-literal-float-values"
+    DictPatternDictValues(..) => "dict-pattern-dict-values"
     DuplicateField(..) => "duplicate-field"
     InheritedField(..) => "inherited-field"
     NotTypeExpression(..) => "not-type-expression"

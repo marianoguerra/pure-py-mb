@@ -260,7 +260,6 @@ test "forms that are planned and not yet supported" {
     (
       "match v:\n    case 1 | 2:\n        pass\n", "5: or-patterns not allowed in PurePy (excluded from this version)",
     ),
-    ("x = a and b and c\n", "5: chained boolean operator not allowed in PurePy (excluded from this version)"),
     (
       "x = a < b < c\n", "5: chained comparison not allowed in PurePy (excluded from this version)",
     ),
@@ -351,23 +350,15 @@ fn verdict_under(source : String, profile : @profile.Profile) -> String {
 }
 
 ///|
-/// The pair that is the whole claim: refused under `core` with the message the
-/// reference prints, accepted under the profile that opens the gate.
-///
-/// The `core` half is the one that matters. `test/golden/` and the conformance
-/// ratchet say the same thing over 392 files, but they say it about the
-/// default argument; this says it about `@profile.core` written out, which is
-/// what the default is.
-test "chained boolean operators are gated, not removed" {
+/// `a and b and c` was the `pending` profile's until spec v0.24 made it
+/// PurePy (upstream #312): `core` accepts it, and so does every profile.
+test "chained boolean operators are PurePy" {
   let cases = [
     "a = b and c and d\n", "a = b or c or d\n", "a = b and c and d and e\n",
   ]
   for source in cases {
-    assert_eq(
-      verdict(source),
-      "5: chained boolean operator not allowed in PurePy (excluded from this version)",
-    )
-    assert_eq(verdict_under(source, @profile.core), verdict(source))
+    assert_eq(verdict(source), "ok")
+    assert_eq(verdict_under(source, @profile.core), "ok")
     assert_eq(verdict_under(source, @profile.pending()), "ok")
   }
 }
@@ -390,10 +381,10 @@ test "a profile keeps walking past the gate it opened" {
   // The second violation has to be one `pending` does NOT open, or the test
   // stops asking anything. `*args` is the durable choice now that f-strings
   // have landed: it needs an arity model this evaluator does not have.
-  let source = "a = b and c and d\ndef f(*g):\n    return 1\n"
+  let source = "a = 1 < b < 3\ndef f(*g):\n    return 1\n"
   assert_eq(
     verdict(source),
-    "5: chained boolean operator not allowed in PurePy (excluded from this version)",
+    "5: chained comparison not allowed in PurePy (excluded from this version)",
   )
   assert_eq(
     verdict_under(source, @profile.pending()),
@@ -410,7 +401,6 @@ test "a profile keeps walking past the gate it opened" {
 /// are `test/profile/`, driven by `tools/profile-conform.py`.
 test "every pending feature is gated, not removed" {
   let cases = [
-    ("a = b and c and d\n", "5: chained boolean operator not allowed in PurePy (excluded from this version)"),
     (
       "a = 1 < b < 3\n", "5: chained comparison not allowed in PurePy (excluded from this version)",
     ),

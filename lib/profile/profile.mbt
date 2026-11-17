@@ -47,6 +47,10 @@
 /// a `Feature` exhaustively, which is the usual trade for an open enum.
 pub(all) enum Feature {
   /// `a and b and c`: three or more operands in one boolean expression (#82).
+  ///
+  /// PurePy itself since spec v0.24 (upstream #312): `core` accepts it and
+  /// this arm opens nothing. It stays, and stays in `pending`, so that code
+  /// naming it still builds and `Profile::features` still lists it.
   ChainedBoolean
   /// `1 < x < 10`: more than one operator in one comparison (#82).
   ChainedComparison
@@ -303,8 +307,7 @@ pub fn accepted_by(feature : String) -> String? {
     None => feature
   }
   match feature {
-    "chained boolean operator"
-    | "chained comparison"
+    "chained comparison"
     | "identity operator (is/is not)"
     | "slicing"
     | "unpacking assignment"

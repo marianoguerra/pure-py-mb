@@ -42,6 +42,8 @@ pub fn extend_env(@hashmap.HashMap[String, Value], @hashmap.HashMap[String, Valu
 
 pub fn extend_value(Value, Value) -> Value
 
+pub fn float_divmod(Double, Double) -> (Double, Double)
+
 pub fn float_mod(Double, Double) -> Double
 
 pub fn floor_div(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt

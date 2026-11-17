@@ -224,6 +224,18 @@ fn power_int(sigma : ClassTable, s : Type, t : Type) -> Resolved? {
 }
 
 ///|
+/// `float ** int`: a float base, an int exponent (`OverloadPowFloat`). A
+/// float exponent has no overload since spec v0.24 -- `2.0 ** 0.5` is
+/// refused -- so a power is always a repeated product or its reciprocal.
+fn power_float(sigma : ClassTable, s : Type, t : Type) -> Resolved? {
+  if subtype(sigma, s, t_float) && subtype(sigma, t, t_int) {
+    Some({ params: [t_float, t_int], result: t_float, })
+  } else {
+    None
+  }
+}
+
+///|
 type BinaryOverload = (ClassTable, Type, Type) -> Resolved?
 
 ///|
@@ -244,7 +256,7 @@ pub fn binary_overloads(op : String) -> Array[BinaryOverload] {
         repeat_list_left,
       ]
     "/" => [arithmetic_float]
-    "**" => [power_int, arithmetic_float]
+    "**" => [power_int, power_float]
     _ => abort("no binary operator \{op}")
   }
 }

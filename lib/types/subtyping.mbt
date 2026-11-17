@@ -181,15 +181,95 @@ pub fn instance_below(sigma : ClassTable, c : String, tau : Type) -> Instance {
     Class(d, sigmas) if ancestors(sigma, c).contains(d) => {
       let generic = Class(c, alphas.map(fn(a) { TypeVar(a) }))
       let (_, rhos) = instantiated_ancestor(sigma, generic, d)
-      match instantiation_candidates(sigma, rhos, sigmas, alphas) {
-        [] => NoInstance
-        [taus] => Found(c, taus)
-        _ => Undetermined
+      // The mechanisation's `instance_below` (spec v0.25): match the
+      // ancestor's arguments one way against the type's, read the class's
+      // arguments off the match, and take them only if they reproduce the
+      // type exactly. A union in the ancestor's arguments binds nothing, so
+      // `Leaf[T](Tree[T | int])` below `Tree[float]` is undetermined.
+      match match_args_seq(rhos, sigmas) {
+        ArgIncomparable => NoInstance
+        ArgUndefined => Undetermined
+        Matched(gamma) => {
+          let taus = []
+          for a in alphas {
+            match gamma.get(a) {
+              Some(t) => taus.push(t)
+              None => return Undetermined
+            }
+          }
+          let (_, back) = instantiated_ancestor(sigma, Class(c, taus), d)
+          if back.length() == sigmas.length() &&
+            all_pairs(back, sigmas, fn(r, s) { equivalent(sigma, r, s) }) {
+            Found(c, taus)
+          } else {
+            Undetermined
+          }
+        }
       }
     }
     Prim(Object) => if alphas.is_empty() { Found(c, []) } else { Undetermined }
     _ => NoInstance
   }
+}
+
+///|
+/// One-way matching of a type over a class's type parameters against a
+/// type: the mechanisation's `arg_match`. `ArgUndefined` where the type has a
+/// variable or a union the pattern side does not, `ArgIncomparable` where two
+/// types with structure differ.
+priv enum ArgMatch {
+  Matched(Map[String, Type])
+  ArgUndefined
+  ArgIncomparable
+}
+
+///|
+fn merge_match(a : ArgMatch, b : ArgMatch) -> ArgMatch {
+  match (a, b) {
+    (ArgIncomparable, _) | (_, ArgIncomparable) => ArgIncomparable
+    (ArgUndefined, _) | (_, ArgUndefined) => ArgUndefined
+    (Matched(g), Matched(h)) => {
+      let out = Map::new()
+      for k, v in g {
+        out[k] = v
+      }
+      for k, v in h {
+        out[k] = v
+      }
+      Matched(out)
+    }
+  }
+}
+
+///|
+fn match_args(rho : Type, s : Type) -> ArgMatch {
+  match (rho, s) {
+    (TypeVar(a), _) => Matched(Map::from_array([(a, s)]))
+    (Union(_, _), _) => Matched(Map::new())
+    (_, TypeVar(_)) | (_, Union(_, _)) => ArgUndefined
+    (List(r), List(t)) | (Dict(r), Dict(t)) => match_args(r, t)
+    (Tuple(rs), Tuple(ts)) => match_args_seq(rs, ts)
+    (Callable(rs, r), Callable(ts, t)) => match_args_seq([r, ..rs], [t, ..ts])
+    (Class(c, rs), Class(d, ts)) =>
+      if c == d {
+        match_args_seq(rs, ts)
+      } else {
+        ArgIncomparable
+      }
+    _ => if rho == s { Matched(Map::new()) } else { ArgIncomparable }
+  }
+}
+
+///|
+fn match_args_seq(rhos : Array[Type], ss : Array[Type]) -> ArgMatch {
+  if rhos.length() != ss.length() {
+    return ArgIncomparable
+  }
+  let mut acc = Matched(Map::new())
+  for i, r in rhos {
+    acc = merge_match(acc, match_args(r, ss[i]))
+  }
+  acc
 }
 
 ///|
@@ -216,106 +296,6 @@ pub fn instantiated_ancestor(
     }
   }
   (c, args)
-}
-
-///|
-/// The argument sequences for `alphas` that make `rhos` equivalent to
-/// `sigmas`: none, one, or two that differ -- which is enough to say there
-/// is no single one.
-fn instantiation_candidates(
-  sigma : ClassTable,
-  rhos : Array[Type],
-  sigmas : Array[Type],
-  alphas : Array[String],
-) -> Array[Array[Type]] {
-  let atoms : Array[Type] = [t_object]
-  for s in sigmas {
-    for a in subterms(s) {
-      if !atoms.contains(a) {
-        atoms.push(a)
-      }
-    }
-  }
-  atoms.sort_by(fn(a, b) { @basic.lexical_compare(render(a), render(b)) })
-  let choices = product(Array::make(alphas.length(), subsets(atoms))[:])
-  let mut first : Array[Type]? = None
-  for choice in choices {
-    let taus = choice.map(fn(ts) { join_seq(sigma, ts[:]) })
-    let solves = all_pairs(rhos, sigmas, fn(rho, s) {
-      equivalent(sigma, substitute(taus[:], alphas[:], rho), s)
-    })
-    if !solves {
-      continue
-    }
-    match first {
-      None => first = Some(taus)
-      Some(f) =>
-        if !all_pairs(taus, f, fn(a, b) { equivalent(sigma, a, b) }) {
-          return [f, taus]
-        }
-    }
-  }
-  match first {
-    None => []
-    Some(f) => [f]
-  }
-}
-
-///|
-/// Every sub-sequence of `xs`, in the order `itertools.product((False,
-/// True), repeat=n)` enumerates them.
-fn[T] subsets(xs : Array[T]) -> Array[Array[T]] {
-  let keeps = product(Array::make(xs.length(), [false, true])[:])
-  keeps.map(fn(k) {
-    let out = []
-    for i, x in xs {
-      if k[i] {
-        out.push(x)
-      }
-    }
-    out
-  })
-}
-
-///|
-/// The types of a type's parts, the type among them.
-fn subterms(tau : Type) -> Array[Type] {
-  let out : Array[Type] = []
-  fn add(t : Type) {
-    if !out.contains(t) {
-      out.push(t)
-    }
-  }
-
-  fn go(t : Type) -> Unit {
-    match t {
-      Union(a, b) => {
-        go(a)
-        go(b)
-      }
-      List(s) | Dict(s) => {
-        add(t)
-        go(s)
-      }
-      Tuple(ss) | Class(_, ss) => {
-        add(t)
-        for s in ss {
-          go(s)
-        }
-      }
-      Callable(ps, r) => {
-        add(t)
-        go(r)
-        for p in ps {
-          go(p)
-        }
-      }
-      _ => add(t)
-    }
-  }
-
-  go(tau)
-  out
 }
 
 ///|

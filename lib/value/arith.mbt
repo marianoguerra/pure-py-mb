@@ -412,7 +412,7 @@ fn float_arith(op : @ast.Operator, x : Double, y : Double) -> Outcome {
       if y == 0.0 {
         Aborts(ZeroDivisionError)
       } else {
-        Val(Float((x / y).floor()))
+        Val(Float(float_divmod(x, y).0))
       }
     Mod =>
       if y == 0.0 {
@@ -426,31 +426,68 @@ fn float_arith(op : @ast.Operator, x : Double, y : Double) -> Outcome {
       // kind, so it has no rule here.
       if x < 0.0 && y != y.floor() {
         Stuck("a negative number raised to a fractional power")
+      } else if x == 0.0 && y < 0.0 {
+        // `0.0 ** -1` raises in Python, as `0 ** -1` does.
+        Aborts(ZeroDivisionError)
       } else {
-        Val(Float(@math.pow(x, y)))
+        let r = @math.pow(x, y)
+        // Python raises OverflowError where a finite power's result is not
+        // finite; PurePy leaves it undefined (suite `power_overflow`, v0.24).
+        if r.is_inf() && !x.is_inf() && !y.is_inf() && x != 0.0 {
+          Stuck("a float power that overflows")
+        } else {
+          Val(Float(r))
+        }
       }
     _ => Stuck("binary operator '" + op.symbol() + "'")
   }
 }
 
 ///|
-/// Python's `%` on floats: the result takes the sign of the divisor.
+/// Python's `%` on floats: the result takes the sign of the divisor, a zero
+/// one too (`4.0 % -2.0` is -0.0, and `repr` tells the two zeroes apart).
 pub fn float_mod(x : Double, y : Double) -> Double {
-  let r = x - (x / y).floor() * y
-  // The subtraction can land exactly on the divisor through rounding; Python
-  // never returns a remainder equal to the divisor.
-  let r = if r != 0.0 && (r < 0.0) != (y < 0.0) { r + y } else { r }
-  // A ZERO remainder takes the sign of the divisor too, which the correction
-  // above cannot do because it is guarded on a non-zero: `4.0 % -2.0` is
-  // -0.0 in Python, and `repr` tells the two zeroes apart.
-  if r == 0.0 {
-    if y < 0.0 {
-      -0.0
-    } else {
-      0.0
+  float_divmod(x, y).1
+}
+
+///|
+/// Python's `//` and `%` on floats, together: CPython's `_float_div_mod`,
+/// which builds both on `fmod` (MoonBit's `%` on `Double`). Taking the floor
+/// of `x / y` instead rounds before it floors -- `1.0 // 0.1` would be 10.0,
+/// where Python's is 9.0 -- and has no answer at an infinite divisor.
+pub fn float_divmod(x : Double, y : Double) -> (Double, Double) {
+  let mut m = x % y
+  let mut div = (x - m) / y
+  if m != 0.0 {
+    if (y < 0.0) != (m < 0.0) {
+      m = m + y
+      div = div - 1.0
     }
   } else {
-    r
+    m = copysign(0.0, y)
+  }
+  let floordiv = if div != 0.0 {
+    let f = div.floor()
+    if div - f > 0.5 {
+      f + 1.0
+    } else {
+      f
+    }
+  } else {
+    copysign(0.0, x / y)
+  }
+  (floordiv, m)
+}
+
+///|
+/// `x` with the sign of `s`, the sign of a zero and of a NaN included.
+fn copysign(x : Double, s : Double) -> Double {
+  let negative = s.reinterpret_as_uint64() >> 63 == 1UL
+  let magnitude = x.abs()
+  if negative {
+    -magnitude
+  } else {
+    magnitude
   }
 }
 
