@@ -42,8 +42,8 @@ license = "Apache-2.0"
 keywords = [ "python", "parser", "interpreter", "purepy" ]
 
 import {
-  "marianoguerra/error-report@0.1.1",
-  "moonbitlang/x@0.5.6",
+  "marianoguerra/error-report@0.1.2",
+  "moonbitlang/x@0.5.7",
 }
 
 preferred_target = "wasm"

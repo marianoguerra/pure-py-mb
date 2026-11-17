@@ -20,9 +20,9 @@ license = "Apache-2.0"
 keywords = [ "python", "parser", "interpreter", "purepy", "cli" ]
 
 import {
-  "marianoguerra/error-report@0.1.1",
+  "marianoguerra/error-report@0.1.2",
   "marianoguerra/pure-py@0.13.0",
-  "moonbitlang/x@0.5.6",
+  "moonbitlang/x@0.5.7",
 }
 
 description = "The pure-py command: tokenize, parse, check and run PurePy"
