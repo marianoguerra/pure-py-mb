@@ -562,6 +562,11 @@ fn Parser::parse_from_import(self : Parser) -> Stmt raise {
     let _ = self.advance()
   }
   let module_name = if self.at_name("import") {
+    // `from . import x` names no module; `from import x` names nothing at
+    // all, which CPython refuses at the `import`.
+    if level == 0 {
+      raise self.error("invalid syntax")
+    }
     None
   } else {
     Some(self.parse_dotted_name())

@@ -35,9 +35,12 @@ ANSWERS = {0, 1, 2, 3, 4, 5}
 
 
 def corpus() -> list[bytes]:
-    files = [
+    # Sorted: `rglob` answers in directory order, which differs between two
+    # checkouts of one commit, and a seed is only reproducible over a corpus
+    # in one order.
+    files = sorted(
         p for p in (ROOT / "test").rglob("*.py") if "__pycache__" not in p.parts
-    ]
+    )
     return [p.read_bytes() for p in files]
 
 
